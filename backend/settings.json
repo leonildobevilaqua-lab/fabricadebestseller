@@ -1,0 +1,35 @@
+{
+  "providers": {
+    "gemini": "AIzaSyAQSq23SpTgzmduKg6A4bStoN8OejgtQJM",
+    "openai": "",
+    "anthropic": "",
+    "deepseek": "",
+    "llama": ""
+  },
+  "activeProvider": "gemini",
+  "admin": {
+    "user": "contato@leonildobevilaqua.com.br",
+    "pass": "Leo129520-*-"
+  },
+  "email": {
+    "host": "b9378.cloud-network.biz",
+    "port": "465",
+    "user": "suporte@fabricadebestseller.com.br",
+    "pass": "Leo129520-*-"
+  },
+  "products": {
+    "english_book": "https://pay.kiwify.com.br/VqifT9S",
+    "spanish_book": "https://pay.kiwify.com.br/1Aj655e",
+    "cover_printed": "https://pay.kiwify.com.br/i45JRf1",
+    "cover_ebook": "https://pay.kiwify.com.br/NxPHXje",
+    "pub_amazon_printed": "https://pay.kiwify.com.br/QbQGtgm",
+    "pub_amazon_digital": "https://pay.kiwify.com.br/FOxvupC",
+    "pub_uiclap": "https://pay.kiwify.com.br/5MZbxZi",
+    "catalog_card": "https://pay.kiwify.com.br/hv6UVlU",
+    "isbn_printed": "https://pay.kiwify.com.br/rZdo3Jv",
+    "isbn_digital": "https://pay.kiwify.com.br/qoM41Tt",
+    "complete_package": "https://pay.kiwify.com.br/IHk1tZd",
+    "sales_page": "",
+    "hosting": ""
+  }
+}

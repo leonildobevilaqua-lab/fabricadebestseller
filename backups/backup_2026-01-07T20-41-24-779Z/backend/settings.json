@@ -1,0 +1,20 @@
+{
+  "providers": {
+    "gemini": "AIzaSyAQSq23SpTgzmduKg6A4bStoN8OejgtQJM",
+    "openai": "",
+    "anthropic": "",
+    "deepseek": "",
+    "llama": ""
+  },
+  "activeProvider": "gemini",
+  "admin": {
+    "user": "contato@leonildobevilaqua.com.br",
+    "pass": "Leo129520-*-"
+  },
+  "email": {
+    "host": "smtp.gmail.com",
+    "port": "587",
+    "user": "suporte@editora360express.com.br",
+    "pass": "Leo129520"
+  }
+}
