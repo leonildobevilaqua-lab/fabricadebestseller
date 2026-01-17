@@ -701,7 +701,30 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [msg, setMsg] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
 
+    // Auth Mode State
+    const [authMode, setAuthMode] = useState<'login' | 'forgot' | 'reset'>('login');
+    const [resetToken, setResetToken] = useState('');
+    const [newPass, setNewPass] = useState('');
+
+    // UI Navigation State
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'setup' | 'integrations' | 'backups' | 'simulator' | 'profile'>('dashboard');
+
+    // Profile State
+    const [profileOldPass, setProfileOldPass] = useState('');
+    const [profileNewPass, setProfileNewPass] = useState('');
+
     const [loadingError, setLoadingError] = useState(false);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const rToken = params.get('resetToken');
+        const rEmail = params.get('email');
+        if (rToken) {
+            setAuthMode('reset');
+            setResetToken(rToken);
+            if (rEmail) setUser(rEmail);
+        }
+    }, []);
 
     // useEffect for initial load handled below with leads
 
@@ -734,12 +757,59 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 const data = await res.json();
                 setToken(data.token);
                 localStorage.setItem('admin_token', data.token);
+                // Clear URL params if logged in
+                window.history.replaceState({}, '', '/admin');
             } else {
                 setMsg("Credenciais Inválidas");
             }
         } catch (e) {
             console.error("Login Link Error:", e);
             setMsg("Erro de conexão (Verifique se o backend está rodando)");
+        }
+    };
+
+    const handleForgot = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setMsg("Enviando solicitação...");
+        try {
+            const res = await fetch(`${API_URL}/forgot-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setMsg("Email de recuperação enviado! Verifique sua caixa de entrada.");
+            } else {
+                setMsg("Erro: " + data.error);
+            }
+        } catch (e) {
+            setMsg("Erro de conexão.");
+        }
+    };
+
+    const handleReset = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (newPass.length < 6) return setMsg("Senha muito curta.");
+        setMsg("Redefinindo senha...");
+        try {
+            const res = await fetch(`${API_URL}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user, token: resetToken, newPassword: newPass })
+            });
+            if (res.ok) {
+                alert("Senha redefinida com sucesso! Você pode logar agora.");
+                setAuthMode('login');
+                setPass('');
+                setMsg('');
+                window.history.replaceState({}, '', '/admin');
+            } else {
+                const data = await res.json();
+                setMsg("Erro: " + data.error);
+            }
+        } catch (e) {
+            setMsg("Erro de conexão.");
         }
     };
 
@@ -925,39 +995,145 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const isLogged = !!token;
 
+    const handleChangePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setMsg("Atualizando senha...");
+        try {
+            const res = await fetch(`${API_URL}/change-password`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ oldPass: profileOldPass, newPass: profileNewPass })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert("Senha atualizada com sucesso!");
+                setMsg("");
+                setProfileOldPass("");
+                setProfileNewPass("");
+            } else {
+                setMsg("Erro: " + data.error);
+            }
+        } catch (e) {
+            setMsg("Erro de conexão");
+        }
+    };
+
     if (!isLogged) {
         return (
             <div className="max-w-md mx-auto mt-20 p-8 bg-white rounded-xl shadow-lg border border-slate-200">
-                <h2 className="text-2xl font-bold mb-6 text-center text-slate-800">Acesso Administrativo</h2>
-                <form onSubmit={handleLogin}>
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Usuário</label>
-                        <input
-                            type="email"
-                            value={user}
-                            onChange={e => setUser(e.target.value)}
-                            className="w-full p-2 border rounded-lg"
-                            placeholder="admin@exemplo.com"
-                        />
-                    </div>
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Senha</label>
-                        <input
-                            type="password"
-                            value={pass}
-                            onChange={e => setPass(e.target.value)}
-                            className="w-full p-2 border rounded-lg"
-                            placeholder="******"
-                        />
-                    </div>
-                    {msg && <p className="text-red-500 text-sm mb-4 text-center">{msg}</p>}
-                    <button type="submit" className="w-full bg-slate-900 text-white py-2 rounded-lg font-bold hover:bg-slate-800 transition">
-                        Entrar
-                    </button>
-                    <button onClick={onBack} type="button" className="w-full mt-2 text-slate-500 text-sm hover:underline">
-                        Voltar ao App
-                    </button>
-                </form>
+                <h2 className="text-2xl font-bold mb-6 text-center text-slate-800">
+                    {authMode === 'login' && "Acesso Administrativo"}
+                    {authMode === 'forgot' && "Recuperar Senha"}
+                    {authMode === 'reset' && "Redefinir Senha"}
+                </h2>
+
+                {authMode === 'login' && (
+                    <form onSubmit={handleLogin}>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Usuário</label>
+                            <input
+                                type="email"
+                                value={user}
+                                onChange={e => setUser(e.target.value)}
+                                className="w-full p-2 border rounded-lg"
+                                placeholder="admin@exemplo.com"
+                                required
+                            />
+                        </div>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Senha</label>
+                            <input
+                                type="password"
+                                value={pass}
+                                onChange={e => setPass(e.target.value)}
+                                className="w-full p-2 border rounded-lg"
+                                placeholder="******"
+                                required
+                            />
+                        </div>
+                        {msg && <p className="text-red-500 text-sm mb-4 text-center">{msg}</p>}
+                        <button type="submit" className="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition">
+                            Entrar
+                        </button>
+                        <div className="mt-4 flex flex-col gap-2 text-center">
+                            <button type="button" onClick={() => { setAuthMode('forgot'); setMsg(''); }} className="text-sm text-blue-600 hover:underline">
+                                Esqueci minha senha
+                            </button>
+                            <button type="button" onClick={onBack} className="text-sm text-slate-500 hover:underline">
+                                Voltar ao App
+                            </button>
+                        </div>
+                    </form>
+                )}
+
+                {authMode === 'forgot' && (
+                    <form onSubmit={handleForgot}>
+                        <div className="mb-4 text-sm text-slate-600 text-center">
+                            Digite seu email para receber um link de redefinição de senha.
+                        </div>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Email Cadastrado</label>
+                            <input
+                                type="email"
+                                value={user}
+                                onChange={e => setUser(e.target.value)}
+                                className="w-full p-2 border rounded-lg"
+                                placeholder="admin@exemplo.com"
+                                required
+                            />
+                        </div>
+                        {msg && <p className={`text-sm mb-4 text-center ${msg.includes('enviado') ? 'text-green-600' : 'text-red-500'}`}>{msg}</p>}
+                        <button type="submit" className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition">
+                            Enviar Link
+                        </button>
+                        <div className="mt-4 text-center">
+                            <button type="button" onClick={() => { setAuthMode('login'); setMsg(''); }} className="text-sm text-slate-500 hover:underline">
+                                Voltar ao Login
+                            </button>
+                        </div>
+                    </form>
+                )}
+
+                {authMode === 'reset' && (
+                    <form onSubmit={handleReset}>
+                        <div className="mb-4 text-sm text-slate-600 text-center">
+                            Defina sua nova senha de acesso.
+                        </div>
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                            <input
+                                type="email"
+                                value={user}
+                                disabled
+                                className="w-full p-2 border rounded-lg bg-slate-100 text-slate-500"
+                            />
+                        </div>
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Nova Senha</label>
+                            <input
+                                type="password"
+                                value={newPass}
+                                onChange={e => setNewPass(e.target.value)}
+                                className="w-full p-2 border rounded-lg"
+                                placeholder="******"
+                                required
+                                minLength={6}
+                            />
+                        </div>
+                        {msg && <p className="text-red-500 text-sm mb-4 text-center">{msg}</p>}
+                        <button type="submit" className="w-full py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition">
+                            Salvar Nova Senha
+                        </button>
+                        <div className="mt-4 text-center">
+                            <button type="button" onClick={() => { setAuthMode('login'); setMsg(''); window.history.replaceState({}, '', '/admin'); }} className="text-sm text-slate-500 hover:underline">
+                                Cancelar
+                            </button>
+                        </div>
+                    </form>
+                )}
             </div>
         );
     }
@@ -998,409 +1174,489 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
 
     return (
-        <div className="max-w-4xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-lg border border-slate-200">
-            <div className="flex justify-between items-center mb-8">
-                <h2 className="text-2xl font-bold text-slate-800">Configuração de IA (Multi-Modelos)</h2>
-                <div className="gap-2 flex">
-                    <button onClick={() => { setToken(null); localStorage.removeItem('admin_token'); }} className="text-sm text-red-500 hover:underline">Sair</button>
-                    <span className="text-slate-300">|</span>
-                    <a href="/?new_session=true" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-500 hover:underline">Voltar ao App</a>
-                </div>
-            </div>
-
-            <div className="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-100">
-                <h3 className="font-bold text-blue-800 mb-2">Modelo Ativo</h3>
-                <select
-                    value={settings.activeProvider}
-                    onChange={e => setSettings({ ...settings, activeProvider: e.target.value })}
-                    className="w-full p-2 border rounded-lg text-lg bg-white"
-                >
-                    <option value="gemini">Google Gemini (Rápido & Gratuito/Barato)</option>
-                    <option value="openai">OpenAI GPT-4 (Padrão Ouro)</option>
-                    <option value="anthropic">Anthropic Claude 3 Opus (Melhor Texto)</option>
-                    <option value="deepseek">DeepSeek Coder (Custo-Benefício)</option>
-                    <option value="llama">Meta Llama 3 - via Groq (Ultra Rápido)</option>
-                </select>
-                <p className="text-xs text-blue-600 mt-2">
-                    O sistema usará este modelo para gerar todo o conteúdo do livro. Certifique-se de que a chave da API correspondente esteja preenchida abaixo.
-                </p>
-            </div>
-
-            <div className="space-y-4">
-                <h3 className="font-bold text-slate-700 border-b pb-2">Chaves de API (API Keys)</h3>
-
-                {/* Gemini */}
-                <div className="flex items-center gap-4">
-                    <div className="w-32 font-medium text-slate-600">Gemini Key</div>
-                    <input
-                        type="password"
-                        value={settings.providers.gemini}
-                        onChange={e => setSettings({ ...settings, providers: { ...settings.providers, gemini: e.target.value } })}
-                        className="flex-1 p-2 border rounded-lg font-mono text-sm"
-                        placeholder="AIza..."
-                    />
+        <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
+            {/* Sidebar */}
+            <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-xl z-20">
+                <div className="p-6 border-b border-slate-800">
+                    <h2 className="font-bold text-white text-lg tracking-tight">Admin Panel</h2>
+                    <div className="text-xs text-slate-500 mt-1">v2.1.0 (Stable)</div>
                 </div>
 
-                {/* OpenAI */}
-                <div className="flex items-center gap-4">
-                    <div className="w-32 font-medium text-slate-600">OpenAI Key</div>
-                    <input
-                        type="password"
-                        value={settings.providers.openai}
-                        onChange={e => setSettings({ ...settings, providers: { ...settings.providers, openai: e.target.value } })}
-                        className="flex-1 p-2 border rounded-lg font-mono text-sm"
-                        placeholder="sk-..."
-                    />
-                </div>
+                <nav className="flex-1 overflow-y-auto py-4">
+                    <div className="px-4 space-y-1">
+                        <button
+                            onClick={() => setActiveSection('dashboard')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        >
+                            <span>📊</span> Dashboard
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('setup')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'setup' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        >
+                            <span>⚙️</span> Config. IA & Email
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('integrations')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'integrations' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        >
+                            <span>🔗</span> Integrações
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('backups')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'backups' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        >
+                            <span>💾</span> Backups
+                        </button>
+                        <div className="pt-4 pb-2">
+                            <div className="text-xs font-bold text-slate-600 px-4 uppercase tracking-wider">Ferramentas</div>
+                        </div>
+                        <button
+                            onClick={() => setActiveSection('simulator')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'simulator' ? 'bg-purple-600 text-white shadow-lg shadow-purple-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        >
+                            <span>🚀</span> Simulador App
+                        </button>
+                        <div className="pt-4 pb-2">
+                            <div className="text-xs font-bold text-slate-600 px-4 uppercase tracking-wider">Conta</div>
+                        </div>
+                        <button
+                            onClick={() => setActiveSection('profile')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'profile' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        >
+                            <span>👤</span> Meu Perfil
+                        </button>
+                    </div>
+                </nav>
 
-                {/* Anthropic */}
-                <div className="flex items-center gap-4">
-                    <div className="w-32 font-medium text-slate-600">Claude Key</div>
-                    <input
-                        type="password"
-                        value={settings.providers.anthropic}
-                        onChange={e => setSettings({ ...settings, providers: { ...settings.providers, anthropic: e.target.value } })}
-                        className="flex-1 p-2 border rounded-lg font-mono text-sm"
-                        placeholder="sk-ant-..."
-                    />
-                </div>
-
-                {/* DeepSeek */}
-                <div className="flex items-center gap-4">
-                    <div className="w-32 font-medium text-slate-600">DeepSeek Key</div>
-                    <input
-                        type="password"
-                        value={settings.providers.deepseek}
-                        onChange={e => setSettings({ ...settings, providers: { ...settings.providers, deepseek: e.target.value } })}
-                        className="flex-1 p-2 border rounded-lg font-mono text-sm"
-                        placeholder="sk-..."
-                    />
-                </div>
-
-                {/* Llama */}
-                <div className="flex items-center gap-4">
-                    <div className="w-32 font-medium text-slate-600">Groq Key (Llama)</div>
-                    <input
-                        type="password"
-                        value={settings.providers.llama}
-                        onChange={e => setSettings({ ...settings, providers: { ...settings.providers, llama: e.target.value } })}
-                        className="flex-1 p-2 border rounded-lg font-mono text-sm"
-                        placeholder="gsk_..."
-                    />
-                </div>
-            </div>
-
-            <h3 className="font-bold text-slate-700 border-b pb-2 pt-8 flex justify-between items-center">
-                <span>Solicitações Pendentes (Contatos)</span>
-                <div className="flex flex-col gap-2">
+                <div className="p-4 border-t border-slate-800 space-y-2">
+                    <a href="/" target="_blank" className="block w-full text-center py-2 text-xs font-bold text-slate-400 hover:text-white border border-slate-700 rounded hover:bg-slate-800 transition">
+                        Ver Aplicação ↗
+                    </a>
                     <button
-                        onClick={refreshAll}
-                        disabled={isRefreshing}
-                        className={`text-sm px-3 py-1.5 rounded flex items-center justify-center gap-2 ${isRefreshing ? 'bg-gray-400 text-white cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                        onClick={() => { setToken(null); localStorage.removeItem('admin_token'); }}
+                        className="w-full py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded transition"
                     >
-                        <span>{isRefreshing ? '⏳' : '🔄'}</span> {isRefreshing ? 'Atualizando...' : 'Atualizar Painel'}
-                    </button>
-                    <button
-                        onClick={() => {
-                            const headers = ["Data", "Nome", "Email", "Telefone", "Tipo", "Status"];
-                            const rows = leads.map(l => [
-                                new Date(l.date).toLocaleDateString() + " " + new Date(l.date).toLocaleTimeString(),
-                                l.name,
-                                l.email,
-                                l.fullPhone,
-                                l.type || "BOOK",
-                                l.status || "PENDING"
-                            ]);
-                            const csvContent = [headers, ...rows]
-                                .map(e => e.join(","))
-                                .join("\n");
-
-                            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                            const url = URL.createObjectURL(blob);
-                            const link = document.createElement("a");
-                            link.setAttribute("href", url);
-                            link.setAttribute("download", "leads_export.csv");
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-                        }}
-                        className="text-sm bg-green-600 text-white px-3 py-1.5 rounded hover:bg-green-700 flex items-center justify-center gap-2"
-                    >
-                        <span>📊</span> Exportar Excel (CSV)
+                        Sair do Painel
                     </button>
                 </div>
-            </h3>
-
-            {/* Stats Dashboard */}
-            <DashboardCharts leads={leads} orders={orders} />
-
-            <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto mb-8">
-                <table className="w-full text-sm text-left min-w-[800px]">
-                    <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
-                        <tr>
-                            <th className="p-4 w-32">Data</th>
-                            <th className="p-4">Cliente</th>
-                            <th className="p-4 w-40">Status</th>
-                            <th className="p-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 bg-white">
-                        {leads.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-400">Nenhuma solicitação pendente.</td></tr>}
-                        {leads.map((lead: any) => (
-                            <LeadRow
-                                key={lead.id}
-                                lead={lead}
-                                onApprove={handleApproveLead}
-                                onDelete={handleDelete}
-                                onEdit={handleEdit}
-                                onDiagram={handleDiagram}
-                            />
-                        ))}
-                    </tbody>
-                </table>
             </div>
 
-            <h3 className="font-bold text-slate-700 border-b pb-2 pt-8">Integrações & Sistema</h3>
-
-            {/* Kiwify Webhook */}
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-6">
-                <h4 className="font-bold text-sm text-slate-600 mb-2">Webhook Kiwify</h4>
-                <p className="text-xs text-slate-500 mb-2">Copie esta URL e configure na Kiwify para liberar acesso automático após pagamento.</p>
-                <div className="flex gap-2">
-                    <input
-                        readOnly
-                        value={`${window.location.origin}/api/payment/webhook`}
-                        className="flex-1 p-2 border rounded bg-white text-xs font-mono text-slate-600 select-all"
-                    />
-                    <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/api/payment/webhook`)} className="px-3 py-1 bg-slate-200 text-xs font-bold rounded hover:bg-slate-300">Copiar</button>
-                </div>
-                <div className="mt-2 p-2 bg-yellow-50 text-yellow-800 text-xs rounded border border-yellow-200 flex gap-2 items-start">
-                    <span className="text-lg">⚠️</span>
-                    <div>
-                        <strong>Aviso Importante:</strong> URLs com "localhost" só funcionam no seu computador.
-                        A Kiwify não consegue enviar dados para este endereço. <br />
-                        Para testar automações reais, você precisa de um túnel (ex: Ngrok) ou hospedar o backend.
-                        <br />
-                        <em>Se quiser apenas salvar o formulário na Kiwify sem testar o webhook agora, use uma URL fictícia válida como: <u>https://google.com</u></em>
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-auto bg-slate-50 relative">
+                {/* Header Strip */}
+                <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+                    <h1 className="text-xl font-bold text-slate-800 capitalize">
+                        {activeSection === 'setup' ? 'Configurações de IA' : activeSection}
+                    </h1>
+                    <div className="flex items-center gap-4">
+                        {msg && <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full animate-pulse border border-emerald-100">{msg}</span>}
+                        <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold border border-slate-300">
+                            A
+                        </div>
                     </div>
-                </div>
-            </div>
+                </header>
 
-            {/* Email Settings */}
-            <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-bold text-sm text-slate-600">Configuração de E-mail (SMTP)</h4>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Host (Ex: smtp.gmail.com)</label>
-                        <input
-                            type="text"
-                            value={settings.email?.host || ''}
-                            onChange={e => setSettings({ ...settings, email: { ...settings.email, host: e.target.value } })}
-                            className="w-full p-2 border rounded text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Porta (Ex: 587)</label>
-                        <input
-                            type="text"
-                            value={settings.email?.port || ''}
-                            onChange={e => setSettings({ ...settings, email: { ...settings.email, port: e.target.value } })}
-                            className="w-full p-2 border rounded text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Usuário</label>
-                        <input
-                            type="text"
-                            value={settings.email?.user || ''}
-                            onChange={e => setSettings({ ...settings, email: { ...settings.email, user: e.target.value } })}
-                            className="w-full p-2 border rounded text-sm"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Senha</label>
-                        <input
-                            type="password"
-                            value={settings.email?.pass || ''}
-                            onChange={e => setSettings({ ...settings, email: { ...settings.email, pass: e.target.value } })}
-                            className="w-full p-2 border rounded text-sm"
-                        />
-                    </div>
-                </div>
-            </div>
+                <main className="p-8 max-w-6xl mx-auto pb-20">
 
-            {/* Backup System */}
-            <div className="space-y-4 pt-4 border-t">
-                <h4 className="font-bold text-sm text-slate-600 flex justify-between items-center">
-                    <span>Pontos de Restauração (Backups)</span>
-                    <button
-                        onClick={async () => {
-                            if (confirm("Deseja criar um novo Ponto de Restauração agora?")) {
-                                try {
-                                    const res = await fetch(`${API_URL}/backups`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-                                    if (res.ok) {
-                                        alert("Backup criado com sucesso!");
-                                        // Reload backups logic here if I made it a state, but for now just reload page or alerts.
-                                        // Better: add state for backups list.
-                                    } else {
-                                        alert("Erro ao criar backup");
-                                    }
-                                } catch (e) { alert("Erro de conexão"); }
-                            }
-                        }}
-                        className="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded"
-                    >
-                        + Criar Novo Ponto
-                    </button>
-                </h4>
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                    <p className="text-xs text-slate-500 mb-4">
-                        Abaixo você pode restaurar o sistema para um ponto anterior. Isso é útil caso alguma atualização de dados ou exclusão acidental ocorra.
-                    </p>
-                    <BackupList token={token} apiUrl={API_URL} />
-                </div>
-            </div>
-
-            {/* Product Links */}
-            <div className="space-y-4 pt-4 border-t">
-                {/* --- DYNAMIC PRICING VISUALIZER (NEW) --- */}
-                <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8">
-                    <h4 className="font-bold text-lg text-slate-700 mb-4 flex items-center gap-2">
-                        <span>🧪</span> Visualizador de Preços Dinâmicos (Assinaturas)
-                    </h4>
-                    <p className="text-sm text-slate-500 mb-4">
-                        Abaixo estão os links configurados no sistema para cada nível de desconto progressivo.
-                        <br />Estes links são ativados automaticamente quando um assinante vai gerar um novo livro.
-                    </p>
-
-                    <div className="space-y-6">
-                        {['STARTER', 'PRO', 'BLACK'].map(plan => (
-                            <div key={plan} className="border border-slate-200 rounded-lg overflow-hidden bg-white">
-                                <div className={`px-4 py-2 font-bold text-white text-sm flex justify-between items-center
-                                    ${plan === 'STARTER' ? 'bg-slate-700' : plan === 'PRO' ? 'bg-emerald-600' : 'bg-purple-900'}
-                                `}>
-                                    <span>PLANO {plan}</span>
+                    {/* DASHBOARD SECTION */}
+                    {activeSection === 'dashboard' && (
+                        <div className="space-y-8 animate-fade-in">
+                            {/* Actions Header */}
+                            <div className="flex justify-between items-center">
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-700">Visão Geral</h2>
+                                    <p className="text-sm text-slate-500">Acompanhe as vendas e solicitações em tempo real.</p>
                                 </div>
-                                <div className="p-4 grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                    {/* Annual */}
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={refreshAll}
+                                        disabled={isRefreshing}
+                                        className={`px-4 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition ${isRefreshing ? 'bg-slate-100 text-slate-400' : 'bg-white text-blue-600 border border-blue-100 hover:bg-blue-50'}`}
+                                    >
+                                        <span>{isRefreshing ? '⏳' : '🔄'}</span> {isRefreshing ? 'Atualizando...' : 'Atualizar Dados'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            const headers = ["Data", "Nome", "Email", "Telefone", "Tipo", "Status"];
+                                            const rows = leads.map(l => [
+                                                new Date(l.date).toLocaleDateString() + " " + new Date(l.date).toLocaleTimeString(),
+                                                l.name,
+                                                l.email,
+                                                l.fullPhone,
+                                                l.type || "BOOK",
+                                                l.status || "PENDING"
+                                            ]);
+                                            const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+                                            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                                            const url = URL.createObjectURL(blob);
+                                            const link = document.createElement("a");
+                                            link.setAttribute("href", url);
+                                            link.setAttribute("download", "leads_export.csv");
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                        }}
+                                        className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 transition"
+                                    >
+                                        <span>📊</span> Exportar Excel
+                                    </button>
+                                </div>
+                            </div>
+
+                            <DashboardCharts leads={leads} orders={orders} />
+
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                                    <h3 className="font-bold text-slate-700">Solicitações Recentes</h3>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left min-w-[800px]">
+                                        <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                                            <tr>
+                                                <th className="p-4 w-32">Data</th>
+                                                <th className="p-4">Cliente</th>
+                                                <th className="p-4 w-40">Status</th>
+                                                <th className="p-4 text-right">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 bg-white">
+                                            {leads.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-400">Nenhuma solicitação pendente.</td></tr>}
+                                            {leads.map((lead: any) => (
+                                                <LeadRow
+                                                    key={lead.id}
+                                                    lead={lead}
+                                                    onApprove={handleApproveLead}
+                                                    onDelete={handleDelete}
+                                                    onEdit={handleEdit}
+                                                    onDiagram={handleDiagram}
+                                                />
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SETUP SECTION */}
+                    {activeSection === 'setup' && (
+                        <div className="space-y-6 animate-fade-in max-w-3xl">
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Seleção de Modelo de IA</h3>
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-slate-700 mb-2">Provedor Ativo</label>
+                                    <select
+                                        value={settings.activeProvider}
+                                        onChange={e => setSettings({ ...settings, activeProvider: e.target.value })}
+                                        className="w-full p-2 border rounded-lg text-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                    >
+                                        <option value="gemini">Google Gemini (Recomendado)</option>
+                                        <option value="openai">OpenAI GPT-4</option>
+                                        <option value="anthropic">Anthropic Claude 3</option>
+                                        <option value="deepseek">DeepSeek Coder</option>
+                                        <option value="llama">Meta Llama 3 (Groq)</option>
+                                    </select>
+                                    <p className="text-xs text-slate-500 mt-2">
+                                        O modelo selecionado será usado para gerar todos os livros.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Chaves de API (Secretas)</h3>
+                                <div className="space-y-4">
                                     <div>
-                                        <h5 className="text-xs font-bold text-slate-500 uppercase mb-2 border-b pb-1">Anual</h5>
-                                        <ul className="space-y-2 text-xs">
-                                            {plan === 'STARTER' && (<>
-                                                <li className="flex justify-between"><span>Nível 1 (0% off):</span> <a href="https://pay.kiwify.com.br/SpCDp2q" target="_blank" className="text-blue-500 underline">R$ 24,90</a></li>
-                                                <li className="flex justify-between"><span>Nível 2 (10% off):</span> <a href="https://pay.kiwify.com.br/0R6K3gC" target="_blank" className="text-blue-500 underline">R$ 22,41</a></li>
-                                                <li className="flex justify-between"><span>Nível 3 (15% off):</span> <a href="https://pay.kiwify.com.br/2HYq1Ji" target="_blank" className="text-blue-500 underline">R$ 21,17</a></li>
-                                                <li className="flex justify-between"><span>Nível 4 (20% off):</span> <a href="https://pay.kiwify.com.br/KZSbSjM" target="_blank" className="text-blue-500 underline">R$ 19,92</a></li>
-                                            </>)}
-                                            {plan === 'PRO' && (<>
-                                                <li className="flex justify-between"><span>Nível 1 (0% off):</span> <a href="https://pay.kiwify.com.br/pH8lSvE" target="_blank" className="text-blue-500 underline">R$ 19,90</a></li>
-                                                <li className="flex justify-between"><span>Nível 2 (10% off):</span> <a href="https://pay.kiwify.com.br/SCgOrg9" target="_blank" className="text-blue-500 underline">R$ 17,91</a></li>
-                                                <li className="flex justify-between"><span>Nível 3 (15% off):</span> <a href="https://pay.kiwify.com.br/mChyOMF" target="_blank" className="text-blue-500 underline">R$ 16,92</a></li>
-                                                <li className="flex justify-between"><span>Nível 4 (20% off):</span> <a href="https://pay.kiwify.com.br/t5vOuOH" target="_blank" className="text-blue-500 underline">R$ 15,92</a></li>
-                                            </>)}
-                                            {plan === 'BLACK' && (<>
-                                                <li className="flex justify-between"><span>Nível 1 (0% off):</span> <a href="https://pay.kiwify.com.br/ottQN4o" target="_blank" className="text-blue-500 underline">R$ 14,90</a></li>
-                                                <li className="flex justify-between"><span>Nível 2 (10% off):</span> <a href="https://pay.kiwify.com.br/7Df9tSf" target="_blank" className="text-blue-500 underline">R$ 13,41</a></li>
-                                                <li className="flex justify-between"><span>Nível 3 (15% off):</span> <a href="https://pay.kiwify.com.br/l41UVMk" target="_blank" className="text-blue-500 underline">R$ 12,67</a></li>
-                                                <li className="flex justify-between"><span>Nível 4 (20% off):</span> <a href="https://pay.kiwify.com.br/LxYJjDq" target="_blank" className="text-blue-500 underline">R$ 11,92</a></li>
-                                            </>)}
-                                        </ul>
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Gemini API Key</label>
+                                        <input
+                                            type="password"
+                                            value={settings.providers.gemini}
+                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, gemini: e.target.value } })}
+                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
+                                        />
                                     </div>
-                                    {/* Monthly */}
                                     <div>
-                                        <h5 className="text-xs font-bold text-slate-500 uppercase mb-2 border-b pb-1">Mensal</h5>
-                                        <ul className="space-y-2 text-xs">
-                                            {plan === 'STARTER' && (<>
-                                                <li className="flex justify-between"><span>Nível 1 (0% off):</span> <a href="https://pay.kiwify.com.br/g1L85dO" target="_blank" className="text-blue-500 underline">R$ 26,90</a></li>
-                                                <li className="flex justify-between"><span>Nível 2 (10% off):</span> <a href="https://pay.kiwify.com.br/iztHm1K" target="_blank" className="text-blue-500 underline">R$ 24,21</a></li>
-                                                <li className="flex justify-between"><span>Nível 3 (15% off):</span> <a href="https://pay.kiwify.com.br/tdpPzXY" target="_blank" className="text-blue-500 underline">R$ 22,87</a></li>
-                                                <li className="flex justify-between"><span>Nível 4 (20% off):</span> <a href="https://pay.kiwify.com.br/Up1n5lb" target="_blank" className="text-blue-500 underline">R$ 21,52</a></li>
-                                            </>)}
-                                            {plan === 'PRO' && (<>
-                                                <li className="flex justify-between"><span>Nível 1 (0% off):</span> <a href="https://pay.kiwify.com.br/dEoi760" target="_blank" className="text-blue-500 underline">R$ 21,90</a></li>
-                                                <li className="flex justify-between"><span>Nível 2 (10% off):</span> <a href="https://pay.kiwify.com.br/93RoEg1" target="_blank" className="text-blue-500 underline">R$ 19,71</a></li>
-                                                <li className="flex justify-between"><span>Nível 3 (15% off):</span> <a href="https://pay.kiwify.com.br/JI5Ah1E" target="_blank" className="text-blue-500 underline">R$ 18,62</a></li>
-                                                <li className="flex justify-between"><span>Nível 4 (20% off):</span> <a href="https://pay.kiwify.com.br/EmUxPsB" target="_blank" className="text-blue-500 underline">R$ 17,52</a></li>
-                                            </>)}
-                                            {plan === 'BLACK' && (<>
-                                                <li className="flex justify-between"><span>Nível 1 (0% off):</span> <a href="https://pay.kiwify.com.br/Cg59pjZ" target="_blank" className="text-blue-500 underline">R$ 16,90</a></li>
-                                                <li className="flex justify-between"><span>Nível 2 (10% off):</span> <a href="https://pay.kiwify.com.br/kSe4GqY" target="_blank" className="text-blue-500 underline">R$ 15,21</a></li>
-                                                <li className="flex justify-between"><span>Nível 3 (15% off):</span> <a href="https://pay.kiwify.com.br/GCqdJAU" target="_blank" className="text-blue-500 underline">R$ 14,37</a></li>
-                                                <li className="flex justify-between"><span>Nível 4 (20% off):</span> <a href="https://pay.kiwify.com.br/LcNvYD0" target="_blank" className="text-blue-500 underline">R$ 13,52</a></li>
-                                            </>)}
-                                        </ul>
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">OpenAI API Key</label>
+                                        <input
+                                            type="password"
+                                            value={settings.providers.openai}
+                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, openai: e.target.value } })}
+                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Anthropic Key</label>
+                                        <input
+                                            type="password"
+                                            value={settings.providers.anthropic}
+                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, anthropic: e.target.value } })}
+                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">DeepSeek Key</label>
+                                        <input
+                                            type="password"
+                                            value={settings.providers.deepseek}
+                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, deepseek: e.target.value } })}
+                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Groq (Llama) Key</label>
+                                        <input
+                                            type="password"
+                                            value={settings.providers.llama}
+                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, llama: e.target.value } })}
+                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
+                                        />
                                     </div>
                                 </div>
                             </div>
-                        ))}
-                    </div>
-                </div>
 
-                <h4 className="font-bold text-sm text-slate-600">Links de Produtos (Upsell - Kiwify - Editáveis)</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Livro em Inglês (R$ 24,99)</label>
-                        <input type="text" value={settings.products?.english_book || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, english_book: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Livro em Espanhol (R$ 24,99)</label>
-                        <input type="text" value={settings.products?.spanish_book || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, spanish_book: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Capa Profissional (Impresso) - R$ 250,00</label>
-                        <input type="text" value={settings.products?.cover_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, cover_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Capa Profissional (Ebook) - R$ 149,90</label>
-                        <input type="text" value={settings.products?.cover_ebook || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, cover_ebook: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Publicação Amazon (Impresso) - R$ 69,90</label>
-                        <input type="text" value={settings.products?.pub_amazon_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_amazon_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Publicação Amazon (Digital) - R$ 59,90</label>
-                        <input type="text" value={settings.products?.pub_amazon_digital || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_amazon_digital: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Publicação UICLAP (Impresso) - R$ 59,90</label>
-                        <input type="text" value={settings.products?.pub_uiclap || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_uiclap: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Ficha Catalográfica - R$ 59,90</label>
-                        <input type="text" value={settings.products?.catalog_card || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, catalog_card: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">ISBN (Impresso) - R$ 49,90</label>
-                        <input type="text" value={settings.products?.isbn_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, isbn_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">ISBN (Digital) - R$ 49,90</label>
-                        <input type="text" value={settings.products?.isbn_digital || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, isbn_digital: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div className="col-span-2">
-                        <label className="text-xs font-bold text-slate-700">PACOTE COMPLETO - R$ 599,90</label>
-                        <input type="text" value={settings.products?.complete_package || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, complete_package: e.target.value } })} className="w-full p-2 border rounded text-sm border-brand-300 ring-2 ring-brand-100" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Página de Vendas - R$ 349,90</label>
-                        <input type="text" value={settings.products?.sales_page || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, sales_page: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                    <div>
-                        <label className="text-xs font-medium text-slate-500">Hospedagem (Anual) - R$ 499,90</label>
-                        <input type="text" value={settings.products?.hosting || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, hosting: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                    </div>
-                </div>
-            </div>
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Configuração SMTP (E-mail)</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Host</label>
+                                        <input type="text" value={settings.email?.host || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, host: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" placeholder="smtp.example.com" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Porta</label>
+                                        <input type="text" value={settings.email?.port || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, port: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" placeholder="587 or 465" />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Usuário</label>
+                                        <input type="text" value={settings.email?.user || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, user: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Senha</label>
+                                        <input type="password" value={settings.email?.pass || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, pass: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" />
+                                    </div>
+                                </div>
+                            </div>
 
-            <div className="mt-8 pt-6 border-t flex justify-end items-center gap-4">
-                {msg && <span className="text-green-600 font-medium animate-pulse">{msg}</span>}
-                <button
-                    onClick={handleSave}
-                    className="px-6 py-3 bg-brand-600 text-white font-bold rounded-lg shadow hover:bg-brand-700 transition"
-                >
-                    Salvar Configurações
-                </button>
+                            <div className="flex justify-end pt-4">
+                                <button onClick={handleSave} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition transform active:scale-95">Salvar Configurações</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* INTEGRATIONS SECTION */}
+                    {activeSection === 'integrations' && (
+                        <div className="space-y-6 animate-fade-in max-w-4xl">
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Webhook de Pagamento</h3>
+                                <p className="text-sm text-slate-600 mb-4">A URL abaixo recebe notificações da Kiwify para liberar acesso automaticamente.</p>
+                                <div className="flex gap-2">
+                                    <input readOnly value={`${window.location.origin}/api/payment/webhook`} className="flex-1 p-2 border rounded bg-slate-50 text-xs font-mono text-slate-600" />
+                                    <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/api/payment/webhook`)} className="px-4 py-2 bg-slate-200 text-xs font-bold rounded hover:bg-slate-300">Copiar</button>
+                                </div>
+                            </div>
+
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Links de Produtos (Upsell)</h3>
+                                <p className="text-sm text-slate-500 mb-6">Configure os links de checkout para os produtos adicionais oferecidos no App.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Livro em Inglês</label>
+                                        <input type="text" value={settings.products?.english_book || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, english_book: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Livro em Espanhol</label>
+                                        <input type="text" value={settings.products?.spanish_book || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, spanish_book: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Capa Impressa</label>
+                                        <input type="text" value={settings.products?.cover_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, cover_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Capa Ebook</label>
+                                        <input type="text" value={settings.products?.cover_ebook || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, cover_ebook: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Amazon Impresso</label>
+                                        <input type="text" value={settings.products?.pub_amazon_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_amazon_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Amazon Digital</label>
+                                        <input type="text" value={settings.products?.pub_amazon_digital || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_amazon_digital: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">UICLAP</label>
+                                        <input type="text" value={settings.products?.pub_uiclap || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_uiclap: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Ficha Catalográfica</label>
+                                        <input type="text" value={settings.products?.catalog_card || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, catalog_card: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">ISBN Impresso</label>
+                                        <input type="text" value={settings.products?.isbn_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, isbn_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">ISBN Digital</label>
+                                        <input type="text" value={settings.products?.isbn_digital || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, isbn_digital: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="text-xs font-bold text-slate-700">PACOTE COMPLETO</label>
+                                        <input type="text" value={settings.products?.complete_package || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, complete_package: e.target.value } })} className="w-full p-2 border rounded text-sm border-brand-300 ring-2 ring-brand-100" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Página de Vendas</label>
+                                        <input type="text" value={settings.products?.sales_page || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, sales_page: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-slate-500">Hospedagem</label>
+                                        <input type="text" value={settings.products?.hosting || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, hosting: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end pt-4">
+                                <button onClick={handleSave} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition">Salvar Integrações</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* BACKUPS SECTION */}
+                    {activeSection === 'backups' && (
+                        <div className="space-y-6 animate-fade-in max-w-3xl">
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <div className="flex justify-between items-center mb-6 border-b pb-4">
+                                    <div>
+                                        <h3 className="font-bold text-slate-800">Sistema de Backup</h3>
+                                        <p className="text-sm text-slate-500">Crie pontos de restauração antes de grandes mudanças.</p>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            if (confirm("Criar backup agora?")) {
+                                                try {
+                                                    const res = await fetch(`${API_URL}/backups`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+                                                    if (res.ok) alert("Backup criado!");
+                                                } catch (e) { alert("Erro de conexão"); }
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700"
+                                    >
+                                        + Criar Novo Backup
+                                    </button>
+                                </div>
+                                <BackupList token={token} apiUrl={API_URL} />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SIMULATOR SECTION */}
+                    {activeSection === 'simulator' && (
+                        <div className="animate-fade-in max-w-4xl">
+                            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-lg relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <span className="text-9xl">🚀</span>
+                                </div>
+                                <h3 className="font-bold text-2xl text-slate-800 mb-2 relative z-10">Simulador de Experiência</h3>
+                                <p className="text-slate-600 mb-8 max-w-lg relative z-10">
+                                    Use esta ferramenta para visualizar o aplicativo como se fosse um cliente, pulando etapas burocráticas para testar o fluxo rapidamente.
+                                    <br /><strong className="text-orange-600">Atenção:</strong> Isso abrirá uma nova aba e reiniciará a sessão do navegador.
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                                    <button
+                                        onClick={() => {
+                                            if (!confirm("Iniciar simulação limpa?")) return;
+                                            localStorage.clear();
+                                            window.open('/?new_session=true', '_blank');
+                                        }}
+                                        className="p-6 bg-slate-50 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition text-left group"
+                                    >
+                                        <div className="font-bold text-lg text-slate-700 group-hover:text-blue-700 mb-1">1. Novo Visitante</div>
+                                        <p className="text-sm text-slate-500">Simula um usuário chegando pela primeira vez. Vai para a Landing Page (Vendas).</p>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            if (!confirm("Iniciar simulação?")) return;
+                                            const dummy = { name: "Admin Simulador", email: `admin.sim.${Date.now()}@test.com`, phone: "11999999999" };
+                                            localStorage.setItem('bsf_step', '1');
+                                            localStorage.setItem('bsf_userContact', JSON.stringify(dummy));
+                                            localStorage.setItem('bsf_hasAccess', 'true'); // Simulate Access Granted
+                                            window.open('/', '_blank');
+                                        }}
+                                        className="p-6 bg-slate-50 border-2 border-slate-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition text-left group"
+                                    >
+                                        <div className="font-bold text-lg text-slate-700 group-hover:text-purple-700 mb-1">2. Cliente com Acesso</div>
+                                        <p className="text-sm text-slate-500">Pula a Landing Page e vai direto para o cadastro inicial (Step 1) já autenticado/pago.</p>
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            if (!confirm("Iniciar simulação?")) return;
+                                            const dummy = { name: "Admin Simulador", email: `admin.sim.${Date.now()}@test.com`, phone: "11999999999" };
+                                            const meta = { authorName: "Admin Author", topic: "Livro sobre Testes Automatizados", dedication: "Ao time de QA" };
+                                            localStorage.setItem('bsf_step', '2');
+                                            localStorage.setItem('bsf_userContact', JSON.stringify(dummy));
+                                            localStorage.setItem('bsf_metadata', JSON.stringify(meta));
+                                            localStorage.setItem('bsf_hasAccess', 'true');
+                                            window.open('/', '_blank');
+                                        }}
+                                        className="p-6 bg-slate-50 border-2 border-slate-200 rounded-xl hover:border-emerald-500 hover:bg-emerald-50 transition text-left group"
+                                    >
+                                        <div className="font-bold text-lg text-slate-700 group-hover:text-emerald-700 mb-1">3. Processo de Criação (Generator)</div>
+                                        <p className="text-sm text-slate-500">Pula todo o cadastro. Vai direto para a tela de geração com tópico preenchido.</p>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* PROFILE SECTION */}
+                    {activeSection === 'profile' && (
+                        <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
+                            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
+                                <h3 className="font-bold text-xl text-slate-800 mb-6 flex items-center gap-2">
+                                    <span>🔐</span> Alterar Senha de Acesso
+                                </h3>
+
+                                <form onSubmit={handleChangePassword} className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Senha Atual</label>
+                                        <input
+                                            type="password"
+                                            value={profileOldPass}
+                                            onChange={e => setProfileOldPass(e.target.value)}
+                                            className="w-full p-3 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Digite sua senha atual..."
+                                            required
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 mb-2">Nova Senha</label>
+                                        <input
+                                            type="password"
+                                            value={profileNewPass}
+                                            onChange={e => setProfileNewPass(e.target.value)}
+                                            className="w-full p-3 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                                            placeholder="Digite a nova senha..."
+                                            required
+                                            minLength={6}
+                                        />
+                                        <p className="text-xs text-slate-500 mt-2">Mínimo de 6 caracteres.</p>
+                                    </div>
+
+                                    <div className="pt-4">
+                                        <button
+                                            type="submit"
+                                            className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition shadow-lg"
+                                        >
+                                            Atualizar Senha
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                </main>
             </div>
         </div>
     );

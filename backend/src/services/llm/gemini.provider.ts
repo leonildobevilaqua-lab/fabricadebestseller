@@ -3,7 +3,7 @@ import { LLMProvider } from "./provider.interface"; // Adjusted path since file 
 
 export class GeminiProvider implements LLMProvider {
     private client: GoogleGenerativeAI;
-    private models = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
+    private models = ["gemini-2.5-flash", "gemini-1.5-flash"];
 
     constructor(apiKey: string) {
         this.client = new GoogleGenerativeAI(apiKey);

@@ -593,14 +593,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             <button onClick={() => setLang('es')} className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${lang === 'es' ? 'text-yellow-400 bg-slate-700 shadow-sm' : 'text-slate-500 hover:text-white'}`}>ES</button>
                         </div>
 
-                        <a
-                            href="/admin"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs font-bold text-slate-500 hover:text-white uppercase tracking-widest transition"
-                        >
-                            Admin Area
-                        </a>
+                        {/* Admin Link Removed as per request */}
                     </div>
                 </div>
             </header>

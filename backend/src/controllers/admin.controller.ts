@@ -1,23 +1,177 @@
 import { Request, Response } from 'express';
 import * as ConfigService from '../services/config.service';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
+import bcrypt from 'bcrypt';
+import { sendEmail } from '../services/email.service';
+import { getVal, setVal, reloadDB } from '../services/db.service';
+import { v4 as uuidv4 } from 'uuid';
 
+// ... (Login logic)
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
+const DB_PATH = path.resolve(process.cwd(), 'database.json');
 
-export const login = async (req: Request, res: Response) => {
-    const { user, pass } = req.body;
-    const config = await ConfigService.getConfig();
+// --- CHANGE PASSWORD (AUTHENTICATED) ---
+export const changePassword = async (req: Request, res: Response) => {
+    const { oldPass, newPass } = req.body;
+    const authHeader = req.headers.authorization;
 
-    console.log(`[Login Attempt] Input User: '${user}', Pass length: ${pass?.length}`);
-    console.log(`[Login Attempt] Config User: '${config.admin.user}', Pass length: ${config.admin.pass?.length}`);
-    // console.log(`[DEBUG] Pass comparison: ${pass} === ${config.admin.pass}`);
+    if (!authHeader) return res.status(401).json({ error: "No token provided" });
 
-    if (user === config.admin.user && pass === config.admin.pass) {
-        const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '2h' });
-        return res.json({ token });
+    try {
+        const token = authHeader.split(' ')[1];
+        // @ts-ignore
+        jwt.verify(token, SECRET_KEY);
+    } catch (e) {
+        return res.status(403).json({ error: "Invalid Token" });
     }
 
-    res.status(401).json({ error: "Invalid credentials" });
+    if (!oldPass || !newPass) return res.status(400).json({ error: "Missing fields" });
+
+    try {
+        const config = await ConfigService.getConfig();
+        const storedPass = config.admin.pass;
+
+        // Verify Old Pass
+        let match = false;
+        if (storedPass.startsWith('$2b$')) {
+            match = await bcrypt.compare(oldPass, storedPass);
+        } else {
+            match = (storedPass === oldPass);
+        }
+
+        if (!match) return res.status(403).json({ error: "Senha atual incorreta" });
+
+        // Hash New Pass
+        const hashedPassword = await bcrypt.hash(newPass, 10);
+
+        await ConfigService.updateConfig({
+            admin: { ...config.admin, pass: hashedPassword }
+        });
+
+        res.json({ success: true });
+    } catch (e: any) {
+        console.error("Change Pass Error", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
+// --- FORGOT PASSWORD ---
+export const login = async (req: Request, res: Response) => {
+    const { user, pass } = req.body;
+    console.log(`[Admin Login] User: ${user}`);
+
+    try {
+        let isAuthenticated = false;
+
+        // 1. Check Config Service (Legacy & Main)
+        const config = await ConfigService.getConfig();
+
+        // Check if config pass is a Hash or Plain
+        const storedPass = config.admin.pass;
+        if (config.admin.user === user) {
+            if (storedPass.startsWith('$2b$')) {
+                // It's a hash
+                const match = await bcrypt.compare(pass, storedPass);
+                if (match) isAuthenticated = true;
+            } else {
+                // Plain text
+                if (storedPass === pass) isAuthenticated = true;
+            }
+        }
+
+        // 2. Check File Array (Fallback from "Rescue" operation)
+        if (!isAuthenticated && fs.existsSync(DB_PATH)) {
+            try {
+                const dbData = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+                if (Array.isArray(dbData)) {
+                    const found = dbData.find((u: any) => u.email === user);
+                    if (found) {
+                        if (await bcrypt.compare(pass, found.password)) isAuthenticated = true;
+                    }
+                }
+            } catch (e) { console.error("Error reading DB file fallback", e); }
+        }
+
+        if (isAuthenticated) {
+            const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '2h' });
+            return res.json({ token });
+        }
+
+        res.status(401).json({ error: "Invalid credentials" });
+
+    } catch (e) {
+        console.error("Login Error", e);
+        res.status(500).json({ error: "Internal Error" });
+    }
+};
+
+// --- FORGOT PASSWORD ---
+export const forgotPassword = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+
+    try {
+        const config = await ConfigService.getConfig();
+        const exists = config.admin.user === email;
+
+        if (!exists) {
+            return res.status(404).json({ error: "Admin email not found" });
+        }
+
+        const resetToken = uuidv4();
+        const safeEmail = email.replace(/[^a-zA-Z0-9]/g, '_');
+
+        await setVal(`/resets/${safeEmail}`, { token: resetToken, expires: Date.now() + 3600000 });
+
+        const origin = req.get('origin') || 'http://localhost:3002';
+        const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+        const link = `${cleanOrigin}/admin?resetToken=${resetToken}&email=${email}`;
+
+        console.log(`Sending Reset Link to ${email}: ${link}`);
+
+        await sendEmail(
+            email,
+            "Reset de Senha - Admin",
+            `Link para resetar sua senha: ${link}`,
+            undefined,
+            `<p>Clique <a href="${link}">AQUI</a> para resetar sua senha.</p>`
+        );
+
+        res.json({ success: true, message: "Email sent" });
+
+    } catch (e: any) {
+        console.error("Forgot Password Error", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+    const { email, token, newPassword } = req.body;
+    if (!email || !token || !newPassword) return res.status(400).json({ error: "Missing fields" });
+
+    try {
+        const safeEmail = email.replace(/[^a-zA-Z0-9]/g, '_');
+        const stored = await getVal(`/resets/${safeEmail}`);
+
+        if (!stored || stored.token !== token || Date.now() > stored.expires) {
+            return res.status(403).json({ error: "Invalid or expired token" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        const config = await ConfigService.getConfig();
+
+        await ConfigService.updateConfig({
+            admin: { ...config.admin, pass: hashedPassword }
+        });
+
+        await setVal(`/resets/${safeEmail}`, null);
+        res.json({ success: true });
+
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
 };
 
 export const getSettings = async (req: Request, res: Response) => {
@@ -116,12 +270,9 @@ export const downloadBook = async (req: Request, res: Response) => {
 };
 
 // --- Backups ---
-import fs from 'fs';
-import path from 'path';
-import { reloadDB } from '../services/db.service';
+// Imports moved to top
 
-// Usa o diretório raiz do projeto onde o database.json do GitHub está
-const DB_PATH = path.resolve(process.cwd(), 'database.json');
+// DB_PATH removed (declared at top)
 const BACKUP_DIR = path.resolve(__dirname, '../../backups');
 
 if (!fs.existsSync(BACKUP_DIR)) {
@@ -188,7 +339,7 @@ export const restoreBackup = async (req: Request, res: Response) => {
     }
 }
 
-import { getVal } from '../services/db.service';
+// getVal moved to top
 
 export const getOrders = async (req: Request, res: Response) => {
     try {
