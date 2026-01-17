@@ -120,7 +120,8 @@ import fs from 'fs';
 import path from 'path';
 import { reloadDB } from '../services/db.service';
 
-const DB_PATH = path.resolve(__dirname, '../../database.json');
+// Usa o diretório raiz do projeto onde o database.json do GitHub está
+const DB_PATH = path.resolve(process.cwd(), 'database.json');
 const BACKUP_DIR = path.resolve(__dirname, '../../backups');
 
 if (!fs.existsSync(BACKUP_DIR)) {
