@@ -43,7 +43,7 @@ export const pt = {
         solutionCards: [
             {
                 title: "Conteúdo Robusto",
-                desc: "Livro completo com elementos pré-textuais...\n12 Capítulos estruturados logicamente, +160 páginas.\nPágina Sobre o Autor.\nGeração automática de Página de Agradecimento e Dedicatória...\nCriação de texto para Contra Capa e Orelhas."
+                desc: "Livro completo com elementos pré-textuais...\n14 Capítulos estruturados logicamente, +160 páginas.\nPágina Sobre o Autor.\nGeração automática de Página de Agradecimento e Dedicatória...\nCriação de texto para Contra Capa e Orelhas."
             },
             {
                 title: "Diagramação Pro",
@@ -94,7 +94,7 @@ export const pt = {
         rewardNote: "Quanto mais você produz, menos você paga.",
         features: {
             access: "Acesso à Plataforma Fábrica de Best Sellers",
-            generation: "Geração de Livros (12 Capítulos)",
+            generation: "Geração de Livros (14 Capítulos)",
             content: "Conteúdo Robusto (+160 Páginas)",
             diagram: "Diagramação Automática Profissional",
             titlePage: "Folha de Rosto & Título Diagramadas",
@@ -153,7 +153,7 @@ export const pt = {
         selectTitle: "Selecione um dos títulos gerados. Os marcados são as melhores apostas virais.",
         bestChoice: "MELHOR ESCOLHA",
         viralStructureGenerated: "Estrutura Viral Gerada",
-        reviewChapters: "Revise os 15 capítulos planejados pela IA antes de escrever.",
+        reviewChapters: "Revise os 14 capítulos planejados pela IA antes de escrever.",
         approveAndWrite: "Aprovar & Escrever Livro Completo ➜",
         finalTouches: "Toques Finais de Autoria",
         aiCanWrite: "Nossa I.A. pode escrever textos emocionantes para você. Apenas diga para quem você quer dedicar ou agradecer.",
@@ -173,7 +173,7 @@ export const pt = {
         professionalize: "Profissionalize sua Obra 🚀",
         professionalizeDesc: "Você já tem o conteúdo. Agora transforme em um best-seller de verdade com nossos serviços editoriais.",
         status1: "Pesquisa de Mercado & Tendências",
-        status2: "Engenharia da Estrutura (12 Capítulos)",
+        status2: "Engenharia da Estrutura (14 Capítulos)",
         status3: "Escrita Profunda & Copywriting",
         status4: "Otimização Amazon KDP (SEO & Sinopse)",
         amazonSynopsis: "Sinopse Amazon",
@@ -244,7 +244,7 @@ export const en = {
         solutionCards: [
             {
                 title: "Robust Content",
-                desc: "Complete book with pre-textual elements... 12 logically structured chapters, +160 pages.\nAbout the Author page.\nAutomatic generation of Acknowledgment and Dedication pages...\nCreation of Back Cover and Flap text."
+                desc: "Complete book with pre-textual elements... 14 logically structured chapters, +160 pages.\nAbout the Author page.\nAutomatic generation of Acknowledgment and Dedication pages...\nCreation of Back Cover and Flap text."
             },
             {
                 title: "Pro Diagramming",
@@ -295,7 +295,7 @@ export const en = {
         rewardNote: "The more you produce, the less you pay.",
         features: {
             access: "Access to Best Seller Factory Platform",
-            generation: "Book Generation (15 Chapters)",
+            generation: "Book Generation (14 Chapters)",
             content: "Robust Content (+160 Pages)",
             diagram: "Professional Auto-Diagramming",
             titlePage: "Title Page & Formatted Title",
@@ -354,7 +354,7 @@ export const en = {
         selectTitle: "Select one of the generated titles. Highlighted ones are the best viral bets.",
         bestChoice: "BEST CHOICE",
         viralStructureGenerated: "Viral Structure Generated",
-        reviewChapters: "Review the 15 chapters planned by AI before writing.",
+        reviewChapters: "Review the 14 chapters planned by AI before writing.",
         approveAndWrite: "Approve & Write Full Book ➜",
         finalTouches: "Final Author Touches",
         aiCanWrite: "Our AI can write emotional texts for you. Just say who you want to dedicate or thank.",
@@ -374,7 +374,7 @@ export const en = {
         professionalize: "Professionalize Your Work 🚀",
         professionalizeDesc: "You have the content. Now turn it into a real best-seller with our editorial services.",
         status1: "Market Research & Trends",
-        status2: "Structure Engineering (15 Chapters)",
+        status2: "Structure Engineering (14 Chapters)",
         status3: "Deep Writing & Copywriting",
         status4: "Amazon KDP Optimization (SEO & Synopsis)",
         amazonSynopsis: "Amazon Synopsis",
@@ -445,7 +445,7 @@ export const es = {
         solutionCards: [
             {
                 title: "Contenido Robusto",
-                desc: "Libro completo con elementos pre-textuales... 12 Capítulos estructurados lógicamente, +160 páginas.\nPágina Sobre o Autor.\nGeneración automática de Página de Agradecimiento y Dedicatoria...\nCreación de texto para Contraportada y Solapas."
+                desc: "Libro completo con elementos pre-textuales... 14 Capítulos estructurados lógicamente, +160 páginas.\nPágina Sobre o Autor.\nGeneración automática de Página de Agradecimiento y Dedicatoria...\nCreación de texto para Contraportada y Solapas."
             },
             {
                 title: "Diagramación Pro",
@@ -496,7 +496,7 @@ export const es = {
         rewardNote: "Cuanto más produces, menos pagas.",
         features: {
             access: "Acceso a la Plataforma Fábrica de Best Sellers",
-            generation: "Generación de Libros (12 Capítulos)",
+            generation: "Generación de Libros (14 Capítulos)",
             content: "Contenido Robusto (+160 Páginas)",
             diagram: "Diagramación Automática Profesional",
             titlePage: "Portada Completa y Título Formateados",
@@ -555,7 +555,7 @@ export const es = {
         selectTitle: "Seleccione uno de los títulos generados. Los marcados son las mejores apuestas virales.",
         bestChoice: "MEJOR ELECCIÓN",
         viralStructureGenerated: "Estructura Viral Generada",
-        reviewChapters: "Revise los 15 capítulos planeados por la IA antes de escribir.",
+        reviewChapters: "Revise los 14 capítulos planeados por la IA antes de escribir.",
         approveAndWrite: "Aprobar y Escribir Libro Completo ➜",
         finalTouches: "Toques Finales de Autoría",
         aiCanWrite: "Nuestra IA puede escribir textos emotivos para usted. Solo diga a quién quiere dedicar o agradecer.",
@@ -575,7 +575,7 @@ export const es = {
         professionalize: "Profesionalice su Obra 🚀",
         professionalizeDesc: "Ya tiene el contenido. Ahora conviértalo en un verdadero best-seller con nuestros servicios editoriales.",
         status1: "Investigación de Mercado y Tendencias",
-        status2: "Ingeniería de Estructura (12 Capítulos)",
+        status2: "Ingeniería de Estructura (14 Capítulos)",
         status3: "Escritura Profunda y Copywriting",
         status4: "Optimización Amazon KDP (SEO y Sinopsis)",
         amazonSynopsis: "Sinopsis Amazon",

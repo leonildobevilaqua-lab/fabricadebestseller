@@ -189,9 +189,11 @@ export const generateStructure = async (title: string, subtitle: string, researc
   const prompt = `
     Context: ${researchContext}
     Book: ${title} - ${subtitle}
-    Create a 12-chapter structure.
+    Create a highly detailed 14-chapter structure.
     
-    IMPORTANT: Review content context and ensure chapters flow logically.
+    CRITICAL: The goal is to produce a thick, comprehensive book (200+ pages).
+    Ensure the chapters cover every single angle of the topic in extreme depth.
+    Do not create short or superficial chapters. Each chapter must be a deep dive.
     IMPORTANT: ALL CONTENT MUST BE IN ${langName}.
     
     Return JSON: [{ "id": 1, "title": "...", "intro": "..." }]
@@ -288,10 +290,10 @@ export const writeChapter = async (
     Chapter: ${chapter.title}
     Chapter Objective: ${chapter.intro}
 
-    TASK: Create a detailed outline for this chapter with exactly 4 distinct sub-sections.
-    Each sub-section must cover a specific aspect of the chapter's topic in depth.
+    TASK: Create a detailed outline for this chapter with exactly 6 distinct sub-sections.
+    Each sub-section must cover a specific aspect of the chapter's topic in EXTREME depth.
     
-    Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4"]
+    Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4", "Subheading 5", "Subheading 6"]
     Output ONLY JSON.
     Language: ${langName}.
   `;
@@ -302,11 +304,11 @@ export const writeChapter = async (
   } catch (e) {
     console.error("Failed to generate outline, using fallback topics", e);
     // Fallback topics if JSON fails
-    subtopics = ["Fundamentos", "Estratégias Avançadas", "Erros Comuns", "Estudos de Caso"];
+    subtopics = ["Fundamentos", "Histórico e Evolução", "Principais Desafios", "Ferramentas e Técnicas", "Estudos de Caso", "Tendências Futuras"];
   }
 
   // Ensure we don't go overboard if AI hallucinates 10 topics
-  subtopics = subtopics.slice(0, 4);
+  subtopics = subtopics.slice(0, 6);
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -335,8 +337,10 @@ export const writeChapter = async (
             
             Current Section: "${subtopic}"
             
-            TASK: Write a detailed section for this specific topic (approx 350 words).
-            Include detailed examples, actionable advice, and deep analysis.
+            TASK: Write a VERY DETAILED and EXTENSIVE section for this specific topic (approx 800-1000 words).
+            This is a "Deep Dive" chapter. Do not summarize.
+            Include detailed examples, actionable advice, step-by-step instructions, and deep theoretical analysis.
+            Expand on every point. If you can explain it in 1 sentence, explain it in 5 paragraphs instead.
             Do NOT repeat the introduction. Dive deep.
             
             Previous Context:
@@ -369,7 +373,9 @@ export const writeChapter = async (
         Book: ${metadata.bookTitle}
         Research Context: ${researchContext}
         CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
-        TASK: Write the full content for this chapter. length: 2000 words.
+        TASK: Write the full content for this chapter.
+        CRITICAL: WRite a MASSIVE chapter. Target length: 4000 words.
+        Cover 6 distinct subtopics in extreme detail.
         LANGUAGE: ${langName}.
       `;
 

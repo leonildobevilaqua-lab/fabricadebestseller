@@ -783,8 +783,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             } else {
                 setMsg("Erro: " + data.error);
             }
-        } catch (e) {
-            setMsg("Erro de conexão.");
+        } catch (e: any) {
+            console.error("Forgot Password Error:", e);
+            setMsg("Erro de conexão: " + (e.message || "Falha na requisição"));
         }
     };
 

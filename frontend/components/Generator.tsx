@@ -54,6 +54,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   const [project, setProject] = useState<BookProject | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Hoist metadata extraction for Effects
+  const { status, progress, statusMessage } = project?.metadata || ({} as any);
+
   // Dedication flow state (Lifted from conditional block)
   const [dedication, setDedication] = useState("");
   const [ack, setAck] = useState("");
@@ -248,6 +251,54 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     init();
   }, [metadata.authorName, metadata.topic]);
 
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = async () => {
+    if (!projectId || !project) return;
+
+    // Increment retry count
+    setRetryCount(prev => prev + 1);
+
+    try {
+      if (progress < 30) {
+        // Failed during Research
+        await API.startResearch(projectId);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa automaticamente...' } });
+      } else if (progress >= 30 && progress < 41) {
+        // Failed during Structure/Title
+        await API.generateBookContent(projectId);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Iniciando escrita...' } });
+      } else {
+        // Failed during Writing
+        await API.generateBookContent(projectId);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita automaticamente...' } });
+      }
+    } catch (e) {
+      console.error("Auto-retry failed", e);
+    }
+  };
+
+  // Auto-Retry Effect
+  useEffect(() => {
+    if (status === 'FAILED') {
+      // Limit retries to 10 to avoid infinite loops (though user asked to remove the button wait, we need some safety)
+      // If failure persists for too long, maybe we stop.
+      // But user said "don't make me wait".
+      // Let's retry up to 20 times with a 5s delay.
+      if (retryCount < 20) {
+        const timer = setTimeout(() => {
+          handleRetry();
+        }, 5000); // 5s delay
+        return () => clearTimeout(timer);
+      }
+    } else {
+      // Reset retry count on success/stable status
+      if (status !== 'FAILED' && retryCount > 0 && status !== 'IDLE') {
+        setRetryCount(0);
+      }
+    }
+  }, [status, retryCount]);
+
   // Polling
   useEffect(() => {
     if (!projectId) return;
@@ -355,8 +406,6 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   if (error) return <div className="text-red-500 text-center p-10 bg-red-50 rounded-xl m-10 border border-red-200">{error}</div>;
   if (!project || !project.metadata) return <div className="text-center p-20 flex flex-col items-center"><Spinner /> <span className="mt-4 text-slate-500">{t.startingIntelligence}</span></div>;
-
-  const { status, progress, statusMessage } = project.metadata;
 
   // Refine UI (Moved here to take precedence over status checks)
   if (isRefining) {
