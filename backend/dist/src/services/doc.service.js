@@ -101,7 +101,7 @@ const generateBookDocx = (project) => __awaiter(void 0, void 0, void 0, function
             if (m.keywords && m.keywords.length > 0)
                 yield addDoc('Palavras_Chave.docx', 'Palavras Chave', m.keywords.join(', '));
             if (content.marketing && content.marketing.description)
-                yield addDoc('Descricao_Geral.docx', 'Descrição Geral', content.marketing.description);
+                yield addDoc('Sinopse_Padrao_Profissional_Amazon.docx', 'SINOPSE PADRÃO PROFISSIONAL AMAZON', content.marketing.description);
             // Close archive
             yield archive.finalize();
             // Wait for close
@@ -159,7 +159,10 @@ const createSimpleDocx = (title, content) => __awaiter(void 0, void 0, void 0, f
                     font: "Arial",
                     bold: isHeader // Auto-bold potential headers
                 })],
-            spacing: { after: isHeader ? 120 : 200 } // Tighter spacing for headers to body
+            spacing: {
+                after: isHeader ? 120 : 240,
+                line: 360 // 1.5 Line Spacing for volume and readability
+            }
         }));
     });
     const doc = new docx_1.Document({
@@ -228,8 +231,8 @@ const createDocxBuffer = (metadata, content) => __awaiter(void 0, void 0, void 0
         // Safety Net 3.0: Density-based Wall of Text Detection
         const newlineCount = (cleanText.match(/\n/g) || []).length;
         const avgCharsPerLine = cleanText.length / (newlineCount + 1);
-        // If average chars per paragraph is > 600 (approx 10 lines), OR total length > 400 with 0 newlines
-        if (avgCharsPerLine > 600 || (cleanText.length > 400 && newlineCount < 2)) {
+        // If average chars per paragraph is > 300 (approx 5 lines), OR total length > 250 with 0 newlines
+        if (avgCharsPerLine > 300 || (cleanText.length > 250 && newlineCount < 2)) {
             console.log(`[DocService] Wall of Text Detected! Avg: ${avgCharsPerLine}, Length: ${cleanText.length}. Splitting...`);
             // Strategy: Force split every ~2 sentences or ~350 chars to create visual breathing room
             const sentences = cleanText.match(/[^.!?\n]+[.!?\n]+["']?|[^.!?\n]+$/g) || [cleanText];
@@ -243,9 +246,9 @@ const createDocxBuffer = (metadata, content) => __awaiter(void 0, void 0, void 0
                     return;
                 buffer += trimmed + " ";
                 sentenceCount++;
-                // Break every 2 sentences OR if buffer > 350 chars
+                // Break every 2 sentences OR if buffer > 300 chars
                 // Also break immediately if the sentence itself was huge (which shouldn't happen with sentence split but safe to check)
-                if (sentenceCount >= 2 || buffer.length > 350) {
+                if (sentenceCount >= 2 || buffer.length > 300) {
                     newText += buffer.trim() + "\n\n";
                     buffer = "";
                     sentenceCount = 0;
@@ -273,10 +276,15 @@ const createDocxBuffer = (metadata, content) => __awaiter(void 0, void 0, void 0
             });
         });
     };
-    const createTitle = (title, breakPage = false) => {
+    const createTitle = (title, breakPage = false, bookmarkName, bookmarkId) => {
         const cleanTitle = sanitizeText(title).replace(/\*/g, '');
+        const textRun = new docx_1.TextRun({ text: cleanTitle, bold: true, font: "Garamond", size: 48 });
+        let pChildren = [textRun];
+        if (bookmarkName && bookmarkId !== undefined) {
+            pChildren = [new docx_1.BookmarkStart(bookmarkName, bookmarkId), textRun, new docx_1.BookmarkEnd(bookmarkId)];
+        }
         return new docx_1.Paragraph({
-            children: [new docx_1.TextRun({ text: cleanTitle, bold: true, font: "Garamond", size: 48 })],
+            children: pChildren,
             heading: docx_1.HeadingLevel.HEADING_1,
             alignment: docx_1.AlignmentType.CENTER,
             spacing: { before: 2400, after: 1200 },
@@ -455,6 +463,17 @@ const createDocxBuffer = (metadata, content) => __awaiter(void 0, void 0, void 0
                 alignment: docx_1.AlignmentType.CENTER,
                 spacing: { before: 1200, after: 800 }
             }),
+            // Intro Entry
+            content.introduction ? new docx_1.Paragraph({
+                children: [
+                    new docx_1.TextRun({ text: "INTRODUÇÃO", bold: true, font: "Garamond", size: 24 }),
+                    new docx_1.TextRun({ text: "\t", font: "Garamond", size: 24 }),
+                    new docx_1.TextRun({ children: [new docx_1.PageReference('intro_ref')], font: "Garamond", size: 24 }),
+                ],
+                tabStops: [{ type: docx_1.TabStopType.RIGHT, position: 9000, leader: "dot" }],
+                spacing: { after: 200 },
+                alignment: docx_1.AlignmentType.LEFT
+            }) : new docx_1.Paragraph({ text: "" }),
             ...content.chapters.map((c, i) => new docx_1.Paragraph({
                 children: [
                     new docx_1.TextRun({ text: `CAPÍTULO ${i + 1}: `, bold: true, font: "Garamond", size: 24 }),
@@ -474,12 +493,12 @@ const createDocxBuffer = (metadata, content) => __awaiter(void 0, void 0, void 0
     if (content.introduction) {
         sections.push({
             properties: {
-                page: Object.assign(Object.assign({}, basePageConfig), { pageNumbers: { start: 1, formatType: docx_1.NumberFormat.DECIMAL } }), // Restart numeric here? Frontend restart at 11.
+                page: Object.assign(Object.assign({}, basePageConfig), { pageNumbers: { start: 11, formatType: docx_1.NumberFormat.DECIMAL } }), // Restart numeric here at 11 as requested
                 type: docx_1.SectionType.ODD_PAGE,
                 titlePage: true,
             },
             children: [
-                createTitle("Introdução"),
+                createTitle("Introdução", false, "intro_ref", 0),
                 ...createTextParams(content.introduction)
             ],
             headers: {

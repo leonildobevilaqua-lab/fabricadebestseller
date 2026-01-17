@@ -160,7 +160,7 @@ const startResearch = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
             // Find latest lead
             const lead = leads.reverse().find((l) => { var _a; return ((_a = l.email) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) === userEmail.toLowerCase().trim(); });
-            if (!lead || (lead.status !== 'APPROVED' && (lead.credits || 0) <= 0)) {
+            if (!lead || (lead.status !== 'APPROVED' && lead.status !== 'IN_PROGRESS' && (lead.credits || 0) <= 0)) {
                 console.warn(`Blocked startResearch for ${userEmail}: Payment not confirmed. Lead Status: ${lead === null || lead === void 0 ? void 0 : lead.status}`);
                 return res.status(402).json({ error: "Aguardando confirmação de pagamento." });
             }
@@ -205,7 +205,20 @@ const startResearch = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             progress: 5,
             statusMessage: `📡 Calibrando sensores para varredura no YouTube: "${topic}"...`
         });
-        const ytResearch = yield AIService.researchYoutube(topic, targetLang);
+        let ytResearch = "";
+        try {
+            ytResearch = yield AIService.researchYoutube(topic, targetLang);
+        }
+        catch (ytError) {
+            console.error("YouTube Research Failed:", ytError);
+            // Fallback or continue? Let's log and maybe use empty string or throw depending on severity.
+            // For now, let's treat it as critical to see the error.
+            yield QueueService.updateMetadata(id, {
+                status: 'FAILED',
+                statusMessage: `Erro na pesquisa YouTube: ${ytError.message || JSON.stringify(ytError)}`
+            });
+            return; // Stop execution
+        }
         yield QueueService.updateMetadata(id, {
             progress: 12,
             statusMessage: `⚙️ Processando dados brutos de vídeo e extraindo insights virais...`
@@ -306,6 +319,7 @@ const selectTitle = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.selectTitle = selectTitle;
 const generateBookContent = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     const { id } = req.params;
     const { language } = req.body;
     const project = yield QueueService.getProject(id);
@@ -347,24 +361,81 @@ const generateBookContent = (req, res) => __awaiter(void 0, void 0, void 0, func
             }
         }
         // 2. Write Introduction (after chapters to be coherent)
-        yield QueueService.updateMetadata(id, {
-            status: 'WRITING_CHAPTERS',
-            progress: 85,
-            statusMessage: "Escrevendo a Introdução de alto impacto..."
-        });
-        const introContent = yield AIService.writeIntroduction(project.metadata, project.structure, project.researchContext, targetLang);
-        // Store intro somewhere? Maybe as chapter 0 or specific field. For now, let's prepend to chapter list as Chapter 0 if not exists, or special field.
-        // The user requested "Introduction" separately. Let's add it to project structure as a special item or just assume it is Chapter 0.
-        // Let's create a "Intro" chapter.
-        const introChapter = { id: 0, title: "Introdução", content: introContent, isGenerated: true };
-        // Prepend to structure if not present
-        if (project.structure[0].id !== 0) {
-            project.structure.unshift(introChapter);
+        // Check if Intro exists (Chapter 0)
+        let hasIntro = false;
+        if (project.structure && project.structure.length > 0) {
+            if (project.structure[0].id === 0 && project.structure[0].isGenerated) {
+                hasIntro = true;
+            }
+        }
+        if (!hasIntro) {
+            yield QueueService.updateMetadata(id, {
+                status: 'WRITING_CHAPTERS',
+                progress: 85,
+                statusMessage: "Escrevendo a Introdução de alto impacto..."
+            });
+            const introContent = yield AIService.writeIntroduction(project.metadata, project.structure, project.researchContext, targetLang);
+            const introChapter = { id: 0, title: "Introdução", content: introContent, isGenerated: true };
+            if (!project.structure)
+                project.structure = [];
+            if (project.structure.length > 0 && project.structure[0].id !== 0) {
+                project.structure.unshift(introChapter);
+            }
+            else {
+                project.structure[0] = introChapter;
+            }
+            yield QueueService.updateProject(id, { structure: project.structure });
         }
         else {
-            project.structure[0] = introChapter;
+            console.log(`Skipping Introduction for project ${id} (Already generated)`);
         }
-        yield QueueService.updateProject(id, { structure: project.structure });
+        // 2.5. Generate Automatic Extras if missing
+        if (!project.metadata.dedication || !project.metadata.acknowledgments || !project.metadata.aboutAuthor) {
+            console.log("Generating missing Extras (Dedication/Ack/About)...");
+            yield QueueService.updateMetadata(id, {
+                statusMessage: "Criando Dedicatória e Agradecimentos Especiais..."
+            });
+            try {
+                // Check User Plan
+                const ownerEmail = ((_a = project.metadata.contact) === null || _a === void 0 ? void 0 : _a.email) || "";
+                const safeEmail = ownerEmail.toLowerCase().trim().replace(/\./g, '_');
+                let planName = 'STARTER';
+                if (safeEmail) {
+                    const userPlan = yield (0, db_service_1.getVal)(`users/${safeEmail}/plan`);
+                    if (userPlan && userPlan.status === 'ACTIVE') {
+                        planName = userPlan.name || 'STARTER';
+                    }
+                }
+                const isProOrBlack = planName.includes('PRO') || planName.includes('BLACK') || planName.includes('VIP');
+                console.log(`User Plan: ${planName} (Auto-Gen: ${isProOrBlack})`);
+                if (isProOrBlack) {
+                    const extras = yield AIService.generateExtras(project.metadata, "", // default to family/friends
+                    "", // default to universal
+                    "", // default context
+                    targetLang);
+                    // Use generated content
+                    project.metadata.dedication = extras.dedication;
+                    project.metadata.acknowledgments = extras.acknowledgments;
+                    project.metadata.aboutAuthor = extras.aboutAuthor;
+                }
+                else {
+                    // STARTER: Manual Placeholders
+                    // Using brackets so user knows to edit
+                    project.metadata.dedication = "[ESCREVA AQUI SUA DEDICATÓRIA]";
+                    project.metadata.acknowledgments = "[ESCREVA AQUI SEUS AGRADECIMENTOS]";
+                    project.metadata.aboutAuthor = "[ESCREVA AQUI A BIOGRAFIA DO AUTOR]";
+                }
+                // Save to DB
+                yield QueueService.updateMetadata(id, {
+                    dedication: project.metadata.dedication,
+                    acknowledgments: project.metadata.acknowledgments,
+                    aboutAuthor: project.metadata.aboutAuthor
+                });
+            }
+            catch (e) {
+                console.error("Failed to auto-generate extras:", e);
+            }
+        }
         // 3. Marketing
         yield QueueService.updateMetadata(id, {
             status: 'GENERATING_MARKETING',
@@ -373,7 +444,7 @@ const generateBookContent = (req, res) => __awaiter(void 0, void 0, void 0, func
         });
         // Pass full book content context implicitly via research context or just metadata.
         // Ideally we pass a summary of what was written, but researchContext + structure is often enough for marketing.
-        const marketing = yield AIService.generateMarketing(project.metadata, project.researchContext, "", targetLang);
+        const marketing = yield AIService.generateMarketing(project.metadata, project.researchContext, project.structure, targetLang);
         yield QueueService.updateProject(id, { marketing });
         // 4. Content Finished
         yield QueueService.updateMetadata(id, {
@@ -631,7 +702,7 @@ const processDiagramLead = (req, res) => __awaiter(void 0, void 0, void 0, funct
 });
 exports.processDiagramLead = processDiagramLead;
 const regenerateDocx = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b;
+    var _a;
     const { id } = req.params;
     try {
         const project = yield QueueService.getProject(id);
@@ -641,20 +712,9 @@ const regenerateDocx = (req, res) => __awaiter(void 0, void 0, void 0, function*
         }
         console.log(`Regenerating DOCX for Project: ${project.id}. Title: ${project.metadata.bookTitle}. Chapters: ${((_a = project.structure) === null || _a === void 0 ? void 0 : _a.length) || 0}`);
         let targetProject = project;
-        // Fallback Logic: If the requested project is empty, try to find a better one for this user.
+        // Fallback Logic Removed: Do NOT swap project context implicitly.
         if (!targetProject.structure || targetProject.structure.length === 0) {
-            const userEmail = ((_b = targetProject.metadata.contact) === null || _b === void 0 ? void 0 : _b.email) || "";
-            console.warn(`Project ${id} is empty. Searching for a better candidate for email: ${userEmail}`);
-            if (userEmail) {
-                const betterProject = yield QueueService.getProjectByEmail(userEmail);
-                if (betterProject && betterProject.structure && betterProject.structure.length > 0) {
-                    console.log(`FOUND BETTER PROJECT: ${betterProject.id} with ${betterProject.structure.length} chapters.`);
-                    targetProject = betterProject;
-                }
-                else {
-                    console.warn("No better project found. Proceeding with empty project.");
-                }
-            }
+            console.warn(`Project ${id} structure is empty. Proceeding anyway (may generate empty doc).`);
         }
         console.log(`Generating DOCX using Project ID: ${targetProject.id}`);
         yield DocService.generateBookDocx(targetProject);

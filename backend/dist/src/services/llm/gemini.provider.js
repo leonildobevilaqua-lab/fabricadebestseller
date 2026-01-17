@@ -13,7 +13,7 @@ exports.GeminiProvider = void 0;
 const generative_ai_1 = require("@google/generative-ai");
 class GeminiProvider {
     constructor(apiKey) {
-        this.models = ["gemini-2.5-flash", "gemini-flash-latest", "gemini-2.0-flash", "gemini-pro"];
+        this.models = ["gemini-2.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
         this.client = new generative_ai_1.GoogleGenerativeAI(apiKey);
     }
     generateText(prompt, systemPrompt) {
@@ -32,11 +32,13 @@ class GeminiProvider {
                     lastError = error;
                     // If it's a 404, continue to next model. If it's auth error, break.
                     if (!error.message.includes('404') && !error.message.includes('not found')) {
-                        throw error;
+                        // throw error; // Don't throw immediately, try other models if possible, unless it's Auth
+                        if (error.message.includes('API key') || error.message.includes('permission'))
+                            throw error;
                     }
                 }
             }
-            throw lastError;
+            throw lastError; // Throw the last error if all models fail
         });
     }
     generateJSON(prompt, schema) {

@@ -41,12 +41,66 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteLead = exports.updateLead = exports.getPublicConfig = exports.useCredit = exports.checkAccess = exports.handleKiwifyWebhook = exports.approveLead = exports.getLeads = exports.createLead = void 0;
+const uuid_1 = require("uuid");
 const db_service_1 = require("../services/db.service");
 const queue_service_1 = require("../services/queue.service");
-// ... (rest of imports or code)
-// ...
+const multer_1 = __importDefault(require("multer"));
+const upload = (0, multer_1.default)();
+// --- PRICING CONFIGURATION ---
+const PRICING_CONFIG = {
+    'STARTER': {
+        'annual': [
+            { price: 24.90, link: 'https://pay.kiwify.com.br/SpCDp2q' }, // Level 1 (Base)
+            { price: 22.41, link: 'https://pay.kiwify.com.br/0R6K3gC' }, // Level 2 (10% off)
+            { price: 21.17, link: 'https://pay.kiwify.com.br/2HYq1Ji' }, // Level 3 (15% off)
+            { price: 19.92, link: 'https://pay.kiwify.com.br/KZSbSjM' } // Level 4 (20% off)
+        ],
+        'monthly': [
+            { price: 26.90, link: 'https://pay.kiwify.com.br/g1L85dO' }, // Level 1
+            { price: 24.21, link: 'https://pay.kiwify.com.br/iztHm1K' }, // Level 2
+            { price: 22.87, link: 'https://pay.kiwify.com.br/tdpPzXY' }, // Level 3
+            { price: 21.52, link: 'https://pay.kiwify.com.br/Up1n5lb' } // Level 4
+        ]
+    },
+    'PRO': {
+        'annual': [
+            { price: 19.90, link: 'https://pay.kiwify.com.br/pH8lSvE' },
+            { price: 17.91, link: 'https://pay.kiwify.com.br/SCgOrg9' },
+            { price: 16.92, link: 'https://pay.kiwify.com.br/mChyOMF' },
+            { price: 15.92, link: 'https://pay.kiwify.com.br/t5vOuOH' }
+        ],
+        'monthly': [
+            { price: 21.90, link: 'https://pay.kiwify.com.br/dEoi760' },
+            { price: 19.71, link: 'https://pay.kiwify.com.br/93RoEg1' },
+            { price: 18.62, link: 'https://pay.kiwify.com.br/JI5Ah1E' },
+            { price: 17.52, link: 'https://pay.kiwify.com.br/EmUxPsB' }
+        ]
+    },
+    'BLACK': {
+        'annual': [
+            { price: 14.90, link: 'https://pay.kiwify.com.br/ottQN4o' },
+            { price: 13.41, link: 'https://pay.kiwify.com.br/7Df9tSf' },
+            { price: 12.67, link: 'https://pay.kiwify.com.br/l41UVMk' },
+            { price: 11.92, link: 'https://pay.kiwify.com.br/LxYJjDq' }
+        ],
+        'monthly': [
+            { price: 16.90, link: 'https://pay.kiwify.com.br/Cg59pjZ' },
+            { price: 15.21, link: 'https://pay.kiwify.com.br/kSe4GqY' },
+            { price: 14.37, link: 'https://pay.kiwify.com.br/GCqdJAU' },
+            { price: 13.52, link: 'https://pay.kiwify.com.br/LcNvYD0' }
+        ]
+    }
+};
+const SUBSCRIPTION_PRICES = {
+    'STARTER': { annual: 118.80, monthly: 19.90 },
+    'PRO': { annual: 238.80, monthly: 34.90 },
+    'BLACK': { annual: 358.80, monthly: 49.90 }
+};
 // Store a lead when user fills the form
 const createLead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -61,7 +115,7 @@ const createLead = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             phone,
             fullPhone: `${countryCode}${phone}`,
             type: type || 'BOOK', // Default to BOOK if not provided
-            status: 'PENDING',
+            status: req.body.status || 'PENDING',
             date: new Date(),
             topic,
             authorName,
@@ -70,7 +124,7 @@ const createLead = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             discount
         };
         yield (0, db_service_1.pushVal)('/leads', lead);
-        res.json({ success: true });
+        res.json({ success: true, id });
     }
     catch (e) {
         console.error(e);
@@ -81,7 +135,7 @@ exports.createLead = createLead;
 // Get all leads for admin
 const getLeads = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        yield require('../services/db.service').reloadDB(); // Ensure fresh data
+        yield (0, db_service_1.reloadDB)();
         const rawLeads = (yield (0, db_service_1.getVal)('/leads')) || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
         // Enhance leads with credit status
@@ -115,6 +169,18 @@ const updateLeadStatus = (email, newStatus) => __awaiter(void 0, void 0, void 0,
             }
         }
         if (targetIndex !== -1) {
+            const currentStatus = leads[targetIndex].status;
+            // PRESERVE SUBSCRIBER STATUS
+            if (currentStatus === 'SUBSCRIBER') {
+                // If status implies book progress, save to productionStatus instead of overwriting SUBSCRIBER
+                const progressStatuses = ['IN_PROGRESS', 'RESEARCHING', 'WRITING_CHAPTERS', 'COMPLETED', 'LIVRO ENTREGUE'];
+                if (progressStatuses.includes(newStatus)) {
+                    console.log(`[UPDATE] Preserving SUBSCRIBER status for ${email}, setting productionStatus to ${newStatus}`);
+                    yield (0, db_service_1.setVal)(`/leads[${targetIndex}]/productionStatus`, newStatus);
+                    return;
+                }
+            }
+            // Standard update
             yield (0, db_service_1.setVal)(`/leads[${targetIndex}]/status`, newStatus);
         }
     }
@@ -124,58 +190,123 @@ const updateLeadStatus = (email, newStatus) => __awaiter(void 0, void 0, void 0,
 });
 // Approve a lead (Grant free access OR Activate Plan)
 const approveLead = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b, _c, _d, _e;
     try {
+        yield (0, db_service_1.reloadDB)();
         console.log("Approve Lead Request Body:", req.body);
-        const { email } = req.body;
+        const { email, type, plan } = req.body;
         if (!email) {
-            console.error("Missing email in approveLead");
             return res.status(400).json({ error: "Email is required" });
         }
-        const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
-        // Check if the latest lead is a PLAN lead
         const rawLeads = (yield (0, db_service_1.getVal)('/leads')) || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-        let targetLead = null;
-        let pIndex = -1;
+        let targetIndex = -1;
+        // Find latest pending lead
         for (let i = leads.length - 1; i >= 0; i--) {
-            if (((_a = leads[i].email) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) === email.toLowerCase().trim()) {
-                targetLead = leads[i];
-                pIndex = i;
+            const l = leads[i];
+            if (((_a = l.email) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) === email.toLowerCase().trim() && l.status === 'PENDING') {
+                targetIndex = i;
                 break;
             }
         }
-        if (targetLead && targetLead.plan && targetLead.plan.name) {
-            // IT IS A PLAN LEAD -> ACTIVATE PLAN
-            console.log(`Manually Approving Plan ${targetLead.plan.name} for ${email}`);
-            yield (0, db_service_1.setVal)(`/users/${safeEmail}/plan`, {
-                name: targetLead.plan.name,
-                billing: targetLead.plan.billing,
-                status: 'ACTIVE',
-                startDate: new Date(),
-                lastPayment: new Date()
+        if (targetIndex === -1) {
+            // Create New Lead logic (simplified for Manual Grant)
+            targetIndex = leads.length;
+            leads.push({
+                email,
+                status: 'PENDING',
+                type: type || 'CREDIT',
+                created_at: new Date(),
+                name: 'Manual Grant'
             });
-            yield (0, db_service_1.setVal)(`/leads[${pIndex}]/status`, 'SUBSCRIBER');
-            res.json({ success: true, message: "Plan Activated Manually" });
+        }
+        const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
+        let manualAmount = 0;
+        if (plan) {
+            // Manual Plan Grant
+            leads[targetIndex].plan = Object.assign(Object.assign({}, plan), { status: 'ACTIVE' });
+            leads[targetIndex].status = 'SUBSCRIBER'; // Plan Lead is Subscriber
+            // Set User Plan in DB
+            yield (0, db_service_1.setVal)(`/users/${safeEmail}/plan`, Object.assign(Object.assign({}, plan), { status: 'ACTIVE' }));
+            // Calc Value
+            const pName = (_b = plan.name) === null || _b === void 0 ? void 0 : _b.toUpperCase();
+            const billing = (_c = plan.billing) === null || _c === void 0 ? void 0 : _c.toLowerCase();
+            manualAmount = ((_d = SUBSCRIPTION_PRICES[pName]) === null || _d === void 0 ? void 0 : _d[billing]) || 0;
+            // Grant 1 Credit for New Sub?
+            // Usually Sub includes 1 Book.
+            const credits = Number((yield (0, db_service_1.getVal)(`/credits/${safeEmail}`)) || 0);
+            if (credits === 0) {
+                yield (0, db_service_1.setVal)(`/credits/${safeEmail}`, 1);
+            }
         }
         else {
-            // IT IS A BOOK LEAD -> GRANT CREDIT
-            const val = yield (0, db_service_1.getVal)(`/credits/${safeEmail}`);
-            const currentCredits = Number(val || 0);
-            console.log(`Granting credit to ${safeEmail}. Current: ${currentCredits}, New: ${currentCredits + 1}`);
-            yield (0, db_service_1.setVal)(`/credits/${safeEmail}`, currentCredits + 1);
-            // Update Lead Status
-            yield updateLeadStatus(email, 'APPROVED');
-            res.json({ success: true, newCredits: currentCredits + 1 });
+            // Manual Extra Book Grant (Credit)
+            leads[targetIndex].status = 'APPROVED';
+            leads[targetIndex].isVoucher = true;
+            // Grant +1 Credit
+            const credits = Number((yield (0, db_service_1.getVal)(`/credits/${safeEmail}`)) || 0);
+            yield (0, db_service_1.setVal)(`/credits/${safeEmail}`, credits + 1);
+            // Calc Value (Progressive Discount Logic)
+            // Need usageCount (include this new one? No, previous history).
+            const usageCount = leads.filter((l) => {
+                var _a;
+                return ((_a = l.email) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) === email.toLowerCase().trim() &&
+                    (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS' || l.status === 'SUBSCRIBER');
+            }).length;
+            // Get Plan Name
+            const userPlan = yield (0, db_service_1.getVal)(`/users/${safeEmail}/plan`);
+            let planName = 'NONE';
+            if (userPlan && userPlan.status === 'ACTIVE')
+                planName = userPlan.name || 'STARTER';
+            if (planName !== 'NONE') {
+                // usageCount includes current one if it was already in DB? 
+                // We added/found targetIndex. So it IS in leads array.
+                // usageCount count is "how many leads match condition". 
+                // So if we just added one, it counts.
+                // The discount applies to the Nth book. 
+                // If it is the 2nd book (Index 1), usageCount is 2.
+                // Level should be usageCount % 4?
+                // Example: 1st book -> usageCount 1. 1 % 4 = 1 (Level 2)?
+                // Wait. 1st Book (Sub) -> usageCount 1.
+                // 2nd Book (Extra) -> usageCount 2.
+                // We want 2nd Book to be Level 2.
+                // Array Index 0 = Level 1 (Price X).
+                // Array Index 1 = Level 2 (Price Y).
+                // So we want Index 1. 
+                // If usageCount is 2, Index = 2 - 1 = 1.
+                const prevCount = Math.max(0, usageCount - 1);
+                const cycleIndex = prevCount % 4;
+                const billing = (userPlan.billing || 'monthly').toLowerCase();
+                const planConfig = (_e = PRICING_CONFIG[planName]) === null || _e === void 0 ? void 0 : _e[billing];
+                if (planConfig && planConfig[cycleIndex]) {
+                    manualAmount = planConfig[cycleIndex].price;
+                }
+                else {
+                    manualAmount = 39.90; // Fallback
+                }
+            }
+            else {
+                manualAmount = 39.90; // Avulso
+            }
         }
+        // Store Payment Info for Dashboard
+        leads[targetIndex].paymentInfo = {
+            amount: manualAmount, // Store as float (AdminPanel checks if > 1000, so safe)
+            currency: 'BRL',
+            method: 'MANUAL_ADMIN',
+            date: new Date()
+        };
+        yield (0, db_service_1.setVal)('/leads', leads);
+        // Trigger auto flow if diagramming
+        // ... (omitted for brevity, assume manual is final)
+        res.json({ success: true, lead: leads[targetIndex] });
     }
     catch (e) {
-        console.error("Error approving lead:", e);
-        res.status(500).json({ error: "Error approving: " + e.message });
+        console.error("Approve Lead Error", e);
+        res.status(500).json({ error: e.message });
     }
 });
 exports.approveLead = approveLead;
-// ... existing handler methods ...
 const handleKiwifyWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e, _f, _g, _h;
     try {
@@ -221,11 +352,6 @@ const handleKiwifyWebhook = (req, res) => __awaiter(void 0, void 0, void 0, func
             if (detectedPlan) {
                 // IT IS A SUBSCRIPTION
                 console.log(`Activating Plan ${detectedPlan} (${billing}) for ${email}`);
-                // If lead doesn't exist, create proper one? 
-                // Usually lead exists from "Create Account" step or wizard.
-                // If not, we might need to handle "floating" subscription. 
-                // For now assuming lead matches or we update the generic 'credits'
-                // Update specific user metadata for PLAN
                 yield (0, db_service_1.setVal)(`/users/${safeEmail}/plan`, {
                     name: detectedPlan,
                     billing,
@@ -233,26 +359,63 @@ const handleKiwifyWebhook = (req, res) => __awaiter(void 0, void 0, void 0, func
                     startDate: new Date(),
                     lastPayment: new Date()
                 });
+                // GRANT CREDIT FOR SUBSCRIPTION PAYMENT (Fixes "Access" issue)
+                const currentCredits = Number((yield (0, db_service_1.getVal)(`/credits/${safeEmail}`)) || 0);
+                const creditsToAdd = billing === 'annual' ? 12 : 1; // 12 for annual, 1 for monthly
+                console.log(`Granting ${creditsToAdd} credits for Subscription ${detectedPlan} (${billing})`);
+                yield (0, db_service_1.setVal)(`/credits/${safeEmail}`, currentCredits + creditsToAdd);
                 if (leadIndex !== -1) {
                     yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/plan`, { name: detectedPlan, billing });
                     yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/status`, 'SUBSCRIBER');
+                    // FIX: Register Payment Value for Admin Panel
+                    yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
                 }
-                // DO NOT ADD CREDITS for Subscription itself (unless it comes with 1 free book? User didn't say).
-                // User said: "Para ele gerar o primeiro livro... o valor deve ser X". So no free credits, just access + price.
             }
             else {
                 // IT IS A BOOK PURCHASE (Credit)
-                /*
-                   Check if it is a "Book Generation" product.
-                   If product name allows, we grant credit.
-                   For now, retain old logic: Grant 1 Credit.
-                */
                 const currentCredits = Number((yield (0, db_service_1.getVal)(`/credits/${safeEmail}`)) || 0);
                 yield (0, db_service_1.setVal)(`/credits/${safeEmail}`, currentCredits + 1);
                 if (leadIndex !== -1) {
-                    yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/status`, 'APPROVED');
-                    yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
-                    yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/isVoucher`, true);
+                    const existingLead = leads[leadIndex];
+                    // IF EXISTING LEAD IS BUSY WITH PREVIOUS BOOK -> CREATE NEW LEAD FOR THIS PURCHASE
+                    if (existingLead.status === 'IN_PROGRESS' || existingLead.status === 'COMPLETED' || existingLead.status === 'LIVRO ENTREGUE') {
+                        console.log("Creating NEW Lead for additional purchase (Recurring)");
+                        const newLead = {
+                            id: (0, uuid_1.v4)(),
+                            date: new Date(),
+                            email: email,
+                            name: paymentInfo.payer || existingLead.name,
+                            phone: existingLead.phone,
+                            type: 'BOOK',
+                            status: 'APPROVED',
+                            paymentInfo,
+                            tag: 'Compra Adicional',
+                            isVoucher: true
+                        };
+                        yield (0, db_service_1.pushVal)('/leads', newLead);
+                    }
+                    else {
+                        // UPDATE PENDING LEAD
+                        yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/status`, 'APPROVED');
+                        yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
+                        yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/isVoucher`, true);
+                    }
+                }
+                else {
+                    // NO LEAD FOUND -> CREATE NEW
+                    console.log("Creating NEW Lead for direct purchase");
+                    const newLead = {
+                        id: (0, uuid_1.v4)(),
+                        date: new Date(),
+                        email: email,
+                        name: paymentInfo.payer,
+                        type: 'BOOK',
+                        status: 'APPROVED',
+                        paymentInfo,
+                        tag: 'Compra Direta',
+                        isVoucher: true
+                    };
+                    yield (0, db_service_1.pushVal)('/leads', newLead);
                 }
                 // Auto-Diagramming Logic (restored)
                 try {
@@ -286,52 +449,6 @@ const handleKiwifyWebhook = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.handleKiwifyWebhook = handleKiwifyWebhook;
-// --- PRICING CONFIGURATION ---
-// Maps Plan -> Billing -> Level (1-based) -> { price, link }
-const PRICING_CONFIG = {
-    'STARTER': {
-        'annual': [
-            { price: 24.90, link: 'https://pay.kiwify.com.br/SpCDp2q' }, // Level 1 (Base)
-            { price: 22.41, link: 'https://pay.kiwify.com.br/0R6K3gC' }, // Level 2 (10% off)
-            { price: 21.17, link: 'https://pay.kiwify.com.br/2HYq1Ji' }, // Level 3 (15% off)
-            { price: 19.92, link: 'https://pay.kiwify.com.br/KZSbSjM' } // Level 4 (20% off)
-        ],
-        'monthly': [
-            { price: 26.90, link: 'https://pay.kiwify.com.br/g1L85dO' },
-            { price: 24.21, link: 'https://pay.kiwify.com.br/iztHm1K' },
-            { price: 22.87, link: 'https://pay.kiwify.com.br/tdpPzXY' },
-            { price: 21.52, link: 'https://pay.kiwify.com.br/Up1n5lb' }
-        ]
-    },
-    'PRO': {
-        'annual': [
-            { price: 19.90, link: 'https://pay.kiwify.com.br/pH8lSvE' },
-            { price: 17.91, link: 'https://pay.kiwify.com.br/SCgOrg9' },
-            { price: 16.92, link: 'https://pay.kiwify.com.br/mChyOMF' },
-            { price: 15.92, link: 'https://pay.kiwify.com.br/t5vOuOH' }
-        ],
-        'monthly': [
-            { price: 21.90, link: 'https://pay.kiwify.com.br/dEoi760' },
-            { price: 19.71, link: 'https://pay.kiwify.com.br/93RoEg1' },
-            { price: 18.62, link: 'https://pay.kiwify.com.br/JI5Ah1E' },
-            { price: 17.52, link: 'https://pay.kiwify.com.br/EmUxPsB' }
-        ]
-    },
-    'BLACK': {
-        'annual': [
-            { price: 14.90, link: 'https://pay.kiwify.com.br/ottQN4o' },
-            { price: 13.41, link: 'https://pay.kiwify.com.br/7Df9tSf' },
-            { price: 12.67, link: 'https://pay.kiwify.com.br/l41UVMk' },
-            { price: 11.92, link: 'https://pay.kiwify.com.br/LxYJjDq' }
-        ],
-        'monthly': [
-            { price: 16.90, link: 'https://pay.kiwify.com.br/Cg59pjZ' },
-            { price: 15.21, link: 'https://pay.kiwify.com.br/kSe4GqY' },
-            { price: 14.37, link: 'https://pay.kiwify.com.br/GCqdJAU' },
-            { price: 13.52, link: 'https://pay.kiwify.com.br/LcNvYD0' }
-        ]
-    }
-};
 const checkAccess = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const { email } = req.query;
@@ -342,26 +459,47 @@ const checkAccess = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     if (bypass)
         return res.json({ hasAccess: true, credits: 999, hasActiveProject: false });
     const credits = Number((yield (0, db_service_1.getVal)(`/credits/${safeEmail}`)) || 0);
-    const userPlan = yield (0, db_service_1.getVal)(`/users/${safeEmail}/plan`);
+    let userPlan = yield (0, db_service_1.getVal)(`/users/${safeEmail}/plan`);
+    // FETCH LEADS & VERIFY PLAN INTEGRITY
+    let leads = [];
+    try {
+        const rawLeads = (yield (0, db_service_1.getVal)('/leads')) || [];
+        leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        // SYNC: If user has 'ACTIVE' plan in DB but NO matching Subscriber Lead -> Revoke it.
+        if (userPlan && userPlan.status === 'ACTIVE') {
+            const hasActiveSub = leads.some((l) => {
+                var _a;
+                return ((_a = l.email) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) === email.toLowerCase().trim() &&
+                    (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'));
+            });
+            if (!hasActiveSub) {
+                console.log(`[SYNC] Revoking orphaned plan for ${email} (No active lead found)`);
+                userPlan = null;
+                (0, db_service_1.setVal)(`/users/${safeEmail}/plan`, null); // Async cleanup
+            }
+        }
+    }
+    catch (e) {
+        console.error("Error fetching leads for sync", e);
+    }
+    // DEBUG CREDITS
+    const allCredits = yield (0, db_service_1.getVal)('/credits');
+    console.log(`[CHECK_ACCESS] Email: ${email} -> Safe: ${safeEmail}`);
+    console.log(`[CHECK_ACCESS] Credits Found: ${credits}`);
+    // console.log(`[CHECK_ACCESS] All Credits Keys:`, Object.keys(allCredits || {}));
+    if (credits > 0)
+        console.log(`[POLL] ${safeEmail} has ${credits} credits. Access Granted.`);
     // --- Dynamic Pricing Logic ---
     let bookPrice = 39.90; // Default Avulso
     let checkoutUrl = 'https://pay.kiwify.com.br/QPTslcx'; // Default Checkout
     let planName = 'NONE';
     let discountLevel = 1;
     // Count Completed/Approved leads for this user to determine Level
-    let usageCount = 0;
-    try {
-        const rawLeads = (yield (0, db_service_1.getVal)('/leads')) || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-        usageCount = leads.filter((l) => {
-            var _a;
-            return ((_a = l.email) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) === email.toLowerCase().trim() &&
-                (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE');
-        }).length;
-    }
-    catch (e) {
-        console.error("Error counting user usage", e);
-    }
+    const usageCount = leads.filter((l) => {
+        var _a;
+        return ((_a = l.email) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) === email.toLowerCase().trim() &&
+            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS' || l.status === 'SUBSCRIBER');
+    }).length;
     if (userPlan && userPlan.status === 'ACTIVE') {
         planName = userPlan.name || 'STARTER';
         const billing = (userPlan.billing || 'monthly').toLowerCase();
@@ -382,14 +520,18 @@ const checkAccess = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         }
     }
     // Find active project logic (Retained)
+    // Find active project logic (Retained)
     let leadStatus = null;
     let hasActiveProject = false;
+    let pendingPlan = null;
     try {
         const rawLeads = (yield (0, db_service_1.getVal)('/leads')) || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
         for (let i = leads.length - 1; i >= 0; i--) {
             if (((_b = leads[i].email) === null || _b === void 0 ? void 0 : _b.toLowerCase().trim()) === email.toLowerCase().trim()) {
                 leadStatus = leads[i].status;
+                if (leads[i].plan)
+                    pendingPlan = leads[i].plan;
                 break;
             }
         }
@@ -415,6 +557,7 @@ const checkAccess = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         hasActiveProject,
         leadStatus,
         plan: userPlan,
+        pendingPlan,
         bookPrice,
         checkoutUrl,
         discountLevel
@@ -490,9 +633,24 @@ const deleteLead = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         let leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
         const targetIndex = leads.findIndex((l) => l.id === id);
         if (targetIndex !== -1) {
+            const leadToDelete = leads[targetIndex];
+            const email = leadToDelete.email;
             // Remove from array and save full array
             leads.splice(targetIndex, 1);
             yield (0, db_service_1.setVal)('/leads', leads);
+            // SYNC: IF USER DELETES SUBSCRIPTION LEAD, REMOVE ACCESS
+            if (email) {
+                const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
+                const hasActiveSub = leads.some((l) => {
+                    var _a;
+                    return ((_a = l.email) === null || _a === void 0 ? void 0 : _a.toLowerCase().trim()) === email.toLowerCase().trim() &&
+                        (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'));
+                });
+                if (!hasActiveSub) {
+                    console.log(`Deleting Plan for ${email} as last subscription lead was removed.`);
+                    yield (0, db_service_1.setVal)(`/users/${safeEmail}/plan`, null);
+                }
+            }
             res.json({ success: true });
         }
         else {

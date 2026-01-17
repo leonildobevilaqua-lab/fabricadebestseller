@@ -73,17 +73,32 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     const [activeDiscount, setActiveDiscount] = useState<number>(0);
     const [isRewardModalOpen, setIsRewardModalOpen] = useState(false);
 
+    // PERSIST SELECTED PLAN
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem('selectedPlan_v3');
+            if (saved) setSelectedPlan(JSON.parse(saved));
+        } catch (e) {
+            console.error("Error parsing saved plan", e);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (selectedPlan) {
+            localStorage.setItem('selectedPlan_v3', JSON.stringify(selectedPlan));
+        }
+    }, [selectedPlan]);
+
     // CHANGED: Use a new key to reset user's discount for testing/fresh start
     const DISCOUNT_KEY = 'activeDiscount_v4_clean';
 
-    const handleClaimReward = () => {
-        const discount = 10;
-        setActiveDiscount(discount);
-        localStorage.setItem(DISCOUNT_KEY, discount.toString());
-        setIsRewardModalOpen(false);
 
+    const handleNewBook = () => {
         // RESET FLOW TO START
         setStep(0);
+        setCurrentLeadId(null);
+        setDiscountUpdated(false);
+
         // Clear book data for new project
         setBookData({
             authorName: '',
@@ -152,9 +167,32 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     useEffect(() => {
         if (initialState) {
             if (initialState.email) {
-                setFormData(prev => ({ ...prev, email: initialState.email, name: initialState.name || prev.name || '' }));
+                // If preserving user (upsell), we keep Email/Phone but force Name clear if requested?
+                // User said: "Tem que mandar ele para a página onde ele vai ter que inserir novamente o nome dele"
+                // So we default name to empty if it's a "reset" flow.
+                const shouldClearName = initialState.resetData === true;
+
+                setFormData(prev => {
+                    // Try to recover phone from localStorage if missing in props
+                    let recoveredPhone = initialState.phone || prev.phone || '';
+                    if (!recoveredPhone) {
+                        try {
+                            const saved = JSON.parse(localStorage.getItem('bs_formData') || '{}');
+                            if (saved.email === initialState.email && saved.phone) {
+                                recoveredPhone = saved.phone;
+                            }
+                        } catch (e) { }
+                    }
+
+                    return {
+                        ...prev,
+                        email: initialState.email,
+                        phone: recoveredPhone,
+                        name: shouldClearName ? '' : (initialState.name || prev.name || '')
+                    };
+                });
             }
-            if (initialState.step) {
+            if (initialState.step !== undefined) {
                 setStep(initialState.step);
                 setIsWizardOpen(true);
             }
@@ -365,28 +403,65 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     if (data.discountLevel) (window as any).discountLevel = data.discountLevel;
                     if (data.plan) (window as any).currentUserPlan = data.plan;
 
+                    // RESTORE PENDING PLAN FROM DB IF LOCAL STATE LOST
+                    if (data.pendingPlan) {
+                        (window as any).currentUserPendingPlan = data.pendingPlan;
+                        if (!selectedPlan) {
+                            setSelectedPlan(data.pendingPlan);
+                        }
+                    }
+
                     // LEADS UPDATE FIX
-                    if (data.plan && data.plan.status === 'ACTIVE' && currentLeadId && !discountUpdated) {
+                    if (data.discountLevel && data.plan && data.plan.status === 'ACTIVE') {
                         let correctDiscount = 0;
                         if (data.discountLevel === 2) correctDiscount = 10;
                         if (data.discountLevel === 3) correctDiscount = 15;
-                        if (data.discountLevel === 4) correctDiscount = 20;
+                        if (data.discountLevel >= 4) correctDiscount = 20;
 
+                        // ALWAYS UPDATE LOCAL STATE
                         setActiveDiscount(correctDiscount);
-                        fetch('/api/payment/leads', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ id: currentLeadId, updates: { discount: correctDiscount } })
-                        }).then(() => setDiscountUpdated(true)).catch(console.error);
+                        // localStorage.setItem(DISCOUNT_KEY, correctDiscount.toString()); // If needed
+
+                        // LEADS UPDATE FIX (Only if Lead Exists and not updated)
+                        if (currentLeadId && !discountUpdated) {
+                            // Update Lead with Discount and Level Tag for Admin visibility
+                            fetch('/api/payment/leads', {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    id: currentLeadId,
+                                    updates: {
+                                        discount: correctDiscount,
+                                        tag: `Nível ${data.discountLevel} (${data.plan.name})`
+                                    }
+                                })
+                            }).then(() => setDiscountUpdated(true)).catch(console.error);
+                        }
+                    }
+
+                    // CHECK EXPIRATION
+                    if (data.plan && data.plan.status === 'EXPIRED') {
+                        console.warn("Plan Expired");
+                        if (!sessionStorage.getItem('expired_alert_' + formData.email)) {
+                            alert("⚠️ SEU PLANO EXPIROU!\n\nPara continuar usufruindo dos benefícios e descontos do SaaS, por favor renove sua assinatura (Mensal ou Anual).");
+                            sessionStorage.setItem('expired_alert_' + formData.email, 'true');
+                        }
                     }
 
                     // PLAN CELEBRATION
                     if (data.plan && data.plan.status === 'ACTIVE') {
-                        const planKey = `celebrated_${data.plan.name}_${formData.email}`;
+                        const planKey = `celebrated_v2_${data.plan.name}_${formData.email}`;
                         if (!localStorage.getItem(planKey)) {
                             setCelebratedPlan(data.plan);
                             setShowPlanCelebration(true);
                             localStorage.setItem(planKey, 'true');
+                        }
+                    } else {
+                        // RESET CELEBRATION IF PLAN IS LOST/DELETED (Supports Retesting)
+                        if (formData.email) {
+                            ['STARTER', 'PRO', 'BLACK'].forEach(p => {
+                                localStorage.removeItem(`celebrated_v2_${p}_${formData.email}`);
+                            });
                         }
                     }
 
@@ -396,9 +471,25 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     const hasAccess = data.hasAccess === true;
 
                     if (hasCredit || isApproved || hasAccess) {
+                        // STRICT VALIDATION FOR SUBSCRIBERS: 
+                        // If user is a Subscriber, we ignores generic 'hasAccess' (which might be true due to platform access).
+                        // They MUST have actual Credit or specific Approval to start generation.
+                        const isSubscriber = data.plan && data.plan.status === 'ACTIVE';
+                        if (isSubscriber && !hasCredit && !isApproved) {
+                            console.log("Subscriber detected but no Credit/Approval. Blocking auto-start.");
+                            return; // Do not confirm payment yet
+                        }
+
                         if (!paymentConfirmed) {
                             console.log("PAYMENT CONFIRMED (POLLING)", data);
                             setPaymentConfirmed(true);
+
+                            // AUTO START BOOK GENERATION
+                            if (formData.type !== 'VOUCHER' && formData.type !== 'DIAGRAMMING') {
+                                setTimeout(() => {
+                                    onStart(formData, bookData);
+                                }, 2000);
+                            }
                         }
                     }
 
@@ -461,12 +552,12 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         <h2 className="text-3xl font-black text-white mb-4">
                             PARABÉNS! <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-                                VOCÊ É UM ASSINANTE {celebratedPlan.name}!
+                                VOCÊ AGORA É UM ASSINANTE!
                             </span>
                         </h2>
                         <p className="text-slate-300 text-lg mb-8 leading-relaxed">
-                            Você acaba de desbloquear as condições exclusivas para assinantes.
-                            O preço da geração do seu livro foi atualizado para:
+                            Acabamos de desbloquear as condições exclusivas do seu plano e a
+                            <span className="text-yellow-400 font-bold"> Taxa de Geração Promocional (R$ 26,90)</span>.
                         </p>
                         <div className="bg-indigo-500/10 border border-indigo-500/30 p-4 rounded-xl mb-8">
                             <span className="text-sm text-indigo-300 uppercase font-bold tracking-widest">Novo Valor Por Livro</span>
@@ -545,6 +636,17 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 {/* MERGED STEP: DATA ENTRY */}
                                 {step === 0 && (
                                     <div className="space-y-6 w-full">
+                                        {activeDiscount > 0 && (
+                                            <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 rounded-xl mb-6 text-center animate-pulse border border-indigo-400/50 shadow-lg shadow-indigo-500/20">
+                                                <div className="flex items-center justify-center gap-2 mb-1">
+                                                    <span className="text-2xl">🎉</span>
+                                                    <h3 className="font-black text-white text-lg tracking-wider">BÔNUS DE FIDELIDADE ATIVO</h3>
+                                                </div>
+                                                <p className="text-indigo-100 text-sm">
+                                                    Você tem <span className="font-bold text-yellow-400 bg-black/20 px-2 py-0.5 rounded border border-yellow-500/30">{activeDiscount}% DE DESCONTO</span> garantido nesta geração.
+                                                </p>
+                                            </div>
+                                        )}
                                         <div className="text-center mb-8">
                                             <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-2">
                                                 Dados do Projeto
@@ -559,7 +661,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                             <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 space-y-4">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="bg-yellow-500/10 text-yellow-500 p-2 rounded-lg">👤</span>
-                                                    <h3 className="font-bold text-lg text-slate-200">Responsável pelo Projeto</h3>
+                                                    <h3 className="font-bold text-lg text-slate-200">
+                                                        {activeDiscount > 0 ? "Identificação (Cliente Vip)" : "Responsável pelo Projeto"}
+                                                    </h3>
                                                 </div>
 
                                                 <div>
@@ -567,18 +671,20 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     <input
                                                         value={formData.name}
                                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                                        className="w-full bg-slate-900 border-slate-700 rounded-xl p-3 text-white focus:ring-1 focus:ring-yellow-500 outline-none transition-all hover:bg-slate-900/80"
-                                                        placeholder="Seu nome"
+                                                        className="w-full bg-slate-900 border-slate-700 rounded-xl p-3 text-white focus:ring-1 focus:ring-yellow-500 outline-none transition-all hover:bg-slate-900/80 items-center"
+                                                        placeholder="Seu nome completo"
+                                                        autoFocus
                                                     />
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">E-mail</label>
+                                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">E-mail {activeDiscount > 0 && "(Registrado)"}</label>
                                                         <input
                                                             value={formData.email}
                                                             onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                            className="w-full bg-slate-900 border-slate-700 rounded-xl p-3 text-white focus:ring-1 focus:ring-yellow-500 outline-none transition-all hover:bg-slate-900/80"
+                                                            className={`w-full rounded-xl p-3 text-white outline-none transition-all ${activeDiscount > 0 ? 'bg-slate-800/50 border border-slate-700 text-slate-400 cursor-not-allowed' : 'bg-slate-900 border-slate-700 focus:ring-1 focus:ring-yellow-500 hover:bg-slate-900/80'}`}
                                                             placeholder="seu@email.com"
+                                                            readOnly={activeDiscount > 0}
                                                         />
                                                     </div>
                                                     <div>
@@ -587,7 +693,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                             <select
                                                                 value={formData.countryCode}
                                                                 onChange={e => setFormData({ ...formData, countryCode: e.target.value })}
-                                                                className="w-24 bg-slate-900 border-slate-700 rounded-xl p-3 text-white focus:ring-1 focus:ring-yellow-500 outline-none cursor-pointer"
+                                                                className={`w-24 rounded-xl p-3 text-white outline-none ${activeDiscount > 0 && formData.phone ? 'bg-slate-800/50 border border-slate-700 cursor-not-allowed' : 'bg-slate-900 border-slate-700 focus:ring-1 focus:ring-yellow-500 cursor-pointer'}`}
+                                                                disabled={activeDiscount > 0 && !!formData.phone}
                                                             >
                                                                 <option value="+55">🇧🇷</option>
                                                                 <option value="+1">🇺🇸</option>
@@ -596,8 +703,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                             <input
                                                                 value={formData.phone}
                                                                 onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                                                className="flex-1 bg-slate-900 border-slate-700 rounded-xl p-3 text-white focus:ring-1 focus:ring-yellow-500 outline-none transition-all hover:bg-slate-900/80"
+                                                                className={`flex-1 rounded-xl p-3 text-white outline-none transition-all ${activeDiscount > 0 && formData.phone ? 'bg-slate-800/50 border border-slate-700 text-slate-400 cursor-not-allowed' : 'bg-slate-900 border-slate-700 focus:ring-1 focus:ring-yellow-500 hover:bg-slate-900/80'}`}
                                                                 placeholder="(99) 99999-9999"
+                                                                readOnly={activeDiscount > 0 && !!formData.phone}
                                                             />
                                                         </div>
                                                     </div>
@@ -923,22 +1031,39 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     // FORCE CORRECT LEVEL 1 PRICE IF USER HAS PLAN BUT PRICE IS GENERIC
                                                     // This fixes the issue where a Starter User sees 39.90 instead of 24.90 on Level 1
                                                     const plan = (window as any).currentUserPlan || selectedPlan;
-                                                    if (!isVoucher && plan && discountLevel === 1 && displayPrice === 39.90) {
+
+                                                    // PRICE CALCULATION
+                                                    if (!isVoucher && plan && displayPrice === 39.90) {
                                                         const pName = plan.name?.toUpperCase();
-                                                        const billing = plan.billing?.toLowerCase();
+                                                        const billing = plan.billing?.toLowerCase() || 'monthly'; // Force monthly default
 
                                                         // Fallback Prices for Level 1 based on known config
                                                         if (pName === 'STARTER') {
-                                                            displayPrice = billing === 'annual' ? 24.90 : 26.90;
-                                                            if (finalLink.includes('QPTslcx')) finalLink = billing === 'annual' ? 'https://pay.kiwify.com.br/SpCDp2q' : 'https://pay.kiwify.com.br/g1L85dO';
+                                                            if (billing === 'annual') {
+                                                                displayPrice = 24.90;
+                                                                finalLink = 'https://pay.kiwify.com.br/SpCDp2q';
+                                                            } else {
+                                                                displayPrice = 26.90;
+                                                                finalLink = 'https://pay.kiwify.com.br/g1L85dO';
+                                                            }
                                                         }
                                                         if (pName === 'PRO') {
-                                                            displayPrice = billing === 'annual' ? 19.90 : 21.90;
-                                                            if (finalLink.includes('QPTslcx')) finalLink = billing === 'annual' ? 'https://pay.kiwify.com.br/pH8lSvE' : 'https://pay.kiwify.com.br/dEoi760';
+                                                            if (billing === 'annual') {
+                                                                displayPrice = 19.90;
+                                                                finalLink = 'https://pay.kiwify.com.br/pH8lSvE';
+                                                            } else {
+                                                                displayPrice = 21.90;
+                                                                finalLink = 'https://pay.kiwify.com.br/dEoi760';
+                                                            }
                                                         }
                                                         if (pName === 'BLACK') {
-                                                            displayPrice = billing === 'annual' ? 14.90 : 16.90;
-                                                            if (finalLink.includes('QPTslcx')) finalLink = billing === 'annual' ? 'https://pay.kiwify.com.br/ottQN4o' : 'https://pay.kiwify.com.br/Cg59pjZ';
+                                                            if (billing === 'annual') {
+                                                                displayPrice = 14.90;
+                                                                finalLink = 'https://pay.kiwify.com.br/ottQN4o';
+                                                            } else {
+                                                                displayPrice = 16.90;
+                                                                finalLink = 'https://pay.kiwify.com.br/Cg59pjZ';
+                                                            }
                                                         }
                                                     }
 
@@ -951,13 +1076,22 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     const finalPriceStr = displayPrice.toFixed(2).replace('.', ',');
 
                                                     // --- SUBSCRIPTION ENFORCEMENT LOGIC ---
-                                                    // Ensure user pays for plan before book if they selected a plan
-                                                    const realPlan = (window as any).currentUserPlan; // From Backend
-                                                    const chosenPlan = selectedPlan; // From Frontend Selection
+                                                    const realPlan = (window as any).currentUserPlan; // Backend Plan
 
-                                                    // If user chose a plan, but backend says no active plan...
-                                                    // FIX: If payment is confirmed (via credit), we bypass subscription check to allow generation
-                                                    const needToPaySubscription = chosenPlan && (!realPlan || realPlan.status !== 'ACTIVE') && !isVoucher && !paymentConfirmed;
+                                                    // GET CHOSEN PLAN (State OR Storage OR Backend Global)
+                                                    let chosenPlan = selectedPlan;
+                                                    if (!chosenPlan && typeof window !== 'undefined') {
+                                                        try { chosenPlan = JSON.parse(localStorage.getItem('selectedPlan_v3') || 'null'); } catch (e) { }
+                                                    }
+                                                    if (!chosenPlan && (window as any).currentUserPendingPlan) {
+                                                        chosenPlan = (window as any).currentUserPendingPlan;
+                                                    }
+
+                                                    // STRICT CHECK: If user selected a plan, they MUST have it Active.
+                                                    // If db is empty, realPlan is null.
+                                                    const userHasActivePlan = realPlan && realPlan.status === 'ACTIVE';
+
+                                                    const needToPaySubscription = (!!chosenPlan && !userHasActivePlan) && !isVoucher && !paymentConfirmed;
 
                                                     // --- PLAN VARIABLES CALCULATION (Pre-calc for reuse) ---
                                                     let subLink = '';
@@ -971,14 +1105,14 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                                                         // HARDCODED SUBSCRIPTION LINKS (From PricingSection)
                                                         if (pName === 'STARTER') {
-                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/hCg3tD6'; subPrice = '197,90'; }
-                                                            else { subLink = 'https://pay.kiwify.com.br/t7Dqj2z'; subPrice = '19,90'; }
+                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/47E9CXl'; subPrice = '118,80'; }
+                                                            else { subLink = 'https://pay.kiwify.com.br/kfR54ZJ'; subPrice = '19,90'; }
                                                         } else if (pName === 'PRO') {
-                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/J9tLp5m'; subPrice = '297,90'; }
-                                                            else { subLink = 'https://pay.kiwify.com.br/K5rVd8n'; subPrice = '29,90'; }
+                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/jXQTsFm'; subPrice = '238,80'; }
+                                                            else { subLink = 'https://pay.kiwify.com.br/Bls6OL7'; subPrice = '34,90'; }
                                                         } else if (pName === 'BLACK') {
-                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/R8fXn3q'; subPrice = '497,90'; }
-                                                            else { subLink = 'https://pay.kiwify.com.br/v2BwM6k'; subPrice = '49,90'; }
+                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/hSv5tYq'; subPrice = '358,80'; }
+                                                            else { subLink = 'https://pay.kiwify.com.br/7UgxJ0f'; subPrice = '49,90'; }
                                                         }
                                                     }
 
@@ -1002,10 +1136,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         </div>
                                                                         <div className="ml-3">
                                                                             <p className="text-sm text-yellow-700">
-                                                                                {(window as any).discountLevel > 1
-                                                                                    ? `Você selecionou o plano <strong>${pName}</strong>. Para liberar o valor com desconto progressivo (R$ ${finalPriceStr}), primeiro ative sua assinatura.`
-                                                                                    : `Você selecionou o plano <strong>${pName}</strong>. Para liberar o valor exclusivo de assinante (R$ ${finalPriceStr}), primeiro ative sua assinatura.`
-                                                                                }
+                                                                                Você selecionou o plano <strong>{pName}</strong>. Para liberar o valor
+                                                                                {(window as any).discountLevel > 1 ? " com desconto progressivo" : " exclusivo de assinante"} (R$ {finalPriceStr}), primeiro ative sua assinatura.
                                                                             </p>
                                                                         </div>
                                                                     </div>
@@ -1634,34 +1766,51 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     <a href="/terms-of-use" className="hover:text-white transition">{t[lang].footer.terms}</a>
                 </div>
             </footer>
+
+            {showPlanCelebration && celebratedPlan && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-slate-800 border border-indigo-500/30 p-8 rounded-2xl max-w-lg w-full text-center relative shadow-2xl shadow-indigo-500/20 animate-in zoom-in-95 duration-300">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 p-4 rounded-full shadow-lg">
+                            <span className="text-4xl">🎉</span>
+                        </div>
+
+                        <h2 className="text-3xl font-black text-white mt-8 mb-4">
+                            PARABÉNS! <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                                VOCÊ AGORA É UM ASSINANTE!
+                            </span>
+                        </h2>
+
+                        <div className="bg-indigo-900/30 p-4 rounded-xl border border-indigo-500/20 mb-6">
+                            <p className="text-indigo-200 font-bold text-lg mb-1">{celebratedPlan.name}</p>
+                            <p className="text-sm text-indigo-300/70 uppercase tracking-widest">{celebratedPlan.billing === 'annual' ? 'Plano Anual' : 'Plano Mensal'}</p>
+                        </div>
+
+                        <p className="text-slate-300 text-lg mb-8 leading-relaxed">
+                            Acabamos de desbloquear as condições exclusivas do seu plano e a
+                            <span className="text-yellow-400 font-bold"> Taxa de Geração Promocional ({
+                                celebratedPlan.name === 'BLACK' ? 'R$ 16,90' :
+                                    celebratedPlan.name === 'PRO' ? 'R$ 21,90' :
+                                        'R$ 26,90'
+                            })</span>.
+                        </p>
+
+                        <button
+                            onClick={() => setShowPlanCelebration(false)}
+                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-900/40 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                        >
+                            CONTINUAR PARA GERAÇÃO
+                        </button>
+                    </div>
+                </div>
+            )}
             <RewardModal
                 isOpen={isRewardModalOpen}
                 onClose={() => setIsRewardModalOpen(false)}
-                onClaim={handleClaimReward}
+                onClaim={handleNewBook}
             />
 
-            {/* DEBUGGER (Temporary) */}
-            <div className="fixed bottom-2 left-2 p-2 bg-black/80 text-green-400 text-[10px] font-mono rounded z-[9999] opacity-80 hover:opacity-100 pointer-events-auto border border-green-500/20">
-                <p><strong>DEBUG INFO:</strong></p>
-                <p>Email: {formData.email}</p>
-                <p>Credits: {debugInfo?.credits ?? '?'}</p>
-                <p>Access: {debugInfo?.hasAccess ? 'YES' : 'NO'}</p>
-                <p>Status: {debugInfo?.leadStatus}</p>
-                <p>PlanActive: {debugInfo?.plan?.status === 'ACTIVE' ? 'YES' : 'NO'}</p>
-                <p>Discount: {debugInfo?.discountLevel || 0}</p>
-                <p>PayConfirmed: {paymentConfirmed ? 'TRUE' : 'FALSE'}</p>
-                <button onClick={() => {
-                    fetch(`/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`)
-                        .then(r => r.json())
-                        .then(d => {
-                            setDebugInfo(d);
-                            if (d.credits > 0 || d.hasAccess) setPaymentConfirmed(true);
-                            alert(JSON.stringify(d, null, 2));
-                        })
-                }} className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 mt-1 font-bold rounded w-full border border-slate-500">
-                    FORCE REFRESH
-                </button>
-            </div>
+
         </div >
     );
 };

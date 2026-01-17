@@ -8,6 +8,10 @@ export const login = async (req: Request, res: Response) => {
     const { user, pass } = req.body;
     const config = await ConfigService.getConfig();
 
+    console.log(`[Login Attempt] Input User: '${user}', Pass length: ${pass?.length}`);
+    console.log(`[Login Attempt] Config User: '${config.admin.user}', Pass length: ${config.admin.pass?.length}`);
+    // console.log(`[DEBUG] Pass comparison: ${pass} === ${config.admin.pass}`);
+
     if (user === config.admin.user && pass === config.admin.pass) {
         const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '2h' });
         return res.json({ token });

@@ -248,60 +248,15 @@ export const generateDocx = async (metadata: BookMetadata, content: BookContent)
   sections.push({
     properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
     children: [
-      // Top Section: 2 Columns using Table
-      new Table({
-        width: { size: 100, type: WidthType.PERCENTAGE },
-        borders: {
-          top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE }, insideHorizontal: { style: BorderStyle.NONE }
-        },
-        rows: [
-          new TableRow({
-            children: [
-              // Left Column: Book Info
-              new TableCell({
-                width: { size: 50, type: WidthType.PERCENTAGE },
-                children: [
-                  new Paragraph({ children: [new TextRun({ text: metadata.bookTitle, bold: true, font: "Garamond", size: 24 })], spacing: { after: 200 } }),
-                  new Paragraph({ children: [new TextRun({ text: metadata.subTitle, font: "Garamond", size: 24 })], spacing: { after: 400 } }),
-                  new Paragraph({ children: [new TextRun({ text: "Leme, SP / " + new Date().getFullYear(), font: "Garamond", size: 24 })], spacing: { after: 400 } }),
-                  new Paragraph({ children: [new TextRun({ text: metadata.authorName, bold: true, font: "Garamond", size: 24, color: "990000", underline: { type: "wave", color: "990000" } })], spacing: { after: 200 } }),
-                ]
-              }),
-              // Right Column: Rights, Credits, ISBN, QR
-              new TableCell({
-                width: { size: 50, type: WidthType.PERCENTAGE },
-                children: [
-                  new Paragraph({ children: [new TextRun({ text: "Categoria: Educação / Desenvolvimento", font: "Garamond", size: 20 })], spacing: { after: 200 } }),
+      // Table removed per user request
 
-                  new Paragraph({ children: [new TextRun({ text: "Todos os direitos reservados em Língua Portuguesa por", font: "Garamond", size: 20 })], spacing: { after: 100 } }),
-                  new Paragraph({ children: [new TextRun({ text: metadata.authorName, bold: true, font: "Garamond", size: 20 })], spacing: { after: 200 } }),
+      // (Table content completely removed)
 
-                  new Paragraph({ children: [new TextRun({ text: "Coordenação Editorial:", bold: true, font: "Garamond", size: 20 })], spacing: { after: 50 } }),
-                  new Paragraph({ children: [new TextRun({ text: "Leonildo Bevilaqua", font: "Garamond", size: 20 })], spacing: { after: 150 } }),
-
-                  new Paragraph({ children: [new TextRun({ text: "Capa & Diagramação:", bold: true, font: "Garamond", size: 20 })], spacing: { after: 50 } }),
-                  new Paragraph({ children: [new TextRun({ text: "Leonildo Bevilaqua", font: "Garamond", size: 20 })], spacing: { after: 150 } }),
-
-                  new Paragraph({ children: [new TextRun({ text: "ISBN:", bold: true, font: "Garamond", size: 24 })], spacing: { before: 200, after: 50 } }),
-                  new Paragraph({ children: [new TextRun({ text: "[SUBSTITUA O ISBN AQUI]", font: "Garamond", size: 24 })], spacing: { after: 200 } }),
-
-                  logoBuffer ? new Paragraph({ children: [new ImageRun({ data: logoBuffer, transformation: { width: 40, height: 40 } })], spacing: { before: 200, after: 200 } }) : new Paragraph(""),
-
-                  new Paragraph({ children: [new TextRun({ text: "CONTATO COM O AUTOR", bold: true, font: "Garamond", size: 20 })], alignment: AlignmentType.CENTER, spacing: { before: 200 } }),
-                  new Paragraph({ children: [new TextRun({ text: "@" + (metadata.contact?.name || "seu_instagram"), font: "Garamond", size: 20 })], alignment: AlignmentType.CENTER }),
-
-                  qrBuffer ? new Paragraph({ children: [new ImageRun({ data: qrBuffer, transformation: { width: 100, height: 100 } })], alignment: AlignmentType.CENTER, spacing: { before: 100 } }) : new Paragraph("[QR CODE AQUI]"),
-                ]
-              })
-            ]
-          })
-        ]
-      }),
 
       // Simplified CIP Box (User Request)
       new Paragraph({
         children: [
-          new TextRun({ text: "[PÁGINA DESTINADA PARA FICHA CATALOGRÁFICA E ISBN DO LIVRO]", font: "Arial", size: 24, bold: true, color: "888888" }),
+          new TextRun({ text: "[PÁGINA DESTINADA PARA FICHA CATALOGRÁFICA E ISBN DO LIVRO]", font: "Arial", size: 24, bold: true, color: "CCCCCC" }),
         ],
         alignment: AlignmentType.CENTER,
         spacing: { before: 5000 }, // Center on page roughly

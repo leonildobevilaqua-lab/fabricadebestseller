@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { getConfig } from './config.service';
 
-export const sendEmail = async (to: string, subject: string, text: string, attachments?: any[]) => {
+export const sendEmail = async (to: string, subject: string, text: string, attachments?: any[], html?: string) => {
     const config = await getConfig();
     const settings = config.email;
 
@@ -19,11 +19,15 @@ export const sendEmail = async (to: string, subject: string, text: string, attac
     const transporter = nodemailer.createTransport({
         host,
         port: Number(port),
-        secure: Number(port) === 465, // true for 465, false for other ports
+        secure: Number(port) === 465, // true for 465, false for 587
         auth: {
             user,
             pass,
         },
+        tls: {
+            // Do not fail on invalid certs (common for cPanel/Shared Hosting)
+            rejectUnauthorized: false
+        }
     });
 
     try {
@@ -32,6 +36,7 @@ export const sendEmail = async (to: string, subject: string, text: string, attac
             to,
             subject,
             text,
+            html,
             attachments
         });
         console.log("Message sent: %s", info.messageId);

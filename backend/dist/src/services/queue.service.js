@@ -151,9 +151,9 @@ const getProjectByEmail = (email) => __awaiter(void 0, void 0, void 0, function*
         const sLen = p.structure ? (Array.isArray(p.structure) ? p.structure.length : 'Not Array') : 'undefined';
         console.log(`Example ${i}: ID ${p.id} | Title: ${p.book_title} | Structure Len: ${sLen}`);
     });
-    // Find first project with non-empty structure (meaning content generation started)
-    // If none found, fallback to the latest (index 0).
-    const data = projects.find((p) => p.structure && Array.isArray(p.structure) && p.structure.length > 0) || projects[0];
+    // STRICT FIX: Always return the LATEST project (index 0). 
+    // Do NOT try to be smart and find "non-empty" ones, because that causes "Wrong Book" bugs if the new project is empty/buggy.
+    const data = projects[0];
     console.log(`getProjectByEmail: Selected ID ${data.id}`);
     if (error || !data)
         return null;

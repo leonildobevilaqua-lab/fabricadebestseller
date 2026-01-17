@@ -112,7 +112,7 @@ function resume() {
         // Marketing matching controller logic
         if (!project.marketing || !project.marketing.salesSynopsis) {
             console.log("Generating Marketing...");
-            const marketing = yield AIService.generateMarketing(project.metadata, project.researchContext, "", 'pt');
+            const marketing = yield AIService.generateMarketing(project.metadata, project.researchContext, project.structure, 'pt');
             yield QueueService.updateProject(project.id, { marketing });
         }
         // Finalize

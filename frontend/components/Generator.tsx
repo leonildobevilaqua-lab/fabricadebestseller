@@ -221,9 +221,28 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         if (p.metadata.status === 'IDLE') {
           await API.startResearch(p.id);
         }
-      } catch (e) {
+      } catch (e: any) {
+        console.error("Project Init Error:", e);
+
+        // Use Upsell as "Pay Wall" if createProject failed (likely 403 No Credits)
+        if (userContact?.email) {
+          fetch(`/api/payment/check-access?email=${userContact.email}`)
+            .then(r => r.json())
+            .then(access => {
+              setUpsellOffer({
+                price: access.bookPrice,
+                link: access.checkoutUrl,
+                level: access.discountLevel
+              });
+              setShowUpsell(true);
+            })
+            .catch(err => console.error("Access check fail", err));
+
+          // Don't show generic error, show Modal
+          return;
+        }
+
         setError(t.serverConnectionError);
-        console.error(e);
       }
     };
     init();
@@ -282,14 +301,27 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       backCover: ""
     };
 
+    // Smart Extraction of Sections logic
+    const isIntro = (c: Chapter) => c.id === 0 || ['introdução', 'introduction', 'introducción', 'introducao'].some(term => c.title.toLowerCase().includes(term));
+    const isConc = (c: Chapter) => ['conclusão', 'conclusion', 'conclusao', 'considerações finais'].some(term => c.title.toLowerCase().includes(term)) && c.id > 1;
+
+    const introChapter = project.structure.find(isIntro);
+    // Find conclusion (must not be intro)
+    const conclusionChapter = project.structure.find(c => isConc(c) && c !== introChapter);
+
+    // Main Chapters: Exclude Intro and Conclusion
+    const mainChapters = project.structure.filter(c => c !== introChapter && c !== conclusionChapter);
+
     const content = {
-      introduction: "",
-      chapters: project.structure,
-      conclusion: "",
-      acknowledgments: "",
+      introduction: introChapter ? introChapter.content : "",
+      chapters: mainChapters,
+      conclusion: conclusionChapter ? conclusionChapter.content : "",
+      acknowledgments: project.metadata.acknowledgments || "",
       dedication: project.metadata.dedication || "",
+      aboutAuthor: project.metadata.aboutAuthor || "",
       marketing: safeMarketing
     };
+
     const blob = await generateDocx(project.metadata, content);
 
     // Download
@@ -326,50 +358,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   const { status, progress, statusMessage } = project.metadata;
 
-  if (status === 'WAITING_TITLE') {
-    return (
-      <div className="max-w-4xl mx-auto animate-fade-in-up pb-20">
-        <h2 className="text-3xl font-bold text-slate-800 mb-2 text-center font-serif">{t.marketAnalysisComplete}</h2>
-        <p className="text-center text-slate-500 mb-8 text-lg">{t.selectTitle}</p>
-
-        <div className="grid gap-4 md:grid-cols-2 mt-6">
-          {project.titleOptions.map((opt, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleTitleSelect(opt)}
-              className={`text-left p-6 rounded-xl border transition-all bg-white group relative overflow-hidden ${opt.isTopChoice ? 'border-[#0ea5e9] shadow-lg ring-2 ring-[#e0f2fe]' : 'border-gray-200 hover:border-[#0ea5e9] hover:shadow-md'}`}
-            >
-              <div className="absolute top-0 right-0 p-2 opacity-5">
-                <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-              </div>
-              {opt.isTopChoice && (
-                <span className="absolute top-0 right-0 bg-[#0ea5e9] text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-20">{t.bestChoice}</span>
-              )}
-              <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-[#0284c7] relative z-10">{opt.title}</h3>
-              <p className="text-sm text-slate-600 italic mb-4 relative z-10">{opt.subtitle}</p>
-              <div className="text-xs bg-slate-50 p-3 rounded text-slate-500 border border-slate-100 relative z-10 flex items-start gap-2">
-                <span className="text-yellow-500 text-base">★</span>
-                <span>{opt.reason}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-        <div className="text-center mt-8">
-          <button
-            onClick={() => {
-              setRefineTopic(project?.metadata.topic || "");
-              setIsRefining(true);
-            }}
-            className="text-slate-400 hover:text-red-500 text-sm font-medium underline transition-colors flex items-center gap-2 mx-auto"
-          >
-            ❌ Não gostei: Refazer Pesquisa
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Refine UI (inserted here to take precedence over others if active)
+  // Refine UI (Moved here to take precedence over status checks)
   if (isRefining) {
     return (
       <div className="max-w-xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-lg border border-slate-200 animate-fade-in-up">
@@ -400,6 +389,66 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             className="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30"
           >
             🔄 Refazer Pesquisa
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (status === 'WAITING_TITLE') {
+    return (
+      <div className="max-w-4xl mx-auto animate-fade-in-up pb-20">
+        <h2 className="text-3xl font-bold text-slate-800 mb-2 text-center font-serif">{t.marketAnalysisComplete}</h2>
+        <p className="text-center text-slate-500 mb-8 text-lg">{t.selectTitle}</p>
+
+        <div className="grid gap-4 md:grid-cols-2 mt-6">
+          {project.titleOptions && project.titleOptions.length > 0 ? (
+            project.titleOptions.map((opt, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleTitleSelect(opt)}
+                className={`text-left p-6 rounded-xl border transition-all bg-white group relative overflow-hidden ${opt.isTopChoice ? 'border-[#0ea5e9] shadow-lg ring-2 ring-[#e0f2fe]' : 'border-gray-200 hover:border-[#0ea5e9] hover:shadow-md'}`}
+              >
+                <div className="absolute top-0 right-0 p-2 opacity-5">
+                  <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                </div>
+                {opt.isTopChoice && (
+                  <span className="absolute top-0 right-0 bg-[#0ea5e9] text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-20">{t.bestChoice}</span>
+                )}
+                <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-[#0284c7] relative z-10">{opt.title}</h3>
+                <p className="text-sm text-slate-600 italic mb-4 relative z-10">{opt.subtitle}</p>
+                <div className="text-xs bg-slate-50 p-3 rounded text-slate-500 border border-slate-100 relative z-10 flex items-start gap-2">
+                  <span className="text-yellow-500 text-base">★</span>
+                  <span>{opt.reason}</span>
+                </div>
+              </button>
+            ))
+          ) : (
+            <div className="md:col-span-2 text-center p-10 bg-slate-50 rounded-xl border border-dashed border-slate-300 animate-fade-in-up">
+              <div className="text-4xl mb-4">🤔</div>
+              <h3 className="text-xl font-bold text-slate-700 mb-2">Ops! Precisamos de mais detalhes.</h3>
+              <p className="text-slate-500 mb-6 max-w-md mx-auto">A Inteligência Artificial não conseguiu criar títulos virais com o tema atual. Tente ser mais específico sobre o nicho.</p>
+              <button
+                onClick={() => {
+                  setRefineTopic(project?.metadata.topic || "");
+                  setIsRefining(true);
+                }}
+                className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1"
+              >
+                🔄 Refinar Pesquisa Agora
+              </button>
+            </div>
+          )}
+        </div>
+        <div className="text-center mt-8">
+          <button
+            onClick={() => {
+              setRefineTopic(project?.metadata.topic || "");
+              setIsRefining(true);
+            }}
+            className="text-slate-400 hover:text-red-500 text-sm font-medium underline transition-colors flex items-center gap-2 mx-auto"
+          >
+            ❌ Não gostei: Refazer Pesquisa
           </button>
         </div>
       </div>
@@ -656,30 +705,36 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           onClose={() => setShowUpsell(false)}
           offer={upsellOffer}
           onClaim={async () => {
-            // 1. Create Pending Lead for Admin
-            if (userContact?.email && upsellOffer?.level) {
-              try {
-                await API.createLead({
-                  name: userContact.name,
-                  email: userContact.email,
-                  phone: userContact.phone || '',
-                  countryCode: userContact.countryCode || '+55',
-                  type: `LIVRO (Nível ${upsellOffer.level})`,
-                  status: 'PENDING',
-                  discount: upsellOffer.level === 2 ? 10 : upsellOffer.level === 3 ? 15 : 20,
-                  tag: `Upsell_Nv${upsellOffer.level}`
-                });
-              } catch (e) { console.error("Upsell Lead Error", e); }
-            }
+            // Logic Split:
+            // 1. If COMPLETED: User wants to start next book -> Reset to Input Form.
+            // 2. If Blocked (Init Failed): User needs to pay -> Open Link.
 
-            if (upsellOffer?.link) {
-              // Open Checkout
-              window.open(upsellOffer.link, '_blank');
+            const isCompleted = project?.metadata?.status === 'COMPLETED';
+
+            if (isCompleted) {
+              // RESET TO START (Input Form) - FORCE NEW TOPIC
+              // We reset to Step 0 (Start) or 1 depending on App logic, but crucial is clearing 'topic'
+              setShowUpsell(false);
+              onReset({
+                step: 0, // Go to User/Bio input or start
+                resetData: true,
+                preserveUser: true, // Hint to App to keep email if possible (implementation depends on App.tsx)
+                name: userContact?.name || "",
+                email: userContact?.email || "",
+                // CRITICAL: Clear Book Metadata
+                topic: "",
+                authorName: "",
+                dedication: ""
+              });
+
+
+            } else {
+              // Payment Block (Pay Now)
+              if (upsellOffer?.link) {
+                window.open(upsellOffer.link, '_blank');
+              }
+              setShowUpsell(false);
             }
-            // Reset App to force re-login/payment check
-            // Pass state to LandingPage to show "Waiting Payment"
-            setShowUpsell(false);
-            onReset({ step: 3, email: userContact?.email, name: userContact?.name });
           }}
         />
         {/* UPSELL SECTION */}
@@ -936,7 +991,34 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 {t.resumeProcess}
               </button>
             ) : (
-              <RotatingMessage messages={t.rotatingMessages} />
+              <RotatingMessage messages={(() => {
+                if (progress < 40) return [
+                  "Pesquisando os vídeos mais visualizados sobre o assunto...",
+                  "Verificando os comentários nos vídeos sobre o tema...",
+                  "Mapeando as dores, dúvidas e sugestões da audiência...",
+                  "Analisando tendências de pesquisa no Google...",
+                  "Identificando gatilhos mentais mais utilizados...",
+                  "Cruzando dados de concorrentes best-sellers..."
+                ];
+                if (progress < 90) return [
+                  "Selecionando as principais informações coletadas na pesquisa profissional...",
+                  "Organizando os assuntos de acordo com os capítulos...",
+                  "Fazendo a estruturação adequada do pensamento lógico do livro...",
+                  "Escrevendo os conteúdos de forma profissional e harmônica...",
+                  "Desenvolvendo o pensamento crítico e aplicando ao conteúdo do livro.",
+                  "Otimizando parágrafos para retenção de leitura...",
+                  "Enriquecendo o texto com exemplos práticos...",
+                  "Aplicando técnicas de PNL para persuasão..."
+                ];
+                return [
+                  "EFETUANDO A REVISÃO DETALHADA E CRITERIOSA DO CONTEÚDO GERADO...",
+                  "FAZENDO A DIAGRAMAÇÃO PROFISSIONAL PADRÃO AMAZON DE QUALIDADE...",
+                  "CONFIGURANDO TODOS OS ELEMENTOS PRÉ-TEXTUAIS, TEXTUAIS E PÓS-TEXTUAIS DO LIVRO...",
+                  "EMPACONTANDO TUDO PARA LIBERAÇÃO...",
+                  "Gerando links de sumário interativo...",
+                  "Renderizando arquivo final para download..."
+                ];
+              })()} />
             )}
           </div>
         </div>
@@ -979,7 +1061,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 5 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 30 ? <CheckIcon /> : <EmptyCircle />}
               <span className={progress >= 30 ? 'text-slate-500' : 'text-slate-700'}>
-                {t.status1}
+                PESQUISA AVANÇADA
                 {progress < 30 && progress > 0 && <span className="ml-2 text-xs text-brand-500 animate-pulse">...</span>}
               </span>
             </div>
@@ -996,7 +1078,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 45 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 95 ? <CheckIcon /> : <div className={`w-5 h-5 flex items-center justify-center ${progress >= 45 ? '' : ''}`}>{progress >= 45 && <div className="w-2 h-2 bg-brand-500 rounded-full animate-ping"></div>}</div>}
               <span className={progress >= 95 ? 'text-slate-500' : 'text-slate-700'}>
-                {t.status3}
+                PESQUISA VIRAL PROFISSIONAL
               </span>
             </div>
 

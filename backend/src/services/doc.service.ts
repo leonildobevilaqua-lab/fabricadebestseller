@@ -21,7 +21,9 @@ import {
     SectionVerticalAlign,
     BookmarkStart,
     BookmarkEnd,
-    PageReference
+    PageReference,
+    TableOfContents,
+    StyleLevel
 } from 'docx';
 import archiver from 'archiver';
 import { BookProject, BookContent, BookMetadata } from '../types';
@@ -121,7 +123,7 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
             if (m.backFlapCopy) await addDoc('Texto_Orelha_Contra_Capa.docx', 'Texto da Orelha da Contra Capa', m.backFlapCopy);
             if (m.youtubeDescription) await addDoc('Youtube_Descricao.docx', 'Descrição Youtube', m.youtubeDescription);
             if (m.keywords && m.keywords.length > 0) await addDoc('Palavras_Chave.docx', 'Palavras Chave', m.keywords.join(', '));
-            if (content.marketing && content.marketing.description) await addDoc('Descricao_Geral.docx', 'Descrição Geral', content.marketing.description);
+            if (content.marketing && content.marketing.description) await addDoc('Sinopse_Padrao_Profissional_Amazon.docx', 'SINOPSE PADRÃO PROFISSIONAL AMAZON', content.marketing.description);
 
             // Close archive
             await archive.finalize();
@@ -378,16 +380,21 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
             right: MARGIN_OUTSIDE,
             header: MARGIN_HEADER,
             footer: MARGIN_FOOTER,
-            mirror: true
+            mirror: true, // APPLIED: Páginas Espelho (Mirror Margins)
+            gutter: 0 // Gutter is handled by Inside Margin (1.93cm)
         },
     };
 
-    // 1. Half Title (Página 1 - Ímpar)
+    // -------------------------------------------------------------------------
+    // STRICT PAGE STRUCTURE (1-11)
+    // -------------------------------------------------------------------------
+
+    // PÁGINA 1 (Direita/Ímpar) - FOLHA DE ROSTO (Half Title)
     sections.push({
         properties: {
             page: { ...basePageConfig, pageNumbers: { start: 1, formatType: NumberFormat.LOWER_ROMAN } },
             type: SectionType.NEXT_PAGE,
-            verticalAlign: VerticalAlign.CENTER // Ensure Perfect Vertical Centering
+            verticalAlign: VerticalAlign.CENTER
         },
         children: [
             new Paragraph({
@@ -404,117 +411,122 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         footers: { default: new Footer({ children: [] }) },
     });
 
-    // 2. Blank Page
+    // PÁGINA 2 (Esquerda/Par) - BRANCO
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
-                children: [new TextRun({ text: "[ATENÇÃO ESTÁ PÁGINA DEVERÁ ESTAR EM BRANCO]", color: "FFFFFF", size: 20 })],
-                alignment: AlignmentType.CENTER,
-                spacing: { before: 4000 }
+                children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
+                alignment: AlignmentType.CENTER
             })
         ],
         headers: { default: new Header({ children: [] }) },
         footers: { default: new Footer({ children: [] }) },
     });
 
-    // 3. Title Page - Vertically Centered
+    // PÁGINA 3 (Direita/Ímpar) - PÁGINA DE TÍTULO
     sections.push({
-        properties: {
-            type: SectionType.NEXT_PAGE,
-            page: basePageConfig,
-            verticalAlign: VerticalAlign.CENTER
-        },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: metadata.authorName || "Autor", font: "Garamond", bold: true, size: 32 })],
                 alignment: AlignmentType.CENTER,
-                spacing: { before: 0 }, // Top
+                spacing: { before: 0 },
             }),
             new Paragraph({
                 children: [new TextRun({ text: metadata.bookTitle || "", bold: true, font: "Garamond", size: 52 })],
                 alignment: AlignmentType.CENTER,
-                spacing: { before: 400 }, // Reduced spacing
+                spacing: { before: 400 },
             }),
             new Paragraph({
                 children: [new TextRun({ text: metadata.subTitle || "", font: "Garamond", size: 32 })],
                 alignment: AlignmentType.CENTER,
-                spacing: { before: 200 }, // Reduced spacing
+                spacing: { before: 200 },
             }),
             new Paragraph({
                 children: [new TextRun({ text: "Editora 360 Express", bold: true, font: "Garamond", size: 32, color: "000000" })],
                 alignment: AlignmentType.CENTER,
-                spacing: { before: 400 }, // Reduced closer to subtitle
+                spacing: { before: 400 },
             }),
         ],
         headers: { default: new Header({ children: [] }) },
         footers: { default: new Footer({ children: [] }) },
     });
 
-    // 4. Credits & CIP - Center, Simple text
+    // PÁGINA 4 (Esquerda/Par) - FICHA CATALOGRÁFICA / ISBN
     sections.push({
-        properties: {
-            type: SectionType.NEXT_PAGE,
-            page: basePageConfig,
-            verticalAlign: VerticalAlign.CENTER
-        },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.BOTTOM },
         children: [
             new Paragraph({
                 children: [
-                    new TextRun({ text: "[PÁGINA DESTINADA PARA FICHA CATALOGRÁFICA E ISBN DO LIVRO]", font: "Arial", size: 24, bold: true, color: "888888" }),
+                    new TextRun({ text: "[PÁGINA DESTINADA AS INFORMAÇÕES DE REGISTRO DO LIVRO – FICHA CATALOGRÁFICA E ISBN]", font: "Arial", size: 20, color: "888888" }),
                 ],
                 alignment: AlignmentType.CENTER,
+                spacing: { after: 1000 }
             }),
         ],
         headers: { default: new Header({ children: [] }) },
         footers: { default: new Footer({ children: [] }) },
     });
 
-    // 5. Acknowledgments
-    if (content.acknowledgments) {
-        sections.push({
-            properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
-            children: [
-                createTitle("AGRADECIMENTO"),
-                ...createTextParams(content.acknowledgments)
-            ],
-            headers: { default: new Header({ children: [] }) },
-            footers: { default: new Footer({ children: [] }) },
-        });
-        // Blank after
-        sections.push({
-            properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
-            children: [new Paragraph({ children: [new TextRun({ text: ".", color: "FFFFFF" })] })],
-            headers: { default: new Header({ children: [] }) },
-            footers: { default: new Footer({ children: [] }) },
-        });
-    }
+    // PÁGINA 5 (Direita/Ímpar) - AGRADECIMENTO
+    // (Force placement even if empty to maintain structure)
+    sections.push({
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
+        children: [
+            createTitle("AGRADECIMENTOS"),
+            ...(content.acknowledgments ? createTextParams(content.acknowledgments) : [new Paragraph({ text: "[Espaço para Agradecimentos]" })])
+        ],
+        headers: { default: new Header({ children: [] }) },
+        footers: { default: new Footer({ children: [] }) },
+    });
 
-    // 6. Dedication
-    if (content.dedication) {
-        sections.push({
-            properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
-            children: [
-                createTitle("DEDICATÓRIA"),
-                new Paragraph({
-                    children: [new TextRun({ text: content.dedication, italics: false, font: "Garamond", size: 27 })],
-                    alignment: AlignmentType.CENTER,
-                    spacing: { before: 4000 },
-                })
-            ],
-            headers: { default: new Header({ children: [] }) },
-            footers: { default: new Footer({ children: [] }) },
-        });
-        // Blank after
-        sections.push({
-            properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
-            children: [new Paragraph({ children: [new TextRun({ text: ".", color: "FFFFFF" })] })],
-            headers: { default: new Header({ children: [] }) },
-            footers: { default: new Footer({ children: [] }) },
-        });
-    }
+    // PÁGINA 6 (Esquerda/Par) - BRANCO
+    sections.push({
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        children: [
+            new Paragraph({
+                children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
+                alignment: AlignmentType.CENTER
+            })
+        ],
+        headers: { default: new Header({ children: [] }) },
+        footers: { default: new Footer({ children: [] }) },
+    });
 
-    // 7. Table of Contents (Dynamic with PageReference)
+    // PÁGINA 7 (Direita/Ímpar) - DEDICATÓRIA
+    sections.push({
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        children: [
+            new Paragraph({
+                children: [new TextRun({ text: "DEDICATÓRIA", bold: true, font: "Garamond", size: 24 })],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 800 }
+            }),
+            new Paragraph({
+                children: [new TextRun({ text: content.dedication || "[Espaço para Dedicatória]", italics: true, font: "Garamond", size: 24 })],
+                alignment: AlignmentType.CENTER,
+                indent: { left: 1440, right: 1440 }
+            })
+        ],
+        headers: { default: new Header({ children: [] }) },
+        footers: { default: new Footer({ children: [] }) },
+    });
+
+    // PÁGINA 8 (Esquerda/Par) - BRANCO
+    sections.push({
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        children: [
+            new Paragraph({
+                children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
+                alignment: AlignmentType.CENTER
+            })
+        ],
+        headers: { default: new Header({ children: [] }) },
+        footers: { default: new Footer({ children: [] }) },
+    });
+
+    // PÁGINA 9 (Direita) + 10 (Esquerda) - SUMÁRIO
     sections.push({
         properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
         children: [
@@ -523,43 +535,35 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
                 alignment: AlignmentType.CENTER,
                 spacing: { before: 1200, after: 800 }
             }),
-            // Intro Entry
-            content.introduction ? new Paragraph({
-                children: [
-                    new TextRun({ text: "INTRODUÇÃO", bold: true, font: "Garamond", size: 24 }),
-                    new TextRun({ text: "\t", font: "Garamond", size: 24 }),
-                    new TextRun({ children: [new PageReference('intro_ref')], font: "Garamond", size: 24 }),
+            new TableOfContents("Sumário", {
+                hyperlink: true,
+                headingStyleRange: "1-2",
+                stylesWithLevels: [
+                    new StyleLevel("Heading 1", 1),
+                    new StyleLevel("Heading 2", 2),
                 ],
-                tabStops: [{ type: TabStopType.RIGHT, position: 9000, leader: "dot" as any }],
-                spacing: { after: 200 },
-                alignment: AlignmentType.LEFT
-            }) : new Paragraph({ text: "" }),
-            ...content.chapters.map((c, i) => new Paragraph({
-                children: [
-                    new TextRun({ text: `CAPÍTULO ${i + 1}: `, bold: true, font: "Garamond", size: 24 }),
-                    new TextRun({ text: c.title.toUpperCase(), font: "Garamond", size: 24 }),
-                    new TextRun({ text: "\t", font: "Garamond", size: 24 }),
-                    new TextRun({ children: [new PageReference(`chapter_${i + 1}`)], font: "Garamond", size: 24 }),
-                ],
-                tabStops: [{ type: TabStopType.RIGHT, position: 9000, leader: "dot" as any }],
-                spacing: { after: 200 },
-                alignment: AlignmentType.LEFT
-            })),
+            }),
         ],
         headers: { default: new Header({ children: [] }) },
         footers: { default: new Footer({ children: [] }) },
     });
 
-    // 8. Introduction
+    // PÁGINA 11 - INTRODUÇÃO
     if (content.introduction) {
         sections.push({
             properties: {
-                page: { ...basePageConfig, pageNumbers: { start: 11, formatType: NumberFormat.DECIMAL } }, // Restart numeric here at 11 as requested
-                type: SectionType.ODD_PAGE,
+                page: { ...basePageConfig, pageNumbers: { start: 11, formatType: NumberFormat.DECIMAL } }, // FORCE START 11
+                type: SectionType.ODD_PAGE, // Ensure it falls on odd page (11 usually is)
                 titlePage: true,
             },
             children: [
-                createTitle("Introdução", false, "intro_ref", 0),
+                new Paragraph({
+                    children: [new TextRun({ text: "INTRODUÇÃO", bold: true, font: "Garamond", size: 48 })],
+                    heading: HeadingLevel.HEADING_1,
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 2400, after: 1200 },
+                    pageBreakBefore: false
+                }),
                 ...createTextParams(content.introduction)
             ],
             headers: {
@@ -577,6 +581,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // 9. Chapters
     content.chapters.forEach((chapter, index) => {
+        const cleanTitle = sanitizeText(chapter.title).replace(/\*/g, '');
         sections.push({
             properties: {
                 page: basePageConfig,
@@ -584,7 +589,20 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
                 titlePage: true,
             },
             children: [
-                ...createChapterNumberTitle(index + 1, chapter.title, `chapter_${index + 1}`),
+                // Chapter Number (Visual Only)
+                new Paragraph({
+                    children: [new TextRun({ text: `CAPÍTULO ${index + 1}`, bold: true, font: "Garamond", size: 48 })],
+                    heading: HeadingLevel.HEADING_1, // Included in TOC as Level 1
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 2400, after: 400 },
+                }),
+                // Chapter Title (Visual Only)
+                new Paragraph({
+                    children: [new TextRun({ text: cleanTitle, bold: true, font: "Garamond", size: 48 })],
+                    heading: HeadingLevel.HEADING_2, // Included in TOC as Level 2 (Indented)
+                    alignment: AlignmentType.CENTER,
+                    spacing: { before: 200, after: 1200 },
+                }),
                 ...createTextParams(chapter.content)
             ],
             headers: {
@@ -624,6 +642,53 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
             }
         });
     }
+
+    // 11. Sobre o Autor (Conditional)
+    const authorName = metadata.authorName || "Autor";
+    const firstName = authorName.trim().split(" ")[0].toLowerCase();
+
+    // Heuristic: Ends in 'a' -> Female (mostly). 
+    // Exceptions like 'Luca', 'Jean' can be added if needed, but for now simple is better.
+    const isFemale = firstName.endsWith('a') && firstName !== 'luca';
+    const authorTitle = isFemale ? "SOBRE A AUTORA" : "SOBRE O AUTOR";
+
+    // Detect Plan from Metadata (Tag or Explicit Plan object)
+    // tag might be "Id_STARTER_monthly" or "Nível 2 (STARTER)"
+    const safeMetadata = metadata as any;
+    const planTag = (safeMetadata.tag || "").toUpperCase();
+    const explicitPlan = safeMetadata.plan?.name?.toUpperCase() || "";
+
+    const isProOrBlack = planTag.includes('PRO') || planTag.includes('BLACK') ||
+        explicitPlan.includes('PRO') || explicitPlan.includes('BLACK');
+
+    const aboutContent = isProOrBlack && content.aboutAuthor
+        ? createTextParams(content.aboutAuthor)
+        : [new Paragraph({
+            children: [new TextRun({ text: "[ESPAÇO DESTINADO AS INFORMAÇÕES SOBRE O(A) AUTOR(A)]", color: "888888", italics: true })],
+            alignment: AlignmentType.CENTER
+        })];
+
+    sections.push({
+        properties: {
+            page: basePageConfig,
+            type: SectionType.ODD_PAGE,
+            titlePage: true,
+        },
+        children: [
+            createTitle(authorTitle),
+            ...aboutContent
+        ],
+        headers: {
+            default: createHeader(metadata.bookTitle || ""),
+            even: createHeader(metadata.authorName),
+            first: new Header({ children: [] }),
+        },
+        footers: {
+            default: createFooter(),
+            even: createFooter(),
+            first: createFooter(),
+        }
+    });
 
     const doc = new Document({
         creator: "Book Factory AI",

@@ -2,8 +2,10 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const payment_controller_1 = require("../controllers/payment.controller");
+const simulation_controller_1 = require("../controllers/simulation.controller");
 const router = (0, express_1.Router)();
 router.post('/webhook', payment_controller_1.handleKiwifyWebhook);
+router.post('/simulate-webhook', simulation_controller_1.simulateWebhook); // NEW: Local Simulation
 router.get('/access', payment_controller_1.checkAccess);
 router.post('/use', payment_controller_1.useCredit);
 // Admin / Leads

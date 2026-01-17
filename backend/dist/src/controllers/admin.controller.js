@@ -86,16 +86,26 @@ const downloadBook = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
     if (isUUID(identifier)) {
         console.log(`Download request by Project ID: ${identifier}`);
-        const idZip = path.join(outputDir, `kit_completo_project_${identifier}.zip`);
-        const idDoc = path.join(outputDir, `book_project_${identifier}.docx`);
-        // Also check if file was saved without 'project_' prefix if older logic used it (unlikely but safe)
-        console.log(`Checking file existence for UUID ${identifier}:`);
-        console.log(`Expected Zip: ${idZip} | Exists: ${fs.existsSync(idZip)}`);
-        console.log(`Expected Doc: ${idDoc} | Exists: ${fs.existsSync(idDoc)}`);
-        if (fs.existsSync(idZip))
-            return res.download(idZip, `kit_completo_${identifier}.zip`);
-        if (fs.existsSync(idDoc))
-            return res.download(idDoc, `book_${identifier}.docx`);
+        try {
+            // Robust Lookup: Find file containing ID in filename (ignoring prefix like email)
+            if (fs.existsSync(outputDir)) {
+                const files = fs.readdirSync(outputDir);
+                // Priority: ZIP then DOCX
+                const zipFile = files.find((f) => f.includes(identifier) && f.endsWith('.zip'));
+                const docFile = files.find((f) => f.includes(identifier) && f.endsWith('.docx'));
+                if (zipFile) {
+                    console.log(`Sending Zip: ${zipFile}`);
+                    return res.download(path.join(outputDir, zipFile));
+                }
+                if (docFile) {
+                    console.log(`Sending Doc: ${docFile}`);
+                    return res.download(path.join(outputDir, docFile));
+                }
+            }
+        }
+        catch (e) {
+            console.error("Error reading dir", e);
+        }
         console.log(`File not found for Project ID ${identifier}`);
         return res.status(404).json({ error: "File not found for this Project ID" });
     }

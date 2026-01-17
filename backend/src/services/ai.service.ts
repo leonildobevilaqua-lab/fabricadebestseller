@@ -57,25 +57,129 @@ export const analyzeCompetitors = async (topic: string, priorContext: string, la
 export const generateTitleOptions = async (topic: string, researchContext: string, lang: string = 'pt'): Promise<TitleOption[]> => {
   const llm = await getLLMProvider();
   const langName = getLangName(lang);
+
+  // Sanitize topic to avoid breaking prompt with quotes
+  const safeTopic = topic.replace(/"/g, "'").trim();
+
   const prompt = `
-    Context: ${researchContext}
-    Generate 10 title and subtitle suggestions for a book about "${topic}".
+    Context: ${researchContext.substring(0, 2000)}...
     
-    Criteria:
-    - Must be highly commercial and viral.
-    - Identify the 3 best ones (highest sales potential) by marking "isTopChoice": true.
+    Task: Create 10 VIRAL book title suggestions for this specific topic: "${safeTopic}".
     
-    IMPORTANT: All titles and reasoning must be in ${langName}.
+    CRITICAL RULES FOR TITLES:
+    1. MAX 8 WORDS per title. Short, Punchy, Aggressive.
+    2. MUST BE PERSUASIVE. Use triggers like "Secrets", "Mastering", "The Truth", "Definitive Guide".
+    3. SUBTITLES should explain the specific benefit/transformation.
+    4. VARIETY: Mix "How-to", "Counter-intuitive", "Listicle", and "Promise-based" titles.
     
-    Return JSON array: [{ "title": "...", "subtitle": "...", "reason": "...", "isTopChoice": boolean }]
+    LANGUAGE: All content must be in ${langName} and sound natural/native.
+
+    Return JSON array: 
+    [
+      { "title": "Short Title", "subtitle": "Compelling Subtitle", "reason": "Why this sells", "isTopChoice": boolean, "marketingHook": "Marketing phrase", "score": number }
+    ]
+    
     Return ONLY JSON.
   `;
 
   try {
-    return await llm.generateJSON<TitleOption[]>(prompt);
+    const titles = await llm.generateJSON<TitleOption[]>(prompt);
+
+    if (!titles || !Array.isArray(titles) || titles.length === 0) {
+      throw new Error("Invalid or empty titles generated");
+    }
+
+    // Ensure we have at least 10 (or return what we have)
+    return titles;
+
   } catch (error) {
-    console.error("Error generating titles:", error);
-    return [];
+    console.error("Error generating titles, using fallback:", error);
+
+    // Fallback: Create a short label from topic (First 5 words) to avoid huge titles
+    const shortTopicLabel = safeTopic.split(' ').slice(0, 6).join(' ') + (safeTopic.split(' ').length > 6 ? '...' : '');
+
+    return [
+      {
+        title: `A Bíblia de ${shortTopicLabel}`,
+        subtitle: "O manual definitivo que os especialistas não querem que você leia",
+        reason: "Autoridade absoluta e curiosidade (Fallback)",
+        isTopChoice: true,
+        marketingHook: "O segredo final.",
+        score: 98
+      },
+      {
+        title: `Domine ${shortTopicLabel}`,
+        subtitle: "O passo a passo prático, do zero ao avançado em tempo recorde",
+        reason: "Promessa de rapidez e eficácia (Fallback)",
+        isTopChoice: true,
+        marketingHook: "Resultados rápidos.",
+        score: 95
+      },
+      {
+        title: `Os Segredos de ${shortTopicLabel}`,
+        subtitle: "O que ninguém te contou sobre como ter sucesso real",
+        reason: "Gatilho de prova social e segredo (Fallback)",
+        isTopChoice: true,
+        marketingHook: "A verdade revelada.",
+        score: 92
+      },
+      {
+        title: `${shortTopicLabel} Sem Filtro`,
+        subtitle: "A verdade nua e crua sobre o que realmente funciona",
+        reason: "Honestidade radical (Fallback)",
+        isTopChoice: false,
+        marketingHook: "Direto ao ponto.",
+        score: 89
+      },
+      {
+        title: `Descomplicando ${shortTopicLabel}`,
+        subtitle: "Guia prático e direto para quem não tem tempo a perder",
+        reason: "Simplicidade e facilidade (Fallback)",
+        isTopChoice: false,
+        marketingHook: "Sem enrolação.",
+        score: 88
+      },
+      {
+        title: `Mestres de ${shortTopicLabel}`,
+        subtitle: "As estratégias ocultas dos maiores experts do mercado",
+        reason: "Modelagem de sucesso (Fallback)",
+        isTopChoice: false,
+        marketingHook: "Aprenda com os melhores.",
+        score: 85
+      },
+      {
+        title: `O Fim de ${shortTopicLabel}`,
+        subtitle: "Por que tudo o que você sabe está errado (e o jeito novo de fazer)",
+        reason: "Controvérsia e quebra de padrão (Fallback)",
+        isTopChoice: false,
+        marketingHook: "Revolucionário.",
+        score: 84
+      },
+      {
+        title: `Hackeando ${shortTopicLabel}`,
+        subtitle: "Atalhos inteligentes para resultados acima da média",
+        reason: "Desejo de atalho/esperteza (Fallback)",
+        isTopChoice: false,
+        marketingHook: "Vantagem injusta.",
+        score: 82
+      },
+      {
+        title: `O Código de ${shortTopicLabel}`,
+        subtitle: "Desvendando o sistema para garantir sua aprovação/sucesso",
+        reason: "Mistério e sistema (Fallback)",
+        isTopChoice: false,
+        marketingHook: "Decifre o código.",
+        score: 80
+      },
+      {
+        title: `Tudo Sobre ${shortTopicLabel}`,
+        subtitle: "O guia essencial de consulta rápida e prática",
+        reason: "Utilidade e segurança (Fallback)",
+        isTopChoice: false,
+        marketingHook: "Tenha sempre à mão.",
+        score: 75
+      }
+    ];
   }
 };
 
@@ -85,7 +189,7 @@ export const generateStructure = async (title: string, subtitle: string, researc
   const prompt = `
     Context: ${researchContext}
     Book: ${title} - ${subtitle}
-    Create a 15-chapter structure.
+    Create a 12-chapter structure.
     
     IMPORTANT: Review content context and ensure chapters flow logically.
     IMPORTANT: ALL CONTENT MUST BE IN ${langName}.
@@ -156,10 +260,10 @@ export const writeIntroduction = async (
       Objective: Hook the reader IMMEDIATELY. Start with a controversial statement, a personal story, or a surprising fact.
       
       Requirements:
-      - Length: Minimum 3500 words. (CRITICAL: EXPAND EVERY POINT)
+      - Length: Approx 1500 words. (CRITICAL: Be concise but powerful)
       - Tone: Best-seller authority, confident, yet intimate.
       - Flow: Continuous, absorbing text. NO section headers within the introduction.
-      - Content: Tell a powerful, long, and detailed personal story or case study that illustrates the problem. Dive deep into the pain points.
+      - Content: Tell a powerful personal story or case study that illustrates the problem. Dive deep into the pain points.
       - LANGUAGE: ${langName} ONLY.
     `;
 
@@ -177,55 +281,132 @@ export const writeChapter = async (
   const lang = metadata.language || 'pt';
   const langName = getLangName(lang);
 
-  const prompt = `
-    ${getHumanizationInstructions(lang)}
-    
-    Author: ${metadata.authorName}
+  // 1. Generate Outline for the Chapter (Agentic Split)
+  const outlinePrompt = `
+    Context: ${researchContext}
     Book: ${metadata.bookTitle}
+    Chapter: ${chapter.title}
+    Chapter Objective: ${chapter.intro}
+
+    TASK: Create a detailed outline for this chapter with exactly 4 distinct sub-sections.
+    Each sub-section must cover a specific aspect of the chapter's topic in depth.
     
-    Research Context (Facts/Data): ${researchContext}
-    
-    CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
-    Chapter Promise: ${chapter.intro}
-    
-    TASK: Write the full content for this chapter.
-    
-    CRITICAL REQUIREMENT: This book MUST be comprehensive (approx 190 pages total).
-    
-    Requirements:
-    - **Length**: Target approx 3800 WORDS per chapter. (CRITICAL: VOLUME IS PRIORITY).
-    - **Depth**: Do NOT summarize. EXPAND on every concept with clear examples, case studies, and distinct steps.
-    - **Storytelling**: Begin with a detailed narrative/case study (min 800 words).
-    - **Structure**: Use subheadings to break up the long text.
-    - **Paragraphs**: EXTREMELY IMPORTANT: USE SHORT PARAGRAPHS (max 3-4 lines). NEVER create large blocks of text.
-    - **Ending**: End with a cliffhanger or a powerful thought.
-    - **Artifacts**: ABSOLUTELY NO "___" or "---".
-    
-    LANGUAGE: ${langName} ONLY.
+    Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4"]
+    Output ONLY JSON.
+    Language: ${langName}.
   `;
 
-  const raw = await llm.generateText(prompt);
-  return cleanText(raw);
+  let subtopics: string[] = [];
+  try {
+    subtopics = await llm.generateJSON<string[]>(outlinePrompt);
+  } catch (e) {
+    console.error("Failed to generate outline, using fallback topics", e);
+    // Fallback topics if JSON fails
+    subtopics = ["Fundamentos", "Estratégias Avançadas", "Erros Comuns", "Estudos de Caso"];
+  }
+
+  // Ensure we don't go overboard if AI hallucinates 10 topics
+  subtopics = subtopics.slice(0, 4);
+
+  // 2. Iterative Generation
+  let fullChapterContent = "";
+
+  // 2.1 Intro of Chapter
+  try {
+    const introPrompt = `
+        ${getHumanizationInstructions(lang)}
+        Context: ${researchContext}
+        Chapter: ${chapter.title}
+        Objective: ${chapter.intro}
+        
+        TASK: Write the INTRODUCTION for this chapter (approx 250 words).
+        Hook the reader, explain what will be covered, and set the stage.
+        Start directly with the content.
+        LANGUAGE: ${langName}.
+    `;
+    fullChapterContent += (await llm.generateText(introPrompt)) + "\n\n";
+
+    // 2.2 Sections
+    for (const subtopic of subtopics) {
+      const sectionPrompt = `
+            ${getHumanizationInstructions(lang)}
+            Book: ${metadata.bookTitle}
+            Chapter: ${chapter.title}
+            
+            Current Section: "${subtopic}"
+            
+            TASK: Write a detailed section for this specific topic (approx 350 words).
+            Include detailed examples, actionable advice, and deep analysis.
+            Do NOT repeat the introduction. Dive deep.
+            
+            Previous Context:
+            ${fullChapterContent.slice(-500)}
+            
+            LANGUAGE: ${langName}.
+        `;
+      const content = await llm.generateText(sectionPrompt);
+      fullChapterContent += `### ${subtopic}\n\n${content}\n\n`;
+    }
+
+    // 2.3 Conclusion
+    const conclusionPrompt = `
+        ${getHumanizationInstructions(lang)}
+        Chapter: ${chapter.title}
+        
+        TASK: Write a powerful CONCLUSION for this chapter (approx 150 words).
+        Summarize key points and transition to the next idea.
+        
+        LANGUAGE: ${langName}.
+    `;
+    fullChapterContent += (await llm.generateText(conclusionPrompt));
+
+  } catch (error) {
+    console.error("Error in iterative writing, falling back to single shot", error);
+    // Fallback to single shot if iteration fails completely
+    const prompt = `
+        ${getHumanizationInstructions(lang)}
+        Author: ${metadata.authorName}
+        Book: ${metadata.bookTitle}
+        Research Context: ${researchContext}
+        CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
+        TASK: Write the full content for this chapter. length: 2000 words.
+        LANGUAGE: ${langName}.
+      `;
+
+    const raw = await llm.generateText(prompt);
+    return cleanText(raw);
+  }
+
+  return cleanText(fullChapterContent);
 };
 
-export const generateMarketing = async (metadata: BookMetadata, researchContext: string, fullBookContent: string, lang: string = 'pt'): Promise<MarketingAssets> => {
+export const generateMarketing = async (metadata: BookMetadata, researchContext: string, structure: Chapter[], lang: string = 'pt'): Promise<MarketingAssets> => {
   const llm = await getLLMProvider();
   const langName = getLangName(lang);
+
+  const structureList = structure.map(c => `• ${c.id === 0 ? 'Intro' : 'Cap ' + c.id}: ${c.title}`).join('\n');
 
   const prompt = `
     Book: ${metadata.bookTitle}
     Author: ${metadata.authorName}
     Subtitle: ${metadata.subTitle || "A definitive guide"}
-    Context: ${researchContext}
+    Language: ${langName}
+    STRICT LANGUAGE RULE: THE OUTPUT MUST BE 100% IN ${langName}. DO NOT INCLUDE ENGLISH TEXT (unless book is in English).
+    
+    Structure:
+    ${structureList}
+    
+    Context: 
+    ${researchContext}
 
-    Based on the book content and metadata, create PROFESSIONAL MARKETING ASSETS following strict formatting.
+    Based on the book content and metadata, create PROFESSIONAL MARKETING ASSETS.
     
-    CRITICAL FORMATTING INSTRUCTIONS:
-    - You must STRICTLY allow for line breaks using "\\n" in the JSON strings for proper formatting.
-    - Use relevant EMOJIS where appropriate.
-    - The tone must be "High-Ticket Sales", persuasive, and authoritative.
+    CRITICAL INSTRUCTIONS:
+    - Tone: WORLD-CLASS BEST-SELLER COPYWRITING. Exciting, Emotional, High-Ticket, Urgent.
+    - Avoid generic AI text. Use power words.
     
-    TASK 1: YouTube Video Description (MUST be Detailed)
+    TASK 1: YouTube Video Description
+    REQUIREMENT: YOU MUST LIST ALL CHAPTERS from the provided Structure list in the body under "ESTRUTURA DOS CAPÍTULOS".
     Format:
     📘 [Book Title]
     👇 GARANTA O SEU EXEMPLAR AGORA: 🛒 Amazon: [LINK] 🛒 UICLAP: [LINK]
@@ -247,9 +428,7 @@ export const generateMarketing = async (metadata: BookMetadata, researchContext:
     • [Target Audience 3]
     ________________________________________
     📚 ESTRUTURA DOS CAPÍTULOS:
-    • Cap 01: [Title]
-    • Cap 02: [Title]
-    ... (List main chapters)
+    ${structureList}
     ________________________________________
     🚀 SOBRE O AUTOR: ${metadata.authorName}
     [Bio]
@@ -274,21 +453,30 @@ export const generateMarketing = async (metadata: BookMetadata, researchContext:
     This book is your map. In "${metadata.bookTitle}", ${metadata.authorName} guides you...
     [Description of the transformation - approx 150 words]
     
-    TASK 4: Back Flap Text (Orelha da Capa - Sobre o Autor)
+    TASK 4: Back Flap Text (Orelha da Contra Capa - Sobre o Autor)
     Format:
     [Author Name] is... [Professional Bio focusing on authority and mission - approx 100 words]
-
+    
+    TASK 5: SINOPSE PADRÃO PROFISSIONAL AMAZON
+    Create a highly persuasive description for the Amazon Sales Page (approx 600 words).
+    Title the section: "SINOPSE PADRÃO PROFISSIONAL AMAZON".
+    Focus on Benefits, Pain Points, and the Transformation the reader will experience.
+    
+    TASK 6: Keywords
+    REQUIREMENT: GENERATE AT LEAST 20 HIGH-TRAFFIC KEYWORDS/TAGS, separated by commas.
+    Example: keyword1, keyword2, keyword3, ...
+    
     Output JSON Required:
     {
        "youtubeDescription": "Full text with \\n...",
        "backCover": "Full text...",
        "flapCopy": "Front flap text...",
        "backFlapCopy": "Back flap text...",
-       "description": "Short Amazon Synopsis (Standard)",
-       "keywords": ["tag1", "tag2"...]
+       "salesSynopsis": "Full Amazon Synopsis...",
+       "description": "Short summary...",
+       "keywords": ["tag1", "tag2", ...] 
     }
     
-    IMPORTANT: ALL TEXT MUST BE IN ${langName}.
     Return ONLY JSON.
   `;
 
@@ -311,11 +499,11 @@ export const generateExtras = async (
 
     TASK 1: Write a DEDICATION for this book.
     Target: ${dedicationTo || "Family and Friends"}
-    Style: Emotional, profound, but concise (approx 50 words). NOT ITALIC. Plain text.
+    Style: Emotional, profound, and rich (approx 100 words). NOT ITALIC. Plain text.
 
     TASK 2: Write ACKNOWLEDGMENTS for this book.
     Target: ${ackTo || "Everyone who helped"}
-    Style: Gratitude, standard book format, generic but warm (approx 100 words). NOT ITALIC. Plain text.
+    Style: Gratitude, standard book format, detailed and warm (approx 300 words). NOT ITALIC. Plain text.
 
     TASK 3: Write an ABOUT THE AUTHOR section.
     Context: ${aboutAuthorContext || "Experienced professional in the field of " + metadata.topic}

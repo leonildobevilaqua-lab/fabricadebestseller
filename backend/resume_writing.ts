@@ -82,7 +82,7 @@ async function resume() {
     // Marketing matching controller logic
     if (!project.marketing || !project.marketing.salesSynopsis) {
         console.log("Generating Marketing...");
-        const marketing = await AIService.generateMarketing(project.metadata, project.researchContext, "", 'pt');
+        const marketing = await AIService.generateMarketing(project.metadata, project.researchContext, project.structure, 'pt');
         await QueueService.updateProject(project.id, { marketing });
     }
 

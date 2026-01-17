@@ -69,11 +69,19 @@ export const update = async (req: Request, res: Response) => {
             if (fullProject) {
                 // Ensure structure is sorted/valid if needed?
                 // Just generate.
-                await DocService.generateBookDocx(fullProject);
-                console.log(`Final artifact generated for project ${id}`);
+                const artifactPath = await DocService.generateBookDocx(fullProject);
+                console.log(`Final artifact generated for project ${id} at ${artifactPath}`);
 
-                // --- UPDATE LEAD STATUS TO 'LIVRO ENTREGUE' ---
                 const userEmail = fullProject.metadata.contact?.email;
+                if (userEmail) {
+                    // AUTO-SEND EMAIL with Design
+                    try {
+                        await notifyUserBookReady(userEmail, fullProject.metadata.bookTitle || "Seu Livro", artifactPath);
+                        console.log(`Auto-sent success email to ${userEmail}`);
+                    } catch (emailErr) {
+                        console.error("Failed to auto-send email:", emailErr);
+                    }
+                }
                 if (userEmail) {
                     const rawLeads = await getVal('/leads') || [];
                     const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
@@ -336,23 +344,92 @@ export const generateBookContent = async (req: Request, res: Response) => {
         }
 
         // 2. Write Introduction (after chapters to be coherent)
-        await QueueService.updateMetadata(id, {
-            status: 'WRITING_CHAPTERS',
-            progress: 85,
-            statusMessage: "Escrevendo a Introdução de alto impacto..."
-        });
-        const introContent = await AIService.writeIntroduction(project.metadata, project.structure, project.researchContext, targetLang);
-        // Store intro somewhere? Maybe as chapter 0 or specific field. For now, let's prepend to chapter list as Chapter 0 if not exists, or special field.
-        // The user requested "Introduction" separately. Let's add it to project structure as a special item or just assume it is Chapter 0.
-        // Let's create a "Intro" chapter.
-        const introChapter: any = { id: 0, title: "Introdução", content: introContent, isGenerated: true };
-        // Prepend to structure if not present
-        if (project.structure[0].id !== 0) {
-            project.structure.unshift(introChapter);
-        } else {
-            project.structure[0] = introChapter;
+        // Check if Intro exists (Chapter 0)
+        let hasIntro = false;
+        if (project.structure && project.structure.length > 0) {
+            if (project.structure[0].id === 0 && project.structure[0].isGenerated) {
+                hasIntro = true;
+            }
         }
-        await QueueService.updateProject(id, { structure: project.structure });
+
+        if (!hasIntro) {
+            await QueueService.updateMetadata(id, {
+                status: 'WRITING_CHAPTERS',
+                progress: 85,
+                statusMessage: "Escrevendo a Introdução de alto impacto..."
+            });
+            const introContent = await AIService.writeIntroduction(project.metadata, project.structure, project.researchContext, targetLang);
+
+            const introChapter: any = { id: 0, title: "Introdução", content: introContent, isGenerated: true };
+
+            if (!project.structure) project.structure = [];
+
+            if (project.structure.length > 0 && project.structure[0].id !== 0) {
+                project.structure.unshift(introChapter);
+            } else {
+                project.structure[0] = introChapter;
+            }
+            await QueueService.updateProject(id, { structure: project.structure });
+        } else {
+            console.log(`Skipping Introduction for project ${id} (Already generated)`);
+        }
+
+        // 2.5. Generate Automatic Extras if missing
+        if (!project.metadata.dedication || !project.metadata.acknowledgments || !project.metadata.aboutAuthor) {
+            console.log("Generating missing Extras (Dedication/Ack/About)...");
+            await QueueService.updateMetadata(id, {
+                statusMessage: "Criando Dedicatória e Agradecimentos Especiais..."
+            });
+
+            try {
+                // Check User Plan
+                const ownerEmail = project.metadata.contact?.email || "";
+                const safeEmail = ownerEmail.toLowerCase().trim().replace(/\./g, '_');
+                let planName = 'STARTER';
+
+                if (safeEmail) {
+                    const userPlan: any = await getVal(`users/${safeEmail}/plan`);
+                    if (userPlan && userPlan.status === 'ACTIVE') {
+                        planName = userPlan.name || 'STARTER';
+                    }
+                }
+
+                const isProOrBlack = planName.includes('PRO') || planName.includes('BLACK') || planName.includes('VIP');
+                console.log(`User Plan: ${planName} (Auto-Gen: ${isProOrBlack})`);
+
+                if (isProOrBlack) {
+                    const extras = await AIService.generateExtras(
+                        project.metadata,
+                        "", // default to family/friends
+                        "", // default to universal
+                        "", // default context
+                        targetLang
+                    );
+
+                    // Use generated content
+                    project.metadata.dedication = extras.dedication;
+                    project.metadata.acknowledgments = extras.acknowledgments;
+                    project.metadata.aboutAuthor = extras.aboutAuthor;
+
+                } else {
+                    // STARTER: Manual Placeholders
+                    // Using brackets so user knows to edit
+                    project.metadata.dedication = "[ESCREVA AQUI SUA DEDICATÓRIA]";
+                    project.metadata.acknowledgments = "[ESCREVA AQUI SEUS AGRADECIMENTOS]";
+                    project.metadata.aboutAuthor = "[ESCREVA AQUI A BIOGRAFIA DO AUTOR]";
+                }
+
+                // Save to DB
+                await QueueService.updateMetadata(id, {
+                    dedication: project.metadata.dedication,
+                    acknowledgments: project.metadata.acknowledgments,
+                    aboutAuthor: project.metadata.aboutAuthor
+                });
+
+            } catch (e) {
+                console.error("Failed to auto-generate extras:", e);
+            }
+        }
 
         // 3. Marketing
         await QueueService.updateMetadata(id, {
@@ -363,7 +440,7 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
         // Pass full book content context implicitly via research context or just metadata.
         // Ideally we pass a summary of what was written, but researchContext + structure is often enough for marketing.
-        const marketing = await AIService.generateMarketing(project.metadata, project.researchContext, "", targetLang);
+        const marketing = await AIService.generateMarketing(project.metadata, project.researchContext, project.structure, targetLang);
         await QueueService.updateProject(id, { marketing });
 
         // 4. Content Finished
@@ -406,6 +483,71 @@ export const generateBookContent = async (req: Request, res: Response) => {
     }
 };
 
+async function notifyUserBookReady(email: string, bookTitle: string, filePath: string) {
+    const fs = require('fs');
+    if (!fs.existsSync(filePath)) {
+        console.error("File not found for email:", filePath);
+        return;
+    }
+
+    const filename = require('path').basename(filePath);
+    const fileBuffer = fs.readFileSync(filePath);
+
+    // Hardcoded URL for now, or dynamic based on REFERER if available, but here we are in backend.
+    // Assuming standard port 3001 for backend/downloads.
+    // In production this should be the PUBLIC_URL.
+    const downloadLink = `http://localhost:3001/downloads/${filename}`;
+
+    const htmlContent = `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f3f4f6; padding: 40px 20px; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <!-- Header -->
+            <div style="background-color: #4F46E5; padding: 30px 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">Seu Livro Está Pronto! 📚</h1>
+            </div>
+            
+            <!-- Body -->
+            <div style="padding: 30px;">
+                <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 20px;">Olá,</p>
+                <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 20px;">
+                    Temos o prazer de informar que seu livro <strong>"${bookTitle}"</strong> foi finalizado com sucesso.
+                </p>
+                <p style="font-size: 16px; line-height: 1.6; color: #4b5563; margin-bottom: 30px;">
+                    Ele passou por todas as etapas de nossa inteligência artificial, revisão e diagramação, e agora está pronto para ser lançado ao mundo.
+                </p>
+
+                <!-- Button -->
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <a href="${downloadLink}" style="background-color: #10B981; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block; transition: background-color 0.2s;">
+                        ⬇️ Baixar Livro Agora
+                    </a>
+                </div>
+
+                <p style="font-size: 14px; color: #6b7280; text-align: center; margin-bottom: 0;">
+                    O arquivo também foi anexado a este e-mail para sua conveniência.
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="background-color: #f9fafb; padding: 20px; text-align: center; border-top: 1px solid #e5e7eb;">
+                <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+                    &copy; ${new Date().getFullYear()} Fábrica de Best Sellers - Editora 360 Express<br>
+                    Transformando ideias em livros.
+                </p>
+            </div>
+        </div>
+    </div>
+    `;
+
+    await sendEmail(
+        email,
+        `Seu Livro "${bookTitle}" Está Pronto! - Editora 360 Express`,
+        `Seu livro ${bookTitle} está pronto! Faça o download no anexo.`, // Fallback text
+        [{ filename: filename, content: fileBuffer }],
+        htmlContent
+    );
+};
+
 export const sendBookEmail = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { email } = req.body;
@@ -417,7 +559,7 @@ export const sendBookEmail = async (req: Request, res: Response) => {
     try {
         console.log(`Sending email to ${email} for project ${id}`);
 
-        // Save file locally first to ensure we have it (optional but good for debug)
+        // Save file locally logic preserved
         const fs = require('fs');
         const path = require('path');
         const savePath = path.join(__dirname, '../../generated_books');
@@ -427,22 +569,9 @@ export const sendBookEmail = async (req: Request, res: Response) => {
         const fullPath = path.join(savePath, `book_${safeEmail}.docx`);
         fs.writeFileSync(fullPath, file.buffer);
 
-        const downloadLink = `http://localhost:3001/downloads/book_${safeEmail}.docx`;
+        // Notify
+        await notifyUserBookReady(email, "Seu Livro", fullPath);
 
-        await sendEmail(
-            email,
-            "Seu Livro Está Pronto! - Editora 360 Express",
-            `Parabéns! Seu livro foi gerado com sucesso.
-            
-Segue em anexo o arquivo DOCX formatado.
-
-Caso não consiga abrir o anexo, você também pode baixar pelo link abaixo:
-${downloadLink}
-
-Atenciosamente,
-Equipe Fábrica de Best Sellers`,
-            [{ filename: file.originalname || 'livro.docx', content: file.buffer }]
-        );
         res.json({ success: true });
     } catch (error: any) {
         console.error("Email Error:", error);

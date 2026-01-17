@@ -15,7 +15,7 @@ interface PricingProps {
 }
 
 export const PricingSection: React.FC<PricingProps> = ({ onSelectPlan, lang }) => {
-    const [billing, setBilling] = useState<'monthly' | 'annual'>('annual');
+    const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
     const t = translations[lang].pricing;
 
     const plans = [
@@ -243,6 +243,23 @@ export const PricingSection: React.FC<PricingProps> = ({ onSelectPlan, lang }) =
                                     : 'bg-slate-800 hover:bg-slate-700 text-white border border-slate-700'
                                     }`}>
                                 {t.choose} {plan.name}
+                            </button>
+
+                            {/* ALREADY SUBSCRIBER BUTTON */}
+                            <button
+                                onClick={() => {
+                                    if (onSelectPlan) onSelectPlan(plan.name, billing);
+                                }}
+                                className="mt-4 w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 rounded-xl shadow-lg shadow-yellow-500/10 transition-all transform hover:scale-[1.02]"
+                            >
+                                <div className="flex flex-col items-center leading-tight">
+                                    <span className="text-[10px] font-black uppercase tracking-wide opacity-90">
+                                        JÁ É ASSINANTE DO PLANO {plan.name} {billing === 'monthly' ? 'MENSAL' : 'ANUAL'}?
+                                    </span>
+                                    <span className="text-xs font-black border-b-2 border-slate-900 mt-0.5 pb-0.5">
+                                        CLIQUE AQUI!
+                                    </span>
+                                </div>
                             </button>
                         </div>
                     ))}
