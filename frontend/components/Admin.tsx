@@ -361,10 +361,12 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                             <div className="font-bold text-purple-700 mb-1 flex items-center gap-1">
                                 🎟️ Info Compra / Plano
                             </div>
-                            {/* Tag / Plan */}
-                            <div className="text-slate-600 mb-1">
-                                🏷️ Etiqueta: <span className="font-bold text-slate-800 bg-yellow-100 px-1 rounded">{lead.tag || 'Sem Etiqueta'}</span>
-                            </div>
+                            {/* Tag / Plan - Hide Tag for Subscriptions as Badge is enough */}
+                            {lead.type !== 'SUBSCRIPTION' && lead.status !== 'SUBSCRIBER' && (
+                                <div className="text-slate-600 mb-1">
+                                    🏷️ Etiqueta: <span className="font-bold text-slate-800 bg-yellow-100 px-1 rounded">{lead.tag || 'Sem Etiqueta'}</span>
+                                </div>
+                            )}
                             {/* Discount */}
                             {(lead.discount > 0 || lead.paymentInfo?.discount) && (
                                 <div className="text-slate-600 mb-1">

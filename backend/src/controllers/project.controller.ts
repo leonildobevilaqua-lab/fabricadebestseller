@@ -176,14 +176,8 @@ export const startResearch = async (req: Request, res: Response) => {
         try {
             ytResearch = await AIService.researchYoutube(topic, targetLang);
         } catch (ytError: any) {
-            console.error("YouTube Research Failed:", ytError);
-            // Fallback or continue? Let's log and maybe use empty string or throw depending on severity.
-            // For now, let's treat it as critical to see the error.
-            await QueueService.updateMetadata(id, {
-                status: 'FAILED',
-                statusMessage: `Erro na pesquisa YouTube: ${ytError.message || JSON.stringify(ytError)}`
-            });
-            return; // Stop execution
+            console.error("YouTube Research Failed (Continuing anyway):", ytError);
+            ytResearch = "Pesquisa YouTube indisponível no momento. Seguindo com Google Search.";
         }
 
         await QueueService.updateMetadata(id, {
