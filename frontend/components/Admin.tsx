@@ -1230,8 +1230,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </nav>
 
                 <div className="p-4 border-t border-slate-800 space-y-2">
-                    <a href="/" target="_blank" className="block w-full text-center py-2 text-xs font-bold text-slate-400 hover:text-white border border-slate-700 rounded hover:bg-slate-800 transition">
-                        Ver Aplicação ↗
+                    <a href="/?new_session=true" className="block w-full text-center py-2 text-xs font-bold text-slate-400 hover:text-white border border-slate-700 rounded hover:bg-slate-800 transition">
+                        Ir para Landing Page ↗
                     </a>
                     <button
                         onClick={() => { setToken(null); localStorage.removeItem('admin_token'); }}

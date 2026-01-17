@@ -65,7 +65,8 @@ export const pt = {
         step2Desc: "Nossa IA vai estruturar tudo com base nisso.",
         giftLabel: "Presente",
         voucherLinkInfo: "Você recebe um link exclusivo válido por 30 dias.",
-        faqTitle: "Perguntas Frequentes"
+        faqTitle: "Perguntas Frequentes",
+        confirmExit: "Deseja realmente sair? Todo o progresso não salvo será perdido."
     },
     pricing: {
         title: "ESCOLHA SEU PLANO E",
@@ -265,7 +266,8 @@ export const en = {
         step2Desc: "Our AI will structure everything based on this.",
         giftLabel: "Gift",
         voucherLinkInfo: "You receive an exclusive link to use whenever you want.",
-        faqTitle: "Frequently Asked Questions"
+        faqTitle: "Frequently Asked Questions",
+        confirmExit: "Do you really want to exit? All unsaved progress will be lost."
     },
     pricing: {
         title: "CHOOSE YOUR PLAN AND",
@@ -465,7 +467,8 @@ export const es = {
         step2Desc: "Nuestra IA estructurará todo basándose en esto.",
         giftLabel: "Regalo",
         voucherLinkInfo: "Recibes un enlace exclusivo para usar cuando quieras.",
-        faqTitle: "Preguntas Frecuentes"
+        faqTitle: "Preguntas Frecuentes",
+        confirmExit: "¿Realmente deseas salir? Se perderá todo el progreso no guardado."
     },
     pricing: {
         title: "ELIGE TU PLAN Y",

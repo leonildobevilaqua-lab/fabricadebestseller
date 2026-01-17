@@ -157,6 +157,16 @@ const App: React.FC = () => {
                 <span className="font-serif font-bold text-xl text-slate-800">Fábrica de Best Sellers</span>
               </a>
               <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    if (confirm(t.landing.confirmExit || "Deseja realmente sair? Todo o progresso não salvo será perdido.")) {
+                      resetApp();
+                    }
+                  }}
+                  className="text-xs font-bold text-red-400 hover:text-red-500 uppercase tracking-widest transition border border-red-200 hover:border-red-400 px-3 py-1 rounded-full"
+                >
+                  {lang === 'pt' ? 'Sair' : lang === 'es' ? 'Salir' : 'Exit'}
+                </button>
                 <div className="flex gap-2 mr-4">
                   <button onClick={() => setLang('pt')} className={`font-bold ${lang === 'pt' ? 'text-brand-600' : 'text-slate-400 hover:text-slate-600'}`}>BR</button>
                   <span className="text-slate-300">|</span>

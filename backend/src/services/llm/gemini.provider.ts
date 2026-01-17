@@ -3,7 +3,7 @@ import { LLMProvider } from "./provider.interface"; // Adjusted path since file 
 
 export class GeminiProvider implements LLMProvider {
     private client: GoogleGenerativeAI;
-    private models = ["gemini-2.5-flash", "gemini-1.5-flash"];
+    private models = ["gemini-2.0-flash-exp", "gemini-1.5-flash"];
 
     constructor(apiKey: string) {
         this.client = new GoogleGenerativeAI(apiKey);
@@ -16,7 +16,13 @@ export class GeminiProvider implements LLMProvider {
         for (const modelName of this.models) {
             try {
                 const generativeModel = this.client.getGenerativeModel({ model: modelName });
-                const result = await generativeModel.generateContent(finalPrompt);
+
+                // Add Timeout of 60s
+                const resultFn = generativeModel.generateContent(finalPrompt);
+                const timeoutPromise = new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Gemini Request Timeout")), 60000));
+
+                const result = await Promise.race([resultFn, timeoutPromise]);
+
                 const response = await result.response;
                 return response.text();
             } catch (error: any) {
