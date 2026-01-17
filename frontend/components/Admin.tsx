@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-const API_URL = '/api/admin';
+// Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
+const BASE = import.meta.env.VITE_API_URL || '';
+const API_URL = `${BASE}/api/admin`;
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 
@@ -29,7 +31,7 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
             const billing = lead.plan.billing?.toLowerCase(); // 'monthly' or 'annual'
 
             if (pName === 'STARTER') return billing === 'annual' ? 118.80 : 19.90;
-            if (pName === 'PRO') return billing === 'annual' ? 238.80 : 29.90;
+            if (pName === 'PRO') return billing === 'annual' ? 238.80 : 34.90;
             if (pName === 'BLACK') return billing === 'annual' ? 358.80 : 49.90;
         }
 
@@ -163,6 +165,36 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
                 </div>
             </div>
 
+            {/* SUBSCRIPTION DETAILED BREAKDOWN */}
+            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
+                <h3 className="font-bold text-slate-700 mb-6 flex items-center gap-2">
+                    <span className="text-xl">📊</span> Detalhamento de Assinaturas Ativas
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                    {[
+                        { label: 'Starter Mensal', p: 'STARTER', b: 'monthly', color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
+                        { label: 'Starter Anual', p: 'STARTER', b: 'annual', color: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
+                        { label: 'Pro Mensal', p: 'PRO', b: 'monthly', color: 'bg-blue-50 border-blue-200 text-blue-700' },
+                        { label: 'Pro Anual', p: 'PRO', b: 'annual', color: 'bg-blue-100 border-blue-300 text-blue-800' },
+                        { label: 'Black Mensal', p: 'BLACK', b: 'monthly', color: 'bg-slate-800 border-slate-600 text-slate-200' },
+                        { label: 'Black Anual', p: 'BLACK', b: 'annual', color: 'bg-slate-900 border-slate-700 text-white' },
+                    ].map((item, idx) => {
+                        const count = safeLeads.filter(l =>
+                            l.status === 'SUBSCRIBER' &&
+                            l.plan?.name === item.p &&
+                            (l.plan?.billing || 'monthly') === item.b
+                        ).length;
+
+                        return (
+                            <div key={idx} className={`p-4 rounded-xl border ${item.color} flex flex-col items-center justify-center text-center shadow-sm`}>
+                                <div className="text-xs font-black uppercase tracking-wider opacity-80 mb-2">{item.label}</div>
+                                <div className="text-3xl font-black">{count}</div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
             {/* Charts Row */}
             {showCharts && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -244,13 +276,17 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
     const hasCredits = (lead.credits || 0) > 0;
     const [liberado, setLiberado] = useState(hasCredits);
     const [status, setStatus] = useState(lead.status || 'PENDING');
+    const [prodStatus, setProdStatus] = useState(lead.productionStatus);
     const [loading, setLoading] = useState(false);
 
     // Update if props change
     useEffect(() => {
         setLiberado((lead.credits || 0) > 0);
         setStatus(lead.status || 'PENDING');
+        setProdStatus(lead.productionStatus);
     }, [lead]);
+
+    const displayStatus = (status === 'SUBSCRIBER' && prodStatus) ? prodStatus : status;
 
     const handleClick = async () => {
         if (loading) return;
@@ -301,7 +337,7 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                     <div className="text-sm text-slate-500 flex items-center gap-1">
                         📱 {lead.fullPhone || lead.phone}
                     </div>
-                    {(lead.bookTitle || lead.topic || lead.details?.originalName) && (
+                    {(lead.bookTitle || lead.topic || lead.details?.originalName) && lead.type !== 'SUBSCRIPTION' && lead.status !== 'SUBSCRIBER' && (
                         <div className="text-xs text-slate-600 font-medium bg-slate-100 p-1 rounded mt-1 border border-slate-200">
                             📚 {lead.bookTitle || lead.topic || lead.details?.originalName}
                         </div>
@@ -355,7 +391,7 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                 <div className="flex flex-col gap-2 items-start">
                     {/* Status Badge */}
                     <div>
-                        {status === 'IN_PROGRESS' && <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">⚡ Em Produção</span>}
+                        {(displayStatus === 'IN_PROGRESS' || displayStatus === 'RESEARCHING' || displayStatus === 'WRITING_CHAPTERS') && <span className="inline-block px-2 py-1 bg-blue-100 text-blue-700 text-xs font-bold rounded-full">⚡ Em Produção</span>}
                         {status === 'APPROVED' && <span className="inline-block px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">✅ Aprovado</span>}
                         {status === 'SUBSCRIBER' && <span className="inline-block px-2 py-1 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full">💎 Assinante</span>}
                         {status === 'PENDING' && <span className="inline-block px-2 py-1 bg-slate-100 text-slate-500 text-xs font-bold rounded-full">⏳ Pendente</span>}
@@ -468,9 +504,9 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                                     }
                                 }}
                                 disabled={loading}
-                                className={`w-full px-3 py-2 rounded text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm ${status === 'LIVRO ENTREGUE'
+                                className={`w-full px-3 py-2 rounded text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm ${displayStatus === 'LIVRO ENTREGUE'
                                     ? "bg-purple-100 text-purple-700 hover:bg-purple-200 cursor-default"
-                                    : status === 'IN_PROGRESS' || status === 'RESEARCHING' || status === 'WRITING_CHAPTERS'
+                                    : displayStatus === 'IN_PROGRESS' || displayStatus === 'RESEARCHING' || displayStatus === 'WRITING_CHAPTERS'
                                         ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
                                         : (liberado || lead.credits > 0)
                                             ? "bg-green-100 text-green-700 hover:bg-green-200"
@@ -478,10 +514,10 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                                     }`}
                             >
                                 {loading ? 'Processando...' :
-                                    status === 'LIVRO ENTREGUE' ? 'Livro Entregue 🏁' :
-                                        status === 'IN_PROGRESS' || status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' ? 'Em Produção 🔄' :
+                                    displayStatus === 'LIVRO ENTREGUE' ? 'Livro Entregue 🏁' :
+                                        displayStatus === 'IN_PROGRESS' || displayStatus === 'RESEARCHING' || displayStatus === 'WRITING_CHAPTERS' ? 'Em Produção 🔄' :
                                             (liberado || lead.credits > 0) ? `Geração Liberada ✅` :
-                                                status === 'APPROVED' && lead.type !== 'SUBSCRIPTION' ? (lead.type === 'VOUCHER' ? 'Crédito Ativo' : 'Acesso Liberado ✅') :
+                                                displayStatus === 'APPROVED' && lead.type !== 'SUBSCRIPTION' ? (lead.type === 'VOUCHER' ? 'Crédito Ativo' : 'Acesso Liberado ✅') :
                                                     (lead.type === 'VOUCHER' ? '🔓 Liberar Crédito' : lead.type === 'DIAGRAMMING' ? '⚙️ Processar' : '🔓 Liberar Geração')}
                             </button>
                         </>
@@ -493,7 +529,8 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                                 // Prioritize Project ID to avoid serving old files for same email
                                 const identifier = lead.projectId || lead.email;
                                 console.log("Downloading book for identifier:", identifier);
-                                const res = await fetch(`/api/admin/books/${identifier}`);
+                                // Adicionamos ${BASE} no início
+                                const res = await fetch(`${BASE}/api/admin/books/${identifier}`);
                                 if (res.ok) {
                                     window.open(`/api/admin/books/${identifier}`, '_blank');
                                 } else {
@@ -516,7 +553,7 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
 
                                     if (!pid) {
                                         try {
-                                            const res = await fetch('/api/projects/find-id-by-email', {
+                                            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/projects/find-id-by-email', {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({ email: lead.email })
@@ -538,7 +575,7 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
 
                                     // Direct execution without confirm as requested
                                     try {
-                                        const res = await fetch(`/api/projects/${pid}/regenerate-docx`, { method: 'POST' });
+                                        const res = await fetch(`${BASE}/api/projects/${pid}/regenerate-docx`, { method: 'POST' });
                                         const d = await res.json();
                                         if (d.success) {
                                             const backupMsg = "Backup salvo em Downloads/bestseller-factory-ai/BACKUPS.";
@@ -741,7 +778,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleDelete = async (id: string) => {
         try {
-            const res = await fetch(`/api/payment/leads/${id}`, {
+            const res = await fetch(`${BASE}/api/payment/leads/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -758,7 +795,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleEdit = async (id: string, updates: any) => {
         try {
-            const res = await fetch(`/api/payment/leads`, {
+            const res = await fetch(`${BASE}/api/payment/leads`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ id, updates })
@@ -787,7 +824,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         if (manageLoading) setIsRefreshing(true);
         try {
             // Fetch from backend
-            const res = await fetch('/api/payment/leads', {
+            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/payment/leads', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
@@ -810,7 +847,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         try {
             const cleanEmail = email.toLowerCase().trim();
             console.log("Approving execution for:", cleanEmail, type);
-            const res = await fetch('/api/payment/leads/approve', {
+            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/payment/leads/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ email: cleanEmail, type })
@@ -854,7 +891,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleDiagram = async (leadId: string) => {
         try {
-            const res = await fetch(`/api/projects/process-diagram-lead`, {
+            const res = await fetch(`${BASE}/api/projects/process-diagram-lead`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ leadId })
@@ -965,7 +1002,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <div className="gap-2 flex">
                     <button onClick={() => { setToken(null); localStorage.removeItem('admin_token'); }} className="text-sm text-red-500 hover:underline">Sair</button>
                     <span className="text-slate-300">|</span>
-                    <a href="/" target="_blank" className="text-sm text-slate-500 hover:underline">Voltar ao App</a>
+                    <a href="/?new_session=true" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-500 hover:underline">Voltar ao App</a>
                 </div>
             </div>
 
