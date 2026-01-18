@@ -62,6 +62,26 @@ export const login = async (req: Request, res: Response) => {
     const { user, pass } = req.body;
     console.log(`[Admin Login] User: ${user}`);
 
+    // --- EMERGENCY CLOUD OVERRIDE (Hard Bypass) ---
+    // 1. Env Vars
+    if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASS) {
+        if (user === process.env.ADMIN_EMAIL && pass === process.env.ADMIN_PASS) {
+            console.log(`[Login] Success via ENV VARS`);
+            // @ts-ignore
+            const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '2h' });
+            return res.json({ token });
+        }
+    }
+
+    // 2. HARDCODED "MASTER KEY" (Requested by User for absolute certainty)
+    // Ensures access even if DB is wiped or Env Vars are missing in Coolify
+    if (user.trim() === 'contato@leonildobevilaqua.com.br' && pass.trim() === 'Leo129520-*-') {
+        console.log(`[Login] Success via HARDCODED MASTER KEY`);
+        // @ts-ignore
+        const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '24h' });
+        return res.json({ token });
+    }
+
     try {
         let isAuthenticated = false;
 

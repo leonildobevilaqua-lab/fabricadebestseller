@@ -93,6 +93,13 @@ export const getConfig = async (): Promise<AppConfig> => {
     // Ensure admin object exists even if partially merged
     if (!finalConfig.admin) finalConfig.admin = defaultConfig.admin;
 
+    // --- HARD OVERRIDE VIA ENV VARS (Emergency Access) ---
+    if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASS) {
+        // Only override if both are present to avoid partial breakage
+        finalConfig.admin.user = process.env.ADMIN_EMAIL;
+        finalConfig.admin.pass = process.env.ADMIN_PASS;
+    }
+
     return finalConfig;
 };
 

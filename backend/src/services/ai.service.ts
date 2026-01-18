@@ -290,10 +290,10 @@ export const writeChapter = async (
     Chapter: ${chapter.title}
     Chapter Objective: ${chapter.intro}
 
-    TASK: Create a detailed outline for this chapter with exactly 6 distinct sub-sections.
+    TASK: Create a detailed outline for this chapter with exactly 5 distinct sub-sections.
     Each sub-section must cover a specific aspect of the chapter's topic in EXTREME depth.
     
-    Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4", "Subheading 5", "Subheading 6"]
+    Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4", "Subheading 5"]
     Output ONLY JSON.
     Language: ${langName}.
   `;
@@ -304,11 +304,11 @@ export const writeChapter = async (
   } catch (e) {
     console.error("Failed to generate outline, using fallback topics", e);
     // Fallback topics if JSON fails
-    subtopics = ["Fundamentos", "Histórico e Evolução", "Principais Desafios", "Ferramentas e Técnicas", "Estudos de Caso", "Tendências Futuras"];
+    subtopics = ["Fundamentos", "Histórico e Evolução", "Principais Desafios", "Ferramentas e Técnicas", "Estudos de Caso"];
   }
 
   // Ensure we don't go overboard if AI hallucinates 10 topics
-  subtopics = subtopics.slice(0, 6);
+  subtopics = subtopics.slice(0, 5);
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -337,7 +337,7 @@ export const writeChapter = async (
             
             Current Section: "${subtopic}"
             
-            TASK: Write a DETAILED section for this specific topic (approx 600 words).
+            TASK: Write a DETAILED section for this specific topic (approx 500 words).
             This is a "Deep Dive" chapter. Do not summarize.
             Include detailed examples, actionable advice, step-by-step instructions, and deep theoretical analysis.
             Do NOT repeat the introduction. Dive deep.
@@ -373,8 +373,8 @@ export const writeChapter = async (
         Research Context: ${researchContext}
         CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
         TASK: Write the full content for this chapter.
-        CRITICAL: Write a comprehensive chapter. Target length: 3300 words.
-        Cover 6 distinct subtopics in detailed depth.
+        CRITICAL: Write a comprehensive chapter. Target length: 2500 words.
+        Cover 5 distinct subtopics in detailed depth.
         LANGUAGE: ${langName}.
       `;
 

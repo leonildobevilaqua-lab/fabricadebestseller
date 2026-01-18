@@ -319,21 +319,33 @@ export const generateBookContent = async (req: Request, res: Response) => {
                 progress: 41 + Math.floor(((i) / total) * 40) // 41% to 81%
             });
 
-            // Wait a bit to avoid rate limits if loop is tight? No, awaiting generation is enough.
-
-            try {
-                // Pass language to writer
-                const meta = { ...project.metadata, language: targetLang };
-                const content = await AIService.writeChapter(meta, chapter, project.structure, project.researchContext);
-                chapter.content = content;
-                chapter.isGenerated = true;
-                await QueueService.updateProject(id, { structure: chapters });
-            } catch (e: any) {
-                console.error(`Error writing chapter ${chapter.id}:`, e);
-                // If error, we stop here and mark as failed. The user can retry.
-                // But to make it robust, we should probably mark status as FAILED so frontend shows Retry button.
-                // However, we want to allow "Resume".
-                throw e;
+            // RETRY STRATEGY (3 Attempts)
+            let success = false;
+            let attempts = 0;
+            while (!success && attempts < 3) {
+                try {
+                    attempts++;
+                    // Pass language to writer
+                    const meta = { ...project.metadata, language: targetLang };
+                    const content = await AIService.writeChapter(meta, chapter, project.structure, project.researchContext);
+                    chapter.content = content;
+                    chapter.isGenerated = true;
+                    await QueueService.updateProject(id, { structure: chapters });
+                    success = true;
+                } catch (e: any) {
+                    console.error(`Error writing chapter ${chapter.id} (Attempt ${attempts}/3):`, e);
+                    if (attempts >= 3) {
+                        // EMERGENCY FALLBACK TO PREVENT HALT
+                        console.error(`CRITICAL: Chapter ${chapter.id} failed after 3 attempts. Using Emergency Placeholder.`);
+                        chapter.content = `[ERRO NA GERAÇÃO DESTE CAPÍTULO]\n\nInfelizmente a IA não conseguiu completar este capítulo após múltiplas tentativas. O tema era: ${chapter.title}.\n\nSugerimos que você escreva este trecho manualmente ou regenere o projeto.`;
+                        chapter.isGenerated = true; // Mark as done to finish the process!!!
+                        await QueueService.updateProject(id, { structure: chapters });
+                        success = true; // Force success to continue loop
+                    } else {
+                        // Wait 2s before retry
+                        await new Promise(r => setTimeout(r, 2000));
+                    }
+                }
             }
         }
 
