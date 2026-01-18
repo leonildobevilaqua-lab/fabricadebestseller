@@ -777,11 +777,20 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: user })
             });
-            const data = await res.json();
+
+            let data;
+            try {
+                data = await res.json();
+            } catch (jsonError) {
+                // If JSON fails, it might be a raw text error or empty
+                console.error("JSON Parse Error", jsonError);
+                throw new Error("Resposta inválida do servidor. Verifique os logs.");
+            }
+
             if (res.ok) {
                 setMsg("Email de recuperação enviado! Verifique sua caixa de entrada.");
             } else {
-                setMsg("Erro: " + data.error);
+                setMsg("Erro: " + (data.error || "Erro desconhecido"));
             }
         } catch (e: any) {
             console.error("Forgot Password Error:", e);

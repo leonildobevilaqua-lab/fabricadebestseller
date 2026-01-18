@@ -73,17 +73,36 @@ const defaultConfig: AppConfig = {
 // Since Config is rarely changed, efficient.
 
 export const getConfig = async (): Promise<AppConfig> => {
-    const data = await getVal('settings'); // maps to key='settings'
-    if (!data) {
-        await saveConfig(defaultConfig);
-        return defaultConfig;
+    // Load fresh data mapped to user's database.json structure
+    const settingsData = await getVal('/settings');
+    const adminData = await getVal('/admin');
+
+    // Base default
+    let finalConfig = { ...defaultConfig };
+
+    // Merge Settings (Providers, etc)
+    if (settingsData) {
+        finalConfig = { ...finalConfig, ...settingsData };
     }
-    // Deep merge default with data to ensure new keys exist
-    return { ...defaultConfig, ...data };
+
+    // Merge Admin (User/Pass) - Prioritize Root /admin key
+    if (adminData) {
+        finalConfig.admin = { ...finalConfig.admin, ...adminData };
+    }
+
+    // Ensure admin object exists even if partially merged
+    if (!finalConfig.admin) finalConfig.admin = defaultConfig.admin;
+
+    return finalConfig;
 };
 
 export const saveConfig = async (config: AppConfig) => {
-    await setVal('settings', config);
+    // Split config to match JSON structure: root admin, root settings
+    const { admin, ...rest } = config;
+
+    // Save separately
+    if (admin) await setVal('/admin', admin);
+    await setVal('/settings', rest);
 };
 
 export const updateConfig = async (updates: Partial<AppConfig>) => {
