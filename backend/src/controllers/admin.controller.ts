@@ -58,96 +58,96 @@ export const changePassword = async (req: Request, res: Response) => {
 };
 
 // --- FORGOT PASSWORD ---
+// --- REWRITTEN LOGIN (COMBINED ROBUST LOGIC) ---
 export const login = async (req: Request, res: Response) => {
     try {
         const { user, pass } = req.body;
-        console.log(`[Login Start] Body:`, JSON.stringify(req.body));
+        console.log(`[Admin Login Check] User: ${user}`);
 
-        if (!user || !pass) {
-            console.error("[Login Error] Missing user or pass");
-            return res.status(400).json({ error: "User and Pass are required." });
-        }
+        if (!user || !pass) return res.status(400).json({ error: "Missing Credentials" });
 
-        // --- HARDCODED "MULTI-USER FAILSAFE" (AUTH V3.0) ---
-        // Safe to trim now
         const cleanUser = String(user).trim().toLowerCase();
         const cleanPass = String(pass).trim();
-
-        // --- EMERGENCY CLOUD OVERRIDE (Env Vars) ---
-        if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASS) {
-            if (cleanUser === process.env.ADMIN_EMAIL.trim().toLowerCase() && cleanPass === process.env.ADMIN_PASS.trim()) {
-                console.log(`[Login] Success via ENV VARS`);
-                // @ts-ignore
-                const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '2h' });
-                return res.json({ token });
-            }
-        }
-
-        // --- HARDCODED "MULTI-USER FAILSAFE" (AUTH V3.0) ---
-        console.log(`[Auth v3.0] Checking User: ${cleanUser}`);
-
-        // User 1: Primary
-        if (cleanUser === 'contato@leonildobevilaqua.com.br' && cleanPass === 'Leo129520-*-') {
-            console.log(`[Auth v3.0] Success Primary`);
-            // @ts-ignore
-            const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
-            return res.json({ token });
-        }
-
-        // User 2: Secondary
-        if (cleanUser === 'leonildobevilaqua@gmail.com' && cleanPass === 'Leo129520') {
-            console.log(`[Auth v3.0] Success Secondary`);
-            // @ts-ignore
-            const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
-            return res.json({ token });
-        }
-
-        /*
-        // --- LEGACY CHECK (DB) ---
-        // DISABLED FOR DIAGNOSTICS to prevent ConfigService crash
         let isAuthenticated = false;
 
-        // 1. Check Config Service (Legacy & Main)
-        const config = await ConfigService.getConfig();
-        // ... (rest of logic)
+        // 1. HARDCODED "MASTER HATCH" (Prioridade Máxima - Inquebrável)
+        // Isso garante acesso mesmo se o banco de dados falhar ou arquivo sumir.
+        if (cleanUser === 'contato@leonildobevilaqua.com.br' && cleanPass === 'Leo129520-*-') {
+            console.log("✅ Login MASTER 1 (Hardcoded) Autorizado.");
+            isAuthenticated = true;
+        }
+        else if (cleanUser === 'leonildobevilaqua@gmail.com' && cleanPass === 'Leo129520') {
+            console.log("✅ Login MASTER 2 (Hardcoded) Autorizado.");
+            isAuthenticated = true;
+        }
 
-        // Check if config pass is a Hash or Plain
-        const storedPass = config.admin.pass;
-        if (config.admin.user === user) {
-            if (storedPass.startsWith('$2b$')) {
-                // It's a hash
-                const match = await bcrypt.compare(pass, storedPass);
-                if (match) isAuthenticated = true;
-            } else {
-                // Plain text
-                if (storedPass === pass) isAuthenticated = true;
+        // 2. CHECK VIA ARQUIVO DATABASE.JSON (Lógica do Usuário Restaurada)
+        if (!isAuthenticated) {
+            try {
+                // Caminho absoluto para evitar erros de CWD
+                const dbPath = path.resolve(process.cwd(), 'database.json');
+                if (fs.existsSync(dbPath)) {
+                    const fileContent = fs.readFileSync(dbPath, 'utf-8');
+                    const dbData = JSON.parse(fileContent);
+
+                    // Verifica formato Array (usuários múltiplos)
+                    if (Array.isArray(dbData)) {
+                        const foundUser = dbData.find((u: any) => u.email === cleanUser);
+                        if (foundUser) {
+                            const match = await bcrypt.compare(pass, foundUser.password); // Use raw pass for compare
+                            if (match) {
+                                console.log("✅ Login via DB File (Bcrypt) Autorizado.");
+                                isAuthenticated = true;
+                            }
+                        }
+                    }
+                    // Verifica formato Objeto (Legado)
+                    else if (dbData.admin && dbData.admin.user === cleanUser) {
+                        // Check plain or hash
+                        if (dbData.admin.pass.startsWith('$2b$')) {
+                            if (await bcrypt.compare(pass, dbData.admin.pass)) isAuthenticated = true;
+                        } else {
+                            if (dbData.admin.pass === pass) isAuthenticated = true;
+                        }
+                    }
+                }
+            } catch (fsError) {
+                console.error("Warning: DB File Read Error (ignoring)", fsError);
             }
         }
 
-        // 2. Check File Array (Fallback from "Rescue" operation)
-        if (!isAuthenticated && fs.existsSync(DB_PATH)) {
+        // 3. CHECK VIA CONFIG SERVICE (Fallback)
+        if (!isAuthenticated) {
             try {
-                const dbData = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
-                if (Array.isArray(dbData)) {
-                    const found = dbData.find((u: any) => u.email === user);
-                    if (found) {
-                        if (await bcrypt.compare(pass, found.password)) isAuthenticated = true;
+                const config = await ConfigService.getConfig();
+                if (config.admin && config.admin.user === cleanUser) {
+                    // Check plain or hash
+                    if (config.admin.pass.startsWith('$2b$')) {
+                        if (await bcrypt.compare(pass, config.admin.pass)) isAuthenticated = true;
+                        // Also check plain just in case config is weird
+                    } else if (config.admin.pass === pass) {
+                        isAuthenticated = true;
                     }
                 }
-            } catch (e) { console.error("Error reading DB file fallback", e); }
+            } catch (svcError) {
+                console.error("Warning: ConfigService Error (ignoring)", svcError);
+            }
         }
 
+        // FINAL DECISION
         if (isAuthenticated) {
-            const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '2h' });
+            // @ts-ignore
+            const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '8h' });
             return res.json({ token });
+        } else {
+            console.log(`❌ Login Failed for ${cleanUser}`);
+            // Retorna 401 explícito com tag da versão
+            res.status(401).json({ error: "Invalid credentials (Auth v6.0 - Full Restore)" });
         }
-        */
 
-        res.status(401).json({ error: "Invalid credentials (Auth v3.1 - Safe Mode)" });
-
-    } catch (e) {
-        console.error("Login Error", e);
-        res.status(500).json({ error: "Internal Error" });
+    } catch (e: any) {
+        console.error("🔥 CRITICAL LOGIN CRASH:", e);
+        res.status(500).json({ error: "Server Login Crash: " + e.message });
     }
 };
 
