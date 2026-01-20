@@ -748,12 +748,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // AUTH V5.0: Use Master Hatch to bypass 405/Router issues
-            // Construct URL: Remove '/admin' suffix if present, append '/auth-master'
-            const baseUrl = API_URL.endsWith('/admin') ? API_URL.slice(0, -6) : API_URL;
-            const targetUrl = `${baseUrl.replace(/\/$/, '')}/auth-master`;
-
-            console.log("Attempting Master Login at:", targetUrl);
+            // Revert to standard route (Robust Controller in place)
+            const targetUrl = `${API_URL}/login`;
+            console.log("Attempting Standard Login at:", targetUrl);
 
             const res = await fetch(targetUrl, {
                 method: 'POST',
@@ -767,23 +764,22 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             } catch (jsonErr) {
                 console.error("Non-JSON response:", jsonErr);
                 const text = await res.text().catch(() => "");
-                throw new Error(`Erro Crítico (${res.status}): Possível falha de servidor. (${text.substring(0, 30)}...)`);
+                throw new Error(`Erro Crítico (${res.status}) em ${targetUrl}. Resposta inválida: ${text.substring(0, 50)}...`);
             }
 
             if (res.ok) {
                 setToken(data.token);
                 localStorage.setItem('admin_token', data.token);
-                // Clear URL params if logged in
                 window.history.replaceState({}, '', '/admin');
             } else {
-                // Show specific backend error (e.g. "Invalid credentials v2")
                 setMsg("Erro: " + (data.error || "Acesso negado"));
             }
         } catch (e: any) {
-            console.error("Login Link Error:", e);
+            console.error("Login Error:", e);
             setMsg("Erro de conexão: " + (e.message || "Verifique o backend"));
         }
     };
+
 
     const handleForgot = async (e: React.FormEvent) => {
         e.preventDefault();
