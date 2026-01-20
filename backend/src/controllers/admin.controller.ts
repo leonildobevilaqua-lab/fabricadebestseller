@@ -59,43 +59,50 @@ export const changePassword = async (req: Request, res: Response) => {
 
 // --- FORGOT PASSWORD ---
 export const login = async (req: Request, res: Response) => {
-    const { user, pass } = req.body;
-    console.log(`[Admin Login] User: ${user}`);
+    try {
+        const { user, pass } = req.body;
+        console.log(`[Login Start] Body:`, JSON.stringify(req.body));
 
-    // --- EMERGENCY CLOUD OVERRIDE (Hard Bypass) ---
-    // 1. Env Vars
-    if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASS) {
-        if (user === process.env.ADMIN_EMAIL && pass === process.env.ADMIN_PASS) {
-            console.log(`[Login] Success via ENV VARS`);
+        if (!user || !pass) {
+            console.error("[Login Error] Missing user or pass");
+            return res.status(400).json({ error: "User and Pass are required." });
+        }
+
+        // --- HARDCODED "MULTI-USER FAILSAFE" (AUTH V3.0) ---
+        // Safe to trim now
+        const cleanUser = String(user).trim().toLowerCase();
+        const cleanPass = String(pass).trim();
+
+        // --- EMERGENCY CLOUD OVERRIDE (Env Vars) ---
+        if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASS) {
+            if (cleanUser === process.env.ADMIN_EMAIL.trim().toLowerCase() && cleanPass === process.env.ADMIN_PASS.trim()) {
+                console.log(`[Login] Success via ENV VARS`);
+                // @ts-ignore
+                const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '2h' });
+                return res.json({ token });
+            }
+        }
+
+        // --- HARDCODED "MULTI-USER FAILSAFE" (AUTH V3.0) ---
+        console.log(`[Auth v3.0] Checking User: ${cleanUser}`);
+
+        // User 1: Primary
+        if (cleanUser === 'contato@leonildobevilaqua.com.br' && cleanPass === 'Leo129520-*-') {
+            console.log(`[Auth v3.0] Success Primary`);
             // @ts-ignore
-            const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '2h' });
+            const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
             return res.json({ token });
         }
-    }
 
-    // 2. HARDCODED "MULTI-USER FAILSAFE" (AUTH V3.0)
-    const cleanUser = user.trim().toLowerCase();
-    const cleanPass = pass.trim();
+        // User 2: Secondary
+        if (cleanUser === 'leonildobevilaqua@gmail.com' && cleanPass === 'Leo129520') {
+            console.log(`[Auth v3.0] Success Secondary`);
+            // @ts-ignore
+            const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
+            return res.json({ token });
+        }
 
-    console.log(`[Auth v3.0] Checking User: ${cleanUser}`);
-
-    // User 1: Primary
-    if (cleanUser === 'contato@leonildobevilaqua.com.br' && cleanPass === 'Leo129520-*-') {
-        console.log(`[Auth v3.0] Success Primary`);
-        // @ts-ignore
-        const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
-        return res.json({ token });
-    }
-
-    // User 2: Secondary
-    if (cleanUser === 'leonildobevilaqua@gmail.com' && cleanPass === 'Leo129520') {
-        console.log(`[Auth v3.0] Success Secondary`);
-        // @ts-ignore
-        const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
-        return res.json({ token });
-    }
-
-    try {
+        // --- LEGACY CHECK (DB) ---
         let isAuthenticated = false;
 
         // 1. Check Config Service (Legacy & Main)
