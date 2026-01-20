@@ -753,7 +753,15 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user, pass })
             });
-            const data = await res.json(); // Clean parse for both success and error
+
+            let data;
+            try {
+                data = await res.json();
+            } catch (jsonErr) {
+                console.error("Non-JSON response:", jsonErr);
+                // If JSON fails, it might be HTML (502/504) or empty
+                throw new Error("Erro Crítico no Servidor (Possível quebra de build ou 502).");
+            }
 
             if (res.ok) {
                 setToken(data.token);
