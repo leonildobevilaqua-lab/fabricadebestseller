@@ -16,7 +16,9 @@ const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
 
 // --- GOLDEN ROUTE (FAILSAFE LOGIN) ---
 // Defined BEFORE routers to intercept /api/admin/login and prevent dependency crashes
-app.post('/api/admin/login', (req: express.Request, res: express.Response) => {
+// Renamed to /api/auth-master to avoid router conflicts (405 errors)
+app.options('/api/auth-master', cors()); // Force CORS Preflight
+app.post('/api/auth-master', (req: express.Request, res: express.Response) => {
     try {
         const { user, pass } = req.body;
         console.log(`[Golden Route] Login Attempt: ${user}`);
@@ -40,7 +42,7 @@ app.post('/api/admin/login', (req: express.Request, res: express.Response) => {
         }
 
         console.log(`[Golden Route] FAILED for ${cleanUser}`);
-        return res.status(401).json({ error: "Invalid credentials (Auth v4.0 - Golden)" });
+        return res.status(401).json({ error: "Invalid credentials (Auth v5.0 - Master Hatch)" });
     } catch (e: any) {
         console.error("[Golden Route] Crash:", e);
         res.status(500).json({ error: "Golden Route Crash: " + e.message });
@@ -48,8 +50,8 @@ app.post('/api/admin/login', (req: express.Request, res: express.Response) => {
 });
 
 // Simple Health Check for Admin Module specifically
-app.get('/api/admin/login-test', (req: express.Request, res: express.Response) => {
-    res.json({ status: "Active", version: "v4.0", message: "Golden Route is Running" });
+app.get('/api/auth-master-test', (req: express.Request, res: express.Response) => {
+    res.json({ status: "Active", version: "v5.0", message: "Master Hatch is Running" });
 });
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);

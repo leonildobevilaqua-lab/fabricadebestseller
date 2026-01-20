@@ -748,7 +748,14 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch(`${API_URL}/login`, {
+            // AUTH V5.0: Use Master Hatch to bypass 405/Router issues
+            // Construct URL: Remove '/admin' suffix if present, append '/auth-master'
+            const baseUrl = API_URL.endsWith('/admin') ? API_URL.slice(0, -6) : API_URL;
+            const targetUrl = `${baseUrl.replace(/\/$/, '')}/auth-master`;
+
+            console.log("Attempting Master Login at:", targetUrl);
+
+            const res = await fetch(targetUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user, pass })
