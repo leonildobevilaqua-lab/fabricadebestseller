@@ -759,8 +759,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 data = await res.json();
             } catch (jsonErr) {
                 console.error("Non-JSON response:", jsonErr);
-                // If JSON fails, it might be HTML (502/504) or empty
-                throw new Error("Erro Crítico no Servidor (Possível quebra de build ou 502).");
+                const text = await res.text().catch(() => "");
+                throw new Error(`Erro Crítico (${res.status}): Possível falha de servidor. (${text.substring(0, 30)}...)`);
             }
 
             if (res.ok) {

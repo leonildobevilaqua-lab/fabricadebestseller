@@ -16,8 +16,7 @@ const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
 
 // --- GOLDEN ROUTE (FAILSAFE LOGIN) ---
 // Defined BEFORE routers to intercept /api/admin/login and prevent dependency crashes
-// @ts-ignore
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', (req: express.Request, res: express.Response) => {
     try {
         const { user, pass } = req.body;
         console.log(`[Golden Route] Login Attempt: ${user}`);
@@ -35,6 +34,7 @@ app.post('/api/admin/login', (req, res) => {
 
         if (valid) {
             console.log(`[Golden Route] SUCCESS for ${cleanUser}`);
+            // @ts-ignore
             const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
             return res.json({ token });
         }
@@ -45,6 +45,11 @@ app.post('/api/admin/login', (req, res) => {
         console.error("[Golden Route] Crash:", e);
         res.status(500).json({ error: "Golden Route Crash: " + e.message });
     }
+});
+
+// Simple Health Check for Admin Module specifically
+app.get('/api/admin/login-test', (req: express.Request, res: express.Response) => {
+    res.json({ status: "Active", version: "v4.0", message: "Golden Route is Running" });
 });
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
