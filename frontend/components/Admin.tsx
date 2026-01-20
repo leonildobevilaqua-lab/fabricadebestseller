@@ -1240,7 +1240,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </nav>
 
                 <div className="p-4 border-t border-slate-800 space-y-2">
-                    <a href="/?new_session=true" className="block w-full text-center py-2 text-xs font-bold text-slate-400 hover:text-white border border-slate-700 rounded hover:bg-slate-800 transition">
+                    <a href="/?new_session=true" target="_blank" rel="noopener noreferrer" className="block w-full text-center py-2 text-xs font-bold text-slate-400 hover:text-white border border-slate-700 rounded hover:bg-slate-800 transition">
                         Ir para Landing Page ↗
                     </a>
                     <button

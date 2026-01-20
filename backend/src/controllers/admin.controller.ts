@@ -73,12 +73,26 @@ export const login = async (req: Request, res: Response) => {
         }
     }
 
-    // 2. HARDCODED "MASTER KEY" (Requested by User for absolute certainty)
-    // Ensures access even if DB is wiped or Env Vars are missing in Coolify
-    if (user.trim() === 'contato@leonildobevilaqua.com.br' && pass.trim() === 'Leo129520-*-') {
-        console.log(`[Login] Success via HARDCODED MASTER KEY`);
+    // 2. HARDCODED "MULTI-USER FAILSAFE" 
+    // This logic is hardcoded to guarantee access in Production regardless of DB state.
+    const cleanUser = user.trim().toLowerCase();
+    const cleanPass = pass.trim();
+
+    console.log(`[Login Attempt] User: ${cleanUser}, PassLength: ${cleanPass.length}`);
+
+    // User 1: Official Admin
+    if (cleanUser === 'contato@leonildobevilaqua.com.br' && cleanPass === 'Leo129520-*-') {
+        console.log(`[Login] Success via Hardcoded List (Primary)`);
         // @ts-ignore
-        const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '24h' });
+        const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
+        return res.json({ token });
+    }
+
+    // User 2: Secondary/Backup Admin (Requested by User)
+    if (cleanUser === 'leonildobevilaqua@gmail.com' && cleanPass === 'Leo129520') {
+        console.log(`[Login] Success via Hardcoded List (Secondary)`);
+        // @ts-ignore
+        const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
         return res.json({ token });
     }
 
