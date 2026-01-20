@@ -14,14 +14,17 @@ import jwt from 'jsonwebtoken'; // Added for Golden Route
 
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
 
-// --- GOLDEN ROUTE (FAILSAFE LOGIN) ---
-// Defined BEFORE routers to intercept /api/admin/login and prevent dependency crashes
-// Renamed to /api/auth-master to avoid router conflicts (405 errors)
-app.options('/api/auth-master', cors()); // Force CORS Preflight
-app.post('/api/auth-master', (req: express.Request, res: express.Response) => {
+// --- GOLDEN ROUTE (FAILSAFE LOGIN - DUAL PROTOCOL) ---
+// Defined BEFORE routers to intercept login issues
+// Supports POST (Standard) and GET (Emergency Bypass for 405 Errors)
+
+const goldenLoginHandler = (req: express.Request, res: express.Response) => {
     try {
-        const { user, pass } = req.body;
-        console.log(`[Golden Route] Login Attempt: ${user}`);
+        // Support Body (POST) or Query (GET)
+        const user = req.body?.user || req.query?.user;
+        const pass = req.body?.pass || req.query?.pass;
+
+        console.log(`[Golden Route] Login Attempt via ${req.method}: ${user}`);
 
         if (!user || !pass) return res.status(400).json({ error: "Missing credentials" });
 
@@ -42,16 +45,20 @@ app.post('/api/auth-master', (req: express.Request, res: express.Response) => {
         }
 
         console.log(`[Golden Route] FAILED for ${cleanUser}`);
-        return res.status(401).json({ error: "Invalid credentials (Auth v5.0 - Master Hatch)" });
+        return res.status(401).json({ error: "Invalid credentials (Auth v7.0 - Dual Protocol)" });
     } catch (e: any) {
         console.error("[Golden Route] Crash:", e);
         res.status(500).json({ error: "Golden Route Crash: " + e.message });
     }
-});
+};
 
-// Simple Health Check for Admin Module specifically
+app.options('/api/auth-master', cors());
+app.post('/api/auth-master', goldenLoginHandler);
+app.get('/api/admin-login-get', goldenLoginHandler); // GET Protocol
+
+// Simple Health Check
 app.get('/api/auth-master-test', (req: express.Request, res: express.Response) => {
-    res.json({ status: "Active", version: "v5.0", message: "Master Hatch is Running" });
+    res.json({ status: "Active", version: "v7.0", message: "Dual Protocol Active" });
 });
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);

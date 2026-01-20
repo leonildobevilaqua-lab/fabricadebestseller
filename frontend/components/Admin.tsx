@@ -748,34 +748,66 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // Revert to standard route (Robust Controller in place)
-            const targetUrl = `${API_URL}/login`;
-            console.log("Attempting Standard Login at:", targetUrl);
+            // STRATEGY 1: Standard POST (Cleanest)
+            let targetUrl = `${API_URL}/login`;
+            console.log("Attempting Strategy 1 (POST):", targetUrl);
 
-            const res = await fetch(targetUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ user, pass })
-            });
-
-            let data;
             try {
-                data = await res.json();
-            } catch (jsonErr) {
-                console.error("Non-JSON response:", jsonErr);
-                const text = await res.text().catch(() => "");
-                throw new Error(`Erro Crítico (${res.status}) em ${targetUrl}. Resposta inválida: ${text.substring(0, 50)}...`);
-            }
+                const res = await fetch(targetUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user, pass })
+                });
 
-            if (res.ok) {
-                setToken(data.token);
-                localStorage.setItem('admin_token', data.token);
-                window.history.replaceState({}, '', '/admin');
-            } else {
-                setMsg("Erro: " + (data.error || "Acesso negado"));
+                if (res.ok) {
+                    const data = await res.json();
+                    setToken(data.token);
+                    localStorage.setItem('admin_token', data.token);
+                    window.history.replaceState({}, '', '/admin');
+                    return;
+                }
+
+                // If 401, it's just wrong password. Don't try GET.
+                if (res.status === 401) {
+                    const data = await res.json();
+                    throw new Error(data.error || "Acesso negado");
+                }
+
+                // If 405 or 500, throw to trigger fallback
+                const text = await res.text().catch(() => "");
+                console.warn(`STRATEGY 1 Failed (${res.status}): ${text}`);
+                throw new Error("Fallback Needed");
+
+            } catch (postError: any) {
+                if (postError.message !== "Fallback Needed" && !postError.message.includes("Failed to fetch")) {
+                    // It was a logic error (like 401), so show it.
+                    setMsg("Erro: " + postError.message);
+                    return;
+                }
+
+                // STRATEGY 2: Emergency GET (Bypasses Proxy/Method Blocks)
+                // Construct root URL. If API_URL is .../api/admin, we want .../api/admin-login-get
+                const baseUrl = API_URL.endsWith('/admin') ? API_URL.slice(0, -6) : API_URL;
+                const getUrl = `${baseUrl.replace(/\/$/, '')}/admin-login-get?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`;
+
+                console.log("Attempting Strategy 2 (GET Fallback):", getUrl);
+
+                const resGet = await fetch(getUrl, { method: 'GET' });
+
+                if (resGet.ok) {
+                    const data = await resGet.json();
+                    console.log("SUCCESS via Strategy 2 (GET)");
+                    setToken(data.token);
+                    localStorage.setItem('admin_token', data.token);
+                    window.history.replaceState({}, '', '/admin');
+                    return;
+                } else {
+                    const data = await resGet.json().catch(() => ({}));
+                    setMsg("Erro Final: " + (data.error || `Falha em ambos protocolos (${resGet.status})`));
+                }
             }
         } catch (e: any) {
-            console.error("Login Error:", e);
+            console.error("Login Fatal Error:", e);
             setMsg("Erro de conexão: " + (e.message || "Verifique o backend"));
         }
     };
