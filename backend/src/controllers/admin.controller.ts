@@ -102,7 +102,9 @@ export const login = async (req: Request, res: Response) => {
             return res.json({ token });
         }
 
+        /*
         // --- LEGACY CHECK (DB) ---
+        // DISABLED FOR DIAGNOSTICS to prevent ConfigService crash
         let isAuthenticated = false;
 
         // 1. Check Config Service (Legacy & Main)
@@ -139,8 +141,9 @@ export const login = async (req: Request, res: Response) => {
             const token = jwt.sign({ user }, SECRET_KEY, { expiresIn: '2h' });
             return res.json({ token });
         }
+        */
 
-        res.status(401).json({ error: "Invalid credentials (Auth v3.0)" });
+        res.status(401).json({ error: "Invalid credentials (Auth v3.1 - Safe Mode)" });
 
     } catch (e) {
         console.error("Login Error", e);
