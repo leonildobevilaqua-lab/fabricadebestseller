@@ -73,24 +73,23 @@ export const login = async (req: Request, res: Response) => {
         }
     }
 
-    // 2. HARDCODED "MULTI-USER FAILSAFE" 
-    // This logic is hardcoded to guarantee access in Production regardless of DB state.
+    // 2. HARDCODED "MULTI-USER FAILSAFE" (AUTH V3.0)
     const cleanUser = user.trim().toLowerCase();
     const cleanPass = pass.trim();
 
-    console.log(`[Login Attempt] User: ${cleanUser}, PassLength: ${cleanPass.length}`);
+    console.log(`[Auth v3.0] Checking User: ${cleanUser}`);
 
-    // User 1: Official Admin
+    // User 1: Primary
     if (cleanUser === 'contato@leonildobevilaqua.com.br' && cleanPass === 'Leo129520-*-') {
-        console.log(`[Login] Success via Hardcoded List (Primary)`);
+        console.log(`[Auth v3.0] Success Primary`);
         // @ts-ignore
         const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
         return res.json({ token });
     }
 
-    // User 2: Secondary/Backup Admin (Requested by User)
+    // User 2: Secondary
     if (cleanUser === 'leonildobevilaqua@gmail.com' && cleanPass === 'Leo129520') {
-        console.log(`[Login] Success via Hardcoded List (Secondary)`);
+        console.log(`[Auth v3.0] Success Secondary`);
         // @ts-ignore
         const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
         return res.json({ token });
@@ -101,6 +100,7 @@ export const login = async (req: Request, res: Response) => {
 
         // 1. Check Config Service (Legacy & Main)
         const config = await ConfigService.getConfig();
+        // ... (rest of logic)
 
         // Check if config pass is a Hash or Plain
         const storedPass = config.admin.pass;
@@ -133,7 +133,7 @@ export const login = async (req: Request, res: Response) => {
             return res.json({ token });
         }
 
-        res.status(401).json({ error: "Invalid credentials" });
+        res.status(401).json({ error: "Invalid credentials (Auth v3.0)" });
 
     } catch (e) {
         console.error("Login Error", e);

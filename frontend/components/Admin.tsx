@@ -753,18 +753,20 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ user, pass })
             });
+            const data = await res.json(); // Clean parse for both success and error
+
             if (res.ok) {
-                const data = await res.json();
                 setToken(data.token);
                 localStorage.setItem('admin_token', data.token);
                 // Clear URL params if logged in
                 window.history.replaceState({}, '', '/admin');
             } else {
-                setMsg("Credenciais Inválidas");
+                // Show specific backend error (e.g. "Invalid credentials v2")
+                setMsg("Erro: " + (data.error || "Acesso negado"));
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error("Login Link Error:", e);
-            setMsg("Erro de conexão (Verifique se o backend está rodando)");
+            setMsg("Erro de conexão: " + (e.message || "Verifique o backend"));
         }
     };
 
