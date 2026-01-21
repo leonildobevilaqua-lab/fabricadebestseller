@@ -26,7 +26,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose, userEmail }
                 let baseUrl = getApiBase();
                 if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
-                const res = await fetch(`${baseUrl}/api/payment/public-config?email=${userEmail}`);
+                const res = await fetch(`${baseUrl}/api/payment/access?email=${userEmail}`);
                 const data = await res.json();
                 setConfig(data);
             } catch (error) {

@@ -1,6 +1,21 @@
 import { BookMetadata, TitleOption, BookProject, Chapter } from '../types';
 
-const API_URL = '/api/projects';
+// Robust URL Resolution Strategy
+export const getApiBase = () => {
+    const env = (import.meta as any).env.VITE_API_URL;
+    if (env) return env;
+    const custom = localStorage.getItem('admin_api_url');
+    if (custom) return custom.trim();
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return '';
+    return window.location.origin;
+};
+
+let BASE_URL = getApiBase();
+if (BASE_URL.endsWith('/')) BASE_URL = BASE_URL.slice(0, -1);
+
+const API_URL = `${BASE_URL}/api/projects`;
+const PAYMENT_URL = `${BASE_URL}/api/payment`;
 
 export const createProject = async (authorName: string, topic: string, language?: string, contact?: any, forceNew?: boolean): Promise<BookProject> => {
     const res = await fetch(API_URL, {
@@ -50,7 +65,7 @@ export const updateProject = async (id: string, data: any): Promise<void> => {
 
 export const useCredit = async (email: string): Promise<boolean> => {
     try {
-        const res = await fetch('/api/payment/use', {
+        const res = await fetch(`${PAYMENT_URL}/use`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
@@ -64,7 +79,7 @@ export const useCredit = async (email: string): Promise<boolean> => {
 };
 
 export const createLead = async (data: any): Promise<any> => {
-    const res = await fetch('/api/payment/leads', {
+    const res = await fetch(`${PAYMENT_URL}/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)

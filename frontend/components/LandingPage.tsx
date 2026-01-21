@@ -1193,7 +1193,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                                             name: formData.name,
                                                                                             email: formData.email,
                                                                                             phone: formData.phone
-                                                                                        });
+                                                                                        }, bookData); // Pass bookData to persist topic info
                                                                                     } else {
                                                                                         const txt = await res.text();
                                                                                         alert(`❌ Erro no Servidor (${res.status}):\n${txt}`);

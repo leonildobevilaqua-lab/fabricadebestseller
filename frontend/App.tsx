@@ -52,9 +52,11 @@ const App: React.FC = () => {
   useEffect(() => {
     if (hasAccess && userContact?.email) {
       // Check for JUST ACTIVATED flag
+      let isJustActivated = false;
       if (localStorage.getItem('bsf_plan_just_activated') === 'true') {
         setShowWelcome(true);
         localStorage.removeItem('bsf_plan_just_activated');
+        isJustActivated = true;
       }
 
       // Create a specific check to verify if this user SHOULD be here
@@ -62,7 +64,9 @@ const App: React.FC = () => {
         .then(r => r.json())
         .then(d => {
           // If backend says NO access, but frontend has Access, it means state is dirty.
-          if (d.success && !d.hasAccess) {
+          // EXCEPTION: If user Just Activated a plan, they have 0 credits but should remain logged in
+          // to see the Welcome Modal and Pay for the first book.
+          if (d.success && !d.hasAccess && !isJustActivated) {
             console.warn("State Mismatch: Backend denies access. Resetting App.");
             resetApp();
           }

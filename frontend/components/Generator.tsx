@@ -217,12 +217,39 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     const init = async () => {
       try {
         const p = await API.createProject(metadata.authorName, metadata.topic, language, userContact, true);
+
+        if ((p as any).error || !p.id) {
+          console.warn("Project Create Failed:", p);
+          // It's likely a payment/credit issue
+          if (userContact?.email) {
+            // Check access status to be sure
+            fetch(`/api/payment/check-access?email=${userContact.email}`)
+              .then(r => r.json())
+              .then(access => {
+                setUpsellOffer({
+                  price: access.bookPrice,
+                  link: access.checkoutUrl,
+                  level: access.discountLevel
+                });
+                setShowUpsell(true);
+                // Also set a visible error state so it doesn't spin forever
+                setError("Aguardando confirmação de pagamento para iniciar...");
+              })
+              .catch(err => {
+                console.error("Access check fail", err);
+                setError("Erro ao verificar status. Tente recarregar.");
+              });
+            return;
+          }
+          throw new Error((p as any).error || "Failed to create project");
+        }
+
         setProjectId(p.id);
         setProject(p);
 
         // Only start research if it's a new (IDLE) project to avoid resetting active projects
         if (p.metadata.status === 'IDLE') {
-          await API.startResearch(p.id);
+          await API.startResearch(p.id, language);
         }
       } catch (e: any) {
         console.error("Project Init Error:", e);
@@ -238,10 +265,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 level: access.discountLevel
               });
               setShowUpsell(true);
+              setError("Pagamento necessário para iniciar.");
             })
             .catch(err => console.error("Access check fail", err));
-
-          // Don't show generic error, show Modal
           return;
         }
 

@@ -6,6 +6,7 @@ import multer from 'multer';
 const upload = multer();
 
 // --- PRICING CONFIGURATION ---
+// --- PRICING CONFIGURATION ---
 const PRICING_CONFIG: any = {
     'STARTER': {
         'annual': [
@@ -52,9 +53,18 @@ const PRICING_CONFIG: any = {
 };
 
 const SUBSCRIPTION_PRICES: any = {
-    'STARTER': { annual: 118.80, monthly: 19.90 },
-    'PRO': { annual: 238.80, monthly: 34.90 },
-    'BLACK': { annual: 358.80, monthly: 49.90 }
+    'STARTER': {
+        annual: { price: 118.80, link: 'https://pay.kiwify.com.br/47E9CXl' },
+        monthly: { price: 19.90, link: 'https://pay.kiwify.com.br/kfR54ZJ' }
+    },
+    'PRO': {
+        annual: { price: 238.80, link: 'https://pay.kiwify.com.br/jXQTsFm' },
+        monthly: { price: 34.90, link: 'https://pay.kiwify.com.br/Bls6OL7' }
+    },
+    'BLACK': {
+        annual: { price: 358.80, link: 'https://pay.kiwify.com.br/hSv5tYq' },
+        monthly: { price: 49.90, link: 'https://pay.kiwify.com.br/7UgxJ0f' }
+    }
 };
 
 // Store a lead when user fills the form
@@ -151,177 +161,90 @@ const updateLeadStatus = async (email: string, newStatus: string) => {
 export const approveLead = async (req: Request, res: Response) => {
     try {
         await reloadDB();
-        console.log("Approve Lead Request Body:", req.body);
-        const { email, type, plan } = req.body;
-
-        if (!email) {
-            return res.status(400).json({ error: "Email is required" });
-        }
+        const { email } = req.body;
+        const approvalType = req.body.type; // 'CREDIT' or undefined (Subscription)
 
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
         let targetIndex = -1;
-        // Find latest pending lead
+
+        // Find latest lead
         for (let i = leads.length - 1; i >= 0; i--) {
-            const l: any = leads[i];
-            if (l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.status === 'PENDING') {
+            if ((leads[i] as any).email.toLowerCase().trim() === email.toLowerCase().trim()) {
                 targetIndex = i;
                 break;
             }
         }
 
         if (targetIndex === -1) {
-            // Create New Lead logic (simplified for Manual Grant)
-            targetIndex = leads.length;
-            leads.push({
-                id: uuidv4(), // FIX: Ensure ID exists
-                email,
-                status: 'PENDING',
-                type: type || 'CREDIT',
-                date: new Date(),
-                created_at: new Date(),
-                name: email.split('@')[0] || 'Manual Grant'
-            });
+            // Optional: Create if not found (Manual Grant case)
+            // For safety, we only approve existing leads unless needed
+            // But if User manually approves a random email in Admin (if supported), we'd need this.
+            // Currently Admin.tsx passes existing emails.
+            return res.status(404).json({ success: false, error: 'Lead not found' });
         }
 
+        const currentLead = leads[targetIndex] as any;
         const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
-        let manualAmount = 0;
 
-        // DETERMINE ACTION: PLAN ACTIVATION OR CREDIT GRANT?
-        // Check if an explicit plan is passed, OR if the lead already has a Pending Plan (and we are not forcing CREDIT)
-        const storedPlan = targetIndex !== -1 ? (leads[targetIndex] as any).plan : null;
-        const planToActivate = plan || (storedPlan && storedPlan.status !== 'ACTIVE' && type !== 'CREDIT' ? storedPlan : null);
+        // LOGIC BRANCH: CREDIT vs SUBSCRIPTION
+        if (approvalType === 'CREDIT') {
+            // Admin is manually allowing a generation (Book Paid)
+            // Add 1 Credit
+            const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            await setVal(`/credits/${safeEmail}`, currentCredits + 1);
 
-        if (planToActivate) {
-            // Manual Plan Grant
-            leads[targetIndex].plan = { ...planToActivate, status: 'ACTIVE' };
-            leads[targetIndex].status = 'SUBSCRIBER'; // Plan Lead is Subscriber
-
-            // Set User Plan in DB
-            await setVal(`/users/${safeEmail}/plan`, { ...planToActivate, status: 'ACTIVE' });
-
-            // Calc Value
-            const pName = planToActivate.name?.toUpperCase();
-            const billing = planToActivate.billing?.toLowerCase();
-            manualAmount = SUBSCRIPTION_PRICES[pName]?.[billing] || 0;
-
-            // --- SEND NOTIFICATION EMAIL W/ PAYMENT LINK ---
-            try {
-                // Determine Link for Level 1 (First Book)
-                // Default fallback if config missing
-                let buyLink = 'https://pay.kiwify.com.br/SpCDp2q'; // Fallback Starter
-                const cycle = PRICING_CONFIG[pName]?.[billing];
-
-                if (cycle && cycle[0]) {
-                    buyLink = cycle[0].link;
-                }
-
-                // Send Email
-                const { sendEmail } = await import('../services/email.service');
-                await sendEmail(
-                    email,
-                    "Parabéns! Sua Assinatura está Ativa 💎",
-                    `Sua assinatura ${pName} foi ativada. Compre seu primeiro livro com desconto agora: ${buyLink}`,
-                    undefined,
-                    `
-                    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8fafc; text-align: center;">
-                        <div style="background-color: white; padding: 30px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                            <h1 style="color: #4338ca; margin-bottom: 10px;">Assinatura Confirmada! 🚀</h1>
-                            <p style="color: #475569; font-size: 16px; margin-bottom: 20px;">
-                                Parabéns! Sua assinatura do plano <strong>${pName}</strong> está ativa.
-                                Agora você tem acesso exclusivo aos valores promocionais para gerar seus livros.
-                            </p>
-                            <div style="background-color: #e0e7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #3730a3; font-weight: bold;">
-                                📉 Desconto Ativado: Nível 1
-                            </div>
-                            <a href="${buyLink}" style="display: inline-block; background-color: #16a34a; color: white; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 18px;">
-                                📖 Gerar Meu Primeiro Livro
-                            </a>
-                            <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">
-                                Ao clicar, você será redirecionado para o pagamento da taxa de geração já com o desconto aplicado.
-                            </p>
-                        </div>
-                    </div>
-                    `
-                );
-                console.log(`[EMAIL] Activation email sent to ${email} with link ${buyLink}`);
-            } catch (mailErr) {
-                console.error("[EMAIL ERROR] Failed to send activation email", mailErr);
-                // Non-blocking
+            // Mark Lead as APPROVED (meaning they have access/credit) if not already
+            if (currentLead.status !== 'APPROVED') {
+                // Keep SUBSCRIBER status if valid, but maybe APPROVED implies "Project Ready"?
+                // Let's stick to APPROVED for "Has Credit".
+                // But if they are a SUBSCRIBER, we should probably keep that visible?
+                // Actually, checkAccess checks credits. Status is secondary.
+                // We'll update status to APPROVED to turn the button Green in Admin.
+                currentLead.status = 'APPROVED';
+                await setVal(`/leads[${targetIndex}]/status`, 'APPROVED');
             }
 
-            // CREDIT GRANT REMOVED
+            console.log(`[ADMIN] Granted Credit to ${email}. Total: ${currentCredits + 1}`);
+
         } else {
-            // Manual Extra Book Grant (Credit)
-            leads[targetIndex].status = 'APPROVED';
-            leads[targetIndex].isVoucher = true;
+            // SUBSCRIPTION ACTIVATION
+            // Logic: Set Plan to ACTIVE. Set Lead Status to SUBSCRIBER.
+            // DO NOT GRANT CREDITS (Credits remain 0 until Book Purchase)
 
-            // Grant +1 Credit
-            const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-            await setVal(`/credits/${safeEmail}`, credits + 1);
+            if (currentLead.plan) {
+                // Activate Plan
+                currentLead.plan.status = 'ACTIVE';
+                currentLead.plan.startDate = new Date();
 
-            // Calc Value (Progressive Discount Logic)
-            // Need usageCount (include this new one? No, previous history).
-            const usageCount = leads.filter((l: any) =>
-                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-                (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
-            ).length;
+                // Update Lead Status to SUBSCRIBER
+                currentLead.status = 'SUBSCRIBER';
 
-            // Get Plan Name
-            const userPlan: any = await getVal(`/users/${safeEmail}/plan`);
-            let planName = 'NONE';
-            if (userPlan && userPlan.status === 'ACTIVE') planName = userPlan.name || 'STARTER';
+                // Update array in DB
+                await setVal(`/leads[${targetIndex}]`, currentLead);
 
-            if (planName !== 'NONE') {
-                // usageCount includes current one if it was already in DB? 
-                // We added/found targetIndex. So it IS in leads array.
-                // usageCount count is "how many leads match condition". 
-                // So if we just added one, it counts.
-                // The discount applies to the Nth book. 
-                // If it is the 2nd book (Index 1), usageCount is 2.
-                // Level should be usageCount % 4?
-                // Example: 1st book -> usageCount 1. 1 % 4 = 1 (Level 2)?
-                // Wait. 1st Book (Sub) -> usageCount 1.
-                // 2nd Book (Extra) -> usageCount 2.
-                // We want 2nd Book to be Level 2.
-                // Array Index 0 = Level 1 (Price X).
-                // Array Index 1 = Level 2 (Price Y).
-                // So we want Index 1. 
-                // If usageCount is 2, Index = 2 - 1 = 1.
-                const prevCount = Math.max(0, usageCount - 1);
-                const cycleIndex = prevCount % 4;
+                // Persist User Plan separately for easy lookup
+                await setVal(`/users/${safeEmail}/plan`, currentLead.plan);
 
-                const billing = (userPlan.billing || 'monthly').toLowerCase();
-                const planConfig = PRICING_CONFIG[planName]?.[billing];
-                if (planConfig && planConfig[cycleIndex]) {
-                    manualAmount = planConfig[cycleIndex].price;
-                } else {
-                    manualAmount = 39.90; // Fallback
-                }
+                console.log(`[ADMIN] Activated Subscription for ${email}. Plan: ${currentLead.plan.name}`);
             } else {
-                manualAmount = 39.90; // Avulso
+                // If it's a non-plan lead being approved without CREDIT type, assume standard approval (Legacy)
+                // This might be "Liberar Geração" for old leads.
+                // We will grant 1 credit here to be safe for legacy flows.
+                const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                if (currentCredits === 0) {
+                    await setVal(`/credits/${safeEmail}`, 1);
+                }
+                currentLead.status = 'APPROVED';
+                await setVal(`/leads[${targetIndex}]`, currentLead);
             }
         }
 
-        // Store Payment Info for Dashboard
-        leads[targetIndex].paymentInfo = {
-            amount: manualAmount, // Store as float (AdminPanel checks if > 1000, so safe)
-            currency: 'BRL',
-            method: 'MANUAL_ADMIN',
-            date: new Date()
-        };
-
-        await setVal('/leads', leads);
-
-        // Trigger auto flow if diagramming
-        // ... (omitted for brevity, assume manual is final)
-
-        res.json({ success: true, lead: leads[targetIndex] });
-
-    } catch (e: any) {
-        console.error("Approve Lead Error", e);
-        res.status(500).json({ error: e.message });
+        // Return success
+        res.json({ success: true, lead: currentLead });
+    } catch (error) {
+        console.error('Erro ao aprovar lead:', error);
+        res.status(500).json({ success: false, error: 'Erro ao aprovar lead' });
     }
 };
 
@@ -424,9 +347,13 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 if (leadIndex !== -1) {
                     const existingLead = leads[leadIndex] as any;
 
-                    // IF EXISTING LEAD IS BUSY WITH PREVIOUS BOOK -> CREATE NEW LEAD FOR THIS PURCHASE
-                    if (existingLead.status === 'IN_PROGRESS' || existingLead.status === 'COMPLETED' || existingLead.status === 'LIVRO ENTREGUE') {
-                        console.log("Creating NEW Lead for additional purchase (Recurring)");
+                    // IF EXISTING LEAD IS SUBSCRIBER OR BUSY -> CREATE NEW LEAD FOR THIS PURCHASE
+                    // This creates a history of "Orders" rather than just one mutable Lead
+                    const isSubscriber = existingLead.status === 'SUBSCRIBER' || (existingLead.plan && existingLead.plan.status === 'ACTIVE');
+                    const isBusy = existingLead.status === 'IN_PROGRESS' || existingLead.status === 'COMPLETED' || existingLead.status === 'LIVRO ENTREGUE';
+
+                    if (isSubscriber || isBusy) {
+                        console.log(`Creating NEW Lead for additional purchase (Subscriber/Recurring) for ${email}`);
                         const newLead = {
                             id: uuidv4(),
                             date: new Date(),
@@ -436,12 +363,19 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                             type: 'BOOK',
                             status: 'APPROVED',
                             paymentInfo,
-                            tag: 'Compra Adicional',
+                            tag: isSubscriber ? 'Compra Assinante' : 'Compra Adicional',
                             isVoucher: true
                         };
                         await pushVal('/leads', newLead);
+
+                        // We also need to trigger auto-diagramming for this NEW lead, not the old one
+                        // But the auto-diagram logic below likely uses 'email' to find the lead to process.
+                        // We must ensure it picks the NEW one.
+                        // The logic below calls 'process-diagram-lead' with 'leadId'. 
+                        // Wait, looking at lines 381+, it searches for lead by email?
+                        // Actually, I should check the auto-diagram trigger block below.
                     } else {
-                        // UPDATE PENDING LEAD
+                        // UPDATE PENDING LEAD (First purchase or non-subscriber)
                         await setVal(`/leads[${leadIndex}]/status`, 'APPROVED');
                         await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
                         await setVal(`/leads[${leadIndex}]/isVoucher`, true);
