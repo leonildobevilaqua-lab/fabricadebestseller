@@ -7,6 +7,7 @@ import path from 'path';
 const app = express();
 
 app.use(cors());
+app.options('*', cors()); // Enable Pre-Flight for ALL routes
 app.use(express.json());
 
 import paymentRoutes from './routes/payment.routes';
