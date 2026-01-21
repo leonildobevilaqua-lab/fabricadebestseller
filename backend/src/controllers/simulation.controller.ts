@@ -1,9 +1,10 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { setVal, getVal, pushVal } from '../services/db.service';
+import { setVal, getVal, pushVal, reloadDB } from '../services/db.service';
 
 export const simulateWebhook = async (req: Request, res: Response) => {
     try {
+        await reloadDB(); // Force sync with disk to ensure we have latest data
         const { plan, billing, user } = req.body;
 
         if (!user || !user.email) {

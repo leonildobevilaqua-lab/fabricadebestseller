@@ -60,6 +60,7 @@ const SUBSCRIPTION_PRICES: any = {
 // Store a lead when user fills the form
 export const createLead = async (req: Request, res: Response) => {
     try {
+        await reloadDB();
         const { name, email, phone, countryCode, type, topic, authorName, tag, plan, discount } = req.body;
         // Create a unique ID or use email
         const id = new Date().getTime().toString();
@@ -281,6 +282,7 @@ export const approveLead = async (req: Request, res: Response) => {
 
 export const handleKiwifyWebhook = async (req: Request, res: Response) => {
     try {
+        await reloadDB();
         const payload = req.body;
         console.log("Kiwify Webhook Received:", JSON.stringify(payload));
 

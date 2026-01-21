@@ -387,6 +387,7 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 export const getOrders = async (req: Request, res: Response) => {
     try {
+        await reloadDB();
         const orders = await getVal('/orders') || [];
         res.json(orders);
     } catch (e: any) {

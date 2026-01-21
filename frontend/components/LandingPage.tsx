@@ -1155,25 +1155,52 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         onClick={async () => {
                                                                             if (confirm(`SIMULAR PAGAMENTO DA ASSINATURA?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}\nPlano: ${pName} (${billing})`)) {
 
-                                                                                const url = ((import.meta as any).env.VITE_API_URL || '') + '/api/payment/simulate-webhook';
+                                                                                // Robust URL Resolution
+                                                                                const getBase = () => {
+                                                                                    // 1. Try Environemnt Variable (Build Time)
+                                                                                    const env = (import.meta as any).env.VITE_API_URL;
+                                                                                    if (env) return env;
 
-                                                                                await fetch(url, {
-                                                                                    method: 'POST',
-                                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                                    body: JSON.stringify({
-                                                                                        plan: pName,
-                                                                                        billing: billing,
-                                                                                        user: {
-                                                                                            name: formData.name,
-                                                                                            email: formData.email,
-                                                                                            phone: formData.phone,
-                                                                                            cpf: "123.456.789-00 (Simulado)",
-                                                                                            cardLast4: "4242"
-                                                                                        }
-                                                                                    })
-                                                                                });
-                                                                                alert("Simulação enviada! O Admin deve aprovar o plano para liberar o desconto.\n\nAguarde a aprovação para continuar.");
-                                                                                // Ideally refresh status
+                                                                                    // 2. Localhost fallback
+                                                                                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return '';
+
+                                                                                    // 3. Production: Assume same origin implies proxy, OR specific domain
+                                                                                    // If your backend is on a different port/domain in prod, CHANGE THIS.
+                                                                                    return window.location.origin;
+                                                                                };
+
+                                                                                let baseUrl = getBase();
+                                                                                // Remove trailing slash if present to avoid double slash
+                                                                                if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+
+                                                                                const url = `${baseUrl}/api/payment/simulate-webhook`;
+
+                                                                                try {
+                                                                                    const res = await fetch(url, {
+                                                                                        method: 'POST',
+                                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                                        body: JSON.stringify({
+                                                                                            plan: pName,
+                                                                                            billing: billing,
+                                                                                            user: {
+                                                                                                name: formData.name,
+                                                                                                email: formData.email,
+                                                                                                phone: formData.phone,
+                                                                                                cpf: "123.456.789-00 (Simulado)",
+                                                                                                cardLast4: "4242"
+                                                                                            }
+                                                                                        })
+                                                                                    });
+
+                                                                                    if (res.ok) {
+                                                                                        alert("✅ Simulação enviada com SUCESSO!\n\nO Admin deve aprovar o plano para liberar o desconto.\nAguarde a aprovação para continuar.");
+                                                                                    } else {
+                                                                                        const txt = await res.text();
+                                                                                        alert(`❌ Erro no Servidor (${res.status}):\n${txt}`);
+                                                                                    }
+                                                                                } catch (err: any) {
+                                                                                    alert(`❌ Erro de Conexão:\n\nTentativa em: ${url}\nErro: ${err.message}\n\nVerifique se o backend está rodando e acessível.`);
+                                                                                }
                                                                             }
                                                                         }}
                                                                         className="w-full bg-green-600/80 hover:bg-green-600 text-white font-bold py-3 rounded-lg text-sm shadow transition-all flex items-center justify-center gap-2"
