@@ -48,49 +48,62 @@ const RotatingMessage = ({ messages }: { messages: string[] }) => {
   );
 };
 
+
+import { PaymentGate } from './PaymentGate';
+
 export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, onReset, language, userContact, setAppStep }) => {
   const t = { pt, en, es }[language].generator;
   const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<BookProject | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Custom State for Factory Intro
+  const [isManufacturing, setIsManufacturing] = useState(true); // Start true to show Intro
+  const [factoryStep, setFactoryStep] = useState(0); // 0..3 for texts
+  const [showPaymentGate, setShowPaymentGate] = useState(false); // Controls the Payment Screen
+
   // Hoist metadata extraction for Effects
   const { status, progress, statusMessage } = project?.metadata || ({} as any);
 
-  // Dedication flow state (Lifted from conditional block)
+  // Dedication flow state
   const [dedication, setDedication] = useState("");
   const [ack, setAck] = useState("");
   const [sending, setSending] = useState(false);
   const [products, setProducts] = useState<any>({});
 
-  // Extra states moved to top level to avoid hook errors
   const [dedicationTo, setDedicationTo] = useState("");
   const [ackTo, setAckTo] = useState("");
   const [aboutAuthorContext, setAboutAuthorContext] = useState("");
-  const [aboutAuthor, setAboutAuthor] = useState(""); // Result
+  const [aboutAuthor, setAboutAuthor] = useState("");
 
   const [generatingExtras, setGeneratingExtras] = useState(false);
 
-  // Upsell State
-  const [showUpsell, setShowUpsell] = useState(false);
+  // Upsell Offer State
   const [upsellOffer, setUpsellOffer] = useState<any>(null);
+  const [showUpsell, setShowUpsell] = useState(false); // Used for POST-gen upsell
 
+  // Factory Intro Effect
   useEffect(() => {
-    if (showUpsell && userContact?.email) {
-      fetch(`/api/payment/check-access?email=${userContact.email}`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.checkoutUrl) {
-            setUpsellOffer({
-              price: data.bookPrice,
-              link: data.checkoutUrl,
-              level: data.discountLevel
-            });
+    if (isManufacturing) {
+      const timer = setInterval(() => {
+        setFactoryStep(prev => {
+          if (prev >= 3) {
+            clearInterval(timer);
+            return 3;
           }
-        })
-        .catch(e => console.error("Upsell fetch error", e));
+          return prev + 1;
+        });
+      }, 1500); // 1.5s per text
+
+      // End animation after ~6 seconds, THEN try to create project
+      const finishTimer = setTimeout(() => {
+        setIsManufacturing(false); // Hide Animation
+        initProject(); // Trigger actual logic
+      }, 6000);
+
+      return () => { clearInterval(timer); clearTimeout(finishTimer); };
     }
-  }, [showUpsell, userContact]);
+  }, [isManufacturing]);
 
   // Refine Research State
   const [isRefining, setIsRefining] = useState(false);
@@ -161,37 +174,6 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       console.error("Failed to sync status to backend", e);
     }
 
-    // Trigger download logic REMOVED - User processes download manually in COMPLETED screen
-    /*
-    try {
-      const introChapter = project.structure.find(c => c.id === 0 || ['introdução', 'introduction', 'introducción'].some(term => c.title.toLowerCase().includes(term)));
-      const introContent = introChapter ? introChapter.content : "";
-      const mainChapters = project.structure.filter(c => c.id !== 0 && !['introdução', 'introduction', 'introducción'].some(term => c.title.toLowerCase().includes(term)));
-
-      const content = {
-        introduction: introContent,
-        chapters: mainChapters,
-        conclusion: "",
-        dedication: dedication,
-        acknowledgments: ack,
-        aboutAuthor: aboutAuthor,
-        marketing: project.marketing!
-      };
-      const blob = await generateDocx(updatedProject.metadata, content);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const safeTitle = (updatedProject.metadata.bookTitle || 'livro').replace(/[^a-z0-9à-ú ]/gi, '_');
-      a.download = `${safeTitle}.docx`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    } catch (e) {
-      console.error("Download error:", e);
-      alert(t.errorCreatingDocx);
-    }
-    */
-
     updateMetadata({ dedication, acknowledgments: ack, status: 'COMPLETED', progress: 100 });
     setProject(updatedProject);
     setSending(false);
@@ -199,83 +181,125 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   const initialized = useRef(false);
 
-  // Load Products (Public Config)
-  useEffect(() => {
-    fetch('/api/payment/config')
-      .then(res => res.json())
-      .then(data => setProducts(data.products || {}))
-      .catch(console.error);
-  }, []);
-
-  // Initialize Project
-  useEffect(() => {
+  const initProject = async () => {
     if (initialized.current) return;
     initialized.current = true;
 
-    setAppStep(2); // Start at step 2 (Research)
+    setAppStep(2);
 
-    const init = async () => {
-      try {
-        const p = await API.createProject(metadata.authorName, metadata.topic, language, userContact, true);
+    try {
+      const p = await API.createProject(metadata.authorName, metadata.topic, language, userContact, true);
 
-        if ((p as any).error || !p.id) {
-          console.warn("Project Create Failed:", p);
-          // It's likely a payment/credit issue
-          if (userContact?.email) {
-            // Check access status to be sure
-            fetch(`/api/payment/check-access?email=${userContact.email}`)
-              .then(r => r.json())
-              .then(access => {
-                setUpsellOffer({
-                  price: access.bookPrice,
-                  link: access.checkoutUrl,
-                  level: access.discountLevel
-                });
-                setShowUpsell(true);
-                // Also set a visible error state so it doesn't spin forever
-                setError("Aguardando confirmação de pagamento para iniciar...");
-              })
-              .catch(err => {
-                console.error("Access check fail", err);
-                setError("Erro ao verificar status. Tente recarregar.");
-              });
-            return;
-          }
-          throw new Error((p as any).error || "Failed to create project");
-        }
-
-        setProjectId(p.id);
-        setProject(p);
-
-        // Only start research if it's a new (IDLE) project to avoid resetting active projects
-        if (p.metadata.status === 'IDLE') {
-          await API.startResearch(p.id, language);
-        }
-      } catch (e: any) {
-        console.error("Project Init Error:", e);
-
-        // Use Upsell as "Pay Wall" if createProject failed (likely 403 No Credits)
+      if ((p as any).error || !p.id) {
+        console.warn("Project Create Failed:", p);
+        // Payment Required Logic
         if (userContact?.email) {
           fetch(`/api/payment/check-access?email=${userContact.email}`)
             .then(r => r.json())
             .then(access => {
               setUpsellOffer({
                 price: access.bookPrice,
+                planName: access.plan?.name || "STARTER", // Pass Plan Name
                 link: access.checkoutUrl,
-                level: access.discountLevel
+                level: access.discountLevel,
+                subscriptionPrice: access.plan?.price || 49.90, // Infer
+                subscriptionLink: access.plan?.link || "#" // Infer or fetch
               });
-              setShowUpsell(true);
-              setError("Pagamento necessário para iniciar.");
+              setShowPaymentGate(true); // Show Gate
+              setError("Aguardando Pagamento...");
             })
-            .catch(err => console.error("Access check fail", err));
+            .catch(err => {
+              console.error("Access check fail", err);
+              setError("Erro ao verificar status.");
+            });
           return;
         }
-
-        setError(t.serverConnectionError);
+        throw new Error((p as any).error || "Failed to create project");
       }
-    };
-    init();
-  }, [metadata.authorName, metadata.topic]);
+
+      setProjectId(p.id);
+      setProject(p);
+
+      if (p.metadata.status === 'IDLE') {
+        await API.startResearch(p.id, language);
+      }
+    } catch (e: any) {
+      console.error("Project Init Error:", e);
+      if (userContact?.email) {
+        fetch(`/api/payment/check-access?email=${userContact.email}`)
+          .then(r => r.json())
+          .then(access => {
+            setUpsellOffer({
+              price: access.bookPrice,
+              planName: access.plan?.name || "STARTER",
+              link: access.checkoutUrl,
+              level: access.discountLevel
+            });
+            setShowPaymentGate(true); // Show Gate
+          })
+          .catch(err => console.error(err));
+        return;
+      }
+      setError(t.serverConnectionError);
+    }
+  };
+
+  // Skip the useEffect init since we call it manually after animation
+  // useEffect(() => {
+  //   if (initialized.current) return;
+  //   initialized.current = true;
+  //   setAppStep(2);
+  //   const init = async () => { ... }
+  //   init();
+  // }, [metadata.authorName, metadata.topic]);
+
+  // RENDER CUSTOM FACTORY INTRO
+  if (isManufacturing) {
+    const messages = [
+      "Verificando os dados informados...",
+      "Validando o Tema/Assunto do livro...",
+      "Preparando as máquinas para começar a produzir seu futuro Best Seller...",
+      "Tudo pronto para começar..."
+    ];
+
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8">
+        <div className="mb-12 relative w-32 h-32 flex items-center justify-center">
+          {/* Gear Animation */}
+          <svg className="w-32 h-32 text-slate-800 animate-spin-slow absolute opacity-20" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+          <div className="text-6xl animate-bounce">🏭</div>
+        </div>
+
+        <h2 className="text-2xl font-bold text-slate-700 mb-4 animate-pulse">
+          {messages[factoryStep]}
+        </h2>
+
+        <div className="w-64 h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-indigo-500 transition-all duration-1000 ease-linear"
+            style={{ width: `${(factoryStep + 1) * 25}%` }}
+          ></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showPaymentGate) {
+    return (
+      <PaymentGate
+        isOpen={true}
+        planName={upsellOffer?.planName || "STARTER"}
+        bookPrice={upsellOffer?.price || 39.90}
+        subscriptionPrice={upsellOffer?.subscriptionPrice || 49.90}
+        checkoutUrl={upsellOffer?.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"} // FIX: Ensure this is the PLAN Link not Book Link? 
+        // Logic: If user is Pending Sub, they need PLAN link. If they are Sub but no credits, they need BOOK link.
+        // Usually Admin sets Plan Link in backend 'payment.controller'.
+        userEmail={userContact?.email}
+        onConfirmPayment={() => window.location.reload()} // Just reload to re-check everything cleanly
+      />
+    );
+  }
+
 
   const [retryCount, setRetryCount] = useState(0);
 
