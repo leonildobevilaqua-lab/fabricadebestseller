@@ -337,7 +337,7 @@ export const writeChapter = async (
             
             Current Section: "${subtopic}"
             
-            TASK: Write a DETAILED section for this specific topic (approx 500 words).
+            TASK: Write a DETAILED section for this specific topic (approx 450 words).
             This is a "Deep Dive" chapter. Do not summarize.
             Include detailed examples, actionable advice, step-by-step instructions, and deep theoretical analysis.
             Do NOT repeat the introduction. Dive deep.
@@ -373,7 +373,7 @@ export const writeChapter = async (
         Research Context: ${researchContext}
         CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
         TASK: Write the full content for this chapter.
-        CRITICAL: Write a comprehensive chapter. Target length: 2500 words.
+        CRITICAL: Write a comprehensive chapter. Target length: 2200 words.
         Cover 5 distinct subtopics in detailed depth.
         LANGUAGE: ${langName}.
       `;

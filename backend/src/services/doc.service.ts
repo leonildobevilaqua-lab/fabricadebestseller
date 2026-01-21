@@ -472,10 +472,17 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     // PÁGINA 5 (Direita/Ímpar) - AGRADECIMENTO
     // (Force placement even if empty to maintain structure)
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
         children: [
-            createTitle("AGRADECIMENTOS"),
-            ...(content.acknowledgments ? createTextParams(content.acknowledgments) : [new Paragraph({ text: "[Espaço para Agradecimentos]" })])
+            new Paragraph({
+                children: [new TextRun({ text: "AGRADECIMENTOS", bold: true, font: "Garamond", size: 24 })],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 2000 } // Push content down slightly if needed, but VerticalAlign.CENTER does most work
+            }),
+            ...(content.acknowledgments ? createTextParams(content.acknowledgments) : [new Paragraph({
+                children: [new TextRun({ text: "[Espaço para Agradecimentos]", font: "Garamond", size: 24 })],
+                alignment: AlignmentType.CENTER
+            })])
         ],
         headers: { default: new Header({ children: [] }) },
         footers: { default: new Footer({ children: [] }) },
@@ -501,10 +508,10 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
             new Paragraph({
                 children: [new TextRun({ text: "DEDICATÓRIA", bold: true, font: "Garamond", size: 24 })],
                 alignment: AlignmentType.CENTER,
-                spacing: { after: 800 }
+                spacing: { after: 2000 }
             }),
             new Paragraph({
-                children: [new TextRun({ text: content.dedication || "[Espaço para Dedicatória]", italics: true, font: "Garamond", size: 24 })],
+                children: [new TextRun({ text: content.dedication || "[Espaço para Dedicatória]", font: "Garamond", size: 24, italics: false })],
                 alignment: AlignmentType.CENTER,
                 indent: { left: 1440, right: 1440 }
             })
@@ -664,18 +671,23 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     const aboutContent = isProOrBlack && content.aboutAuthor
         ? createTextParams(content.aboutAuthor)
         : [new Paragraph({
-            children: [new TextRun({ text: "[ESPAÇO DESTINADO AS INFORMAÇÕES SOBRE O(A) AUTOR(A)]", color: "888888", italics: true })],
+            children: [new TextRun({ text: "[Espaço para Sobre o Autor]", color: "000000", italics: false })],
             alignment: AlignmentType.CENTER
         })];
 
     sections.push({
         properties: {
             page: basePageConfig,
+            verticalAlign: VerticalAlign.CENTER, // Force Center
             type: SectionType.ODD_PAGE,
             titlePage: true,
         },
         children: [
-            createTitle(authorTitle),
+            new Paragraph({
+                children: [new TextRun({ text: authorTitle, bold: true, font: "Garamond", size: 24 })],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 2000 }
+            }),
             ...aboutContent
         ],
         headers: {

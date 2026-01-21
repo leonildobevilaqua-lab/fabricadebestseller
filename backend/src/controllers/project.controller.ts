@@ -9,6 +9,7 @@ import * as StorageService from '../services/storage.service';
 import path from 'path';
 import mammoth from 'mammoth';
 import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
 
 const upload = multer();
 
@@ -39,6 +40,57 @@ export const create = async (req: Request, res: Response) => {
         }
 
         const project = await QueueService.createProject({ authorName, topic, language, contact });
+
+        // --- CRITICAL FIX: Ensure Lead Exists for Admin Panel Visibility ---
+        if (contact && contact.email) {
+            try {
+                const rawLeads = await getVal('/leads') || [];
+                const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+                let leadIndex = -1;
+                // Search backwards for latest
+                for (let i = leads.length - 1; i >= 0; i--) {
+                    if ((leads[i] as any).email?.toLowerCase().trim() === contact.email.toLowerCase().trim()) {
+                        leadIndex = i;
+                        break;
+                    }
+                }
+
+                if (leadIndex !== -1) {
+                    // Update existing
+                    await setVal(`/leads[${leadIndex}]/status`, 'IN_PROGRESS');
+                    await setVal(`/leads[${leadIndex}]/topic`, topic);
+                    // If name was missing, update it
+                    if (!(leads[leadIndex] as any).name) {
+                        await setVal(`/leads[${leadIndex}]/name`, authorName);
+                    }
+                    console.log(`Linked Project to existing Lead ${leadIndex}`);
+                } else {
+                    // Create NEW Lead so it shows in Admin
+                    const newLead = {
+                        id: uuidv4(),
+                        email: contact.email,
+                        name: authorName || 'Autor',
+                        phone: contact.phone || '',
+                        status: 'IN_PROGRESS',
+                        type: 'BOOK', // Origin: Book Generator
+                        topic: topic,
+                        date: new Date(),
+                        created_at: new Date(),
+                        plan: null // Will be populated if they subscribe later or have existing user record
+                    };
+                    await pushVal('/leads', newLead);
+                    console.log(`Created NEW Lead for Project: ${contact.email}`);
+                }
+
+                // Also Ensure User Record exists/links? (Optional, handled by simulation/auth usually)
+
+            } catch (err) {
+                console.error("Error creating/updating lead for project:", err);
+            }
+        }
+        // ------------------------------------------------------------------
+
         res.json(project);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
