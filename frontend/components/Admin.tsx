@@ -547,10 +547,10 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                                 // Prioritize Project ID to avoid serving old files for same email
                                 const identifier = lead.projectId || lead.email;
                                 console.log("Downloading book for identifier:", identifier);
-                                // Adicionamos ${BASE} no início
-                                const res = await fetch(`${BASE}/api/admin/books/${identifier}`);
+                                // Adicionamos ${getApiBase()} no início
+                                const res = await fetch(`${getApiBase()}/api/admin/books/${identifier}`);
                                 if (res.ok) {
-                                    window.open(`/api/admin/books/${identifier}`, '_blank');
+                                    window.open(`${getApiBase()}/api/admin/books/${identifier}`, '_blank');
                                 } else {
                                     alert("Livro ainda não foi gerado ou finalizado. Verifique se o processamento concluiu.");
                                 }
@@ -933,19 +933,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     }, [token]);
 
-    // ... (rest of functions) ...
-    // Note: I will need to replace the large block to ensure context is kept or use smaller chunk? 
-    // I will use StartLine/EndLine carefully.
-
-    // Actually, I need to update `loadLeads` too. I'll simply update logic in a separate chunk or include it here if contiguous.
-    // They are separated by `loadOrders` and others.
-
-    // Let's do loadSettings block first.
-
-
     const loadOrders = async () => {
         try {
-            const res = await fetch(`${API_URL}/orders`, { headers: { Authorization: `Bearer ${token}` } });
+            const res = await fetch(`${getAdminUrl()}/orders`, { headers: { Authorization: `Bearer ${token}` } });
             if (res.ok) {
                 const data = await res.json();
                 setOrders(Array.isArray(data) ? data : []);
@@ -955,11 +945,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
-    // ... handleDelete/Edit code ...
-
     const handleDelete = async (id: string) => {
         try {
-            const res = await fetch(`${BASE}/api/payment/leads/${id}`, {
+            const res = await fetch(`${getApiBase()}/api/payment/leads/${id}`, {
                 method: 'DELETE',
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -976,7 +964,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleEdit = async (id: string, updates: any) => {
         try {
-            const res = await fetch(`${BASE}/api/payment/leads`, {
+            const res = await fetch(`${getApiBase()}/api/payment/leads`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ id, updates })
@@ -1028,7 +1016,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         try {
             const cleanEmail = email.toLowerCase().trim();
             console.log("Approving execution for:", cleanEmail, type);
-            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/payment/leads/approve', {
+            const res = await fetch(`${getApiBase()}/api/payment/leads/approve`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ email: cleanEmail, type })
@@ -1662,7 +1650,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         onClick={async () => {
                                             if (confirm("Criar backup agora?")) {
                                                 try {
-                                                    const res = await fetch(`${API_URL}/backups`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+                                                    const res = await fetch(`${getAdminUrl()}/backups`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
                                                     if (res.ok) alert("Backup criado!");
                                                 } catch (e) { alert("Erro de conexão"); }
                                             }
