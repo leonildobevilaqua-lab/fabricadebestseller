@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react';
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
-const BASE = import.meta.env.VITE_API_URL || '';
-const API_URL = `${BASE}/api/admin`;
+// Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
+const DEFAULT_BASE = import.meta.env.VITE_API_URL || '';
+const DEFAULT_API_URL = `${DEFAULT_BASE}/api/admin`;
+
+// Dynamic Helper to override URL at runtime (Fixes 404/Network Errors)
+const getApiBase = () => {
+    const custom = localStorage.getItem('admin_api_url');
+    let raw = custom ? custom.trim() : DEFAULT_BASE;
+
+    // Normalize to Root (remove /api/admin or similar)
+    let cleanBase = raw.replace(/\/$/, '');
+    if (cleanBase.endsWith('/admin')) cleanBase = cleanBase.slice(0, -6);
+    if (cleanBase.endsWith('/api')) cleanBase = cleanBase.slice(0, -4);
+
+    return cleanBase; // Returns http://site.com
+};
+const getAdminUrl = () => `${getApiBase()}/api/admin`; // Returns http://site.com/api/admin
+const getApiUrl = getAdminUrl; // Alias for backward compatibility
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 
@@ -736,13 +752,13 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const loadSettings = async () => {
         setLoadingError(false);
         try {
-            const res = await fetch(`${API_URL}/settings`, {
+            const res = await fetch(`${getAdminUrl()}/settings`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.ok) {
                 setSettings(await res.json());
             } else {
-                setToken(null); // Invalid token
+                setToken(null);
             }
         } catch (e) {
             console.error(e);
@@ -754,7 +770,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         e.preventDefault();
 
         // 1. Determine Base Domain
-        let rawUrl = customApiUrl.trim() || API_URL;
+        let rawUrl = customApiUrl.trim() || DEFAULT_BASE;
         // Normalize: Remove trailing slash
         let cleanBase = rawUrl.replace(/\/$/, '');
 
@@ -855,7 +871,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         e.preventDefault();
         setMsg("Enviando solicitação...");
         try {
-            const res = await fetch(`${API_URL}/forgot-password`, {
+            const res = await fetch(`${getAdminUrl()}/forgot-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: user })
@@ -886,7 +902,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         if (newPass.length < 6) return setMsg("Senha muito curta.");
         setMsg("Redefinindo senha...");
         try {
-            const res = await fetch(`${API_URL}/reset-password`, {
+            const res = await fetch(`${getAdminUrl()}/reset-password`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: user, token: resetToken, newPassword: newPass })
@@ -988,8 +1004,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const loadLeads = async (manageLoading = true) => {
         if (manageLoading) setIsRefreshing(true);
         try {
-            // Fetch from backend
-            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/payment/leads', {
+            // Fetch from backend using Dynamic Base
+            const res = await fetch(`${getApiBase()}/api/payment/leads`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
@@ -1033,7 +1049,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleSave = async () => {
         try {
-            const res = await fetch(`${API_URL}/settings`, {
+            const res = await fetch(`${getAdminUrl()}/settings`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1056,7 +1072,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleDiagram = async (leadId: string) => {
         try {
-            const res = await fetch(`${BASE}/api/projects/process-diagram-lead`, {
+            const res = await fetch(`${getApiBase()}/api/projects/process-diagram-lead`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ leadId })
@@ -1092,7 +1108,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         e.preventDefault();
         setMsg("Atualizando senha...");
         try {
-            const res = await fetch(`${API_URL}/change-password`, {
+            const res = await fetch(`${getAdminUrl()}/change-password`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1656,7 +1672,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         + Criar Novo Backup
                                     </button>
                                 </div>
-                                <BackupList token={token} apiUrl={API_URL} />
+                                <BackupList token={token} apiUrl={getAdminUrl()} />
                             </div>
                         </div>
                     )}
