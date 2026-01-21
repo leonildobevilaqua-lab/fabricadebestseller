@@ -762,7 +762,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                   window.open(`/api/admin/books/${project.id}`, '_blank');
                 }
 
-                setShowUpsell(true);
+                // setShowUpsell(true); // Removed to prevent confusing reset
               }
             }}
             className="bg-[#0284c7] text-white px-10 py-4 rounded-xl font-bold shadow-xl shadow-[#0ea5e9]/20 hover:bg-[#0369a1] hover:-translate-y-1 transition-all flex items-center gap-2"

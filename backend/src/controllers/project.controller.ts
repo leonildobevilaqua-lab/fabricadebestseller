@@ -16,6 +16,9 @@ const upload = multer();
 export const create = async (req: Request, res: Response) => {
     const { authorName, topic, language, contact } = req.body;
     try {
+        const safeEmail = contact?.email ? contact.email.toLowerCase().trim().replace(/\./g, '_') : null;
+        let isResuming = false;
+
         // RESUME LOGIC: Check if user already has an active project, UNLESS forcing new
         if (contact && contact.email && !req.body.forceNew) {
             const existing = await QueueService.getProjectByEmail(contact.email);
@@ -34,39 +37,101 @@ export const create = async (req: Request, res: Response) => {
                         existing.metadata.authorName = authorName;
                         existing.metadata.topic = topic;
                     }
+                    isResuming = true;
                     return res.json(existing);
                 }
             }
         }
 
+        // --- PAYMENT ENFORCEMENT ---
+        // If we are NOT resuming an existing active project, we MUST consume a credit.
+        if (!isResuming && safeEmail) {
+            const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+
+            // Check for any manually APPROVED leads (Voucher/Manual) that haven't been consumed?
+            // For now, we rely on 'credits'. 
+            // If the user paid, the webhook added a credit. 
+            // If admin approved 'CREDIT', it added a credit.
+
+            if (credits <= 0) {
+                console.log(`[PROJECT] Denied creation for ${contact.email}: No credits. Creating PENDING lead.`);
+
+                // CREATE PENDING LEAD FOR ADMIN VISIBILITY
+                try {
+                    const rawLeads = await getVal('/leads') || [];
+                    const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+                    // Check if a PENDING book lead already exists to avoid duplicates
+                    const hasPending = leads.some((l: any) =>
+                        l.email?.toLowerCase().trim() === contact.email.toLowerCase().trim() &&
+                        l.type === 'BOOK' &&
+                        (l.status === 'PENDING' || l.status === 'WAITING_PAYMENT')
+                    );
+
+                    if (!hasPending) {
+                        const newLead = {
+                            id: uuidv4(),
+                            email: contact.email,
+                            name: authorName || 'Autor',
+                            phone: contact.phone || '',
+                            status: 'PENDING', // Waiting for Payment or Admin Release
+                            type: 'BOOK',
+                            topic: topic,
+                            date: new Date(),
+                            created_at: new Date(),
+                            plan: null,
+                            credits: 0
+                        };
+                        await pushVal('/leads', newLead);
+                        console.log(`Created PENDING BOOK Lead for ${contact.email}`);
+                    }
+                } catch (e) {
+                    console.error("Error creating pending lead:", e);
+                }
+
+                return res.json({ error: "Payment Required", code: "PAYMENT_REQUIRED" });
+            }
+
+            // Deduct Credit
+            await setVal(`/credits/${safeEmail}`, credits - 1);
+            console.log(`[PROJECT] Deducted 1 credit from ${contact.email}. Remaining: ${credits - 1}`);
+        }
+        // ---------------------------
+
         const project = await QueueService.createProject({ authorName, topic, language, contact });
 
-        // --- CRITICAL FIX: Ensure Lead Exists for Admin Panel Visibility ---
+        // --- CRITICAL FIX: Ensure Lead Exists for Admin Panel Visibility & Separate Sub/Book ---
         if (contact && contact.email) {
             try {
                 const rawLeads = await getVal('/leads') || [];
                 const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
                 let leadIndex = -1;
-                // Search backwards for latest
+                // Search backwards for latest BOOK lead
                 for (let i = leads.length - 1; i >= 0; i--) {
-                    if ((leads[i] as any).email?.toLowerCase().trim() === contact.email.toLowerCase().trim()) {
-                        leadIndex = i;
-                        break;
+                    const l = leads[i] as any;
+                    // Match Email
+                    if (l.email?.toLowerCase().trim() === contact.email.toLowerCase().trim()) {
+                        // Match Type: Only update if it's a BOOK lead or VOUCHER. 
+                        // Do NOT overwrite SUBSCRIPTION or SUBSCRIBER status rows.
+                        if (l.type !== 'SUBSCRIPTION' && l.status !== 'SUBSCRIBER' && l.status !== 'SUBSCRIBER_PENDING') {
+                            leadIndex = i;
+                            break;
+                        }
                     }
                 }
 
                 if (leadIndex !== -1) {
-                    // Update existing
+                    // Update existing BOOK Lead
                     await setVal(`/leads[${leadIndex}]/status`, 'IN_PROGRESS');
                     await setVal(`/leads[${leadIndex}]/topic`, topic);
                     // If name was missing, update it
                     if (!(leads[leadIndex] as any).name) {
                         await setVal(`/leads[${leadIndex}]/name`, authorName);
                     }
-                    console.log(`Linked Project to existing Lead ${leadIndex}`);
+                    console.log(`Linked Project to existing Book Lead ${leadIndex}`);
                 } else {
-                    // Create NEW Lead so it shows in Admin
+                    // Create NEW Lead so it shows in Admin as a separate row from Subscription
                     const newLead = {
                         id: uuidv4(),
                         email: contact.email,
@@ -77,13 +142,12 @@ export const create = async (req: Request, res: Response) => {
                         topic: topic,
                         date: new Date(),
                         created_at: new Date(),
-                        plan: null // Will be populated if they subscribe later or have existing user record
+                        plan: null, // Keep separate from subscription plan data
+                        credits: 0 // Consumed now
                     };
                     await pushVal('/leads', newLead);
-                    console.log(`Created NEW Lead for Project: ${contact.email}`);
+                    console.log(`Created NEW BOOK Lead for Project: ${contact.email}`);
                 }
-
-                // Also Ensure User Record exists/links? (Optional, handled by simulation/auth usually)
 
             } catch (err) {
                 console.error("Error creating/updating lead for project:", err);

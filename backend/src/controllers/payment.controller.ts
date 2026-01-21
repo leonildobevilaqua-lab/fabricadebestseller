@@ -519,7 +519,11 @@ export const checkAccess = async (req: Request, res: Response) => {
             setVal(`/users/${safeEmail}/plan`, { ...userPlan, status: 'EXPIRED' });
         } else {
             // Valid Plan
-            planName = userPlan.name || 'STARTER';
+            // Normalize Plan Name (e.g. "Plano Black Mensal" -> "BLACK")
+            const rawName = (userPlan.name || 'STARTER').toUpperCase();
+            if (rawName.includes('BLACK')) planName = 'BLACK';
+            else if (rawName.includes('PRO')) planName = 'PRO';
+            else planName = 'STARTER';
 
             // Cycle: 0->L1, 1->L2, 2->L3, 3->L4, 4->L1 ...
             // usageCount includes previous purchases.
