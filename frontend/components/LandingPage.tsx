@@ -1155,22 +1155,29 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         onClick={async () => {
                                                                             if (confirm(`SIMULAR PAGAMENTO DA ASSINATURA?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}\nPlano: ${pName} (${billing})`)) {
 
-                                                                                // Robust URL Resolution
-                                                                                const getBase = () => {
-                                                                                    // 1. Try Environemnt Variable (Build Time)
+                                                                                // Robust URL Resolution Strategy (Matches Admin.tsx)
+                                                                                const getApiBase = () => {
+                                                                                    // 1. Try Build-Time Environment Variable (VITE_API_URL)
                                                                                     const env = (import.meta as any).env.VITE_API_URL;
                                                                                     if (env) return env;
 
-                                                                                    // 2. Localhost fallback
-                                                                                    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return '';
+                                                                                    // 2. Try Runtime LocalStorage Override (set by /admin debug)
+                                                                                    const custom = localStorage.getItem('admin_api_url');
+                                                                                    if (custom) return custom.trim();
 
-                                                                                    // 3. Production: Assume same origin implies proxy, OR specific domain
-                                                                                    // If your backend is on a different port/domain in prod, CHANGE THIS.
+                                                                                    // 3. Smart Production Fallback
+                                                                                    const host = window.location.hostname;
+                                                                                    // If localhost, return empty (relative to proxy)
+                                                                                    if (host === 'localhost' || host === '127.0.0.1') return '';
+
+                                                                                    // If Production, try to guess the API domain if not same-origin
+                                                                                    // Common pattern: app.com -> api.app.com
+                                                                                    // BUT, if you are using Coolify/Vercel with separate domains, you SHOULD set VITE_API_URL.
+                                                                                    // If not set, we default to window.location.origin (Same Origin)
                                                                                     return window.location.origin;
                                                                                 };
 
-                                                                                let baseUrl = getBase();
-                                                                                // Remove trailing slash if present to avoid double slash
+                                                                                let baseUrl = getApiBase();
                                                                                 if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
 
                                                                                 const url = `${baseUrl}/api/payment/simulate-webhook`;
