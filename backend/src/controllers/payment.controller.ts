@@ -473,93 +473,94 @@ export const checkAccess = async (req: Request, res: Response) => {
     if (credits > 0) console.log(`[POLL] ${safeEmail} has ${credits} credits. Access Granted.`);
 
     // --- Dynamic Pricing Logic ---
+    // --- Dynamic Pricing Logic ---
     let bookPrice = 39.90; // Default Avulso
     let checkoutUrl = 'https://pay.kiwify.com.br/QPTslcx'; // Default Checkout
     let planName = 'NONE';
     let discountLevel = 1;
-
-    // Count Completed/Approved leads for this user to determine Level
-    const leadsUsage = leads.filter((l: any) =>
-        l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
-        (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
-    ).length;
-
-    // Also count completed projects (robustness against broken lead links)
-    // We can get projects from DB.
-    let projectsUsage = 0;
-    try {
-        const projects = await getVal('/projects') || {};
-        const projectList = Array.isArray(projects) ? projects : Object.values(projects);
-        projectsUsage = projectList.filter((p: any) =>
-            p.userEmail?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
-            (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
-        ).length;
-    } catch (e) { }
-
-    const usageCount = Math.max(leadsUsage, projectsUsage);
-
-    if (userPlan && userPlan.status === 'ACTIVE') {
-        // --- EXPIRATION CHECK ---
-        const startDate = userPlan.startDate ? new Date(userPlan.startDate) : new Date();
-        const billing = (userPlan.billing || 'monthly').toLowerCase();
-        let expiryDate = new Date(startDate);
-
-        if (billing === 'annual') {
-            expiryDate.setFullYear(startDate.getFullYear() + 1);
-        } else {
-            // Monthly - Add 30 days (plus grace period?)
-            expiryDate.setDate(startDate.getDate() + 31);
-        }
-
-        const now = new Date();
-        if (now > expiryDate) {
-            console.log(`[SUBSCRIPTION] Plan Expired for ${safeEmail}. Start: ${startDate.toISOString()}, Exp: ${expiryDate.toISOString()}`);
-            userPlan.status = 'EXPIRED'; // Update local object
-            // Persist expiration
-            setVal(`/users/${safeEmail}/plan`, { ...userPlan, status: 'EXPIRED' });
-        } else {
-            // Valid Plan
-            // Normalize Plan Name (e.g. "Plano Black Mensal" -> "BLACK")
-            const rawName = (userPlan.name || 'STARTER').toUpperCase();
-            if (rawName.includes('BLACK')) planName = 'BLACK';
-            else if (rawName.includes('PRO')) planName = 'PRO';
-            else planName = 'STARTER';
-
-            // Cycle: 0->L1, 1->L2, 2->L3, 3->L4, 4->L1 ...
-            // usageCount includes previous purchases.
-            // If usageCount is 0 (new sub), they are at Level 1.
-            // If usageCount is 3 (3 books done), they are at Level 4 for the NEXT.
-            const cycleIndex = usageCount % 4; // 0, 1, 2, 3
-
-            const planConfig = PRICING_CONFIG[planName]?.[billing];
-            if (planConfig && planConfig[cycleIndex]) {
-                bookPrice = planConfig[cycleIndex].price;
-                checkoutUrl = planConfig[cycleIndex].link;
-                discountLevel = cycleIndex + 1;
-            } else {
-                // Fallback if config missing
-                console.warn(`Missing pricing config for ${planName} ${billing} index ${cycleIndex}`);
-            }
-        }
-    }
-
-    // Find active project logic (Retained)
-    // Find active project logic (Retained)
     let leadStatus = null;
-    let hasActiveProject = false;
     let pendingPlan = null;
 
+    // 1. FETCH LEADS TO DETERMINE USAGE AND PENDING PLANS
     try {
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+        // Find most recent status/plan
         for (let i = leads.length - 1; i >= 0; i--) {
             if ((leads[i] as any).email?.toLowerCase().trim() === (email as string).toLowerCase().trim()) {
                 leadStatus = (leads[i] as any).status;
                 if ((leads[i] as any).plan) pendingPlan = (leads[i] as any).plan;
-                break;
+                if (leadStatus === 'APPROVED' || (leads[i] as any).status === 'ACTIVE') break; // Prioritize active
             }
         }
-    } catch (e) { }
+
+        // Count Completed/Approved leads for this user to determine Level
+        const leadsUsage = leads.filter((l: any) =>
+            l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
+            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
+        ).length;
+
+        // Also count completed projects (robustness against broken lead links)
+        let projectsUsage = 0;
+        try {
+            const projects = await getVal('/projects') || {};
+            const projectList = Array.isArray(projects) ? projects : Object.values(projects);
+            projectsUsage = projectList.filter((p: any) =>
+                p.userEmail?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
+                (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
+            ).length;
+        } catch (e) { }
+
+        const usageCount = Math.max(leadsUsage, projectsUsage);
+
+        // 2. DETERMINE PLAN TRUTH
+        const effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : pendingPlan;
+
+        if (effectivePlan) {
+            // Validate Expiration only if it's the Active User Plan
+            let isValid = true;
+            let billing = (effectivePlan.billing || 'monthly').toLowerCase();
+
+            if (userPlan && userPlan.status === 'ACTIVE') {
+                const startDate = userPlan.startDate ? new Date(userPlan.startDate) : new Date();
+                let expiryDate = new Date(startDate);
+                if (billing === 'annual') expiryDate.setFullYear(startDate.getFullYear() + 1);
+                else expiryDate.setDate(startDate.getDate() + 31);
+
+                if (new Date() > expiryDate) {
+                    console.log(`[SUBSCRIPTION] Plan Expired for ${safeEmail}`);
+                    userPlan.status = 'EXPIRED';
+                    setVal(`/users/${safeEmail}/plan`, { ...userPlan, status: 'EXPIRED' });
+                    isValid = false;
+                }
+            }
+
+            if (isValid) {
+                // Normalize Plan Name
+                const rawName = (effectivePlan.name || 'STARTER').toUpperCase();
+                if (rawName.includes('BLACK')) planName = 'BLACK';
+                else if (rawName.includes('PRO')) planName = 'PRO';
+                else planName = 'STARTER';
+
+                // Cycle Logic
+                const cycleIndex = usageCount % 4; // 0, 1, 2, 3
+
+                const planConfig = PRICING_CONFIG[planName]?.[billing];
+                if (planConfig && planConfig[cycleIndex]) {
+                    bookPrice = planConfig[cycleIndex].price;
+                    checkoutUrl = planConfig[cycleIndex].link;
+                    discountLevel = cycleIndex + 1;
+                }
+            }
+        }
+
+    } catch (e) {
+        console.error("Error calculating access/price", e);
+    }
+
+    // Find active project logic (Retained)
+    let hasActiveProject = false;
 
     try {
         const project = await getProjectByEmail((email as string).toLowerCase().trim());
