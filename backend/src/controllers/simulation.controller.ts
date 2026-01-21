@@ -1,6 +1,6 @@
-
 import { Request, Response } from 'express';
-import { setVal, getVal } from '../services/db.service';
+import { v4 as uuidv4 } from 'uuid';
+import { setVal, getVal, pushVal } from '../services/db.service';
 
 export const simulateWebhook = async (req: Request, res: Response) => {
     try {
@@ -26,7 +26,7 @@ export const simulateWebhook = async (req: Request, res: Response) => {
             }
         });
 
-        // 2. Update the Lead Status if it exists
+        // 2. Update the Lead Status if it exists, or Create if missing
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
@@ -50,7 +50,35 @@ export const simulateWebhook = async (req: Request, res: Response) => {
             await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER_PENDING');
             console.log(`Simulated Subscription for ${user.email}: ${plan} (${billing}) - Pending Approval`);
         } else {
-            console.warn(`Simulated Subscription for ${user.email} but no Lead found.`);
+            console.warn(`Simulated Subscription for ${user.email} but no Lead found. Creating new Lead...`);
+
+            // Create a fresh lead for the simulation
+            const newLead = {
+                id: uuidv4(),
+                email: user.email,
+                name: user.name || 'Simulado',
+                phone: user.phone || '',
+                status: 'SUBSCRIBER_PENDING',
+                plan: {
+                    name: plan,
+                    billing,
+                    status: 'PENDING',
+                    startDate: new Date(),
+                    lastPayment: new Date()
+                },
+                paymentInfo: {
+                    amount: 9790, // Generic Placeholder Value (will be fixed by admin or ignored)
+                    method: 'credit_card',
+                    status: 'paid'
+                },
+                date: new Date(),
+                created_at: new Date(),
+                simulated: true,
+                type: 'SIMULATION_RECOVERY'
+            };
+
+            await pushVal('/leads', newLead);
+            console.log("Created new Simulated Lead (Recovery).");
         }
 
         res.json({ success: true, message: "Subscription Simulation Queued" });
