@@ -1154,32 +1154,19 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                     <button
                                                                         onClick={async () => {
                                                                             if (confirm(`SIMULAR PAGAMENTO DA ASSINATURA?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}\nPlano: ${pName} (${billing})`)) {
-
                                                                                 // Robust URL Resolution Strategy (Matches Admin.tsx)
                                                                                 const getApiBase = () => {
-                                                                                    // 1. Try Build-Time Environment Variable (VITE_API_URL)
                                                                                     const env = (import.meta as any).env.VITE_API_URL;
                                                                                     if (env) return env;
-
-                                                                                    // 2. Try Runtime LocalStorage Override (set by /admin debug)
                                                                                     const custom = localStorage.getItem('admin_api_url');
                                                                                     if (custom) return custom.trim();
-
-                                                                                    // 3. Smart Production Fallback
                                                                                     const host = window.location.hostname;
-                                                                                    // If localhost, return empty (relative to proxy)
                                                                                     if (host === 'localhost' || host === '127.0.0.1') return '';
-
-                                                                                    // If Production, try to guess the API domain if not same-origin
-                                                                                    // Common pattern: app.com -> api.app.com
-                                                                                    // BUT, if you are using Coolify/Vercel with separate domains, you SHOULD set VITE_API_URL.
-                                                                                    // If not set, we default to window.location.origin (Same Origin)
                                                                                     return window.location.origin;
                                                                                 };
 
                                                                                 let baseUrl = getApiBase();
                                                                                 if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
-
                                                                                 const url = `${baseUrl}/api/payment/simulate-webhook`;
 
                                                                                 try {
@@ -1200,7 +1187,13 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                                     });
 
                                                                                     if (res.ok) {
-                                                                                        alert("✅ Simulação enviada com SUCESSO!\n\nO Admin deve aprovar o plano para liberar o desconto.\nAguarde a aprovação para continuar.");
+                                                                                        // Auto-Login and trigger Welcome Modal
+                                                                                        localStorage.setItem('bsf_plan_just_activated', 'true');
+                                                                                        onStart({
+                                                                                            name: formData.name,
+                                                                                            email: formData.email,
+                                                                                            phone: formData.phone
+                                                                                        });
                                                                                     } else {
                                                                                         const txt = await res.text();
                                                                                         alert(`❌ Erro no Servidor (${res.status}):\n${txt}`);

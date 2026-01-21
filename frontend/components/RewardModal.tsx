@@ -134,7 +134,11 @@ export const RewardModal: React.FC<RewardModalProps> = ({ isOpen, onClose, onCla
                             </div>
                             <p className="text-slate-300 text-sm">
                                 Você acaba de desbloquear o <span className="text-cyan-400 font-bold">NÍVEL {level}</span>. <br />
-                                Gere seu próximo Best Seller com <span className="text-cyan-300 font-black text-lg">{discount}% DE DESCONTO</span> agora mesmo.
+                                {discount > 0 ? (
+                                    <>Gere seu próximo Best Seller com <span className="text-cyan-300 font-black text-lg">{discount}% DE DESCONTO</span> agora mesmo.</>
+                                ) : (
+                                    <>Inicie um novo ciclo de best sellers com <span className="text-green-400 font-black text-lg">PREÇO EXCLUSIVO</span>.</>
+                                )}
                             </p>
                             {price && <div className="mt-2 text-xl font-bold text-white">{price}</div>}
                         </div>

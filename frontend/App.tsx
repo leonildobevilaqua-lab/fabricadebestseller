@@ -9,6 +9,7 @@ import { LanguageContext } from './i18n/context';
 import { pt, en, es } from './i18n/locales';
 import { BookMetadata } from './types';
 
+import { WelcomeModal } from './components/WelcomeModal';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfUse } from './components/TermsOfUse';
 
@@ -27,6 +28,7 @@ const App: React.FC = () => {
 
   const [step, setStep] = useState(() => Number(localStorage.getItem('bsf_step') || 1));
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [metadata, setMetadata] = useState<BookMetadata>(() => {
     try {
       return JSON.parse(localStorage.getItem('bsf_metadata') || 'null') || { authorName: '', topic: '', dedication: '' };
@@ -49,6 +51,12 @@ const App: React.FC = () => {
   // SELF-HEALING: Validate Access on Load to prevent "Stuck" states
   useEffect(() => {
     if (hasAccess && userContact?.email) {
+      // Check for JUST ACTIVATED flag
+      if (localStorage.getItem('bsf_plan_just_activated') === 'true') {
+        setShowWelcome(true);
+        localStorage.removeItem('bsf_plan_just_activated');
+      }
+
       // Create a specific check to verify if this user SHOULD be here
       fetch(`/api/payment/check-access?email=${userContact.email}`)
         .then(r => r.json())
@@ -61,7 +69,7 @@ const App: React.FC = () => {
         })
         .catch(e => console.error("Access Check Failed", e));
     }
-  }, []); // Run on mount only
+  }, [hasAccess, userContact]); // Run on change of access/contact
 
   // HANDLE EXTERNAL RESET (e.g. from Admin "Voltar ao App")
   useEffect(() => {
@@ -222,6 +230,12 @@ const App: React.FC = () => {
             </div>
           </footer>
         </div>
+      )}
+      {showWelcome && userContact && (
+        <WelcomeModal
+          onClose={() => setShowWelcome(false)}
+          userEmail={userContact.email}
+        />
       )}
     </LanguageContext.Provider>
   );
