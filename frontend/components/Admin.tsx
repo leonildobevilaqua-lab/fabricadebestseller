@@ -697,6 +697,11 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [token, setToken] = useState<string | null>(localStorage.getItem('admin_token'));
     const [user, setUser] = useState('');
     const [pass, setPass] = useState('');
+
+    // API URL Override (Fix for Config Issues)
+    const [customApiUrl, setCustomApiUrl] = useState(localStorage.getItem('admin_api_url') || '');
+    const [showApiOverride, setShowApiOverride] = useState(false);
+
     const [settings, setSettings] = useState<any>(null);
     const [msg, setMsg] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -747,11 +752,16 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log("Environment API_URL:", API_URL);
+
+        // Use Custom URL if provided, removing trailing slash
+        const rawUrl = customApiUrl.trim() || API_URL;
+        const effectiveApiUrl = rawUrl.replace(/\/$/, '');
+
+        console.log("Effective API URL:", effectiveApiUrl);
 
         try {
-            // STRATEGY 1: Standard POST (Cleanest)
-            let targetUrl = `${API_URL}/login`;
+            // STRATEGY 1: Standard POST
+            let targetUrl = `${effectiveApiUrl}/login`;
             console.log("Strategy 1 Target:", targetUrl);
 
             try {
@@ -785,7 +795,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 }
 
                 // STRATEGY 2: Emergency GET
-                const baseUrl = API_URL.endsWith('/admin') ? API_URL.slice(0, -6) : API_URL;
+                const baseUrl = effectiveApiUrl.endsWith('/admin') ? effectiveApiUrl.slice(0, -6) : effectiveApiUrl;
                 const getUrl = `${baseUrl.replace(/\/$/, '')}/admin-login-get?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`;
 
                 console.log("Strategy 2 Target:", getUrl);
@@ -804,19 +814,18 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             return;
                         } catch (jsonErr) {
                             console.error("GET JSON Parse Error:", jsonErr);
-                            // Check for HTML
                             if (text.trim().startsWith("<")) {
-                                const preview = text.substring(0, 100).replace(/</g, "&lt;");
-                                throw new Error(`ERRO DE CONFIGURAÇÃO: O Backend respondeu com HTML (Site) em vez de JSON na URL ${getUrl}. Verifique se a VITE_API_URL está correta. (Conteúdo: ${preview}...)`);
+                                setShowApiOverride(true);
+                                throw new Error(`ERRO FATAL DE ROTA: O Backend respondeu com HTML. Use o campo abaixo para corrigir a URL da API.`);
                             }
                             throw new Error(`Resposta Malformada em ${getUrl}: ${text.substring(0, 50)}...`);
                         }
                     } else {
-                        // Handle non-200 GET
                         let errorMsg = `Falha GET (${resGet.status})`;
                         const text = await resGet.text().catch(() => "");
                         if (text.trim().startsWith("<")) {
-                            errorMsg += ` - O servidor retornou HTML (Provavelmente erro 404/502 do Nginx ou Frontend). URL: ${getUrl}`;
+                            setShowApiOverride(true);
+                            errorMsg += ` - Servidor retornou HTML. Corrija o URL abaixo.`;
                         } else {
                             try {
                                 const data = JSON.parse(text);
@@ -1134,6 +1143,27 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 required
                             />
                         </div>
+
+                        {showApiOverride && (
+                            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <label className="block text-sm font-bold text-yellow-800 mb-1">
+                                    Correção Manual de URL da API
+                                </label>
+                                <p className="text-xs text-yellow-700 mb-2">
+                                    O sistema detectou erro de configuração. Digite a URL correta do backend (HTTPS).
+                                </p>
+                                <input
+                                    type="text"
+                                    value={customApiUrl}
+                                    onChange={e => {
+                                        setCustomApiUrl(e.target.value);
+                                        localStorage.setItem('admin_api_url', e.target.value);
+                                    }}
+                                    className="w-full p-2 border border-yellow-400 rounded-lg bg-white"
+                                    placeholder="Ex: https://api.fabricadebestseller.com.br"
+                                />
+                            </div>
+                        )}
                         {msg && <p className="text-red-500 text-sm mb-4 text-center">{msg}</p>}
                         <button type="submit" className="w-full bg-slate-900 text-white font-bold py-3 rounded-lg hover:bg-slate-800 transition">
                             Entrar
