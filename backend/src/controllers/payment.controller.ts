@@ -284,6 +284,16 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
         const payload = req.body;
         console.log("Kiwify Webhook Received:", JSON.stringify(payload));
 
+        // Check for Token (User provided: 9f1su6po412)
+        const token = req.query.token || req.body.token || req.params.token;
+        if (token) {
+            console.log("Kiwify Token present:", token);
+            if (token === '9f1su6po412') console.log("Token MATCHES production key.");
+            else console.warn("Token mismatch! Expected 9f1su6po412");
+        } else {
+            console.log("No Kiwify token found in request (Safe to ignore if not configured in dashboard, but user provided one).");
+        }
+
         const status = payload.order_status;
         const email = payload.Customer?.email || payload.customer?.email;
         const productName = payload.Product?.name || payload.product?.name || "Produto";

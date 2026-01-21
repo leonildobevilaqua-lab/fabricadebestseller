@@ -1153,26 +1153,26 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                                                                     <button
                                                                         onClick={async () => {
-                                                                            if (confirm(`SIMULAR PAGAMENTO DA ASSINATURA?\n\nSerá enviado para o Admin os dados:\nNome: ${TEST_USER_DATA.name}\nEmail: ${TEST_USER_DATA.email}\nPlano: ${pName} (${billing})`)) {
+                                                                            if (confirm(`SIMULAR PAGAMENTO DA ASSINATURA?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}\nPlano: ${pName} (${billing})`)) {
 
-                                                                                // 1. Force Update Frontend State to match Simulation Data
-                                                                                setFormData(prev => ({
-                                                                                    ...prev,
-                                                                                    name: TEST_USER_DATA.name,
-                                                                                    email: TEST_USER_DATA.email,
-                                                                                    phone: TEST_USER_DATA.phone
-                                                                                }));
+                                                                                const url = (import.meta.env.VITE_API_URL || '') + '/api/payment/simulate-webhook';
 
-                                                                                await fetch('/api/payment/simulate-webhook', {
+                                                                                await fetch(url, {
                                                                                     method: 'POST',
                                                                                     headers: { 'Content-Type': 'application/json' },
                                                                                     body: JSON.stringify({
                                                                                         plan: pName,
                                                                                         billing: billing,
-                                                                                        user: TEST_USER_DATA
+                                                                                        user: {
+                                                                                            name: formData.name,
+                                                                                            email: formData.email,
+                                                                                            phone: formData.phone,
+                                                                                            cpf: "123.456.789-00 (Simulado)",
+                                                                                            cardLast4: "4242"
+                                                                                        }
                                                                                     })
                                                                                 });
-                                                                                alert("Simulação enviada! O Admin deve aprovar o plano para liberar o desconto.\n\nSeus dados de formulário foram atualizados para os dados de teste.");
+                                                                                alert("Simulação enviada! O Admin deve aprovar o plano para liberar o desconto.\n\nAguarde a aprovação para continuar.");
                                                                                 // Ideally refresh status
                                                                             }
                                                                         }}
