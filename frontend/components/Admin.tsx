@@ -747,10 +747,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        console.log("Environment API_URL:", API_URL);
+
         try {
             // STRATEGY 1: Standard POST (Cleanest)
             let targetUrl = `${API_URL}/login`;
-            console.log("Attempting Strategy 1 (POST):", targetUrl);
+            console.log("Strategy 1 Target:", targetUrl);
 
             try {
                 const res = await fetch(targetUrl, {
@@ -767,37 +769,34 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     return;
                 }
 
-                // If 401, it's just wrong password. Don't try GET.
                 if (res.status === 401) {
                     const data = await res.json();
                     throw new Error(data.error || "Acesso negado");
                 }
 
-                // If 405 or 500, throw to trigger fallback
                 const text = await res.text().catch(() => "");
                 console.warn(`STRATEGY 1 Failed (${res.status}): ${text}`);
                 throw new Error("Fallback Needed");
 
             } catch (postError: any) {
                 if (postError.message !== "Fallback Needed" && !postError.message.includes("Failed to fetch")) {
-                    // It was a logic error (like 401), so show it.
                     setMsg("Erro: " + postError.message);
                     return;
                 }
 
-                // STRATEGY 2: Emergency GET (Bypasses Proxy/Method Blocks)
-                // Construct root URL. If API_URL is .../api/admin, we want .../api/admin-login-get
+                // STRATEGY 2: Emergency GET
                 const baseUrl = API_URL.endsWith('/admin') ? API_URL.slice(0, -6) : API_URL;
                 const getUrl = `${baseUrl.replace(/\/$/, '')}/admin-login-get?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`;
 
-                console.log("Attempting Strategy 2 (GET Fallback):", getUrl);
+                console.log("Strategy 2 Target:", getUrl);
 
                 try {
                     const resGet = await fetch(getUrl, { method: 'GET' });
 
                     if (resGet.ok) {
+                        const text = await resGet.text().catch(() => "");
                         try {
-                            const data = await resGet.json();
+                            const data = JSON.parse(text);
                             console.log("SUCCESS via Strategy 2 (GET)");
                             setToken(data.token);
                             localStorage.setItem('admin_token', data.token);
@@ -805,28 +804,36 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             return;
                         } catch (jsonErr) {
                             console.error("GET JSON Parse Error:", jsonErr);
-                            const text = await resGet.text().catch(() => "");
-                            throw new Error(`GET OK mas resposta inválida: ${text.substring(0, 30)}...`);
+                            // Check for HTML
+                            if (text.trim().startsWith("<")) {
+                                const preview = text.substring(0, 100).replace(/</g, "&lt;");
+                                throw new Error(`ERRO DE CONFIGURAÇÃO: O Backend respondeu com HTML (Site) em vez de JSON na URL ${getUrl}. Verifique se a VITE_API_URL está correta. (Conteúdo: ${preview}...)`);
+                            }
+                            throw new Error(`Resposta Malformada em ${getUrl}: ${text.substring(0, 50)}...`);
                         }
                     } else {
                         // Handle non-200 GET
                         let errorMsg = `Falha GET (${resGet.status})`;
-                        try {
-                            const data = await resGet.json();
-                            errorMsg = data.error || errorMsg;
-                        } catch (e) {
-                            const text = await resGet.text().catch(() => "");
-                            errorMsg += `: ${text.substring(0, 40)}...`;
+                        const text = await resGet.text().catch(() => "");
+                        if (text.trim().startsWith("<")) {
+                            errorMsg += ` - O servidor retornou HTML (Provavelmente erro 404/502 do Nginx ou Frontend). URL: ${getUrl}`;
+                        } else {
+                            try {
+                                const data = JSON.parse(text);
+                                errorMsg = data.error || errorMsg;
+                            } catch (e) {
+                                errorMsg += `: ${text.substring(0, 40)}...`;
+                            }
                         }
                         setMsg("Erro Final: " + errorMsg);
                     }
                 } catch (netErr: any) {
-                    setMsg("Erro Conexão GET: " + netErr.message);
+                    setMsg(`Erro Conexão GET em ${getUrl}: ${netErr.message}`);
                 }
             }
         } catch (e: any) {
             console.error("Login Fatal Error:", e);
-            setMsg("Erro de conexão: " + (e.message || "Verifique o backend"));
+            setMsg("Erro Fatal: " + (e.message || "Verifique o backend"));
         }
     };
 
