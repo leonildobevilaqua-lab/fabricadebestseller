@@ -792,18 +792,36 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                 console.log("Attempting Strategy 2 (GET Fallback):", getUrl);
 
-                const resGet = await fetch(getUrl, { method: 'GET' });
+                try {
+                    const resGet = await fetch(getUrl, { method: 'GET' });
 
-                if (resGet.ok) {
-                    const data = await resGet.json();
-                    console.log("SUCCESS via Strategy 2 (GET)");
-                    setToken(data.token);
-                    localStorage.setItem('admin_token', data.token);
-                    window.history.replaceState({}, '', '/admin');
-                    return;
-                } else {
-                    const data = await resGet.json().catch(() => ({}));
-                    setMsg("Erro Final: " + (data.error || `Falha em ambos protocolos (${resGet.status})`));
+                    if (resGet.ok) {
+                        try {
+                            const data = await resGet.json();
+                            console.log("SUCCESS via Strategy 2 (GET)");
+                            setToken(data.token);
+                            localStorage.setItem('admin_token', data.token);
+                            window.history.replaceState({}, '', '/admin');
+                            return;
+                        } catch (jsonErr) {
+                            console.error("GET JSON Parse Error:", jsonErr);
+                            const text = await resGet.text().catch(() => "");
+                            throw new Error(`GET OK mas resposta inválida: ${text.substring(0, 30)}...`);
+                        }
+                    } else {
+                        // Handle non-200 GET
+                        let errorMsg = `Falha GET (${resGet.status})`;
+                        try {
+                            const data = await resGet.json();
+                            errorMsg = data.error || errorMsg;
+                        } catch (e) {
+                            const text = await resGet.text().catch(() => "");
+                            errorMsg += `: ${text.substring(0, 40)}...`;
+                        }
+                        setMsg("Erro Final: " + errorMsg);
+                    }
+                } catch (netErr: any) {
+                    setMsg("Erro Conexão GET: " + netErr.message);
                 }
             }
         } catch (e: any) {
