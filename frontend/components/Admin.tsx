@@ -1422,9 +1422,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                                <DashboardCharts leads={leads} orders={orders} />
-                            </div>
+                            <DashboardCharts leads={leads} orders={orders} />
 
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
