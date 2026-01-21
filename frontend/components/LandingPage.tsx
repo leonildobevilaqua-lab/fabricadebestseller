@@ -1155,7 +1155,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         onClick={async () => {
                                                                             if (confirm(`SIMULAR PAGAMENTO DA ASSINATURA?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}\nPlano: ${pName} (${billing})`)) {
 
-                                                                                const url = (import.meta.env.VITE_API_URL || '') + '/api/payment/simulate-webhook';
+                                                                                const url = ((import.meta as any).env.VITE_API_URL || '') + '/api/payment/simulate-webhook';
 
                                                                                 await fetch(url, {
                                                                                     method: 'POST',

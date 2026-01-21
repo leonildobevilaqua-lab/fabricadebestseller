@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
-const DEFAULT_BASE = import.meta.env.VITE_API_URL || '';
+const DEFAULT_BASE = (import.meta as any).env.VITE_API_URL || '';
 const DEFAULT_API_URL = `${DEFAULT_BASE}/api/admin`;
 
 // Dynamic Helper to override URL at runtime (Fixes 404/Network Errors)
@@ -571,7 +571,7 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
 
                                     if (!pid) {
                                         try {
-                                            const res = await fetch((import.meta.env.VITE_API_URL || '') + '/api/projects/find-id-by-email', {
+                                            const res = await fetch(`${getApiBase()}/api/projects/find-id-by-email`, {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({ email: lead.email })
@@ -593,7 +593,7 @@ const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
 
                                     // Direct execution without confirm as requested
                                     try {
-                                        const res = await fetch(`${BASE}/api/projects/${pid}/regenerate-docx`, { method: 'POST' });
+                                        const res = await fetch(`${getApiBase()}/api/projects/${pid}/regenerate-docx`, { method: 'POST' });
                                         const d = await res.json();
                                         if (d.success) {
                                             const backupMsg = "Backup salvo em Downloads/bestseller-factory-ai/BACKUPS.";
@@ -1422,7 +1422,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
                             </div>
 
-                            <DashboardCharts leads={leads} orders={orders} />
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                <DashboardCharts leads={leads} orders={orders} />
+                            </div>
 
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
                                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
@@ -1538,16 +1540,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     <div className="col-span-2">
                                         <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Host</label>
                                         <input type="text" value={settings.email?.host || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, host: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" placeholder="smtp.example.com" />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Porta</label>
-                                        <input type="text" value={settings.email?.port || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, port: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" placeholder="587 or 465" />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Usuário</label>
-                                        <input type="text" value={settings.email?.user || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, user: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" />
-                                    </div>
-                                    <div className="col-span-2">
                                         <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Senha</label>
                                         <input type="password" value={settings.email?.pass || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, pass: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" />
                                     </div>
