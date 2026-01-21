@@ -753,15 +753,20 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Use Custom URL if provided, removing trailing slash
-        const rawUrl = customApiUrl.trim() || API_URL;
-        const effectiveApiUrl = rawUrl.replace(/\/$/, '');
+        // 1. Determine Base Domain
+        let rawUrl = customApiUrl.trim() || API_URL;
+        // Normalize: Remove trailing slash
+        let cleanBase = rawUrl.replace(/\/$/, '');
 
-        console.log("Effective API URL:", effectiveApiUrl);
+        // Remove known suffixes to find true root (http://site.com)
+        if (cleanBase.endsWith('/admin')) cleanBase = cleanBase.slice(0, -6);
+        if (cleanBase.endsWith('/api')) cleanBase = cleanBase.slice(0, -4);
+
+        console.log("Base Domain detected:", cleanBase);
 
         try {
-            // STRATEGY 1: Standard POST
-            let targetUrl = `${effectiveApiUrl}/login`;
+            // STRATEGY 1: Standard POST (Explicit Path: /api/admin/login)
+            const targetUrl = `${cleanBase}/api/admin/login`;
             console.log("Strategy 1 Target:", targetUrl);
 
             try {
@@ -794,9 +799,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     return;
                 }
 
-                // STRATEGY 2: Emergency GET
-                const baseUrl = effectiveApiUrl.endsWith('/admin') ? effectiveApiUrl.slice(0, -6) : effectiveApiUrl;
-                const getUrl = `${baseUrl.replace(/\/$/, '')}/admin-login-get?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`;
+                // STRATEGY 2: Emergency GET (Explicit Path: /api/admin-login-get)
+                const getUrl = `${cleanBase}/api/admin-login-get?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`;
 
                 console.log("Strategy 2 Target:", getUrl);
 
@@ -816,7 +820,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             console.error("GET JSON Parse Error:", jsonErr);
                             if (text.trim().startsWith("<")) {
                                 setShowApiOverride(true);
-                                throw new Error(`ERRO FATAL DE ROTA: O Backend respondeu com HTML. Use o campo abaixo para corrigir a URL da API.`);
+                                throw new Error(`ERRO FATAL (Rota Inválida): O Backend respondeu com HTML na URL ${getUrl}. Verifique se a URL Base do backend está correta.`);
                             }
                             throw new Error(`Resposta Malformada em ${getUrl}: ${text.substring(0, 50)}...`);
                         }
@@ -825,7 +829,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         const text = await resGet.text().catch(() => "");
                         if (text.trim().startsWith("<")) {
                             setShowApiOverride(true);
-                            errorMsg += ` - Servidor retornou HTML. Corrija o URL abaixo.`;
+                            errorMsg += ` - Servidor retornou HTML (404/502). URL tentada: ${getUrl}`;
                         } else {
                             try {
                                 const data = JSON.parse(text);
