@@ -72,7 +72,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose, userEmail }
                     <div className="bg-slate-800/50 rounded-xl p-6 border border-indigo-500/20 mb-8">
                         <p className="text-sm text-slate-400 mb-2">Você acaba de desbloquear o valor exclusivo:</p>
                         <div className="flex items-end justify-center gap-2">
-                            <span className="text-slate-500 text-lg line-through">R$ 97,90</span>
+                            <span className="text-slate-500 text-lg line-through">R$ 39,90</span>
                             <span className="text-4xl font-bold text-green-400">R$ {bookPrice.toFixed(2).replace('.', ',')}</span>
                         </div>
                         <p className="text-xs text-indigo-300 mt-2 font-semibold tracking-wide uppercase">
