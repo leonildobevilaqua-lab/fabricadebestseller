@@ -206,6 +206,51 @@ export const approveLead = async (req: Request, res: Response) => {
             const billing = planToActivate.billing?.toLowerCase();
             manualAmount = SUBSCRIPTION_PRICES[pName]?.[billing] || 0;
 
+            // --- SEND NOTIFICATION EMAIL W/ PAYMENT LINK ---
+            try {
+                // Determine Link for Level 1 (First Book)
+                // Default fallback if config missing
+                let buyLink = 'https://pay.kiwify.com.br/SpCDp2q'; // Fallback Starter
+                const cycle = PRICING_CONFIG[pName]?.[billing];
+
+                if (cycle && cycle[0]) {
+                    buyLink = cycle[0].link;
+                }
+
+                // Send Email
+                const { sendEmail } = await import('../services/email.service');
+                await sendEmail(
+                    email,
+                    "Parabéns! Sua Assinatura está Ativa 💎",
+                    `Sua assinatura ${pName} foi ativada. Compre seu primeiro livro com desconto agora: ${buyLink}`,
+                    undefined,
+                    `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f8fafc; text-align: center;">
+                        <div style="background-color: white; padding: 30px; border-radius: 12px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                            <h1 style="color: #4338ca; margin-bottom: 10px;">Assinatura Confirmada! 🚀</h1>
+                            <p style="color: #475569; font-size: 16px; margin-bottom: 20px;">
+                                Parabéns! Sua assinatura do plano <strong>${pName}</strong> está ativa.
+                                Agora você tem acesso exclusivo aos valores promocionais para gerar seus livros.
+                            </p>
+                            <div style="background-color: #e0e7ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; color: #3730a3; font-weight: bold;">
+                                📉 Desconto Ativado: Nível 1
+                            </div>
+                            <a href="${buyLink}" style="display: inline-block; background-color: #16a34a; color: white; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 18px;">
+                                📖 Gerar Meu Primeiro Livro
+                            </a>
+                            <p style="color: #94a3b8; font-size: 12px; margin-top: 20px;">
+                                Ao clicar, você será redirecionado para o pagamento da taxa de geração já com o desconto aplicado.
+                            </p>
+                        </div>
+                    </div>
+                    `
+                );
+                console.log(`[EMAIL] Activation email sent to ${email} with link ${buyLink}`);
+            } catch (mailErr) {
+                console.error("[EMAIL ERROR] Failed to send activation email", mailErr);
+                // Non-blocking
+            }
+
             // CREDIT GRANT REMOVED
         } else {
             // Manual Extra Book Grant (Credit)
