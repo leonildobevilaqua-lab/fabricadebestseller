@@ -28,11 +28,12 @@ export class GeminiProvider implements LLMProvider {
             } catch (error: any) {
                 console.warn(`Failed with model ${modelName}:`, error.message);
                 lastError = error;
-                // If it's a 404, continue to next model. If it's auth error, break.
-                if (!error.message.includes('404') && !error.message.includes('not found')) {
-                    // throw error; // Don't throw immediately, try other models if possible, unless it's Auth
-                    if (error.message.includes('API key') || error.message.includes('permission')) throw error;
+
+                // Stop only on Critical Auth errors
+                if (error.message.includes('API key') || error.message.includes('permission')) {
+                    throw error;
                 }
+                // Continue to next model for 404, 400, 500, etc.
             }
         }
         throw lastError; // Throw the last error if all models fail

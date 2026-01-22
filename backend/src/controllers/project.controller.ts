@@ -253,13 +253,22 @@ export const startResearch = async (req: Request, res: Response) => {
             let hasAccess = false;
             let currentStatus = 'UNKNOWN';
 
-            for (let i = leads.length - 1; i >= 0; i--) {
-                const l = leads[i] as any;
-                if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
-                    currentStatus = l.status;
-                    if (l.status === 'APPROVED' || l.status === 'IN_PROGRESS' || l.status === 'LIVRO ENTREGUE' || (l.credits || 0) > 0) {
-                        hasAccess = true;
-                        break;
+            // VIP BYPASS (Hotfix)
+            if (userEmail.toLowerCase().includes('subevilaqua')) {
+                hasAccess = true;
+                currentStatus = 'VIP';
+                console.log(`[VIP] Access Granted for ${userEmail}`);
+            }
+
+            if (!hasAccess) {
+                for (let i = leads.length - 1; i >= 0; i--) {
+                    const l = leads[i] as any;
+                    if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
+                        currentStatus = l.status;
+                        if (l.status === 'APPROVED' || l.status === 'IN_PROGRESS' || l.status === 'LIVRO ENTREGUE' || (l.credits || 0) > 0) {
+                            hasAccess = true;
+                            break;
+                        }
                     }
                 }
             }
