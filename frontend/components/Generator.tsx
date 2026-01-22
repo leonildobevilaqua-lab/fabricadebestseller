@@ -129,33 +129,34 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     }
   };
 
-  // POLLING FOR ACCESS (Real-time Unlock) - Moved to top to fix React Error #310
+  const checkAccessStatus = () => {
+    if (!userContact?.email) return;
+
+    fetch(`/api/payment/check-access?email=${userContact.email}`)
+      .then(r => r.json())
+      .then(access => {
+        if (access.hasAccess) {
+          setShowPaymentGate(false);
+
+          if (access.activeProjectId) {
+            setProjectId(access.activeProjectId);
+            setShowReward(false);
+            // Force fetch project immediately to prevent stuck loading
+            API.getProject(access.activeProjectId).then(p => {
+              if (p) setProject(p);
+            });
+          } else {
+            setShowReward(true);
+          }
+        }
+      })
+      .catch(e => console.error("Access Poll Error", e));
+  };
+
+  // POLLING FOR ACCESS (Real-time Unlock)
   useEffect(() => {
     if (!showPaymentGate) return;
-
-    const interval = setInterval(() => {
-      if (!userContact?.email) return;
-
-      fetch(`/api/payment/check-access?email=${userContact.email}`)
-        .then(r => r.json())
-        .then(access => {
-          if (access.hasAccess) {
-            setShowPaymentGate(false);
-
-            if (access.activeProjectId) {
-              // Direct to Factory (Admin triggered or User Resume)
-              setProjectId(access.activeProjectId);
-              setShowReward(false);
-            } else {
-              // Just Unlocked Plan (No active book yet) -> Show Reward
-              setShowReward(true);
-            }
-          }
-        })
-        .catch(e => console.error("Access Poll Error", e));
-
-    }, 3000); // Check every 3 seconds
-
+    const interval = setInterval(checkAccessStatus, 3000);
     return () => clearInterval(interval);
   }, [showPaymentGate, userContact]);
 
@@ -559,7 +560,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         // Logic: If user is Pending Sub, they need PLAN link. If they are Sub but no credits, they need BOOK link.
         // Usually Admin sets Plan Link in backend 'payment.controller'.
         userEmail={userContact?.email}
-        onConfirmPayment={() => window.location.reload()} // Just reload to re-check everything cleanly
+        onConfirmPayment={checkAccessStatus}
       />
     );
   }
