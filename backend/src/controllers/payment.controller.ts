@@ -484,15 +484,19 @@ export const checkAccess = async (req: Request, res: Response) => {
 
     // 1. FETCH LEADS TO DETERMINE USAGE AND PENDING PLANS
     try {
+        await reloadDB(); // FORCE SYNC to see Admin updates immediately
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
         // Find most recent status/plan
         for (let i = leads.length - 1; i >= 0; i--) {
-            if ((leads[i] as any).email?.toLowerCase().trim() === (email as string).toLowerCase().trim()) {
-                leadStatus = (leads[i] as any).status;
-                if ((leads[i] as any).plan) pendingPlan = (leads[i] as any).plan;
-                if (leadStatus === 'APPROVED' || (leads[i] as any).status === 'ACTIVE') break; // Prioritize active
+            const l = leads[i] as any;
+            if (l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim()) {
+                leadStatus = l.status;
+                if (l.plan) pendingPlan = l.plan;
+
+                // Prioritize 'APPROVED' or 'IN_PROGRESS' status to unblock generation
+                if (leadStatus === 'APPROVED' || leadStatus === 'IN_PROGRESS' || leadStatus === 'ACTIVE') break;
             }
         }
 
