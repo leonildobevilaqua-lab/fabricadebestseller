@@ -4,7 +4,7 @@ import * as AIService from '../services/ai.service';
 import * as DocService from '../services/doc.service';
 import { TitleOption, BookProject } from '../types';
 import { sendEmail } from '../services/email.service';
-import { pushVal, getVal, setVal } from '../services/db.service';
+import { pushVal, getVal, setVal, reloadDB } from '../services/db.service';
 import * as StorageService from '../services/storage.service';
 import path from 'path';
 import mammoth from 'mammoth';
@@ -245,13 +245,27 @@ export const startResearch = async (req: Request, res: Response) => {
     try {
         const userEmail = project.metadata.contact?.email;
         if (userEmail) {
+            await reloadDB(); // Force sync to see Admin Approval
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-            // Find latest lead
-            const lead: any = leads.reverse().find((l: any) => l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim());
 
-            if (!lead || (lead.status !== 'APPROVED' && lead.status !== 'IN_PROGRESS' && (lead.credits || 0) <= 0)) {
-                console.warn(`Blocked startResearch for ${userEmail}: Payment not confirmed. Lead Status: ${lead?.status}`);
+            // Find latest lead status reliably
+            let hasAccess = false;
+            let currentStatus = 'UNKNOWN';
+
+            for (let i = leads.length - 1; i >= 0; i--) {
+                const l = leads[i] as any;
+                if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
+                    currentStatus = l.status;
+                    if (l.status === 'APPROVED' || l.status === 'IN_PROGRESS' || l.status === 'LIVRO ENTREGUE' || (l.credits || 0) > 0) {
+                        hasAccess = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!hasAccess) {
+                console.warn(`Blocked startResearch for ${userEmail}: Payment not confirmed. Lead Status: ${currentStatus}`);
                 return res.status(402).json({ error: "Aguardando confirmação de pagamento." });
             }
         }
