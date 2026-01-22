@@ -34,17 +34,20 @@ export const AsaasProvider = {
 
         // Create new
         try {
-            const payload = {
+            const payload: any = {
                 name: user.name,
-                email: user.email,
-                cpfCnpj: user.cpfCnpj,
-                mobilePhone: user.phone
+                email: user.email
             };
+
+            if (user.cpfCnpj && user.cpfCnpj.trim() !== '') payload.cpfCnpj = user.cpfCnpj;
+            if (user.phone && user.phone.trim() !== '') payload.mobilePhone = user.phone;
+
             const { data } = await api.post('/customers', payload);
             return data.id;
         } catch (error: any) {
+            const errorMsg = error.response?.data?.errors?.[0]?.description || error.message;
             console.error("Asaas Create Customer Error:", error.response?.data || error.message);
-            throw new Error("Failed to create customer in Asaas");
+            throw new Error(`Failed to create customer in Asaas: ${errorMsg}`);
         }
     },
 
