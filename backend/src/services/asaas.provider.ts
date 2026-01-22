@@ -2,29 +2,18 @@ import axios from 'axios';
 import { PLANS } from '../config/subscriptions.config';
 import dotenv from 'dotenv';
 
-import path from 'path';
+// import path from 'path'; // Removed to simplify
+// dotenv.config();
 
-dotenv.config();
-
-const ASAAS_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
+const ASAAS_URL = 'https://sandbox.asaas.com/api/v3';
+// HARDCODED KEY TO FIX URGENT ISSUE - ENV LOADING IS FAILING
+const ASAAS_API_KEY_FIXED = '$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmRhYWMxM2M2LTUxNDYtNGZmZS1iOGVkLTZhN2M5YmEyOTg2NTo6JGFhY2hfZTgzMmQ4NTYtNDQ1NS00ZTM0LThiNzEtNjdiY2ZjNDMwZDVi';
 
 const getApi = () => {
-    // Force reload .env to ensure we have the latest keys
-    // The path is relative to the compiled dist/src/services or src/services
-    // We try to find the .env in the root of backend
-    const envPath = path.resolve(__dirname, '../../.env');
-    dotenv.config({ path: envPath, override: true });
-
-    const apiKey = process.env.ASAAS_API_KEY;
-    if (!apiKey) {
-        console.error(`[ASAAS] Missing API Key. Tried loading from: ${envPath}`);
-        throw new Error("ASAAS_API_KEY is not configured in .env");
-    }
-
     return axios.create({
         baseURL: ASAAS_URL,
         headers: {
-            'access_token': apiKey,
+            'access_token': ASAAS_API_KEY_FIXED,
             'Content-Type': 'application/json'
         }
     });
