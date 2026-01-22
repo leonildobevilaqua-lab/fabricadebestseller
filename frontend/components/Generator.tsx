@@ -129,6 +129,32 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     }
   };
 
+  // POLLING FOR ACCESS (Real-time Unlock) - Moved to top to fix React Error #310
+  useEffect(() => {
+    if (!showPaymentGate) return;
+
+    const interval = setInterval(() => {
+      if (!userContact?.email) return;
+
+      fetch(`/api/payment/check-access?email=${userContact.email}`)
+        .then(r => r.json())
+        .then(access => {
+          if (access.hasAccess) {
+            setShowPaymentGate(false);
+            setShowReward(true);
+            if (access.activeProjectId) {
+              setProjectId(access.activeProjectId);
+              // If project exists, we might implicitly be in "Factory Mode"
+            }
+          }
+        })
+        .catch(e => console.error("Access Poll Error", e));
+
+    }, 3000); // Check every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [showPaymentGate, userContact]);
+
   const [emailSent, setEmailSent] = useState(false);
 
   const handleFinalize = async () => {
@@ -463,31 +489,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     );
   }
 
-  // POLLING FOR ACCESS (Real-time Unlock)
-  useEffect(() => {
-    if (!showPaymentGate) return;
 
-    const interval = setInterval(() => {
-      if (!userContact?.email) return;
-
-      fetch(`/api/payment/check-access?email=${userContact.email}`)
-        .then(r => r.json())
-        .then(access => {
-          if (access.hasAccess) {
-            setShowPaymentGate(false);
-            setShowReward(true);
-            if (access.activeProjectId) {
-              setProjectId(access.activeProjectId);
-              // If project exists, we might implicitly be in "Factory Mode"
-            }
-          }
-        })
-        .catch(e => console.error("Access Poll Error", e));
-
-    }, 3000); // Check every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [showPaymentGate, userContact]);
 
   if (showReward) {
     return (

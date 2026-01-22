@@ -47,14 +47,30 @@ export const PaymentGate: React.FC<PaymentGateProps> = ({
                     </p>
 
                     {/* Warning Box */}
-                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 w-full mb-8 rounded-r-md">
+                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 w-full mb-4 rounded-r-md">
                         <div className="flex gap-3">
                             <div className="text-yellow-600 mt-0.5">
                                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
                             </div>
                             <p className="text-sm text-yellow-800 text-left leading-relaxed">
-                                Você selecionou o plano <strong>{planName}</strong>. Para liberar o valor exclusivo de assinante (R$ {bookPrice.toFixed(2).replace('.', ',')}), primeiro ative sua assinatura.
+                                Você selecionou o plano <strong>{planName}</strong> e está desbloqueando um livro best-seller.
                             </p>
+                        </div>
+                    </div>
+
+                    {/* Pricing Summary */}
+                    <div className="w-full bg-slate-800 rounded-lg p-4 mb-8 border border-slate-700">
+                        <div className="flex justify-between text-slate-400 text-xs mb-1">
+                            <span>Ativação do Plano {planName}:</span>
+                            <span>R$ {subscriptionPrice.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <div className="flex justify-between text-slate-400 text-xs mb-3">
+                            <span>Livro Gerado (Oferta Exclusiva):</span>
+                            <span>R$ {bookPrice.toFixed(2).replace('.', ',')}</span>
+                        </div>
+                        <div className="border-t border-slate-600 pt-2 flex justify-between text-white font-bold">
+                            <span>TOTAL DO INVESTIMENTO:</span>
+                            <span className="text-green-400">R$ {(subscriptionPrice + bookPrice).toFixed(2).replace('.', ',')}</span>
                         </div>
                     </div>
 
