@@ -56,6 +56,16 @@ export const create = async (req: Request, res: Response) => {
             if (credits <= 0) {
                 console.log(`[PROJECT] Denied creation for ${contact.email}: No credits. Creating PENDING lead.`);
 
+                // FORCE RESET USER PLAN TO PENDING (Prevents Stale Active State from Previous Tests)
+                if (contact.plan) {
+                    await setVal(`/users/${safeEmail}/plan`, {
+                        ...contact.plan,
+                        status: 'PENDING',
+                        startDate: new Date(),
+                        updatedAt: new Date()
+                    });
+                }
+
                 // CREATE PENDING LEAD FOR ADMIN VISIBILITY
                 try {
                     const rawLeads = await getVal('/leads') || [];
