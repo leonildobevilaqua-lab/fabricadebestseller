@@ -300,24 +300,32 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           fetch(`/api/payment/check-access?email=${userContact.email}`)
             .then(r => r.json())
             .then(access => {
-              // IF Access is explicitly granted (e.g. from Admin manual approval), API.createProject should have worked.
-              // If it didn't, maybe transient error?
-              // But if access.hasAccess is true, we shouldn't show gate.
               if (access.hasAccess && access.credits > 0) {
-                // Retry creation? Or just show error?
-                setError("Erro ao iniciar progeto, mas você tem créditos. Tente recarregar.");
+                setError("Erro ao iniciar projeto, mas você tem créditos. Tente recarregar.");
                 return;
               }
 
+              const isPlanActive = !!(access.plan && access.plan.status === 'ACTIVE');
+              const subPrice = isPlanActive ? 0 : (access.subscriptionPrice || 49.90);
+
               setUpsellOffer({
                 price: access.bookPrice,
-                planName: access.plan?.name || "STARTER", // Pass Plan Name
+                planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
                 link: access.checkoutUrl,
                 level: access.discountLevel,
-                subscriptionPrice: access.plan?.price || 49.90, // Infer
-                subscriptionLink: access.plan?.link || "#" // Infer or fetch
+                subscriptionPrice: subPrice,
+                subscriptionLink: "#"
               });
-              setShowPaymentGate(true); // Show Gate
+
+              // Flow: If Plan Active -> Show Reward (User clicks -> Go to Book Checkout)
+              // If Plan Inactive -> Show Payment Gate (Total)
+              if (isPlanActive) {
+                setShowReward(true);
+                setShowPaymentGate(false);
+              } else {
+                setShowPaymentGate(true);
+                setShowReward(false);
+              }
               setError("Aguardando Pagamento...");
             })
             .catch(err => {

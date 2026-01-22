@@ -62,7 +62,9 @@ export const PaymentGate: React.FC<PaymentGateProps> = ({
                     <div className="w-full bg-slate-800 rounded-lg p-4 mb-8 border border-slate-700">
                         <div className="flex justify-between text-slate-400 text-xs mb-1">
                             <span>Ativação do Plano {planName}:</span>
-                            <span>R$ {subscriptionPrice.toFixed(2).replace('.', ',')}</span>
+                            <span className={subscriptionPrice === 0 ? "text-green-500 font-bold" : ""}>
+                                {subscriptionPrice === 0 ? "ATIVO ✅" : `R$ ${subscriptionPrice.toFixed(2).replace('.', ',')}`}
+                            </span>
                         </div>
                         <div className="flex justify-between text-slate-400 text-xs mb-3">
                             <span>Livro Gerado (Oferta Exclusiva):</span>

@@ -113,7 +113,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
     }
 
     // Infer context for Book
-    const planContext = lead.tag || (lead.plan?.name ? `Plano ${lead.plan.name}` : 'Avulso');
+    const planContext = lead.tag || (lead.plan?.name ? `Plano ${lead.plan.name} (${lead.plan.billing === 'annual' ? 'Anual' : 'Mensal'})` : 'Avulso');
 
     return (
         <tr className={`hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-100 ${isSubscription ? 'bg-indigo-50/20' : ''}`}>

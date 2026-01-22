@@ -479,7 +479,8 @@ export const checkAccess = async (req: Request, res: Response) => {
     let planName = 'NONE';
     let discountLevel = 1;
     let leadStatus = null;
-    let pendingPlan = null;
+    let pendingPlan: any = null;
+    let effectivePlan: any = null;
 
     // 1. FETCH LEADS TO DETERMINE USAGE AND PENDING PLANS
     try {
@@ -515,7 +516,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         const usageCount = Math.max(leadsUsage, projectsUsage);
 
         // 2. DETERMINE PLAN TRUTH
-        const effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : pendingPlan;
+        effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : pendingPlan;
 
         if (effectivePlan) {
             // Validate Expiration only if it's the Active User Plan
@@ -555,6 +556,15 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
         }
 
+        // Capture effective plan for price calculation
+        effectivePlan = userPlan || pendingPlan;
+        if (effectivePlan) {
+            const pName = effectivePlan.name || planName;
+            const pBilling = effectivePlan.billing || 'monthly';
+            // Override planName for downstream logic
+            planName = pName;
+        }
+
     } catch (e) {
         console.error("Error calculating access/price", e);
     }
@@ -587,7 +597,14 @@ export const checkAccess = async (req: Request, res: Response) => {
         bookPrice,
         checkoutUrl,
         discountLevel,
-        activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null
+        activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,
+        // Helper for frontend total sum
+        subscriptionPrice: (effectivePlan && SUBSCRIPTION_PRICES[planName]?.[(effectivePlan.billing || 'monthly').toLowerCase()]?.price) ||
+            (pendingPlan && pendingPlan.price) ||
+            49.90,
+        planLabel: effectivePlan
+            ? `Plano ${planName} ${(effectivePlan.billing === 'annual' ? 'Anual' : 'Mensal')}`
+            : (pendingPlan ? `Plano ${pendingPlan.name} ${(pendingPlan.billing === 'annual' ? 'Anual' : 'Mensal')}` : 'Avulso')
     });
 };
 
