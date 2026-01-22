@@ -809,6 +809,9 @@ export const processDiagramLead = async (req: Request, res: Response) => {
                     await setVal(`/leads[${leadIndex}]/projectId`, project.id);
                     await setVal(`/leads[${leadIndex}]/productionStatus`, 'RESEARCHING');
 
+                    // Set Auto-Generate Flag for Frontend to auto-advance
+                    await setVal(`/projects/${project.id}/metadata/autoGenerate`, true);
+
                     // 2. Start Research (Async)
                     // We call the controller logic directly or via API? 
                     // Better to call QueueService if available, or just reuse the logic from startResearch.

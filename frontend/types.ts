@@ -18,6 +18,7 @@ export interface BookMetadata {
   acknowledgments?: string;
   aboutAuthor?: string;
   discountUsed?: number;
+  autoGenerate?: boolean;
 }
 
 export type JobStatus = 'IDLE' | 'RESEARCHING' | 'WAITING_TITLE' | 'GENERATING_STRUCTURE' | 'WAITING_STRUCTURE' | 'WRITING' | 'WAITING_DETAILS' | 'COMPLETED' | 'FAILED' | 'REVIEW_STRUCTURE' | 'WRITING_CHAPTERS' | 'GENERATING_MARKETING';

@@ -128,266 +128,6 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     }
   };
 
-  // Define handleGenerateExtras at top level
-  const handleGenerateExtras = async () => {
-    if (!dedicationTo && !ackTo) return alert(t.fillAuthInfo);
-    setGeneratingExtras(true);
-    try {
-      const res = await fetch(`/api/projects/${projectId}/generate-extras`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dedicationTo, ackTo, aboutAuthorContext })
-      });
-      const data = await res.json();
-      if (data.dedication) setDedication(data.dedication);
-      if (data.acknowledgments) setAck(data.acknowledgments);
-      if (data.aboutAuthor) setAboutAuthor(data.aboutAuthor);
-    } catch (e) {
-      console.error(e);
-      alert(t.errorGeneratingExtras);
-    } finally {
-      setGeneratingExtras(false);
-    }
-  };
-
-  // Define submitFinalDetails at top level (replaces inner handleFinalize)
-  const submitFinalDetails = async () => {
-    if (!project) return;
-    setSending(true);
-
-    // Construct updated project state
-    const updatedMetadata = {
-      ...project.metadata,
-      dedication,
-      acknowledgments: ack,
-      aboutAuthor,
-      status: 'COMPLETED' as any,
-      progress: 100,
-      statusMessage: "Livro Concluído com Sucesso!"
-    };
-
-    const updatedProject = { ...project, metadata: updatedMetadata };
-
-    try {
-      await API.updateProject(project.id, { metadata: updatedMetadata });
-    } catch (e) {
-      console.error("Failed to sync status to backend", e);
-    }
-
-    updateMetadata({ dedication, acknowledgments: ack, status: 'COMPLETED', progress: 100 });
-    setProject(updatedProject);
-    setSending(false);
-  };
-
-  const initialized = useRef(false);
-
-  const initProject = async () => {
-    if (initialized.current) return;
-    initialized.current = true;
-
-    setAppStep(2);
-
-    try {
-      const p = await API.createProject(metadata.authorName, metadata.topic, language, userContact, true);
-
-      if ((p as any).error || !p.id) {
-        console.warn("Project Create Failed:", p);
-        // Payment Required Logic
-        if (userContact?.email) {
-          fetch(`/api/payment/check-access?email=${userContact.email}`)
-            .then(r => r.json())
-            .then(access => {
-              setUpsellOffer({
-                price: access.bookPrice,
-                planName: access.plan?.name || "STARTER", // Pass Plan Name
-                link: access.checkoutUrl,
-                level: access.discountLevel,
-                subscriptionPrice: access.plan?.price || 49.90, // Infer
-                subscriptionLink: access.plan?.link || "#" // Infer or fetch
-              });
-              setShowPaymentGate(true); // Show Gate
-              setError("Aguardando Pagamento...");
-            })
-            .catch(err => {
-              console.error("Access check fail", err);
-              setError("Erro ao verificar status.");
-            });
-          return;
-        }
-        throw new Error((p as any).error || "Failed to create project");
-      }
-
-      setProjectId(p.id);
-      setProject(p);
-
-      if (p.metadata.status === 'IDLE') {
-        await API.startResearch(p.id, language);
-      }
-    } catch (e: any) {
-      console.error("Project Init Error:", e);
-      if (userContact?.email) {
-        fetch(`/api/payment/check-access?email=${userContact.email}`)
-          .then(r => r.json())
-          .then(access => {
-            setUpsellOffer({
-              price: access.bookPrice,
-              planName: access.plan?.name || "STARTER",
-              link: access.checkoutUrl,
-              level: access.discountLevel
-            });
-            setShowPaymentGate(true); // Show Gate
-          })
-          .catch(err => console.error(err));
-        return;
-      }
-      setError(t.serverConnectionError);
-    }
-  };
-
-  // Skip the useEffect init since we call it manually after animation
-  // useEffect(() => {
-  //   if (initialized.current) return;
-  //   initialized.current = true;
-  //   setAppStep(2);
-  //   const init = async () => { ... }
-  //   init();
-  // }, [metadata.authorName, metadata.topic]);
-
-  // RENDER CUSTOM FACTORY INTRO
-  if (isManufacturing) {
-    const messages = [
-      "Verificando os dados informados...",
-      "Validando o Tema/Assunto do livro...",
-      "Preparando as máquinas para começar a produzir seu futuro Best Seller...",
-      "Tudo pronto para começar..."
-    ];
-
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8">
-        <div className="mb-12 relative w-32 h-32 flex items-center justify-center">
-          {/* Gear Animation */}
-          <svg className="w-32 h-32 text-slate-800 animate-spin-slow absolute opacity-20" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
-          <div className="text-6xl animate-bounce">🏭</div>
-        </div>
-
-        <h2 className="text-2xl font-bold text-slate-700 mb-4 animate-pulse">
-          {messages[factoryStep]}
-        </h2>
-
-        <div className="w-64 h-2 bg-slate-200 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-indigo-500 transition-all duration-1000 ease-linear"
-            style={{ width: `${(factoryStep + 1) * 25}%` }}
-          ></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (showPaymentGate) {
-    return (
-      <PaymentGate
-        isOpen={true}
-        planName={upsellOffer?.planName || "STARTER"}
-        bookPrice={upsellOffer?.price || 39.90}
-        subscriptionPrice={upsellOffer?.subscriptionPrice || 49.90}
-        checkoutUrl={upsellOffer?.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"} // FIX: Ensure this is the PLAN Link not Book Link? 
-        // Logic: If user is Pending Sub, they need PLAN link. If they are Sub but no credits, they need BOOK link.
-        // Usually Admin sets Plan Link in backend 'payment.controller'.
-        userEmail={userContact?.email}
-        onConfirmPayment={() => window.location.reload()} // Just reload to re-check everything cleanly
-      />
-    );
-  }
-
-
-  const [retryCount, setRetryCount] = useState(0);
-
-  const handleRetry = async () => {
-    if (!projectId || !project) return;
-
-    // Increment retry count
-    setRetryCount(prev => prev + 1);
-
-    try {
-      if (progress < 30) {
-        // Failed during Research
-        await API.startResearch(projectId);
-        setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa automaticamente...' } });
-      } else if (progress >= 30 && progress < 41) {
-        // Failed during Structure/Title
-        await API.generateBookContent(projectId);
-        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Iniciando escrita...' } });
-      } else {
-        // Failed during Writing
-        await API.generateBookContent(projectId);
-        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita automaticamente...' } });
-      }
-    } catch (e) {
-      console.error("Auto-retry failed", e);
-    }
-  };
-
-  // Auto-Retry Effect
-  useEffect(() => {
-    if (status === 'FAILED') {
-      // Limit retries to 10 to avoid infinite loops (though user asked to remove the button wait, we need some safety)
-      // If failure persists for too long, maybe we stop.
-      // But user said "don't make me wait".
-      // Let's retry up to 20 times with a 5s delay.
-      if (retryCount < 20) {
-        const timer = setTimeout(() => {
-          handleRetry();
-        }, 5000); // 5s delay
-        return () => clearTimeout(timer);
-      }
-    } else {
-      // Reset retry count on success/stable status
-      if (status !== 'FAILED' && retryCount > 0 && status !== 'IDLE') {
-        setRetryCount(0);
-      }
-    }
-  }, [status, retryCount]);
-
-  // Polling
-  useEffect(() => {
-    if (!projectId) return;
-
-    const interval = setInterval(async () => {
-      try {
-        const p = await API.getProject(projectId);
-        // Only update if valid 
-        if (p && p.metadata) {
-          setProject(p);
-        }
-      } catch (e) {
-        console.error("Polling error", e);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [projectId]);
-
-  // Sync App Step based on Project Status
-  useEffect(() => {
-    if (!project || !project.metadata) return;
-    const { status } = project.metadata;
-
-    if (status === 'WRITING_CHAPTERS') {
-      setAppStep(3);
-    } else if (status === 'GENERATING_MARKETING' || status === 'WAITING_DETAILS' || status === 'COMPLETED') {
-      setAppStep(4);
-    }
-  }, [project?.metadata?.status, setAppStep]);
-
-  const handleTitleSelect = async (opt: TitleOption) => {
-    if (!projectId) return;
-    updateMetadata({ bookTitle: opt.title, subTitle: opt.subtitle });
-    await API.selectTitle(projectId, opt.title, opt.subtitle);
-    // await API.startGeneration(projectId); 
-    // ^ Removed this because we now wait for structure review before writing content.
-  };
-
   const [emailSent, setEmailSent] = useState(false);
 
   const handleFinalize = async () => {
@@ -453,6 +193,297 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       setSending(false);
     }
   };
+
+  // Define handleGenerateExtras at top level
+  const handleGenerateExtras = async () => {
+    if (!dedicationTo && !ackTo) return alert(t.fillAuthInfo);
+    setGeneratingExtras(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/generate-extras`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dedicationTo, ackTo, aboutAuthorContext })
+      });
+      const data = await res.json();
+      if (data.dedication) setDedication(data.dedication);
+      if (data.acknowledgments) setAck(data.acknowledgments);
+      if (data.aboutAuthor) setAboutAuthor(data.aboutAuthor);
+    } catch (e) {
+      console.error(e);
+      alert(t.errorGeneratingExtras);
+    } finally {
+      setGeneratingExtras(false);
+    }
+  };
+
+  // Define submitFinalDetails at top level (replaces inner handleFinalize)
+  const submitFinalDetails = async () => {
+    if (!project) return;
+    setSending(true);
+
+    // Construct updated project state
+    const updatedMetadata = {
+      ...project.metadata,
+      dedication,
+      acknowledgments: ack,
+      aboutAuthor,
+      status: 'COMPLETED' as any,
+      progress: 100,
+      statusMessage: "Livro Concluído com Sucesso!"
+    };
+
+    const updatedProject = { ...project, metadata: updatedMetadata };
+
+    try {
+      await API.updateProject(project.id, { metadata: updatedMetadata });
+    } catch (e) {
+      console.error("Failed to sync status to backend", e);
+    }
+
+    updateMetadata({ dedication, acknowledgments: ack, status: 'COMPLETED', progress: 100 });
+    setProject(updatedProject);
+    setSending(false);
+  };
+
+  const initialized = useRef(false);
+
+  const initProject = async () => {
+    if (initialized.current) return;
+    initialized.current = true;
+
+    setAppStep(2);
+
+    try {
+      const p = await API.createProject(metadata.authorName, metadata.topic, language, userContact, true);
+
+      if ((p as any).error || !p.id) {
+        console.warn("Project Create Failed:", p);
+
+        // Manual Release Override Check: If we can verify the user has access via another call, maybe we skip?
+        // Actually, API.createProject should HAVE succeeded if manually released.
+        // If it failed, it means createProject rejected it.
+        // Let's double check if we can bypass.
+
+        // Payment Required Logic
+        if (userContact?.email) {
+          fetch(`/api/payment/check-access?email=${userContact.email}`)
+            .then(r => r.json())
+            .then(access => {
+              // IF Access is explicitly granted (e.g. from Admin manual approval), API.createProject should have worked.
+              // If it didn't, maybe transient error?
+              // But if access.hasAccess is true, we shouldn't show gate.
+              if (access.hasAccess && access.credits > 0) {
+                // Retry creation? Or just show error?
+                setError("Erro ao iniciar progeto, mas você tem créditos. Tente recarregar.");
+                return;
+              }
+
+              setUpsellOffer({
+                price: access.bookPrice,
+                planName: access.plan?.name || "STARTER", // Pass Plan Name
+                link: access.checkoutUrl,
+                level: access.discountLevel,
+                subscriptionPrice: access.plan?.price || 49.90, // Infer
+                subscriptionLink: access.plan?.link || "#" // Infer or fetch
+              });
+              setShowPaymentGate(true); // Show Gate
+              setError("Aguardando Pagamento...");
+            })
+            .catch(err => {
+              console.error("Access check fail", err);
+              setError("Erro ao verificar status.");
+            });
+          return;
+        }
+        throw new Error((p as any).error || "Failed to create project");
+      }
+
+      setProjectId(p.id);
+      setProject(p);
+
+      if (p.metadata.status === 'IDLE') {
+        await API.startResearch(p.id, language);
+      }
+    } catch (e: any) {
+      console.error("Project Init Error:", e);
+      if (userContact?.email) {
+        fetch(`/api/payment/check-access?email=${userContact.email}`)
+          .then(r => r.json())
+          .then(access => {
+            setUpsellOffer({
+              price: access.bookPrice,
+              planName: access.plan?.name || "STARTER",
+              link: access.checkoutUrl,
+              level: access.discountLevel
+            });
+            setShowPaymentGate(true); // Show Gate
+          })
+          .catch(err => console.error(err));
+        return;
+      }
+      setError(t.serverConnectionError);
+    }
+  };
+
+  // Skip the useEffect init since we call it manually after animation
+  // useEffect(() => {
+  //   if (initialized.current) return;
+  //   initialized.current = true;
+  //   setAppStep(2);
+  //   const init = async () => { ... }
+  //   init();
+  // }, [metadata.authorName, metadata.topic]);
+
+
+  // --- HOISTED HELPER FUNCTIONS & EFFECTS (Must be before conditional returns) ---
+
+  const handleTitleSelect = async (opt: TitleOption) => {
+    if (!projectId) return;
+    updateMetadata({ bookTitle: opt.title, subTitle: opt.subtitle });
+    await API.selectTitle(projectId, opt.title, opt.subtitle);
+  };
+
+  const handleApproveStructure = async () => {
+    if (!projectId || !project) return;
+    await API.generateBookContent(projectId);
+    setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', progress: 41 } });
+    setAppStep(3);
+  };
+
+  const [retryCount, setRetryCount] = useState(0);
+
+  const handleRetry = async () => {
+    if (!projectId || !project) return;
+    setRetryCount(prev => prev + 1);
+    try {
+      if (progress < 30) {
+        await API.startResearch(projectId);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa automaticamente...' } });
+      } else if (progress >= 30 && progress < 41) {
+        await API.generateBookContent(projectId);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Iniciando escrita...' } });
+      } else {
+        await API.generateBookContent(projectId);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita automaticamente...' } });
+      }
+    } catch (e) {
+      console.error("Auto-retry failed", e);
+    }
+  };
+
+  // Auto-Retry Effect
+  useEffect(() => {
+    if (status === 'FAILED') {
+      if (retryCount < 20) {
+        const timer = setTimeout(() => { handleRetry(); }, 5000);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      if (status !== 'FAILED' && retryCount > 0 && status !== 'IDLE') {
+        setRetryCount(0);
+      }
+    }
+  }, [status, retryCount]);
+
+  // Polling
+  useEffect(() => {
+    if (!projectId) return;
+    const interval = setInterval(async () => {
+      try {
+        const p = await API.getProject(projectId);
+        if (p && p.metadata) setProject(p);
+      } catch (e) {
+        console.error("Polling error", e);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [projectId]);
+
+  // Sync App Step
+  useEffect(() => {
+    if (!project || !project.metadata) return;
+    const { status } = project.metadata;
+    if (status === 'WRITING_CHAPTERS') {
+      setAppStep(3);
+    } else if (status === 'GENERATING_MARKETING' || status === 'WAITING_DETAILS' || status === 'COMPLETED') {
+      setAppStep(4);
+    }
+  }, [project?.metadata?.status, setAppStep]);
+
+  // AUTO-ADVANCE EFFECT
+  useEffect(() => {
+    if (!project || !project.metadata || error) return;
+    const { status, autoGenerate } = project.metadata;
+    const { titleOptions } = project;
+
+    // Check if Auto-Generate Flag is ON (Set by Admin "Gerar Livro")
+    if (autoGenerate) {
+      // Auto-Select Title
+      if (status === 'WAITING_TITLE' && titleOptions && titleOptions.length > 0) {
+        handleTitleSelect(titleOptions[0]);
+      }
+      // Auto-Approve Structure
+      if (status === 'REVIEW_STRUCTURE' || (status === 'IDLE' && project.structure.length > 0 && progress === 40)) {
+        handleApproveStructure();
+      }
+    }
+  }, [project, error]);
+
+  // --- END OF EFFECTS ---
+
+  // RENDER CUSTOM FACTORY INTRO
+  if (isManufacturing) {
+    const messages = [
+      "Verificando os dados informados...",
+      "Validando o Tema/Assunto do livro...",
+      "Preparando as máquinas para começar a produzir seu futuro Best Seller...",
+      "Tudo pronto para começar..."
+    ];
+
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8">
+        <div className="mb-12 relative w-32 h-32 flex items-center justify-center">
+          {/* Gear Animation */}
+          <svg className="w-32 h-32 text-slate-800 animate-spin-slow absolute opacity-20" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
+          <div className="text-6xl animate-bounce">🏭</div>
+        </div>
+
+        <h2 className="text-2xl font-bold text-slate-700 mb-4 animate-pulse">
+          {messages[factoryStep]}
+        </h2>
+
+        <div className="w-64 h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-indigo-500 transition-all duration-1000 ease-linear"
+            style={{ width: `${(factoryStep + 1) * 25}%` }}
+          ></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (showPaymentGate) {
+    return (
+      <PaymentGate
+        isOpen={true}
+        planName={upsellOffer?.planName || "STARTER"}
+        bookPrice={upsellOffer?.price || 39.90}
+        subscriptionPrice={upsellOffer?.subscriptionPrice || 49.90}
+        checkoutUrl={upsellOffer?.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"} // FIX: Ensure this is the PLAN Link not Book Link? 
+        // Logic: If user is Pending Sub, they need PLAN link. If they are Sub but no credits, they need BOOK link.
+        // Usually Admin sets Plan Link in backend 'payment.controller'.
+        userEmail={userContact?.email}
+        onConfirmPayment={() => window.location.reload()} // Just reload to re-check everything cleanly
+      />
+    );
+  }
+
+
+
+
+
+
+
 
   if (error) return <div className="text-red-500 text-center p-10 bg-red-50 rounded-xl m-10 border border-red-200">{error}</div>;
   if (!project || !project.metadata) return <div className="text-center p-20 flex flex-col items-center"><Spinner /> <span className="mt-4 text-slate-500">{t.startingIntelligence}</span></div>;
@@ -556,12 +587,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   // Handle Structure Review
   if (status === 'REVIEW_STRUCTURE' || (status === 'IDLE' && project.structure.length > 0 && progress === 40)) {
-    const handleApproveStructure = async () => {
-      await API.generateBookContent(projectId!);
-      // We update local state to reflect change immediately while polling catches up
-      setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', progress: 41 } });
-      setAppStep(3); // IMMEDIATE UPDATE
-    };
+    // Logic moved to handleApproveStructure hoisted above
 
     return (
       <div className="max-w-3xl mx-auto animate-fade-in-up pb-20">
