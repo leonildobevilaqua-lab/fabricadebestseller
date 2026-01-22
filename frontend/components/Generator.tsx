@@ -1110,12 +1110,11 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                   "Aplicando técnicas de PNL para persuasão..."
                 ];
                 return [
-                  "EFETUANDO A REVISÃO DETALHADA E CRITERIOSA DO CONTEÚDO GERADO...",
-                  "FAZENDO A DIAGRAMAÇÃO PROFISSIONAL PADRÃO AMAZON DE QUALIDADE...",
-                  "CONFIGURANDO TODOS OS ELEMENTOS PRÉ-TEXTUAIS, TEXTUAIS E PÓS-TEXTUAIS DO LIVRO...",
-                  "EMPACONTANDO TUDO PARA LIBERAÇÃO...",
-                  "Gerando links de sumário interativo...",
-                  "Renderizando arquivo final para download..."
+                  "REVISANDO O CONTEÚDO FINAL...",
+                  "FINALIZANDO OS CAPÍTULOS...",
+                  "AJUSTANDO DETALHES FINAIS...",
+                  "PREPARANDO O ARQUIVO PARA VOCÊ...",
+                  "CONCLUINDO A GERAÇÃO..."
                 ];
               })()} />
             )}

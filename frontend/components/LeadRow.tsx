@@ -94,9 +94,23 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
 
     // --- RENDER HELPERS ---
     const formatMoney = (val: number) => `R$ ${val?.toFixed(2).replace('.', ',')}`;
-    const amount = lead.paymentInfo?.amount
-        ? formatMoney(lead.paymentInfo.amount)
-        : lead.plan ? 'N/A' : 'R$ 0,00';
+
+    // Resolve Amount
+    let displayAmount = 'R$ 0,00';
+    if (lead.paymentInfo?.amount) {
+        displayAmount = formatMoney(lead.paymentInfo.amount);
+    } else if (isSubscription && lead.plan) {
+        // Fallback Plan Prices
+        const name = (lead.plan.name || '').toUpperCase();
+        const billing = (lead.plan.billing || 'monthly').toLowerCase();
+        if (name.includes('BLACK')) displayAmount = billing === 'annual' ? 'R$ 358,80' : 'R$ 49,90';
+        else if (name.includes('PRO')) displayAmount = billing === 'annual' ? 'R$ 238,80' : 'R$ 34,90';
+        else if (name.includes('STARTER')) displayAmount = billing === 'annual' ? 'R$ 118,80' : 'R$ 19,90';
+        else displayAmount = 'N/A';
+    } else if (isBook) {
+        // Default Book Price
+        displayAmount = 'R$ 16,90'; // Default for Pending Books
+    }
 
     // Infer context for Book
     const planContext = lead.tag || (lead.plan?.name ? `Plano ${lead.plan.name}` : 'Avulso');
@@ -144,7 +158,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-1">Valor</div>
-                                    <div className="text-lg font-bold text-emerald-600">{amount}</div>
+                                    <div className="text-lg font-bold text-emerald-600">{displayAmount}</div>
                                 </div>
                             </div>
                             <div className="mt-2 pt-2 border-t border-indigo-200/50 flex items-center gap-2 text-xs">
@@ -174,7 +188,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                                     <span className="w-px h-3 bg-slate-600"></span>
                                     <span className="font-normal text-slate-300">{planContext}</span>
                                 </div>
-                                <div className="font-bold text-emerald-600">{amount}</div>
+                                <div className="font-bold text-emerald-600">{displayAmount}</div>
                             </div>
                         </div>
                     )}
@@ -184,9 +198,9 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
             {/* STATUS BADGE */}
             <td className="p-4 align-top">
                 <div className={`text-xs font-bold px-3 py-1 rounded-full w-fit flex items-center gap-1 ${status === 'COMPLETED' || status === 'LIVRO ENTREGUE' ? 'bg-green-100 text-green-700' :
-                        status === 'APPROVED' || status === 'SUBSCRIBER' ? 'bg-blue-100 text-blue-700' :
-                            status === 'IN_PROGRESS' || prodStatus ? 'bg-amber-100 text-amber-700' :
-                                'bg-slate-100 text-slate-500'
+                    status === 'APPROVED' || status === 'SUBSCRIBER' ? 'bg-blue-100 text-blue-700' :
+                        status === 'IN_PROGRESS' || prodStatus ? 'bg-amber-100 text-amber-700' :
+                            'bg-slate-100 text-slate-500'
                     }`}>
                     {(status === 'IN_PROGRESS' || prodStatus) && <span className="animate-spin text-[10px]">⏳</span>}
                     {displayStatus || status}
@@ -220,16 +234,16 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                     {isBook && (
                         <>
                             {/* Release / Unlock */}
-                            {!liberado && status !== 'COMPLETED' && status !== 'APPROVED' && status !== 'LIVRO ENTREGUE' && (
+                            {!liberado && status !== 'COMPLETED' && status !== 'APPROVED' && status !== 'LIVRO ENTREGUE' && status !== 'SUBSCRIBER' && (
                                 <button onClick={() => handleAction('CREDIT')} disabled={loading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded shadow transition shadow-emerald-200">
                                     🔓 LIBERAR GERAÇÃO
                                 </button>
                             )}
 
-                            {/* Diagram (IA) */}
-                            {(liberado || status === 'APPROVED') && status !== 'COMPLETED' && status !== 'LIVRO ENTREGUE' && !prodStatus && (
+                            {/* Diagram (IA) - ONLY IF APPROVED. NO AUTO-STATE JUMPS. */}
+                            {status === 'APPROVED' && !prodStatus && (
                                 <button onClick={() => onDiagram(lead.id)} className="w-full bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 rounded shadow transition flex items-center justify-center gap-1">
-                                    ⚡ DIAGRAMAR
+                                    ⚡ GERAR LIVRO
                                 </button>
                             )}
 
