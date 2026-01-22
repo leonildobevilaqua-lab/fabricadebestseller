@@ -66,4 +66,15 @@ app.get('/reset-admin-force', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} - Updated ${new Date().toISOString()}`);
+
+    // DEBUG ROUTES
+    app._router.stack.forEach((r: any) => {
+        if (r.route && r.route.path) {
+            console.log(r.route.path);
+        } else if (r.name === 'router') {
+            // console.log('Router mounted'); // Hard to inspect deeply without recursive function
+        }
+    });
+    console.log("Health Check: /health");
+    console.log("Subscription Routes mounted at /api/subscription");
 });
