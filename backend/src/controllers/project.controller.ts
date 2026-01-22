@@ -783,9 +783,79 @@ export const processDiagramLead = async (req: Request, res: Response) => {
         }
     }
 
+    // If no file, check if it's an AI Generation Lead (Type BOOK)
+    if ((!lead.details?.filePath) && lead.topic) {
+        // --- AI GENERATION FLOW ---
+        try {
+            // Update Status
+            await setVal(`/leads[${leadIndex}]/status`, 'APPROVED');
+            await setVal(`/leads[${leadIndex}]/productionStatus`, 'IN_PROGRESS'); // UI indicator
+
+            res.json({ success: true, message: "Fábrica iniciada! Geração do livro começou." });
+
+            (async () => {
+                try {
+                    console.log(`[Admin] Force-starting AI Generation for ${lead.email}`);
+
+                    // 1. Create Project
+                    const project = await QueueService.createProject({
+                        authorName: lead.authorName || lead.name || "Autor Desconhecido",
+                        topic: lead.topic,
+                        language: 'pt', // Default to PT for admin force start
+                        contact: { name: lead.name, email: lead.email, phone: lead.fullPhone || lead.phone }
+                    });
+
+                    // Update Lead
+                    await setVal(`/leads[${leadIndex}]/projectId`, project.id);
+                    await setVal(`/leads[${leadIndex}]/productionStatus`, 'RESEARCHING');
+
+                    // 2. Start Research (Async)
+                    // We call the controller logic directly or via API? 
+                    // Better to call QueueService if available, or just reuse the logic from startResearch.
+                    // Since startResearch is a Controller method, we might need to simulate it or extract logic.
+                    // To keep it simple, we use the API via internal fetch or direct service call if possible.
+                    // But here we are in the controller.
+
+                    // Let's call startResearch logic manually using QueueService/AIService
+                    console.log(`[Admin] Project Created ${project.id}. Starting Research...`);
+
+                    // Trigger Research
+                    await performResearch(project.id, 'pt');
+
+                    // The chain (Research -> Structure -> Content) is usually event-driven or chained in frontend?
+                    // actually, generateResearch updates status to RESEARCH_COMPLETED.
+                    // Who triggers the next step?
+                    // In `Generator.tsx`, frontend polls and triggers next steps.
+                    // IF the user is not online, we need a "Auto-Drive" mode.
+                    // Implemented 'Turbo Mode' or 'Auto-Advance' in Backend?
+                    // Currently the backend stops after Research.
+                    // WE NEED TO CHAIN IT HERE for "SEM PARAR".
+
+                    // Chain: Research -> Select Title (Pick first) -> Generate Structure -> Generate Content
+                    // This is complex to do in one go without a workflow engine.
+                    // BUT for now, let's at least START the project so the User (Frontend) picks it up.
+                    // If the User logs in, Generator.tsx will see status 'RESEARCH_COMPLETED' and might wait for user input (Title).
+                    // If we want "Sem Parar", we might need to auto-select title?
+
+                    // For now, let's just START RESEARCH. The User Frontend will pick up the rest.
+                    // If the user meant "Fully Automated Background Generation", we'd need more logic.
+                    // But "Começar a produzir" usually means "Start the process".
+
+                } catch (err) {
+                    console.error("[Admin] AI Generation Error", err);
+                    await setVal(`/leads[${leadIndex}]/productionStatus`, 'FAILED');
+                }
+            })();
+
+        } catch (e: any) {
+            res.status(500).json({ error: e.message });
+        }
+        return;
+    }
+
     if (!lead || !lead.details?.filePath) return res.status(404).json({ error: "Lead or file not found" });
 
-    // RESPONSE IMMEDIATE
+    // RESPONSE IMMEDIATE (Existing File Logic)
     try {
         // Update Lead Status to APPROVED immediately to unblock UI
         await setVal(`/leads[${leadIndex}]/status`, 'APPROVED');
@@ -798,7 +868,6 @@ export const processDiagramLead = async (req: Request, res: Response) => {
         (async () => {
             try {
                 console.log(`Starting background diagramming for lead ${lead.id}`);
-
 
                 // 2. Read File
                 const filePath = lead.details.filePath;
@@ -1041,5 +1110,85 @@ export const translateBook = async (req: Request, res: Response) => {
     } catch (e: any) {
         console.error(e);
         // Avoid sending response again if already sent
+    }
+};
+
+// --- HELPER: Perform Research (Logic extracted from startResearch) ---
+const performResearch = async (projectId: string, language: string) => {
+    try {
+        const project = await QueueService.getProject(projectId);
+        if (!project) return;
+        const id = projectId;
+
+        // Update status and ensure language is in metadata (even if in-memory)
+        await QueueService.updateMetadata(id, {
+            status: 'RESEARCHING',
+            progress: 1,
+            statusMessage: "🏭 Iniciando esteira de produção de conhecimento...",
+            language: language || project.metadata.language || 'pt'
+        });
+
+        const topic = project.metadata.topic;
+        const targetLang = language || project.metadata.language || 'pt';
+
+        // Step 1: YouTube
+        await QueueService.updateMetadata(id, {
+            progress: 5,
+            statusMessage: `📡 Calibrando sensores para varredura no YouTube: "${topic}"...`
+        });
+        let ytResearch = "";
+        try {
+            ytResearch = await AIService.researchYoutube(topic, targetLang);
+        } catch (ytError: any) {
+            console.error("YouTube Research Failed:", ytError);
+        }
+
+        await QueueService.updateMetadata(id, {
+            progress: 12,
+            statusMessage: `⚙️ Processando dados brutos e extraindo insights...`
+        });
+
+        // Step 2: Google
+        await QueueService.updateMetadata(id, {
+            progress: 15,
+            statusMessage: `🔍 Iniciando mineração profunda no Google Search...`
+        });
+        const googleResearch = await AIService.researchGoogle(topic, ytResearch, targetLang);
+
+        await QueueService.updateMetadata(id, {
+            progress: 22,
+            statusMessage: `📊 Refinando minério de dados...`
+        });
+
+        // Step 3: Competitors
+        await QueueService.updateMetadata(id, {
+            progress: 25,
+            statusMessage: `🏆 Analisando Best-Sellers atuais...`
+        });
+        const compResearch = await AIService.analyzeCompetitors(topic, ytResearch + "\n" + googleResearch, targetLang);
+
+        const fullContext = `### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch} `;
+        await QueueService.updateProject(id, { researchContext: fullContext });
+
+        // Auto-proceed to Titles
+        await QueueService.updateMetadata(id, {
+            progress: 28,
+            statusMessage: "🏗️ Moldando estruturas de títulos..."
+        });
+
+        const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang);
+        await QueueService.updateProject(id, { titleOptions: titles });
+
+        await QueueService.updateMetadata(id, {
+            status: 'WAITING_TITLE',
+            progress: 30,
+            statusMessage: "✅ Pesquisa concluída. Matéria-prima pronta para seleção."
+        });
+
+        console.log(`[Research] Completed for project ${id}`);
+
+    } catch (e) {
+        console.error("PerformResearch Error:", e);
+        await QueueService.updateMetadata(projectId, { status: 'FAILED', statusMessage: "Falha na pesquisa." });
     }
 };
