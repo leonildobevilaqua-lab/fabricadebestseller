@@ -709,7 +709,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             });
             const data = await res.json();
             if (data.success) {
-                alert("Processamento liberado! A IA está diagramando o livro em segundo plano.\nO botão 'Baixar' funcionará assim que o processamento concluir (aprox 30s). A lista atualizará automaticamente.");
+                // COMMAND SENT MUTE - The frontend polling in Generator.tsx will detect the new project and auto-switch
+                // For the admin panel itself, we just refresh the list.
+                console.log("Comando de geração enviado com sucesso.");
                 loadLeads();
 
                 // Poll for updates (capture ProjectId when ready)
