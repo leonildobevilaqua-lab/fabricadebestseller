@@ -371,10 +371,19 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
         }
     };
 
+    const getApiBase = () => {
+        const env = (import.meta as any).env.VITE_API_URL;
+        if (env) return env;
+        const host = window.location.hostname;
+        if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+        return 'https://api.fabricadebestseller.com.br'; // Production Fallback
+    };
+
     const handleSubscribe = async () => {
         if (!selectedPlan || !formData.email) return;
+        const baseUrl = getApiBase().replace(/\/$/, ""); // Remove trailing slash
         try {
-            const res = await fetch('/api/subscription/create', {
+            const res = await fetch(`${baseUrl}/api/subscription/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -382,7 +391,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     name: formData.name,
                     phone: formData.phone,
                     planKey: selectedPlan.name,
-                    billing: selectedPlan.billing // Though backend defaults to plan config, sending it helps if we support cycle
+                    billing: selectedPlan.billing
                 })
             });
             const data = await res.json();
@@ -393,14 +402,15 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             }
         } catch (e) {
             console.error(e);
-            alert("Erro de conexão.");
+            alert("Erro de conexão com o servidor de pagamento.");
         }
     };
 
     const handleBookPayment = async () => {
         if (!formData.email) return;
+        const baseUrl = getApiBase().replace(/\/$/, "");
         try {
-            const res = await fetch('/api/payment/create-charge', {
+            const res = await fetch(`${baseUrl}/api/payment/create-charge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
