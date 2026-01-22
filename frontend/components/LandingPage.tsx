@@ -1196,11 +1196,12 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                 <div className="my-2 border-t border-slate-700/50"></div>
 
                                                                 {/* STEP 2: SIMULATE CONFIRMATION */}
-                                                                <div className="bg-indigo-900/30 p-4 rounded-xl border border-indigo-500/30">
+                                                                <div className="bg-indigo-900/30 p-4 rounded-xl border border-indigo-500/30 hidden"> {/* HIDDEN FOR PRODUCTION */}
                                                                     <p className="text-xs text-indigo-300 font-bold mb-2 text-center uppercase">Ambiente de Testes / Simulação</p>
-                                                                    <p className="text-xs text-slate-400 mb-3 text-center">Após efetuar o pagamento na Kiwify (ou para simular), clique abaixo:</p>
+                                                                    <p className="text-xs text-slate-400 mb-3 text-center">Simular confirmação de pagamento:</p>
 
                                                                     <button
+                                                                        //... existing code
                                                                         onClick={async () => {
                                                                             if (confirm(`SIMULAR PAGAMENTO DA ASSINATURA?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}\nPlano: ${pName} (${billing})`)) {
                                                                                 // Robust URL Resolution Strategy (Matches Admin.tsx)
@@ -1254,7 +1255,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         }}
                                                                         className="w-full bg-green-600/80 hover:bg-green-600 text-white font-bold py-3 rounded-lg text-sm shadow transition-all flex items-center justify-center gap-2"
                                                                     >
-                                                                        <span>✅</span> 2. CONFIRMAR QUE JÁ PAGUEI A ASSINATURA
+                                                                        <span>✅</span> SIMULAR APROVAÇÃO (DEV)
                                                                     </button>
                                                                 </div>
 
