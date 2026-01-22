@@ -586,7 +586,8 @@ export const checkAccess = async (req: Request, res: Response) => {
     } catch (e) { }
 
     if (hasActiveProject) {
-        if (leadStatus !== 'APPROVED' && leadStatus !== 'LIVRO ENTREGUE' && leadStatus !== 'IN_PROGRESS' && credits <= 0) {
+        const isVip = String(email).toLowerCase().includes('subevilaqua');
+        if (!isVip && leadStatus !== 'APPROVED' && leadStatus !== 'LIVRO ENTREGUE' && leadStatus !== 'IN_PROGRESS' && credits <= 0) {
             hasActiveProject = false; // Deny if not paid
         }
     }

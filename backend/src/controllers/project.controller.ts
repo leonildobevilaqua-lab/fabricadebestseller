@@ -241,47 +241,41 @@ export const startResearch = async (req: Request, res: Response) => {
     const project = await QueueService.getProject(id);
     if (!project) return res.status(404).json({ error: "Not found" });
 
-    // --- PAYMENT GATING ---
-    try {
-        const userEmail = project.metadata.contact?.email;
-        if (userEmail) {
-            await reloadDB(); // Force sync to see Admin Approval
+    const userEmail = project.metadata.contact?.email;
+    if (userEmail) {
+        await reloadDB(); // Force sync to see Admin Approval
+
+        let hasAccess = false;
+        let currentStatus = 'UNKNOWN';
+
+        // VIP BYPASS (Hotfix)
+        if (userEmail.toLowerCase().includes('subevilaqua')) {
+            hasAccess = true;
+            currentStatus = 'VIP';
+            console.log(`[VIP] Access Granted for ${userEmail}`);
+        }
+
+        if (!hasAccess) {
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
-            // Find latest lead status reliably
-            let hasAccess = false;
-            let currentStatus = 'UNKNOWN';
-
-            // VIP BYPASS (Hotfix)
-            if (userEmail.toLowerCase().includes('subevilaqua')) {
-                hasAccess = true;
-                currentStatus = 'VIP';
-                console.log(`[VIP] Access Granted for ${userEmail}`);
-            }
-
-            if (!hasAccess) {
-                for (let i = leads.length - 1; i >= 0; i--) {
-                    const l = leads[i] as any;
-                    if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
-                        currentStatus = l.status;
-                        if (l.status === 'APPROVED' || l.status === 'IN_PROGRESS' || l.status === 'LIVRO ENTREGUE' || (l.credits || 0) > 0) {
-                            hasAccess = true;
-                            break;
-                        }
+            for (let i = leads.length - 1; i >= 0; i--) {
+                const l = leads[i] as any;
+                if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
+                    currentStatus = l.status;
+                    if (l.status === 'APPROVED' || l.status === 'IN_PROGRESS' || l.status === 'LIVRO ENTREGUE' || (l.credits || 0) > 0) {
+                        hasAccess = true;
+                        break;
                     }
                 }
             }
-
-            if (!hasAccess) {
-                console.warn(`Blocked startResearch for ${userEmail}: Payment not confirmed. Lead Status: ${currentStatus}`);
-                return res.status(402).json({ error: "Aguardando confirmação de pagamento." });
-            }
         }
-    } catch (e) {
-        console.error("Payment check error:", e);
+
+        if (!hasAccess) {
+            console.warn(`Blocked startResearch for ${userEmail}: Payment not confirmed. Lead Status: ${currentStatus}`);
+            return res.status(402).json({ error: "Aguardando confirmação de pagamento." });
+        }
     }
-    // ----------------------
 
     // Update status and ensure language is in metadata (even if in-memory)
     await QueueService.updateMetadata(id, {
