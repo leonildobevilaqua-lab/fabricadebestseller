@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
+import { v4 as uuidv4 } from 'uuid';
 import { AsaasProvider } from '../services/asaas.provider';
 import { PLANS } from '../config/subscriptions.config';
-import { getVal, setVal, reloadDB } from '../services/db.service';
+import { getVal, setVal, pushVal, reloadDB } from '../services/db.service';
 
 const findLeadIndex = (leads: any[], email: string) => {
     return leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
@@ -16,11 +17,21 @@ export const SubscriptionController = {
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
             let leadIndex = findLeadIndex(leads, email);
+            let lead: any;
 
-            if (leadIndex === -1) {
-                return res.status(404).json({ error: "User not found" });
+            if (leadIndex !== -1) {
+                lead = leads[leadIndex];
+            } else {
+                console.log(`[SUBSCRIBE] User ${email} not found. Creating new lead.`);
+                lead = {
+                    id: uuidv4(),
+                    email,
+                    name: name || 'Novo Usuário',
+                    phone: phone || '',
+                    status: 'PENDING',
+                    created_at: new Date()
+                };
             }
-            const lead = leads[leadIndex];
 
             // 1. Create Customer
             const customerId = await AsaasProvider.createCustomer({ name: name || lead.name, email, cpfCnpj, phone });
@@ -43,10 +54,15 @@ export const SubscriptionController = {
                     features: planConfig.features,
                     billing: 'monthly'
                 },
-                status: 'SUBSCRIBER'
+                status: 'SUBSCRIBER_PENDING'
             };
 
-            await setVal(`/leads[${leadIndex}]`, updatedLead);
+            if (leadIndex !== -1) {
+                await setVal(`/leads[${leadIndex}]`, updatedLead);
+            } else {
+                await pushVal('/leads', updatedLead);
+            }
+
             const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             await setVal(`/users/${safeEmail}/plan`, updatedLead.plan);
 
@@ -116,9 +132,7 @@ export const SubscriptionController = {
         if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
             const payment = event.payment;
             const subId = payment.subscription;
-            const email = payment.billingType === 'PIX' ? payment.customer : null;
-            // We need to map Customer ID -> User Email
-            // Since we don't have a reliable DB map in this Agentic setup, we will try to find via Lead search
+            // const email = payment.billingType === 'PIX' ? payment.customer : null; // Unused for now
 
             if (subId) {
                 console.log(`[WEBHOOK] Subscription Payment ${subId} Confirmed!`);
@@ -143,8 +157,7 @@ export const SubscriptionController = {
             } else {
                 // One-off Payment?
                 console.log(`[WEBHOOK] One-off Payment ${payment.id} Confirmed!`);
-                // Try to find by customer ID in our leads
-                // ...
+                // Use payment.customer to find user if needed
             }
         }
 
