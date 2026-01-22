@@ -11,6 +11,7 @@ app.options('*', cors()); // Enable Pre-Flight for ALL routes
 app.use(express.json());
 
 import paymentRoutes from './routes/payment.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 import jwt from 'jsonwebtoken'; // Added for Golden Route
 
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
@@ -64,6 +65,7 @@ app.get('/api/auth-master-test', (req: express.Request, res: express.Response) =
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/subscription', subscriptionRoutes);
 app.use('/downloads', express.static(path.join(__dirname, '../generated_books')));
 
 app.get('/health', (req, res) => {
