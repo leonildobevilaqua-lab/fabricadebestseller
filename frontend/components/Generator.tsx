@@ -340,8 +340,34 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       setProjectId(p.id);
       setProject(p);
 
+      // STRICT CHECK: Only start research if explicitly authorized via Payment/Admin
       if (p.metadata.status === 'IDLE') {
-        await API.startResearch(p.id, language);
+        const accessCheck = await fetch(`/api/payment/check-access?email=${userContact.email}`).then(r => r.json());
+
+        if (accessCheck.hasAccess) {
+          await API.startResearch(p.id, language);
+        } else {
+          // Access Denied -> Show Payment Gate (User must pay or Admin must approve)
+          const isPlanActive = !!(accessCheck.plan && accessCheck.plan.status === 'ACTIVE');
+          const subPrice = isPlanActive ? 0 : (accessCheck.subscriptionPrice || 49.90);
+
+          setUpsellOffer({
+            price: accessCheck.bookPrice,
+            planName: accessCheck.planLabel || (accessCheck.plan?.name ? `Plano ${accessCheck.plan.name}` : "STARTER"),
+            link: accessCheck.checkoutUrl,
+            level: accessCheck.discountLevel,
+            subscriptionPrice: subPrice,
+            subscriptionLink: "#"
+          });
+
+          if (isPlanActive) {
+            setShowReward(true);
+            setShowPaymentGate(false);
+          } else {
+            setShowPaymentGate(true);
+            setShowReward(false);
+          }
+        }
       }
     } catch (e: any) {
       console.error("Project Init Error:", e);
