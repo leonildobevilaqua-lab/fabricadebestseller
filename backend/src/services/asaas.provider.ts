@@ -2,13 +2,24 @@ import axios from 'axios';
 import { PLANS } from '../config/subscriptions.config';
 import dotenv from 'dotenv';
 
+import path from 'path';
+
 dotenv.config();
 
 const ASAAS_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
 
 const getApi = () => {
+    // Force reload .env to ensure we have the latest keys
+    // The path is relative to the compiled dist/src/services or src/services
+    // We try to find the .env in the root of backend
+    const envPath = path.resolve(__dirname, '../../.env');
+    dotenv.config({ path: envPath, override: true });
+
     const apiKey = process.env.ASAAS_API_KEY;
-    if (!apiKey) throw new Error("ASAAS_API_KEY is not configured in .env");
+    if (!apiKey) {
+        console.error(`[ASAAS] Missing API Key. Tried loading from: ${envPath}`);
+        throw new Error("ASAAS_API_KEY is not configured in .env");
+    }
 
     return axios.create({
         baseURL: ASAAS_URL,
