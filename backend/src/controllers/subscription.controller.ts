@@ -50,7 +50,11 @@ export const SubscriptionController = {
             const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             await setVal(`/users/${safeEmail}/plan`, updatedLead.plan);
 
-            res.json({ success: true, subscription });
+            // Fetch Payment Link
+            const payments = await AsaasProvider.getSubscriptionPayments(subscription.id);
+            const invoiceUrl = payments?.[0]?.invoiceUrl || payments?.[0]?.bankSlipUrl;
+
+            res.json({ success: true, subscription, invoiceUrl });
 
         } catch (error: any) {
             console.error("Subscribe Error", error);

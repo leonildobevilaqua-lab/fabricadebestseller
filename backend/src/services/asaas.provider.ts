@@ -107,5 +107,33 @@ export const AsaasProvider = {
         } catch (error: any) {
             return null;
         }
+    },
+
+    async getSubscriptionPayments(subscriptionId: string) {
+        try {
+            const { data } = await api.get(`/subscriptions/${subscriptionId}/payments`);
+            return data.data; // Array of payments
+        } catch (error: any) {
+            console.error("Error fetching sub payments", error);
+            return [];
+        }
+    },
+
+    async createPayment(customerId: string, value: number, description: string) {
+        try {
+            // Create one-off payment
+            const payload = {
+                customer: customerId,
+                billingType: 'UNDEFINED', // Let user choose in Asaas Invoice
+                value: value,
+                dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 days expiry
+                description: description
+            };
+            const { data } = await api.post('/payments', payload);
+            return data;
+        } catch (error: any) {
+            console.error("Create Payment Error", error.response?.data || error.message);
+            throw error;
+        }
     }
 };

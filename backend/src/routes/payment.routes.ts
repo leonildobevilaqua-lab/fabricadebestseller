@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { handleKiwifyWebhook, checkAccess, useCredit, createLead, getLeads, approveLead, updateLead, deleteLead } from '../controllers/payment.controller';
+import { handleKiwifyWebhook, checkAccess, useCredit, createLead, getLeads, approveLead, updateLead, deleteLead, createCharge } from '../controllers/payment.controller';
 import { simulateWebhook } from '../controllers/simulation.controller';
 
 const router = Router();
@@ -8,6 +8,7 @@ router.post('/webhook', handleKiwifyWebhook);
 router.post('/simulate-webhook', simulateWebhook); // NEW: Local Simulation
 router.get('/access', checkAccess);
 router.post('/use', useCredit);
+router.post('/create-charge', createCharge);
 
 // Admin / Leads
 router.post('/leads', createLead);

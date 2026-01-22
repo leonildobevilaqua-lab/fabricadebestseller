@@ -229,13 +229,7 @@ export const PricingSection: React.FC<PricingProps> = ({ onSelectPlan, lang }) =
 
                             <button
                                 onClick={() => {
-                                    const links: any = {
-                                        'STARTER': { 'monthly': 'https://pay.kiwify.com.br/kfR54ZJ', 'annual': 'https://pay.kiwify.com.br/47E9CXl' },
-                                        'PRO': { 'monthly': 'https://pay.kiwify.com.br/Bls6OL7', 'annual': 'https://pay.kiwify.com.br/jXQTsFm' },
-                                        'BLACK': { 'monthly': 'https://pay.kiwify.com.br/7UgxJ0f', 'annual': 'https://pay.kiwify.com.br/hSv5tYq' }
-                                    };
-                                    const url = links[plan.name]?.[billing];
-                                    if (url) window.open(url, '_blank');
+                                    // Internal Flow Only
                                     if (onSelectPlan) onSelectPlan(plan.name, billing);
                                 }}
                                 className={`w-full py-4 rounded-xl font-bold text-lg transition-all ${plan.name === 'PRO'

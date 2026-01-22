@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { setVal, getVal, pushVal, reloadDB } from '../services/db.service';
 import { getProjectByEmail } from '../services/queue.service';
 import multer from 'multer';
+import { AsaasProvider } from '../services/asaas.provider';
 const upload = multer();
 
 // --- PRICING CONFIGURATION ---
@@ -708,6 +709,31 @@ export const deleteLead = async (req: Request, res: Response) => {
         } else {
             res.status(404).json({ error: "Lead not found" });
         }
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const createCharge = async (req: Request, res: Response) => {
+    try {
+        const { email, type } = req.body;
+        let price = 39.90; // Fallback
+
+        await reloadDB();
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        const userPlan = await getVal(`/users/${safeEmail}/plan`);
+
+        if (userPlan && userPlan.status === 'ACTIVE') {
+            const pName = (userPlan.name || 'STARTER').toUpperCase();
+            if (pName.includes('BLACK')) price = 16.90;
+            else if (pName.includes('PRO')) price = 21.90;
+            else price = 26.90;
+        }
+
+        const customerId = await AsaasProvider.createCustomer({ name: 'Cliente', email });
+        const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'}`);
+
+        res.json({ success: true, invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl, price });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }

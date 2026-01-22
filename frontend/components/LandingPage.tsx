@@ -371,6 +371,55 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
         }
     };
 
+    const handleSubscribe = async () => {
+        if (!selectedPlan || !formData.email) return;
+        try {
+            const res = await fetch('/api/subscription/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.email,
+                    name: formData.name,
+                    phone: formData.phone,
+                    planKey: selectedPlan.name,
+                    billing: selectedPlan.billing // Though backend defaults to plan config, sending it helps if we support cycle
+                })
+            });
+            const data = await res.json();
+            if (data.invoiceUrl) {
+                window.open(data.invoiceUrl, '_blank');
+            } else {
+                alert("Erro ao gerar link de assinatura: " + (data.error || "Desconhecido"));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        }
+    };
+
+    const handleBookPayment = async () => {
+        if (!formData.email) return;
+        try {
+            const res = await fetch('/api/payment/create-charge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.email,
+                    type: 'BOOK_GENERATION'
+                })
+            });
+            const data = await res.json();
+            if (data.invoiceUrl) {
+                window.open(data.invoiceUrl, '_blank');
+            } else {
+                alert("Erro ao gerar link de pagamento: " + (data.error || "Desconhecido"));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        }
+    };
+
     // --- AUTOMATION: AUTO-START IF CONFIRMED ---
     useEffect(() => {
         if (paymentConfirmed && step === 3) {
@@ -1138,7 +1187,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                                                                 {/* STEP 1: OPEN CHECKOUT */}
                                                                 <button
-                                                                    onClick={() => window.open(subLink, '_blank')}
+                                                                    onClick={handleSubscribe}
                                                                     className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl text-lg shadow-lg transition-all transform hover:-translate-y-1 block text-center"
                                                                 >
                                                                     1. ATIVAR ASSINATURA (R$ {subPrice})
@@ -1252,7 +1301,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                 </div>
                                                                 <div>
                                                                     <button
-                                                                        onClick={() => window.open(finalLink, '_blank')}
+                                                                        onClick={handleBookPayment}
                                                                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
                                                                     >
                                                                         {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
@@ -1265,7 +1314,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                                                     return (
                                                         <button
-                                                            onClick={() => window.open(finalLink, '_blank')}
+                                                            onClick={handleBookPayment}
                                                             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
                                                         >
                                                             {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
