@@ -42,7 +42,11 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
             return amt > 1000 ? amt / 100 : amt;
         }
 
-        // 2. Check Plans
+        // 2. Check Plans (Distinguish Book vs Sub)
+        if (lead.type === 'BOOK') {
+            return lead.plan ? 16.90 : 39.90;
+        }
+
         if (lead.plan) {
             const pName = lead.plan.name?.toUpperCase();
             const billing = lead.plan.billing?.toLowerCase(); // 'monthly' or 'annual'

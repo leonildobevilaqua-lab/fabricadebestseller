@@ -90,7 +90,12 @@ export const PaymentGate: React.FC<PaymentGateProps> = ({
                         <p className="text-slate-500 text-xs mb-4">Após efetuar o pagamento na Kiwify (ou para simular), clique abaixo:</p>
 
                         <button
-                            onClick={onConfirmPayment}
+                            onClick={(e) => {
+                                e.currentTarget.innerHTML = 'Verificando liberação...';
+                                e.currentTarget.classList.add('opacity-75', 'cursor-not-allowed');
+                                e.currentTarget.disabled = true;
+                                setTimeout(onConfirmPayment, 1500);
+                            }}
                             className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold py-3 rounded-lg shadow-lg shadow-green-900/20 transition-all flex items-center justify-center gap-2"
                         >
                             <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
