@@ -65,6 +65,9 @@ app.get('/api/auth-master-test', (req: express.Request, res: express.Response) =
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+// Alias for user's configured webhook
+import { SubscriptionController } from './controllers/subscription.controller';
+app.post('/webhook/asaas', SubscriptionController.webhook); // Direct mapping
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/downloads', express.static(path.join(__dirname, '../generated_books')));
 

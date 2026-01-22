@@ -101,13 +101,51 @@ export const SubscriptionController = {
     },
 
     async webhook(req: Request, res: Response) {
+        const token = req.headers['asaas-access-token'] || req.body.authToken; // Asaas sends in header or body depending on version
+        const EXPECTED = process.env.ASAAS_WEBHOOK_TOKEN || 'FabricaAsaas2026';
+
+        if (token !== EXPECTED) {
+            console.warn(`[WEBHOOK] Invalid Token: ${token} vs ${EXPECTED}`);
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
         const event = req.body;
         console.log("Asaas Webhook Event:", event.event);
 
         // Handle Status Updates
         if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
-            // Find user by subscription ID?
-            // TODO: Search user logic. For now just ack.
+            const payment = event.payment;
+            const subId = payment.subscription;
+            const email = payment.billingType === 'PIX' ? payment.customer : null;
+            // We need to map Customer ID -> User Email
+            // Since we don't have a reliable DB map in this Agentic setup, we will try to find via Lead search
+
+            if (subId) {
+                console.log(`[WEBHOOK] Subscription Payment ${subId} Confirmed!`);
+                await reloadDB();
+                const rawLeads = await getVal('/leads') || [];
+                const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+                const leadIndex = leads.findIndex((l: any) => l.asaas_subscription_id === subId);
+                if (leadIndex !== -1) {
+                    const lead = leads[leadIndex];
+                    console.log(`[WEBHOOK] Activating Plan for ${lead.email}`);
+
+                    const updatedLead = {
+                        ...lead,
+                        plan: { ...lead.plan, status: 'ACTIVE', lastPayment: new Date() },
+                        status: 'SUBSCRIBER'
+                    };
+                    await setVal(`/leads[${leadIndex}]`, updatedLead);
+                    const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                    await setVal(`/users/${safeEmail}/plan`, updatedLead.plan);
+                }
+            } else {
+                // One-off Payment?
+                console.log(`[WEBHOOK] One-off Payment ${payment.id} Confirmed!`);
+                // Try to find by customer ID in our leads
+                // ...
+            }
         }
 
         res.json({ received: true });
