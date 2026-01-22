@@ -10,7 +10,7 @@ const findLeadIndex = (leads: any[], email: string) => {
 
 export const SubscriptionController = {
     async create(req: Request, res: Response) {
-        const { email, name, cpfCnpj, phone, planKey, creditCard } = req.body;
+        const { email, name, cpfCnpj, phone, planKey, creditCard, address } = req.body;
 
         try {
             await reloadDB();
@@ -33,8 +33,20 @@ export const SubscriptionController = {
                 };
             }
 
-            // 1. Create Customer
-            const customerId = await AsaasProvider.createCustomer({ name: name || lead.name, email, cpfCnpj, phone });
+            // 1. Create Customer (with Address)
+            const customerId = await AsaasProvider.createCustomer({
+                name: name || lead.name,
+                email,
+                cpfCnpj,
+                phone,
+                postalCode: address?.cep,
+                address: address?.street,
+                addressNumber: address?.number,
+                complement: address?.complement,
+                province: address?.neighborhood,
+                // city/state handled by CEP usually, but Asaas doesn't ask for them explicitly in simple payload?
+                // Actually Asaas works best with just CEP + Number.
+            });
 
             // 2. Create Subscription
             const subscription = await AsaasProvider.createSubscription(customerId, planKey, creditCard);

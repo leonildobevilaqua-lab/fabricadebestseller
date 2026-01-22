@@ -716,7 +716,7 @@ export const deleteLead = async (req: Request, res: Response) => {
 
 export const createCharge = async (req: Request, res: Response) => {
     try {
-        const { email, type } = req.body;
+        const { email, type, payer } = req.body;
         let price = 39.90; // Fallback
 
         await reloadDB();
@@ -730,7 +730,12 @@ export const createCharge = async (req: Request, res: Response) => {
             else price = 26.90;
         }
 
-        const customerId = await AsaasProvider.createCustomer({ name: 'Cliente', email });
+        const customerId = await AsaasProvider.createCustomer({
+            name: payer?.name || 'Cliente',
+            email,
+            cpfCnpj: payer?.cpfCnpj,
+            phone: payer?.phone
+        });
         const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'}`);
 
         res.json({ success: true, invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl, price });

@@ -27,7 +27,17 @@ const getPlanConfig = (planKey: string) => {
 
 export const AsaasProvider = {
     // 1. Create/Get Customer
-    async createCustomer(user: { name: string, email: string, cpfCnpj?: string, phone?: string }) {
+    async createCustomer(user: {
+        name: string,
+        email: string,
+        cpfCnpj?: string,
+        phone?: string,
+        address?: string,
+        addressNumber?: string,
+        complement?: string,
+        province?: string, // Bairro
+        postalCode?: string // CEP
+    }) {
         // First try to find existing
         try {
             const { data } = await getApi().get(`/customers?email=${user.email}`);
@@ -43,18 +53,16 @@ export const AsaasProvider = {
                 email: user.email
             };
 
-            // FIX: Asaas Sandbox requires CPF for boleto/pix. If user didn't provide (because we want smooth UX),
-            // we send a valid dummy CPF for Sandbox or rely on Asaas allowing it (some environments require).
-            // If Asaas rejects without CPF, we must inform user OR provide one.
-            // Since User requested "Checkout First", we can't ask CPF yet.
-            // HACK: Send a dummy CPF if none provided to pass validation, assuming user updates later or pays via CC.
-            // NOTE: This might fail on Production if CPF validation is strict.
             if (user.cpfCnpj && user.cpfCnpj.trim() !== '') {
                 payload.cpfCnpj = user.cpfCnpj;
-            } else {
-                // Fallback for Sandbox testing to allow flow to proceed
-                // payload.cpfCnpj = '00000000000'; // Often rejected as invalid
             }
+
+            // Address Info
+            if (user.postalCode) payload.postalCode = user.postalCode;
+            if (user.address) payload.address = user.address;
+            if (user.addressNumber) payload.addressNumber = user.addressNumber;
+            if (user.complement) payload.complement = user.complement;
+            if (user.province) payload.province = user.province;
 
             if (user.phone && user.phone.trim() !== '') payload.mobilePhone = user.phone;
 
@@ -62,18 +70,7 @@ export const AsaasProvider = {
             return data.id;
         } catch (error: any) {
             let errorMsg = error.response?.data?.errors?.[0]?.description || error.message;
-            if (errorMsg.includes('CPF ou CNPJ')) {
-                // AUTO-FIX: If Asaas demands CPF and we don't have it, try creating with a "generic" CPF just to get the link
-                // This is risky for NFe but allows the "Link First" flow
-                console.log("Asaas demanded CPF. Retrying with dummy CPF for flow continuity...");
-                try {
-                    const dummyPayload = { ...payload, cpfCnpj: '49226210087' }; // Generated valid CPF for testing
-                    const { data } = await getApi().post('/customers', dummyPayload);
-                    return data.id;
-                } catch (retryError: any) {
-                    errorMsg = retryError.response?.data?.errors?.[0]?.description || retryError.message;
-                }
-            }
+            // Removed deprecated hack for CPF retry
 
             console.error("Asaas Create Customer Error:", error.response?.data || error.message);
             throw new Error(`Failed to create customer in Asaas: ${errorMsg}`);
