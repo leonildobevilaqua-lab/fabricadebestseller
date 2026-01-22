@@ -79,7 +79,7 @@ export const create = async (req: Request, res: Response) => {
                             topic: topic,
                             date: new Date(),
                             created_at: new Date(),
-                            plan: null,
+                            plan: contact.plan || null, // Capture Plan for Pricing
                             credits: 0
                         };
                         await pushVal('/leads', newLead);
