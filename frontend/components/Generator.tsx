@@ -141,10 +141,14 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         .then(access => {
           if (access.hasAccess) {
             setShowPaymentGate(false);
-            setShowReward(true);
+
             if (access.activeProjectId) {
+              // Direct to Factory (Admin triggered or User Resume)
               setProjectId(access.activeProjectId);
-              // If project exists, we might implicitly be in "Factory Mode"
+              setShowReward(false);
+            } else {
+              // Just Unlocked Plan (No active book yet) -> Show Reward
+              setShowReward(true);
             }
           }
         })
