@@ -3,6 +3,7 @@ import { BookMetadata, BookProject, TitleOption, Chapter, MarketingAssets } from
 import * as API from '../services/api';
 import { generateDocx } from '../services/docxService';
 import { RewardModal } from './RewardModal';
+import { PaymentGate } from './PaymentGate';
 
 import { pt, en, es } from '../i18n/locales';
 
@@ -49,7 +50,6 @@ const RotatingMessage = ({ messages }: { messages: string[] }) => {
 };
 
 
-import { PaymentGate } from './PaymentGate';
 
 export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, onReset, language, userContact, setAppStep }) => {
   const t = { pt, en, es }[language].generator;
@@ -61,6 +61,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   const [isManufacturing, setIsManufacturing] = useState(true); // Start true to show Intro
   const [factoryStep, setFactoryStep] = useState(0); // 0..3 for texts
   const [showPaymentGate, setShowPaymentGate] = useState(false); // Controls the Payment Screen
+  const [showReward, setShowReward] = useState(false); // Controls the Unlock/Reward Screen
 
   // Hoist metadata extraction for Effects
   const { status, progress, statusMessage } = project?.metadata || ({} as any);
@@ -460,6 +461,51 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         </div>
       </div>
     );
+  }
+
+  // POLLING FOR ACCESS (Real-time Unlock)
+  useEffect(() => {
+    if (!showPaymentGate) return;
+
+    const interval = setInterval(() => {
+      if (!userContact?.email) return;
+
+      fetch(`/api/payment/check-access?email=${userContact.email}`)
+        .then(r => r.json())
+        .then(access => {
+          if (access.hasAccess) {
+            setShowPaymentGate(false);
+            setShowReward(true);
+            if (access.activeProjectId) {
+              setProjectId(access.activeProjectId);
+              // If project exists, we might implicitly be in "Factory Mode"
+            }
+          }
+        })
+        .catch(e => console.error("Access Poll Error", e));
+
+    }, 3000); // Check every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [showPaymentGate, userContact]);
+
+  if (showReward) {
+    return (
+      <RewardModal
+        isOpen={true}
+        onClose={() => setShowReward(false)}
+        onClaim={() => {
+          setShowReward(false);
+          // If we didn't have a project ID, we retry init
+          if (!projectId) initProject();
+        }}
+        offer={{
+          level: upsellOffer?.level || 4,
+          price: upsellOffer?.price || 16.90,
+          planName: upsellOffer?.planName || "BLACK"
+        }}
+      />
+    )
   }
 
   if (showPaymentGate) {

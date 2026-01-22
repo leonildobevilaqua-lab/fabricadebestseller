@@ -586,7 +586,8 @@ export const checkAccess = async (req: Request, res: Response) => {
         pendingPlan,
         bookPrice,
         checkoutUrl,
-        discountLevel
+        discountLevel,
+        activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null
     });
 };
 
