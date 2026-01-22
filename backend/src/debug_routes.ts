@@ -1,7 +1,8 @@
 
 import app from './app';
+
 // Function to print routes
-function print(path, layer) {
+function print(path: any, layer: any) {
     if (layer.route) {
         layer.route.stack.forEach(print.bind(null, path.concat(split(layer.route.path))))
     } else if (layer.name === 'router' && layer.handle.stack) {
@@ -13,7 +14,7 @@ function print(path, layer) {
     }
 }
 
-function split(thing) {
+function split(thing: any) {
     if (typeof thing === 'string') {
         return thing.split('/')
     } else if (thing.fast_slash) {
@@ -29,4 +30,7 @@ function split(thing) {
     }
 }
 
-app._router.stack.forEach(print.bind(null, []))
+// Check if _router exists (it should on an express app)
+if (app._router && app._router.stack) {
+    app._router.stack.forEach(print.bind(null, []))
+}
