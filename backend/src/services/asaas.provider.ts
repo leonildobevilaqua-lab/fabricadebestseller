@@ -5,15 +5,19 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const ASAAS_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
-const ASAAS_KEY = process.env.ASAAS_API_KEY || '';
 
-const api = axios.create({
-    baseURL: ASAAS_URL,
-    headers: {
-        'access_token': ASAAS_KEY,
-        'Content-Type': 'application/json'
-    }
-});
+const getApi = () => {
+    const apiKey = process.env.ASAAS_API_KEY;
+    if (!apiKey) throw new Error("ASAAS_API_KEY is not configured in .env");
+
+    return axios.create({
+        baseURL: ASAAS_URL,
+        headers: {
+            'access_token': apiKey,
+            'Content-Type': 'application/json'
+        }
+    });
+};
 
 // Helper to get Plan Config
 const getPlanConfig = (planKey: string) => {
@@ -26,7 +30,7 @@ export const AsaasProvider = {
     async createCustomer(user: { name: string, email: string, cpfCnpj?: string, phone?: string }) {
         // First try to find existing
         try {
-            const { data } = await api.get(`/customers?email=${user.email}`);
+            const { data } = await getApi().get(`/customers?email=${user.email}`);
             if (data.data && data.data.length > 0) {
                 return data.data[0].id; // Return existing ID
             }
@@ -42,7 +46,7 @@ export const AsaasProvider = {
             if (user.cpfCnpj && user.cpfCnpj.trim() !== '') payload.cpfCnpj = user.cpfCnpj;
             if (user.phone && user.phone.trim() !== '') payload.mobilePhone = user.phone;
 
-            const { data } = await api.post('/customers', payload);
+            const { data } = await getApi().post('/customers', payload);
             return data.id;
         } catch (error: any) {
             const errorMsg = error.response?.data?.errors?.[0]?.description || error.message;
@@ -75,7 +79,7 @@ export const AsaasProvider = {
         }
 
         try {
-            const { data } = await api.post('/subscriptions', payload);
+            const { data } = await getApi().post('/subscriptions', payload);
             return data;
         } catch (error: any) {
             console.error("Asaas Create Subscription Error:", error.response?.data || error.message);
@@ -95,7 +99,7 @@ export const AsaasProvider = {
         };
 
         try {
-            const { data } = await api.post(`/subscriptions/${subscriptionId}`, payload);
+            const { data } = await getApi().post(`/subscriptions/${subscriptionId}`, payload);
             return data;
         } catch (error: any) {
             console.error("Asaas Update Subscription Error:", error.response?.data || error.message);
@@ -105,7 +109,7 @@ export const AsaasProvider = {
 
     async getSubscription(subscriptionId: string) {
         try {
-            const { data } = await api.get(`/subscriptions/${subscriptionId}`);
+            const { data } = await getApi().get(`/subscriptions/${subscriptionId}`);
             return data;
         } catch (error: any) {
             return null;
@@ -114,7 +118,7 @@ export const AsaasProvider = {
 
     async getSubscriptionPayments(subscriptionId: string) {
         try {
-            const { data } = await api.get(`/subscriptions/${subscriptionId}/payments`);
+            const { data } = await getApi().get(`/subscriptions/${subscriptionId}/payments`);
             return data.data; // Array of payments
         } catch (error: any) {
             console.error("Error fetching sub payments", error);
@@ -132,7 +136,7 @@ export const AsaasProvider = {
                 dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 days expiry
                 description: description
             };
-            const { data } = await api.post('/payments', payload);
+            const { data } = await getApi().post('/payments', payload);
             return data;
         } catch (error: any) {
             console.error("Create Payment Error", error.response?.data || error.message);
