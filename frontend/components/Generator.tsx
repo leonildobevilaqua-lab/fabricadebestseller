@@ -142,8 +142,18 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             setProjectId(access.activeProjectId);
             setShowReward(false);
             // Force fetch project immediately to prevent stuck loading
-            API.getProject(access.activeProjectId).then(p => {
-              if (p) setProject(p);
+            API.getProject(access.activeProjectId).then(async (p) => {
+              if (p) {
+                setProject(p);
+                // FIX: Kickstart research if project was stuck in IDLE state waiting for payment
+                if (p.metadata.status === 'IDLE') {
+                  console.log("Kickstarting IDLE project...");
+                  try {
+                    await API.startResearch(p.id, language);
+                    setProject(curr => curr ? ({ ...curr, metadata: { ...curr.metadata, status: 'RESEARCHING', progress: 5, statusMessage: 'Iniciando pesquisa...' } }) : p);
+                  } catch (e) { console.error("Error auto-starting", e); }
+                }
+              }
             });
           } else {
             setShowReward(true);
