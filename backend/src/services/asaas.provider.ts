@@ -42,7 +42,29 @@ export const AsaasProvider = {
         try {
             const { data } = await getApi().get(`/customers?email=${user.email}`);
             if (data.data && data.data.length > 0) {
-                return data.data[0].id; // Return existing ID
+                const existingId = data.data[0].id;
+
+                // UPDATE EXISTING CUSTOMER TO ENSURE CPF IS THERE
+                try {
+                    const updatePayload: any = {};
+                    if (user.cpfCnpj) updatePayload.cpfCnpj = user.cpfCnpj;
+                    if (user.phone) updatePayload.mobilePhone = user.phone;
+                    if (user.postalCode) updatePayload.postalCode = user.postalCode;
+                    if (user.address) updatePayload.address = user.address;
+                    if (user.addressNumber) updatePayload.addressNumber = user.addressNumber;
+                    if (user.complement) updatePayload.complement = user.complement;
+                    if (user.province) updatePayload.province = user.province;
+
+                    if (Object.keys(updatePayload).length > 0) {
+                        await getApi().post(`/customers/${existingId}`, updatePayload);
+                        console.log(`[ASAAS] Updated Existing Customer ${existingId}`);
+                    }
+                } catch (updErr: any) {
+                    console.error("[ASAAS] Failed to update existing customer:", updErr.message);
+                    // Continue anyway, maybe it was already correct
+                }
+
+                return existingId;
             }
         } catch (e) { console.error("Error searching customer", e); }
 
