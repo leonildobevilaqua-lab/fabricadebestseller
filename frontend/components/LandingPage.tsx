@@ -23,9 +23,10 @@ interface LandingProps {
     lang: 'pt' | 'en' | 'es';
     setLang: (l: 'pt' | 'en' | 'es') => void;
     initialState?: any;
+    onLoginClick: () => void;
 }
 
-const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, initialState }) => {
+const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, initialState, onLoginClick }) => {
     const translations: any = { pt: pt.landing, en: en.landing, es: es.landing };
     const t: any = { pt, en, es };
     const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -36,6 +37,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     const [formData, setFormData] = useState({
         name: '',
         email: '',
+        password: '',
         phone: '',
         countryCode: '+55',
         type: 'BOOK', // BOOK, VOUCHER, GIFT_DIRECT
@@ -313,6 +315,31 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     // --- LOGIC: SAVE LEAD ---
     const handleSaveLead = async (overrideType?: string) => {
         try {
+            // Register User (New Flow) - Try to register if password exists
+            if (formData.password) {
+                const getApiBase = () => {
+                    const env = (import.meta as any).env.VITE_API_URL;
+                    if (env) return env;
+                    const host = window.location.hostname;
+                    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+                    return 'https://api.fabricadebestseller.com.br';
+                };
+                const baseUrl = getApiBase().replace(/\/$/, "");
+                try {
+                    await fetch(`${baseUrl}/api/user/register`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: formData.name,
+                            email: formData.email,
+                            password: formData.password,
+                            cpf: formData.document,
+                            phone: formData.phone
+                        })
+                    });
+                } catch (err) { console.error("Register Error (ignoring)", err); }
+            }
+
             // Calculate Tag
             let tag = 'Id_avulso';
             if (selectedPlan) {
@@ -764,6 +791,13 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             <button onClick={() => setLang('es')} className={`px-3 py-1 text-xs font-bold rounded-full transition-colors ${lang === 'es' ? 'text-yellow-400 bg-slate-700 shadow-sm' : 'text-slate-500 hover:text-white'}`}>ES</button>
                         </div>
 
+                        <button
+                            onClick={onLoginClick}
+                            className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 border border-white/10"
+                        >
+                            <span>🔐</span> <span className="hidden md:inline">JÁ SOU ALUNO</span><span className="md:hidden">ENTRAR</span>
+                        </button>
+
                         {/* Admin Link Removed as per request */}
                     </div>
                 </div>
@@ -851,6 +885,24 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                             readOnly={activeDiscount > 0}
                                                         />
                                                     </div>
+
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Senha de Acesso (Crie agora)</label>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="password"
+                                                                className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 pl-10 text-white focus:ring-1 focus:ring-yellow-500 outline-none transition-all placeholder-slate-600"
+                                                                placeholder="••••••••"
+                                                                value={(formData as any).password || ''}
+                                                                onChange={e => setFormData({ ...formData, password: e.target.value } as any)}
+                                                            />
+                                                            <div className="absolute left-3 top-3.5 text-slate-500">
+                                                                <Lock className="w-4 h-4" />
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-500 mt-1">Essa senha será usada para acessar sua Área do Membro.</p>
+                                                    </div>
+
                                                     <div>
                                                         <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">WhatsApp</label>
                                                         <div className="flex gap-2">

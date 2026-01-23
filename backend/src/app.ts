@@ -69,6 +69,8 @@ app.use('/api/payment', paymentRoutes);
 import { SubscriptionController } from './controllers/subscription.controller';
 app.post('/webhook/asaas', SubscriptionController.webhook); // Direct mapping
 app.use('/api/subscription', subscriptionRoutes);
+import userRoutes from './routes/user.routes';
+app.use('/api/user', userRoutes);
 app.use('/downloads', express.static(path.join(__dirname, '../generated_books')));
 
 app.get('/health', (req, res) => {
