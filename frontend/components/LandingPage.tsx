@@ -15,6 +15,7 @@ const FileText = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="
 const ChevronDown = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m6 9 6 6 6-6" /></svg>;
 const CheckCircle = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>;
 const SettingsIcon = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>;
+const PenTool = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 19 7-7 3 3-7 7-3-3z" /><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" /><path d="m2 2 7.586 7.586" /><circle cx="11" cy="11" r="2" /></svg>;
 
 interface LandingProps {
     onStart: (userData: any, initialData?: any) => void;
@@ -279,7 +280,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     }
 
                     return {
-                        ...prev,
+                        ...prev, // Keep existing fields like document, cep, etc.
                         email: initialState.email,
                         phone: recoveredPhone,
                         name: shouldClearName ? '' : (initialState.name || prev.name || '')
@@ -544,8 +545,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     useEffect(() => {
         if (paymentConfirmed && step === 3) {
             const t = setTimeout(() => {
-                handleManualStart();
-            }, 1000); // 1s delay for visual feedback
+                // Payment confirmed, go to Book Data Step instead of Auto-Start
+                setStep(1);
+            }, 2000); // 2s delay to show success message
             return () => clearTimeout(t);
         }
     }, [paymentConfirmed, step]);
@@ -874,223 +876,199 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                 </div>
                                             </div>
 
-                                            {/* --- BOOK DATA --- */}
-                                            {/* --- BOOK DATA --- */}
-                                            <div className="bg-indigo-950/30 p-6 rounded-2xl border border-indigo-500/30 space-y-4 relative overflow-hidden">
-                                                <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
-                                                <div className="flex items-center gap-2 mb-2">
-                                                    <span className="bg-indigo-500/20 text-indigo-400 p-2 rounded-lg">📘</span>
-                                                    <h3 className="font-bold text-lg text-indigo-100">Sobre o Livro</h3>
-                                                </div>
+                                            {/* --- MOVED TO STEP 1 (Post-Payment) --- */}
+                                            {/* Author and Topic inputs removed from here */}
+                                            <button
+                                                className={`px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg flex-shrink-0 border ${(bookData as any).isGift ? 'bg-indigo-500 text-white border-indigo-400 shadow-indigo-500/30' : 'bg-slate-800 text-indigo-300 border-indigo-500/30 hover:bg-slate-700'}`}
+                                                onClick={() => setBookData(prev => ({ ...prev, isGift: !(prev as any).isGift }))}
+                                            >
+                                                {(bookData as any).isGift ? '✅ Opção Selecionada' : 'Selecionar Esta Opção'}
+                                            </button>
+                                        </div>
 
-                                                <div>
-                                                    <label className="block text-xs font-bold text-indigo-300 mb-1 uppercase">Nome do Autor (Para a Capa)</label>
-                                                    <input
-                                                        value={bookData.authorName}
-                                                        onChange={e => setBookData({ ...bookData, authorName: e.target.value })}
-                                                        className="w-full bg-indigo-950/50 border-indigo-500/30 border rounded-xl p-3 text-white focus:ring-1 focus:ring-indigo-400 outline-none transition-all hover:bg-indigo-900/50 placeholder-indigo-300/30"
-                                                        placeholder="Ex: Dr. João Silva"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-indigo-300 mb-1 uppercase">Tema/Assunto do Livro</label>
-                                                    <textarea
-                                                        value={bookData.topic}
-                                                        onChange={e => setBookData({ ...bookData, topic: e.target.value })}
-                                                        className="w-full bg-indigo-950/50 border-indigo-500/30 border rounded-xl p-3 text-white focus:ring-1 focus:ring-indigo-400 outline-none h-24 resize-none transition-all hover:bg-indigo-900/50 placeholder-indigo-300/30"
-                                                        placeholder="Ex: Guia definitivo sobre investimentos para iniciantes com foco em liberdade financeira..."
-                                                    />
-                                                    <p className="text-right text-xs text-indigo-300/50 mt-1">Quanto mais detalhes, melhor.</p>
+                                        {(bookData as any).isGift && (
+                                            <div className="bg-indigo-950/40 p-5 rounded-xl space-y-4 border border-indigo-500/20 mt-4">
+                                                <p className="text-xs font-bold text-indigo-300 uppercase border-b border-indigo-500/20 pb-2">Destinatário do Presente</p>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-xs font-bold text-indigo-400 mb-1">Nome Completo</label>
+                                                        <input
+                                                            className="w-full bg-slate-900/80 border-indigo-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-indigo-400 outline-none"
+                                                            placeholder="Nome da pessoa que vai receber"
+                                                            value={(bookData as any).giftName || ''}
+                                                            onChange={e => setBookData(prev => ({ ...prev, giftName: e.target.value }))}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-indigo-400 mb-1">E-mail</label>
+                                                        <input
+                                                            className="w-full bg-slate-900/80 border-indigo-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-indigo-400 outline-none"
+                                                            placeholder="email@dapessoa.com"
+                                                            value={(bookData as any).giftEmail || ''}
+                                                            onChange={e => setBookData(prev => ({ ...prev, giftEmail: e.target.value }))}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-indigo-400 mb-1">WhatsApp</label>
+                                                        <input
+                                                            className="w-full bg-slate-900/80 border-indigo-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-indigo-400 outline-none"
+                                                            placeholder="(11) 99999-9999"
+                                                            value={(bookData as any).giftPhone || ''}
+                                                            onChange={e => setBookData(prev => ({ ...prev, giftPhone: e.target.value }))}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
-
-                                            {/* --- GIFT SECTION --- */}
-                                            {/* --- GIFT SECTION: BOOK (Immediate) --- */}
-                                            <div className="bg-gradient-to-br from-indigo-900/30 to-indigo-800/20 p-6 rounded-2xl border border-indigo-500/30 space-y-4 animate-fade-in hover:border-indigo-400/50 transition-all">
-                                                <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-                                                    <div className="flex-1">
-                                                        <h3 className="text-lg font-bold text-indigo-300 flex items-center gap-2 mb-1">
-                                                            <span>🎁</span> PRESENTEAR ESTE LIVRO AGORA
-                                                        </h3>
-                                                        <p className="text-xs text-indigo-200/70">
-                                                            Você define o Autor e Tema agora, nós geramos e enviamos o livro pronto para a pessoa.
-                                                        </p>
-                                                    </div>
-                                                    <button
-                                                        className={`px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg flex-shrink-0 border ${(bookData as any).isGift ? 'bg-indigo-500 text-white border-indigo-400 shadow-indigo-500/30' : 'bg-slate-800 text-indigo-300 border-indigo-500/30 hover:bg-slate-700'}`}
-                                                        onClick={() => setBookData(prev => ({ ...prev, isGift: !(prev as any).isGift }))}
-                                                    >
-                                                        {(bookData as any).isGift ? '✅ Opção Selecionada' : 'Selecionar Esta Opção'}
-                                                    </button>
-                                                </div>
-
-                                                {(bookData as any).isGift && (
-                                                    <div className="bg-indigo-950/40 p-5 rounded-xl space-y-4 border border-indigo-500/20 mt-4">
-                                                        <p className="text-xs font-bold text-indigo-300 uppercase border-b border-indigo-500/20 pb-2">Destinatário do Presente</p>
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                            <div className="md:col-span-2">
-                                                                <label className="block text-xs font-bold text-indigo-400 mb-1">Nome Completo</label>
-                                                                <input
-                                                                    className="w-full bg-slate-900/80 border-indigo-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-indigo-400 outline-none"
-                                                                    placeholder="Nome da pessoa que vai receber"
-                                                                    value={(bookData as any).giftName || ''}
-                                                                    onChange={e => setBookData(prev => ({ ...prev, giftName: e.target.value }))}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-indigo-400 mb-1">E-mail</label>
-                                                                <input
-                                                                    className="w-full bg-slate-900/80 border-indigo-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-indigo-400 outline-none"
-                                                                    placeholder="email@dapessoa.com"
-                                                                    value={(bookData as any).giftEmail || ''}
-                                                                    onChange={e => setBookData(prev => ({ ...prev, giftEmail: e.target.value }))}
-                                                                />
-                                                            </div>
-                                                            <div>
-                                                                <label className="block text-xs font-bold text-indigo-400 mb-1">WhatsApp</label>
-                                                                <input
-                                                                    className="w-full bg-slate-900/80 border-indigo-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-indigo-400 outline-none"
-                                                                    placeholder="(11) 99999-9999"
-                                                                    value={(bookData as any).giftPhone || ''}
-                                                                    onChange={e => setBookData(prev => ({ ...prev, giftPhone: e.target.value }))}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
+                                        )}
+                                    </div>
 
                                             {/* --- GIFT SECTION: VOUCHER (Credit) --- */}
-                                            <div className="bg-gradient-to-br from-emerald-900/30 to-emerald-800/20 p-6 rounded-2xl border border-emerald-500/30 space-y-4 hover:border-emerald-400/50 transition-all">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex-1">
-                                                        <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 mb-1">
-                                                            <span>🎟️</span> COMPRAR VALE-PRESENTE (VOUCHER)
-                                                        </h3>
-                                                        <p className="text-xs text-emerald-200/70">
-                                                            Você compra um crédito agora e recebe um LINK especial. Você envia esse link para a pessoa e ela mesma cria o livro quando quiser.
-                                                        </p>
-                                                    </div>
+                                <div className="bg-gradient-to-br from-emerald-900/30 to-emerald-800/20 p-6 rounded-2xl border border-emerald-500/30 space-y-4 hover:border-emerald-400/50 transition-all">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 mb-1">
+                                                <span>🎟️</span> COMPRAR VALE-PRESENTE (VOUCHER)
+                                            </h3>
+                                            <p className="text-xs text-emerald-200/70">
+                                                Você compra um crédito agora e recebe um LINK especial. Você envia esse link para a pessoa e ela mesma cria o livro quando quiser.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Voucher Buyer Form */}
+                                    <div className="bg-emerald-950/40 p-5 rounded-xl border border-emerald-500/20 mt-2 space-y-3">
+                                        <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/20 pb-2">Seus Dados (Comprador)</p>
+
+                                        <div>
+                                            <input
+                                                className="w-full bg-slate-900/80 border-emerald-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-emerald-400 outline-none"
+                                                placeholder="Seu Nome Completo"
+                                                value={formData.name}
+                                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <input
+                                                className="w-full bg-slate-900/80 border-emerald-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-emerald-400 outline-none"
+                                                placeholder="Seu E-mail"
+                                                value={formData.email}
+                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                            />
+                                            <input
+                                                className="w-full bg-slate-900/80 border-emerald-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-emerald-400 outline-none"
+                                                placeholder="Seu WhatsApp"
+                                                value={formData.phone}
+                                                onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                            />
+                                        </div>
+
+                                        {/* --- LGPD CONSENT & ACTION (VOUCHER) --- */}
+                                        <div className="space-y-4 pt-2 relative">
+                                            {!(formData as any).lgpdConsent && (
+                                                <div className="absolute -top-5 left-1 flex items-center gap-1 animate-bounce pointer-events-none z-10">
+                                                    <span className="text-xl drop-shadow-lg filter">👇</span>
+                                                    <span className="text-[10px] font-bold text-emerald-400 bg-slate-900/90 px-2 py-0.5 rounded shadow-lg border border-emerald-500/30">
+                                                        ACEITE AQUI
+                                                    </span>
                                                 </div>
+                                            )}
+                                            <label className={`flex items-start gap-3 px-2 cursor-pointer rounded transition-all duration-300 ${!(formData as any).lgpdConsent ? 'bg-emerald-900/20 shadow-[0_0_10px_rgba(16,185,129,0.1)] py-2' : 'hover:bg-emerald-900/10'}`}>
+                                                <input
+                                                    type="checkbox"
+                                                    className="mt-1 w-4 h-4 rounded border-emerald-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500/50 cursor-pointer"
+                                                    checked={(formData as any).lgpdConsent || false}
+                                                    onChange={e => setFormData({ ...formData, lgpdConsent: e.target.checked } as any)}
+                                                />
+                                                <span className="text-[10px] text-emerald-200/80 leading-tight select-none">
+                                                    Concordo com os <a href="#" className="underline hover:text-white">Termos</a> e <a href="#" className="underline hover:text-white">Políticas</a> e aceito receber comunicações promocionais e atualizações.
+                                                </span>
+                                            </label>
 
-                                                {/* Voucher Buyer Form */}
-                                                <div className="bg-emerald-950/40 p-5 rounded-xl border border-emerald-500/20 mt-2 space-y-3">
-                                                    <p className="text-xs font-bold text-emerald-400 uppercase border-b border-emerald-500/20 pb-2">Seus Dados (Comprador)</p>
+                                            <button
+                                                className="w-full px-4 py-4 rounded-xl font-bold text-sm uppercase tracking-wider bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 disabled:grayscale"
+                                                onClick={async () => {
+                                                    if (!formData.name || !formData.email || !formData.phone) {
+                                                        alert("Por favor, preencha seus dados (Nome, Email, WhatsApp) para receber o voucher.");
+                                                        return;
+                                                    }
+                                                    if (!(formData as any).lgpdConsent) {
+                                                        alert("É necessário aceitar os termos e consentir com as comunicações para prosseguir.");
+                                                        return;
+                                                    }
+                                                    setFormData(prev => ({ ...prev, type: 'VOUCHER' }));
+                                                    await handleSaveLead('VOUCHER');
+                                                    setStep(3); // Start processing/paywall for voucher
+                                                }}
+                                                disabled={!(formData as any).lgpdConsent}
+                                            >
+                                                <span>💳</span> FECHAR COMPRA DO VOUCHER
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                                    <div>
-                                                        <input
-                                                            className="w-full bg-slate-900/80 border-emerald-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-emerald-400 outline-none"
-                                                            placeholder="Seu Nome Completo"
-                                                            value={formData.name}
-                                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                                        />
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-3">
-                                                        <input
-                                                            className="w-full bg-slate-900/80 border-emerald-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-emerald-400 outline-none"
-                                                            placeholder="Seu E-mail"
-                                                            value={formData.email}
-                                                            onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                        />
-                                                        <input
-                                                            className="w-full bg-slate-900/80 border-emerald-500/30 border rounded-lg p-3 text-white text-sm focus:ring-1 focus:ring-emerald-400 outline-none"
-                                                            placeholder="Seu WhatsApp"
-                                                            value={formData.phone}
-                                                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                                                        />
-                                                    </div>
+                                )}
 
-                                                    {/* --- LGPD CONSENT & ACTION (VOUCHER) --- */}
-                                                    <div className="space-y-4 pt-2 relative">
-                                                        {!(formData as any).lgpdConsent && (
-                                                            <div className="absolute -top-5 left-1 flex items-center gap-1 animate-bounce pointer-events-none z-10">
-                                                                <span className="text-xl drop-shadow-lg filter">👇</span>
-                                                                <span className="text-[10px] font-bold text-emerald-400 bg-slate-900/90 px-2 py-0.5 rounded shadow-lg border border-emerald-500/30">
-                                                                    ACEITE AQUI
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                        <label className={`flex items-start gap-3 px-2 cursor-pointer rounded transition-all duration-300 ${!(formData as any).lgpdConsent ? 'bg-emerald-900/20 shadow-[0_0_10px_rgba(16,185,129,0.1)] py-2' : 'hover:bg-emerald-900/10'}`}>
-                                                            <input
-                                                                type="checkbox"
-                                                                className="mt-1 w-4 h-4 rounded border-emerald-600 bg-slate-900 text-emerald-500 focus:ring-emerald-500/50 cursor-pointer"
-                                                                checked={(formData as any).lgpdConsent || false}
-                                                                onChange={e => setFormData({ ...formData, lgpdConsent: e.target.checked } as any)}
-                                                            />
-                                                            <span className="text-[10px] text-emerald-200/80 leading-tight select-none">
-                                                                Concordo com os <a href="#" className="underline hover:text-white">Termos</a> e <a href="#" className="underline hover:text-white">Políticas</a> e aceito receber comunicações promocionais e atualizações.
-                                                            </span>
-                                                        </label>
+                                {/* STEP 1: BOOK DATA ENTRY (Post-Payment) */}
+                                {step === 1 && (
+                                    <div className="space-y-6 w-full animate-fade-in">
+                                        <div className="text-center mb-8">
+                                            <div className="inline-block p-4 bg-green-500/10 rounded-full mb-4">
+                                                <PenTool className="w-10 h-10 text-green-400" />
+                                            </div>
+                                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
+                                                Pagamentos Confirmados! 🚀
+                                            </h2>
+                                            <p className="text-slate-400">
+                                                Agora, conte-nos sobre o livro que você quer criar.
+                                            </p>
+                                        </div>
 
-                                                        <button
-                                                            className="w-full px-4 py-4 rounded-xl font-bold text-sm uppercase tracking-wider bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 disabled:grayscale"
-                                                            onClick={async () => {
-                                                                if (!formData.name || !formData.email || !formData.phone) {
-                                                                    alert("Por favor, preencha seus dados (Nome, Email, WhatsApp) para receber o voucher.");
-                                                                    return;
-                                                                }
-                                                                if (!(formData as any).lgpdConsent) {
-                                                                    alert("É necessário aceitar os termos e consentir com as comunicações para prosseguir.");
-                                                                    return;
-                                                                }
-                                                                setFormData(prev => ({ ...prev, type: 'VOUCHER' }));
-                                                                await handleSaveLead('VOUCHER');
-                                                                setStep(3); // Start processing/paywall for voucher
-                                                            }}
-                                                            disabled={!(formData as any).lgpdConsent}
-                                                        >
-                                                            <span>💳</span> FECHAR COMPRA DO VOUCHER
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                        <div className="bg-indigo-950/30 p-6 rounded-2xl border border-indigo-500/30 space-y-4 relative overflow-hidden">
+                                            <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="bg-indigo-500/20 text-indigo-400 p-2 rounded-lg">📘</span>
+                                                <h3 className="font-bold text-lg text-indigo-100">Sobre o Livro</h3>
                                             </div>
 
-                                            {/* --- LGPD CONSENT & ACTION --- */}
-                                            <div className="space-y-4 pt-2 relative">
-                                                {!(formData as any).lgpdConsent && (
-                                                    <div className="absolute -top-6 left-2 flex items-center gap-2 animate-bounce pointer-events-none z-10">
-                                                        <span className="text-2xl drop-shadow-lg filter">👇</span>
-                                                        <span className="text-xs font-bold text-yellow-400 bg-slate-900/80 px-2 py-1 rounded shadow-lg border border-yellow-500/30">
-                                                            CLIQUE AQUI
-                                                        </span>
-                                                    </div>
-                                                )}
-                                                <label className={`flex items-start gap-3 p-4 rounded-xl border transition-all duration-300 cursor-pointer ${!(formData as any).lgpdConsent ? 'border-yellow-500/50 bg-yellow-500/5 shadow-[0_0_15px_rgba(234,179,8,0.1)]' : 'border-slate-700/50 bg-slate-800/30'}`}>
-                                                    <input
-                                                        type="checkbox"
-                                                        className="mt-1 w-5 h-5 rounded border-slate-600 bg-slate-900 text-yellow-500 focus:ring-yellow-500/50 cursor-pointer"
-                                                        checked={(formData as any).lgpdConsent || false}
-                                                        onChange={e => setFormData({ ...formData, lgpdConsent: e.target.checked } as any)}
-                                                    />
-                                                    <span className="text-xs text-slate-400 leading-relaxed select-none">
-                                                        Concordo com os <a href="#" className="underline hover:text-white">Termos de Uso</a> e <a href="#" className="underline hover:text-white">Política de Privacidade</a>.
-                                                        Estou ciente e concordo em receber comunicações da Editora 360 Express, incluindo ofertas exclusivas, premiações, atualizações de produtos e materiais de marketing via e-mail ou WhatsApp.
-                                                        <br />
-                                                        <span className="text-[10px] opacity-70 block mt-1">* Seus dados estão seguros e você pode cancelar a inscrição a qualquer momento.</span>
-                                                    </span>
-                                                </label>
-
-                                                <button
-                                                    onClick={async () => {
-                                                        if (!formData.name || !formData.email || !formData.phone || !bookData.authorName || !bookData.topic) {
-                                                            alert("Por favor, preencha todos os campos obrigatórios.");
-                                                            return;
-                                                        }
-                                                        if (!(formData as any).lgpdConsent) {
-                                                            alert("É necessário aceitar os termos e consentir com as comunicações para prosseguir.");
-                                                            return;
-                                                        }
-                                                        await handleSaveLead();
-                                                        setStep(2); // Go to Processing
-                                                    }}
-                                                    disabled={!formData.name || !formData.email || !formData.phone || !bookData.authorName || !bookData.topic || !(formData as any).lgpdConsent}
-                                                    className="w-full bg-gradient-to-r from-[#eab308] to-[#facc15] hover:from-[#facc15] hover:to-[#fde047] text-slate-900 font-bold py-5 rounded-xl text-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:grayscale disabled:pointer-events-none flex items-center justify-center gap-3"
-                                                >
-                                                    <Zap className="w-6 h-6 fill-current" />
-                                                    INICIAR FABRICAÇÃO DO LIVRO
-                                                </button>
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-300 mb-1 uppercase">Nome do Autor (Para a Capa)</label>
+                                                <input
+                                                    value={bookData.authorName}
+                                                    onChange={e => setBookData({ ...bookData, authorName: e.target.value })}
+                                                    className="w-full bg-indigo-950/50 border-indigo-500/30 border rounded-xl p-3 text-white focus:ring-1 focus:ring-indigo-400 outline-none transition-all hover:bg-indigo-900/50 placeholder-indigo-300/30 text-lg"
+                                                    placeholder="Ex: Dr. João Silva"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-indigo-300 mb-1 uppercase">Tema/Assunto do Livro</label>
+                                                <textarea
+                                                    value={bookData.topic}
+                                                    onChange={e => setBookData({ ...bookData, topic: e.target.value })}
+                                                    className="w-full bg-indigo-950/50 border-indigo-500/30 border rounded-xl p-3 text-white focus:ring-1 focus:ring-indigo-400 outline-none h-32 resize-none transition-all hover:bg-indigo-900/50 placeholder-indigo-300/30 text-lg leading-relaxed"
+                                                    placeholder="Ex: Guia definitivo sobre investimentos para iniciantes com foco em liberdade financeira..."
+                                                />
+                                                <p className="text-right text-xs text-indigo-300/50 mt-1">Quanto mais detalhes, melhor.</p>
                                             </div>
                                         </div>
+
+                                        <button
+                                            onClick={async () => {
+                                                if (!bookData.authorName || !bookData.topic) {
+                                                    alert("Por favor, preencha o Autor e o Tema do livro.");
+                                                    return;
+                                                }
+                                                // Save Updated Lead with Book Info
+                                                await handleSaveLead();
+                                                // Start Generation
+                                                setStep(2); // Go to Processing
+                                            }}
+                                            disabled={!bookData.authorName || !bookData.topic}
+                                            className="w-full bg-gradient-to-r from-[#eab308] to-[#facc15] hover:from-[#facc15] hover:to-[#fde047] text-slate-900 font-bold py-5 rounded-xl text-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3"
+                                        >
+                                            <Zap className="w-6 h-6 fill-current" />
+                                            INICIAR FABRICAÇÃO DO LIVRO
+                                        </button>
                                     </div>
                                 )}
 
@@ -1622,7 +1600,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             </div>
                         </div>
                     </div>
-                </div>
+                </div >
             )
             }
 
@@ -2033,43 +2011,45 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 </div>
             </footer>
 
-            {showPlanCelebration && celebratedPlan && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-                    <div className="bg-slate-800 border border-indigo-500/30 p-8 rounded-2xl max-w-lg w-full text-center relative shadow-2xl shadow-indigo-500/20 animate-in zoom-in-95 duration-300">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 p-4 rounded-full shadow-lg">
-                            <span className="text-4xl">🎉</span>
+            {
+                showPlanCelebration && celebratedPlan && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                        <div className="bg-slate-800 border border-indigo-500/30 p-8 rounded-2xl max-w-lg w-full text-center relative shadow-2xl shadow-indigo-500/20 animate-in zoom-in-95 duration-300">
+                            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-indigo-500 to-purple-500 p-4 rounded-full shadow-lg">
+                                <span className="text-4xl">🎉</span>
+                            </div>
+
+                            <h2 className="text-3xl font-black text-white mt-8 mb-4">
+                                PARABÉNS! <br />
+                                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
+                                    VOCÊ AGORA É UM ASSINANTE!
+                                </span>
+                            </h2>
+
+                            <div className="bg-indigo-900/30 p-4 rounded-xl border border-indigo-500/20 mb-6">
+                                <p className="text-indigo-200 font-bold text-lg mb-1">{celebratedPlan.name}</p>
+                                <p className="text-sm text-indigo-300/70 uppercase tracking-widest">{celebratedPlan.billing === 'annual' ? 'Plano Anual' : 'Plano Mensal'}</p>
+                            </div>
+
+                            <p className="text-slate-300 text-lg mb-8 leading-relaxed">
+                                Acabamos de desbloquear as condições exclusivas do seu plano e a
+                                <span className="text-yellow-400 font-bold"> Taxa de Geração Promocional ({
+                                    celebratedPlan.name === 'BLACK' ? 'R$ 16,90' :
+                                        celebratedPlan.name === 'PRO' ? 'R$ 21,90' :
+                                            'R$ 26,90'
+                                })</span>.
+                            </p>
+
+                            <button
+                                onClick={() => setShowPlanCelebration(false)}
+                                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-900/40 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                CONTINUAR PARA GERAÇÃO
+                            </button>
                         </div>
-
-                        <h2 className="text-3xl font-black text-white mt-8 mb-4">
-                            PARABÉNS! <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-                                VOCÊ AGORA É UM ASSINANTE!
-                            </span>
-                        </h2>
-
-                        <div className="bg-indigo-900/30 p-4 rounded-xl border border-indigo-500/20 mb-6">
-                            <p className="text-indigo-200 font-bold text-lg mb-1">{celebratedPlan.name}</p>
-                            <p className="text-sm text-indigo-300/70 uppercase tracking-widest">{celebratedPlan.billing === 'annual' ? 'Plano Anual' : 'Plano Mensal'}</p>
-                        </div>
-
-                        <p className="text-slate-300 text-lg mb-8 leading-relaxed">
-                            Acabamos de desbloquear as condições exclusivas do seu plano e a
-                            <span className="text-yellow-400 font-bold"> Taxa de Geração Promocional ({
-                                celebratedPlan.name === 'BLACK' ? 'R$ 16,90' :
-                                    celebratedPlan.name === 'PRO' ? 'R$ 21,90' :
-                                        'R$ 26,90'
-                            })</span>.
-                        </p>
-
-                        <button
-                            onClick={() => setShowPlanCelebration(false)}
-                            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-900/40 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-                        >
-                            CONTINUAR PARA GERAÇÃO
-                        </button>
                     </div>
-                </div>
-            )}
+                )
+            }
             <RewardModal
                 isOpen={isRewardModalOpen}
                 onClose={() => setIsRewardModalOpen(false)}
