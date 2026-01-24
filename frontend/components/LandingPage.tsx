@@ -663,15 +663,11 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     }
 
                     // PLAN CELEBRATION
-                    if (data.plan && data.plan.status === 'ACTIVE') {
-                        const planKey = `celebrated_v2_${data.plan.name}_${formData.email}`;
-                        if (!localStorage.getItem(planKey)) {
-                            setCelebratedPlan(data.plan);
-                            setShowPlanCelebration(true);
-                            localStorage.setItem(planKey, 'true');
-                        }
-                    } else {
-                        // RESET CELEBRATION IF PLAN IS LOST/DELETED (Supports Retesting)
+                    // REMOVED PREMATURE CELEBRATION BLOCK FROM HERE
+                    // Celebration logic is now strictly inside the Payment Confirmation block below
+
+                    // RESET CELEBRATION IF PLAN IS LOST/DELETED (Supports Retesting)
+                    if (!data.plan || data.plan.status !== 'ACTIVE') {
                         if (formData.email) {
                             ['STARTER', 'PRO', 'BLACK'].forEach(p => {
                                 localStorage.removeItem(`celebrated_v2_${p}_${formData.email}`);
@@ -2084,7 +2080,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 }}
                                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-900/40 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                             >
-                                CONTINUAR PARA GERAÇÃO
+                                ACESSAR ÁREA VIP DE MEMBROS ASSINANTES
                             </button>
                         </div>
                     </div>
