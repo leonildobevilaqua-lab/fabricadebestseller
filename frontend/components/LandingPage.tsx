@@ -690,14 +690,12 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         // IF SUBSCRIBER CONFIRMED: Redirect to Member Area logic
                         if (isSubscriber) {
                             if (!paymentConfirmedRef.current) {
-                                console.log("SUBSCRIBER PLAN ACTIVE. Redirecting to Dashboard/Login...");
+                                console.log("SUBSCRIBER PLAN ACTIVE. Show Celebration Modal.");
                                 setPaymentConfirmed(true);
                                 paymentConfirmedRef.current = true;
 
-                                setTimeout(() => {
-                                    if (onLoginClick) onLoginClick();
-                                    else window.location.href = '/login';
-                                }, 2000);
+                                // REMOVED AUTO REDIRECT TIMEOUT to allow user to see the modal
+                                // The modal button handles the navigation (onLoginClick)
                             }
                             return;
                         }
@@ -2079,7 +2077,11 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             </p>
 
                             <button
-                                onClick={() => setShowPlanCelebration(false)}
+                                onClick={() => {
+                                    setShowPlanCelebration(false);
+                                    if (onLoginClick) onLoginClick();
+                                    else window.location.href = '/login';
+                                }}
                                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-900/40 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                             >
                                 CONTINUAR PARA GERAÇÃO
