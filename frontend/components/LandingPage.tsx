@@ -684,13 +684,26 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     // STRICTLY CHECK FOR SUBSCRIBER STATUS ONLY
                     // IGNORES generic credits or approved status to force Subscription Flow
                     if (isSubscriber) {
+                        // TIME CHECK: Only valid if plan started RECENTLY (e.g., last 15 mins)
+                        // This prevents old active plans from bypassing the "Waiting for Confirmation" screen on a new purchase attempt.
+                        const planStart = new Date(data.plan.startDate).getTime();
+                        const now = Date.now();
+                        const timeDiff = now - planStart;
+                        const MAX_AGE_MS = 15 * 60 * 1000; // 15 Minutes
 
-                        // IF SUBSCRIBER CONFIRMED: Redirect to Member Area logic
+                        // If plan is older than 15 mins, we ASSUME it's an old plan and user is trying to renew/upgrade.
+                        // We WAIT for the Webhook to update the startDate to NOW.
+                        if (timeDiff > MAX_AGE_MS) {
+                            console.log("Found Active Plan, but it's old. Waiting for new Webhook update...", { planStart: data.plan.startDate, diffMinutes: timeDiff / 60000 });
+                            return;
+                        }
+
+                        // IF SUBSCRIBER CONFIRMED AND RECENT: Redirect to Member Area logic
                         if (!paymentConfirmedRef.current) {
-                            console.log("SUBSCRIBER PLAN ACTIVE. Show Celebration Modal.");
+                            console.log("NEW SUBSCRIBER PLAN CONFIRMED via Webhook. Show Celebration Modal.");
 
                             // STRICT CELEBRATION TRIGGER
-                            const planKey = `celebrated_v2_${data.plan.name}_${formData.email}`;
+                            const planKey = `celebrated_v2_${data.plan.name}_${formData.email}_${planStart}`; // Add timestamp to key to allow re-celebration on renewal
                             if (!localStorage.getItem(planKey)) {
                                 setCelebratedPlan(data.plan);
                                 setShowPlanCelebration(true);
