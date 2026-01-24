@@ -1702,7 +1702,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             </section>
 
             {/* --- PRICING SECTION --- */}
-            <PricingSection onSelectPlan={startWizard} lang={lang} />
+            <PricingSection onSelectPlan={startWizard} lang={lang} onLoginClick={onLoginClick} />
 
             {/* --- OFFER SECTION --- */}
             <section className="py-20" id="oferta">

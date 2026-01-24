@@ -12,9 +12,10 @@ const Gift = () => <svg className="w-5 h-5 text-purple-400 flex-shrink-0" fill="
 interface PricingProps {
     onSelectPlan?: (plan: string, billing: string) => void;
     lang: 'pt' | 'en' | 'es';
+    onLoginClick: () => void;
 }
 
-export const PricingSection: React.FC<PricingProps> = ({ onSelectPlan, lang }) => {
+export const PricingSection: React.FC<PricingProps> = ({ onSelectPlan, lang, onLoginClick }) => {
     const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
     const t = translations[lang].pricing;
 
@@ -242,7 +243,7 @@ export const PricingSection: React.FC<PricingProps> = ({ onSelectPlan, lang }) =
                             {/* ALREADY SUBSCRIBER BUTTON */}
                             <button
                                 onClick={() => {
-                                    if (onSelectPlan) onSelectPlan(plan.name, billing);
+                                    if (onLoginClick) onLoginClick();
                                 }}
                                 className="mt-4 w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-3 rounded-xl shadow-lg shadow-yellow-500/10 transition-all transform hover:scale-[1.02]"
                             >
