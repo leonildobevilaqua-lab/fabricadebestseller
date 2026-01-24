@@ -36,8 +36,12 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
     const calculateLeadValue = (lead: any) => {
         // 1. If explicit payment info exists (from Webhook), use it.
         if (lead.paymentInfo?.amount) {
-            // Kiwify/Stripe usually send cents? The controller seems to store raw or /100.
-            // If > 1000, assume cents and divide.
+            // Asaas usually sends float (19.90). Kiwify sends cents?
+            // If > 1000, likely cents. Wait, if it's annual 199.00?
+            // If provider is ASAAS, trust amount.
+            if (lead.paymentInfo.provider === 'ASAAS') return Number(lead.paymentInfo.amount);
+
+            // Kiwify logic (legacy check)
             const amt = Number(lead.paymentInfo.amount);
             return amt > 1000 ? amt / 100 : amt;
         }
@@ -60,14 +64,16 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         return 39.90;
     };
 
-    // Filter Paid Leads
+    // Filter Paid Leads (Include SUBSCRIBERS)
     const getPaidLeads = () => {
         return safeLeads.filter(l =>
             l.status === 'APPROVED' ||
             l.status === 'IN_PROGRESS' ||
             l.status === 'COMPLETED' ||
             l.status === 'LIVRO ENTREGUE' ||
-            (l.credits || 0) > 0
+            l.status === 'SUBSCRIBER' ||
+            (l.credits || 0) > 0 ||
+            (l.plan && l.plan.status === 'ACTIVE')
         );
     };
 
@@ -77,15 +83,23 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         const paidLeads = getPaidLeads();
 
         const filtered = paidLeads.filter(l => {
-            const dStr = l.date || l.created_at;
+            // Try date, created_at, or if active subscriber assume today? No, subscribers have plan.startDate or date
+            const dStr = l.date || l.created_at || (l.plan ? l.plan.startDate : null);
             if (!dStr) return false;
-            const d = new Date(dStr);
-            if (isNaN(d.getTime())) return false;
 
-            if (filter === 'day') return d.toDateString() === now.toDateString();
+            const d = new Date(dStr);
+            if (isNaN(d.getTime())) return false; // Skip invalid dates
+
+            // Normalize to midnight for day comparison
+            const targetDate = new Date(d);
+            targetDate.setHours(0, 0, 0, 0);
+            const today = new Date(now);
+            today.setHours(0, 0, 0, 0);
+
+            if (filter === 'day') return targetDate.getTime() === today.getTime();
             if (filter === 'week') {
-                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                return d >= oneWeekAgo;
+                const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                return targetDate >= oneWeekAgo;
             }
             if (filter === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             if (filter === 'year') return d.getFullYear() === now.getFullYear();
@@ -105,7 +119,10 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
     const revenueData = last7Days.map(date => {
         const dayStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
         const dayLeads = getPaidLeads().filter(l => {
-            const d = l.date ? new Date(l.date) : new Date();
+            const dStr = l.date || l.created_at || (l.plan ? l.plan.startDate : null);
+            if (!dStr) return false;
+            const d = new Date(dStr);
+            if (isNaN(d.getTime())) return false;
             return d.toDateString() === date.toDateString();
         });
         const total = dayLeads.reduce((acc, curr) => acc + calculateLeadValue(curr), 0);
@@ -136,7 +153,7 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
     }, {});
 
     const pieData = [
-        { name: 'Pagos/Aprovados', value: (statusCounts['APPROVED'] || 0) + (statusCounts['LIVRO ENTREGUE'] || 0) + (statusCounts['COMPLETED'] || 0) },
+        { name: 'Pagos/Aprovados', value: (statusCounts['APPROVED'] || 0) + (statusCounts['LIVRO ENTREGUE'] || 0) + (statusCounts['COMPLETED'] || 0) + (statusCounts['SUBSCRIBER'] || 0) },
         { name: 'Em Produção', value: statusCounts['IN_PROGRESS'] || 0 },
         { name: 'Pendentes', value: statusCounts['PENDING'] || 0 },
     ].filter(d => d.value > 0);
