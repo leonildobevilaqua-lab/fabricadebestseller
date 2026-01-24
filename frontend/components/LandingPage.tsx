@@ -721,15 +721,14 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         const referenceTime = paymentSessionStart > 0 ? paymentSessionStart : Date.now();
                         const timeDiff = planStart - referenceTime;
 
-                        // Tolerance: ENFORCED DELAY.
-                        // To prevent "Instant Success" from old data, we require the plan to be created/updated
-                        // AT LEAST 10 SECONDS after the user entered the payment screen.
-                        // This gives time for the user to click, pay, and webhook to fire.
-                        // Anything faster than 10s is suspiciously indistinguishable from pre-existing data.
-                        const MINIMUM_PROCESSING_TIME = 10000; // 10 Seconds
+                        // Tolerance: RELAXED SENSITIVITY.
+                        // We originally enforced +10s, but this blocks users if Server Clock < Client Clock (Drift).
+                        // We now allow the plan to be up to 5 minutes "older" than the click time
+                        // to account for severe clock skew, while still blocking plans from days/hours ago.
+                        const MINIMUM_PROCESSING_TIME = -5 * 60 * 1000; // -5 Minutes
 
                         if (timeDiff <= MINIMUM_PROCESSING_TIME) {
-                            console.log("Ignored Active Plan (Too fast/Old). Waiting for Webhook update...", {
+                            console.log("Ignored Active Plan (Too Old). Waiting for Webhook update...", {
                                 planStart: new Date(planStart).toISOString(),
                                 sessionStart: new Date(referenceTime).toISOString(),
                                 diffMs: timeDiff,
