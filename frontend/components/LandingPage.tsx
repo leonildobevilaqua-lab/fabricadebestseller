@@ -681,39 +681,26 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     const hasAccess = data.hasAccess === true;
                     const isSubscriber = data.plan && data.plan.status === 'ACTIVE';
 
-                    if (hasCredit || isApproved || isSubscriber) {
+                    // STRICTLY CHECK FOR SUBSCRIBER STATUS ONLY
+                    // IGNORES generic credits or approved status to force Subscription Flow
+                    if (isSubscriber) {
 
                         // IF SUBSCRIBER CONFIRMED: Redirect to Member Area logic
-                        if (isSubscriber) {
-                            if (!paymentConfirmedRef.current) {
-                                console.log("SUBSCRIBER PLAN ACTIVE. Show Celebration Modal.");
-                                setPaymentConfirmed(true);
-                                paymentConfirmedRef.current = true;
-
-                                // REMOVED AUTO REDIRECT TIMEOUT to allow user to see the modal
-                                // The modal button handles the navigation (onLoginClick)
-                            }
-                            return;
-                        }
-
-                        // STRICT VALIDATION FOR BOOK BUYERS (Non-Subscriber):
-                        // Requires actual credit or approval status
-                        if (!isSubscriber && !hasCredit && !isApproved) {
-                            return; // Do not confirm payment yet
-                        }
-
                         if (!paymentConfirmedRef.current) {
-                            console.log("PAYMENT CONFIRMED (POLLING)", data);
+                            console.log("SUBSCRIBER PLAN ACTIVE. Show Celebration Modal.");
+
+                            // STRICT CELEBRATION TRIGGER
+                            const planKey = `celebrated_v2_${data.plan.name}_${formData.email}`;
+                            if (!localStorage.getItem(planKey)) {
+                                setCelebratedPlan(data.plan);
+                                setShowPlanCelebration(true);
+                                localStorage.setItem(planKey, 'true');
+                            }
+
                             setPaymentConfirmed(true);
                             paymentConfirmedRef.current = true;
-
-                            // AUTO START BOOK GENERATION (For Book Buyers)
-                            if (formData.type !== 'VOUCHER' && formData.type !== 'DIAGRAMMING') {
-                                setTimeout(() => {
-                                    onStart(formData, bookData);
-                                }, 2000);
-                            }
                         }
+                        return;
                     }
 
                     // AUTO NAVIGATE VOUCHER / DIAGRAM
