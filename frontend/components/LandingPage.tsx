@@ -677,11 +677,14 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                         // IF SUBSCRIBER CONFIRMED: Redirect to Member Area logic
                         if (isSubscriber) {
-                            if (!paymentConfirmed) {
-                                console.log("SUBSCRIBER PLAN ACTIVE. Redirecting to Dashboard...");
+                            if (!paymentConfirmedRef.current) {
+                                console.log("SUBSCRIBER PLAN ACTIVE. Redirecting to Dashboard/Login...");
                                 setPaymentConfirmed(true);
+                                paymentConfirmedRef.current = true;
+
                                 setTimeout(() => {
                                     if (onLoginClick) onLoginClick();
+                                    else window.location.href = '/login';
                                 }, 2000);
                             }
                             return;
@@ -693,9 +696,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             return; // Do not confirm payment yet
                         }
 
-                        if (!paymentConfirmed) {
+                        if (!paymentConfirmedRef.current) {
                             console.log("PAYMENT CONFIRMED (POLLING)", data);
                             setPaymentConfirmed(true);
+                            paymentConfirmedRef.current = true;
 
                             // AUTO START BOOK GENERATION (For Book Buyers)
                             if (formData.type !== 'VOUCHER' && formData.type !== 'DIAGRAMMING') {
