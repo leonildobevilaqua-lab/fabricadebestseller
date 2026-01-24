@@ -543,6 +543,12 @@ const handleKiwifyWebhook = (req, res) => __awaiter(void 0, void 0, void 0, func
 exports.handleKiwifyWebhook = handleKiwifyWebhook;
 const checkAccess = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d, _e;
+    try {
+        yield (0, db_service_1.reloadDB)(); // CRITICAL: Force load from disk BEFORE reading anything
+    }
+    catch (e) {
+        console.error("Values Reload Error:", e);
+    }
     const { email } = req.query;
     if (!email)
         return res.status(400).json({ error: "Email required" });
@@ -550,6 +556,7 @@ const checkAccess = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     const bypass = yield (0, db_service_1.getVal)('/settings/payment_bypass');
     if (bypass)
         return res.json({ hasAccess: true, credits: 999, hasActiveProject: false });
+    // NOW read specific paths with fresh data
     const credits = Number((yield (0, db_service_1.getVal)(`/credits/${safeEmail}`)) || 0);
     let userPlan = yield (0, db_service_1.getVal)(`/users/${safeEmail}/plan`);
     // FETCH LEADS & VERIFY PLAN INTEGRITY

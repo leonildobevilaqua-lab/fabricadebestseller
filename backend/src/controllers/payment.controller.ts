@@ -516,6 +516,12 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 };
 
 export const checkAccess = async (req: Request, res: Response) => {
+    try {
+        await reloadDB(); // CRITICAL: Force load from disk BEFORE reading anything
+    } catch (e) {
+        console.error("Values Reload Error:", e);
+    }
+
     const { email } = req.query;
     if (!email) return res.status(400).json({ error: "Email required" });
 
@@ -523,6 +529,7 @@ export const checkAccess = async (req: Request, res: Response) => {
     const bypass = await getVal('/settings/payment_bypass');
     if (bypass) return res.json({ hasAccess: true, credits: 999, hasActiveProject: false });
 
+    // NOW read specific paths with fresh data
     const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
     let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
 
