@@ -712,19 +712,20 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         const referenceTime = paymentSessionStart > 0 ? paymentSessionStart : Date.now();
                         const timeDiff = planStart - referenceTime;
 
-                        // Tolerance: STRICT. Plan must be created AFTER session start.
-                        // We allow 0 tolerance. The plan MUST be newer than the session.
-                        // If paymentSessionStart is now, planStart must be > now.
-                        // Since Webhook takes a few seconds, planStart will surely be > sessionStart.
-                        const TOLERANCE_MS = 0;
+                        // Tolerance: ENFORCED DELAY.
+                        // To prevent "Instant Success" from old data, we require the plan to be created/updated
+                        // AT LEAST 10 SECONDS after the user entered the payment screen.
+                        // This gives time for the user to click, pay, and webhook to fire.
+                        // Anything faster than 10s is suspiciously indistinguishable from pre-existing data.
+                        const MINIMUM_PROCESSING_TIME = 10000; // 10 Seconds
 
-                        if (timeDiff <= TOLERANCE_MS) {
-                            console.log("Found Active Plan, but it started BEFORE this payment session.", {
+                        if (timeDiff <= MINIMUM_PROCESSING_TIME) {
+                            console.log("Ignored Active Plan (Too fast/Old). Waiting for Webhook update...", {
                                 planStart: new Date(planStart).toISOString(),
                                 sessionStart: new Date(referenceTime).toISOString(),
-                                diffMs: timeDiff
+                                diffMs: timeDiff,
+                                requiredDiff: MINIMUM_PROCESSING_TIME
                             });
-                            // Extra check: If it's literally the same second (highly unlikely unless clock sync issue), we wait.
                             return;
                         }
 
