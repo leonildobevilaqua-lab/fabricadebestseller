@@ -59,6 +59,17 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
         giftPhone: ''
     });
 
+    // SESSION TIME REFERENCE: Used to validate if a plan is NEWLY created
+    const [paymentSessionStart, setPaymentSessionStart] = useState(0);
+
+    // Update session start when entering Payment Step (3)
+    useEffect(() => {
+        if (step === 3 && paymentSessionStart === 0) {
+            setPaymentSessionStart(Date.now());
+            console.log("PAYMENT SESSION STARTED AT:", Date.now());
+        }
+    }, [step]);
+
     const [processingStage, setProcessingStage] = useState(0);
     const [products, setProducts] = useState<any>({});
 
@@ -684,17 +695,28 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     // STRICTLY CHECK FOR SUBSCRIBER STATUS ONLY
                     // IGNORES generic credits or approved status to force Subscription Flow
                     if (isSubscriber) {
-                        // TIME CHECK: Only valid if plan started RECENTLY (e.g., last 15 mins)
-                        // This prevents old active plans from bypassing the "Waiting for Confirmation" screen on a new purchase attempt.
+                        // CRITICAL: Session-based validation.
+                        // Only accept plans that have a startDate AFTER the user landed on the payment screen.
+                        // This ignores any pre-existing active plans.
                         const planStart = new Date(data.plan.startDate).getTime();
-                        const now = Date.now();
-                        const timeDiff = now - planStart;
-                        const MAX_AGE_MS = 15 * 60 * 1000; // 15 Minutes
 
-                        // If plan is older than 15 mins, we ASSUME it's an old plan and user is trying to renew/upgrade.
-                        // We WAIT for the Webhook to update the startDate to NOW.
-                        if (timeDiff > MAX_AGE_MS) {
-                            console.log("Found Active Plan, but it's old. Waiting for new Webhook update...", { planStart: data.plan.startDate, diffMinutes: timeDiff / 60000 });
+                        // Use paymentSessionStart (if available) or a safe fallback (now - 1 min)
+                        // Actually, trusting paymentSessionStart is safer.
+                        // If paymentSessionStart is 0, user might have refreshed on step 3? 
+                        // If refreshed, paymentSessionStart resets to now. So planStart < now. Safe.
+
+                        const referenceTime = paymentSessionStart > 0 ? paymentSessionStart : Date.now();
+                        const timeDiff = planStart - referenceTime;
+
+                        // Tolerance: Allow 30 seconds drift (Server clock vs Client clock)
+                        const TOLERANCE_MS = -30000;
+
+                        if (timeDiff < TOLERANCE_MS) {
+                            console.log("Found Active Plan, but it started BEFORE this payment session.", {
+                                planStart: new Date(planStart).toISOString(),
+                                sessionStart: new Date(referenceTime).toISOString(),
+                                diffMs: timeDiff
+                            });
                             return;
                         }
 
