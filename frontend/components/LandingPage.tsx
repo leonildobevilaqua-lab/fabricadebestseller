@@ -584,6 +584,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     };
 
     // --- AUTOMATION: AUTO-START IF CONFIRMED ---
+    // --- AUTOMATION: AUTO-START DISABLED FOR SUBSCRIBERS ---
+    // We want Subscribers to see the Celebration Modal, not be redirected to Book Data form.
+    /*
     useEffect(() => {
         if (paymentConfirmed && step === 3) {
             const t = setTimeout(() => {
@@ -593,6 +596,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             return () => clearTimeout(t);
         }
     }, [paymentConfirmed, step]);
+    */
 
     // --- LOGIC: CHECK PAYMENT (POLLING) ---
     const [debugInfo, setDebugInfo] = useState<any>(null);
