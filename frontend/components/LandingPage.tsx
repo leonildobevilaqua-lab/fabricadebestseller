@@ -685,7 +685,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     const hasAccess = data.hasAccess === true;
                     const isSubscriber = data.plan && data.plan.status === 'ACTIVE';
 
-                    if (hasCredit || isApproved || hasAccess || isSubscriber) {
+                    if (hasCredit || isApproved || isSubscriber) {
 
                         // IF SUBSCRIBER CONFIRMED: Redirect to Member Area logic
                         if (isSubscriber) {
