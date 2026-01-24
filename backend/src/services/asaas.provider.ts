@@ -99,6 +99,16 @@ export const AsaasProvider = {
         }
     },
 
+    async getCustomer(customerId: string) {
+        try {
+            const { data } = await getApi().get(`/customers/${customerId}`);
+            return data;
+        } catch (error: any) {
+            console.error("Asaas Get Customer Error:", error.response?.data || error.message);
+            throw error;
+        }
+    },
+
     // 2. Create Subscription
     async createSubscription(customerId: string, planKey: string, creditCard?: any) {
         const plan = getPlanConfig(planKey);

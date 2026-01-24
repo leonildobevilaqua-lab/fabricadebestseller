@@ -131,6 +131,64 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     </div>
                 </div>
 
+                {/* PLAN OVERVIEW SECTION (CONFORME TELA 9) */}
+                <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden text-center border border-slate-800 shadow-2xl">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 via-purple-500 to-indigo-500"></div>
+
+                    <div className="inline-block bg-yellow-400 p-3 rounded-full mb-4 shadow-[0_0_20px_rgba(250,204,21,0.3)]">
+                        <Star className="text-slate-900 w-8 h-8 fill-current" />
+                    </div>
+
+                    <h2 className="text-3xl font-black mb-1">{planName}</h2>
+                    <p className="text-slate-400 text-sm font-bold tracking-widest uppercase mb-8">
+                        {planName === 'STARTER' ? 'AUTOR INICIANTE' : planName === 'PRO' ? 'AUTOR PROFISSIONAL' : 'AUTOR BEST-SELLER'}
+                    </p>
+
+                    <div className="bg-slate-800/50 rounded-2xl p-6 max-w-sm mx-auto border border-slate-700 mb-8 backdrop-blur-sm">
+                        <div className="text-center">
+                            <p className="text-slate-400 text-xs font-bold uppercase mb-2">Preço Assinatura</p>
+                            <p className="text-4xl font-black text-white">
+                                R$ {stats?.subscriptionPrice?.toFixed(2).replace('.', ',') || '0,00'} <span className="text-sm font-normal text-slate-500">/{stats?.plan?.billing === 'annual' ? 'ano' : 'mês'}</span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="bg-yellow-500 text-slate-900 font-bold p-3 rounded-lg uppercase text-xs inline-block mb-6 shadow-lg shadow-yellow-500/20">
+                        A ESCOLHA DESTE PLANO DESBLOQUEIA <br /> O CUSTO POR LIVRO NO VALOR DE:
+                    </div>
+
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <span className="text-3xl">💰</span>
+                        <span className="text-3xl font-bold text-white">R$ {Number(nextBookPrice).toFixed(2).replace('.', ',')}</span>
+                        <span className="text-slate-400 text-sm">/geração</span>
+                    </div>
+                    <p className="text-emerald-400 text-xs font-bold uppercase mb-8">+ Descontos Progressivos 🎁</p>
+
+                    <div className="text-left max-w-md mx-auto space-y-3">
+                        <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mb-4 text-center">O QUE ESTÁ INCLUÍDO:</p>
+                        {[
+                            { text: "Acesso à Plataforma Fábrica de Best Sellers", included: true },
+                            { text: "Geração de Livros (14 Capítulos)", included: true },
+                            { text: "Conteúdo Robusto (+160 Páginas)", included: true },
+                            { text: "Diagramação Automática Profissional", included: true },
+                            { text: "Folha de Rosto & Título Diagramadas", included: true },
+                            { text: "Sumário Automático", included: true },
+                            { text: "Histórico de livros gerados", included: true },
+                            // Variations based on Plan (using simplified logic for demo, could be props)
+                            { text: "Pág. Agradecimento, Dedicatória e Sobre o Autor (Auto)", included: planName !== 'STARTER' },
+                            { text: "Acesso à Comunidade", included: planName !== 'STARTER' },
+                            { text: "Kit de Marketing e Vendas", included: planName === 'PRO' || planName === 'BLACK' },
+                            { text: "Suporte Prioritário", included: planName === 'BLACK' },
+                            { text: "Mentoria", included: planName === 'BLACK' },
+                        ].map((item, idx) => (
+                            <div key={idx} className={`flex items-start gap-3 text-sm ${item.included ? 'text-slate-300' : 'text-red-400 opacity-60 line-through'}`}>
+                                <div className="mt-0.5">{item.included ? <CheckCircle className="w-4 h-4 text-emerald-500" /> : <span className="text-red-500 font-bold text-xs">✕</span>}</div>
+                                <span>{item.text}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Main Action */}
                 <div className="text-center py-8">
                     <button

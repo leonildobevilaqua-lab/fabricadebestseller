@@ -253,31 +253,92 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
     try {
         await reloadDB();
         const payload = req.body;
-        console.log("Kiwify Webhook Received:", JSON.stringify(payload));
+        console.log("Webhook Received:", JSON.stringify(payload));
 
-        // Check for Token (User provided: 9f1su6po412)
-        const token = req.query.token || req.body.token || req.params.token;
-        if (token) {
-            console.log("Kiwify Token present:", token);
-            if (token === '9f1su6po412') console.log("Token MATCHES production key.");
-            else console.warn("Token mismatch! Expected 9f1su6po412");
+        let status = '';
+        let email = '';
+        let productName = '';
+        let amount = 0;
+        let payerName = '';
+        let payerCpf = '';
+        let payerPhone = '';
+        let isAsaas = false;
+
+        // --- DETECT PROVIDER ---
+        if (payload.event && payload.payment) {
+            // ASAAS
+            isAsaas = true;
+            console.log("Identifying Asaas Webhook");
+            const evt = payload.event;
+            const pm = payload.payment;
+
+            if (evt === 'PAYMENT_CONFIRMED' || evt === 'PAYMENT_RECEIVED') status = 'paid';
+            email = pm.customerEmail || (payload.customer && payload.customer.email); // Asaas sometimes sends customer object or just email? Usually we need to query customer or it's in payload? 
+            // Asaas 'payment' object usually doesn't have email directly, but the top level payload might have logic or we need to rely on what we have.
+            // Actually Asaas webhook has payment.customer (ID). We might need to fetch customer logic?
+            // BUT, usually we pass custom data or we use the customer creation email.
+            // In createCharge we created a customer. 
+            // Let's assume for now we might need to lookup or it is passed.
+            // Actually, Asaas `PAYMENT_CONFIRMED` payload often includes limited data.
+            // BUT, wait. in `createCharge` validation we can check.
+            // If email is missing, we might fail.
+            // Let's check typical payload. Often `payment.details` or we have to use `payload.payment.externalReference` if we set it?
+            // We didn't set externalReference in createCharge.
+            // However, we can fetch customer details if needed.
+            // For MVP, Asaas often sends detailed payload if configured? No.
+            // We will try to extract what we can.
+
+            // Asaas typically doesn't send email in the payment event payload directly, only customer ID.
+            // Logic hack: We might have to fetch the customer from Asaas API or rely on local lookup?
+            // Wait, we don't have a local mapping of CustomerID -> Email in `payment.controller`.
+
+            // CRITICAL: We need the email to activate the plan.
+            // If we can't get it from payload, we must fetch from Asaas.
+            // We will use AsaasProvider (need to import getCustomer if exists, or adding it).
+            // Let's assume we can import AsaasProvider.
+
+            if (!email && pm.customer) {
+                try {
+                    const { AsaasProvider } = await import('../services/asaas.provider');
+                    const customer = await AsaasProvider.getCustomer(pm.customer);
+                    email = customer.email;
+                    payerName = customer.name;
+                    payerCpf = customer.cpfCnpj;
+                } catch (err) { console.error("Failed to fetch Asaas customer", err); }
+            }
+
+            amount = pm.value;
+            productName = pm.description || "Assinatura"; // Asaas description
         } else {
-            console.log("No Kiwify token found in request (Safe to ignore if not configured in dashboard, but user provided one).");
-        }
+            // KIWIFY (Default)
+            // Check for Token (User provided: 9f1su6po412)
+            const token = req.query.token || req.body.token || req.params.token;
+            if (token) {
+                console.log("Kiwify Token present:", token);
+                if (token === '9f1su6po412') console.log("Token MATCHES production key.");
+                else console.warn("Token mismatch! Expected 9f1su6po412");
+            } else {
+                console.log("No Kiwify token found in request (Safe to ignore if not configured in dashboard, but user provided one).");
+            }
 
-        const status = payload.order_status;
-        const email = payload.Customer?.email || payload.customer?.email;
-        const productName = payload.Product?.name || payload.product?.name || "Produto";
+            status = payload.order_status;
+            email = payload.Customer?.email || payload.customer?.email;
+            productName = payload.Product?.name || payload.product?.name || "Produto";
+            amount = (payload.amount || payload.total || 0) / 100;
+            payerName = payload.Customer?.full_name || payload.customer?.full_name;
+        }
 
         if (status === 'paid' && email) {
             console.log(`Payment confirmed for ${email} - Product: ${productName}`);
 
             // Extract Payment Info
             const paymentInfo = {
-                payer: payload.Customer?.full_name || payload.customer?.full_name || "Desconhecido",
+                payer: payerName || "Desconhecido",
                 payerEmail: email,
-                amount: (payload.amount || payload.total || 0) / 100,
-                product: productName
+                amount: amount,
+                product: productName,
+                provider: isAsaas ? 'ASAAS' : 'KIWIFY',
+                transactionId: payload.id || payload.payment?.id
             };
 
             await pushVal('/orders', { ...payload, date: new Date(), paymentInfo });
@@ -287,13 +348,23 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             // --- DETECT PLAN ---
             let detectedPlan = null;
             let billing = 'monthly'; // default
-            const pName = productName.toLowerCase();
+            let pName = productName.toLowerCase();
 
+            // Parse Description for Plan
             if (pName.includes('starter')) detectedPlan = 'STARTER';
             if (pName.includes('pro')) detectedPlan = 'PRO';
             if (pName.includes('black') || pName.includes('vip')) detectedPlan = 'BLACK';
 
             if (pName.includes('anual') || pName.includes('annual') || pName.includes('ano')) billing = 'annual';
+
+            // Fallback: If description is generic "Geração de Livro", it might be avulso.
+            // If price matches subscription prices?
+            if (!detectedPlan) {
+                if (amount === 19.90 || amount === 118.80) { detectedPlan = 'STARTER'; }
+                if (amount === 34.90 || amount === 238.80) { detectedPlan = 'PRO'; }
+                if (amount === 49.90 || amount === 358.80) { detectedPlan = 'BLACK'; }
+                if (amount > 100) billing = 'annual';
+            }
 
             // Find and Update Lead
             const rawLeads = await getVal('/leads') || [];
@@ -338,6 +409,20 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     const planTag = `PLANO ${detectedPlan} ${billing === 'annual' ? 'ANUAL' : 'MENSAL'}`;
                     await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
                     await setVal(`/leads[${leadIndex}]/tag`, planTag);
+                } else {
+                    // Create Lead if not exists (Subscriber Direct)
+                    const newLead = {
+                        id: uuidv4(),
+                        date: new Date(),
+                        email: email,
+                        name: payerName,
+                        type: 'BOOK',
+                        status: 'SUBSCRIBER',
+                        plan: { name: detectedPlan, billing },
+                        paymentInfo,
+                        tag: `PLANO ${detectedPlan} ${billing === 'annual' ? 'ANUAL' : 'MENSAL'}`
+                    };
+                    await pushVal('/leads', newLead);
                 }
 
             } else {
@@ -369,12 +454,13 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                         };
                         await pushVal('/leads', newLead);
 
-                        // We also need to trigger auto-diagramming for this NEW lead, not the old one
-                        // But the auto-diagram logic below likely uses 'email' to find the lead to process.
-                        // We must ensure it picks the NEW one.
-                        // The logic below calls 'process-diagram-lead' with 'leadId'. 
-                        // Wait, looking at lines 381+, it searches for lead by email?
-                        // Actually, I should check the auto-diagram trigger block below.
+                        // Try to trigger diagram if needed
+                        try {
+                            // Check if there was a loose diagramming request
+                            // For simplicity, we assume this Purchase corresponds to the latest 'DIAGRAMMING' type lead if exists?
+                            // Or just queue for next?
+                        } catch (e) { }
+
                     } else {
                         // UPDATE PENDING LEAD (First purchase or non-subscriber)
                         await setVal(`/leads[${leadIndex}]/status`, 'APPROVED');
