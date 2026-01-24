@@ -595,7 +595,19 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             interval = setInterval(async () => {
                 try {
                     console.log("Polling for:", formData.email);
-                    const res = await fetch(`/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`);
+
+                    // FIXED: Use Absolute URL from environment or fallback
+                    const baseUrl = (import.meta as any).env.VITE_API_URL || '';
+                    const url = `${baseUrl}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`;
+
+                    const res = await fetch(url);
+
+                    // FIXED: JSON Safety Check
+                    const contentType = res.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        throw new Error(`Received non-JSON response from ${url}`);
+                    }
+
                     const data = await res.json();
                     setDebugInfo(data);
                     console.log("Poll Result:", data);
