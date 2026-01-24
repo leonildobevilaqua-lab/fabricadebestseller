@@ -66,6 +66,7 @@ app.get('/reset-admin-force', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} - Updated ${new Date().toISOString()}`);
+    console.log("FORCE DEPLOY RETRY - V2.6 - DB RELOAD ENABLED");
 
     // DEBUG ROUTES
     app._router.stack.forEach((r: any) => {

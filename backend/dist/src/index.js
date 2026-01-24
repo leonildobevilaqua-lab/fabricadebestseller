@@ -71,6 +71,7 @@ app_1.default.get('/reset-admin-force', (req, res) => __awaiter(void 0, void 0, 
 // --- FIM DO BLOCO SALVA-VIDAS ---
 app_1.default.listen(PORT, () => {
     console.log(`Server running on port ${PORT} - Updated ${new Date().toISOString()}`);
+    console.log("FORCE DEPLOY RETRY - V2.6 - DB RELOAD ENABLED");
     // DEBUG ROUTES
     app_1.default._router.stack.forEach((r) => {
         if (r.route && r.route.path) {
