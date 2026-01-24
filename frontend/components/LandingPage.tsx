@@ -1165,7 +1165,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     <p className="text-slate-400 text-sm mt-4">
                                                         {formData.type === 'VOUCHER'
                                                             ? 'Após o pagamento, você receberá o link exclusivo para enviar.'
-                                                            : 'Para liberar a utilização da nossa API OFICIAL e gerar o conteúdo, efetue a taxa única.'}
+                                                            : ''}
                                                     </p>
                                                 </div>
 
