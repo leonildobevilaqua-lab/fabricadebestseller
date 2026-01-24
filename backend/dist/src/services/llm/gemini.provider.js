@@ -13,7 +13,7 @@ exports.GeminiProvider = void 0;
 const generative_ai_1 = require("@google/generative-ai");
 class GeminiProvider {
     constructor(apiKey) {
-        this.models = ["gemini-2.5-flash", "gemini-1.5-flash-latest", "gemini-1.5-pro"];
+        this.models = ["gemini-2.5-flash", "gemini-2.0-flash-exp", "gemini-1.5-flash"];
         this.client = new generative_ai_1.GoogleGenerativeAI(apiKey);
     }
     generateText(prompt, systemPrompt) {
@@ -23,19 +23,21 @@ class GeminiProvider {
             for (const modelName of this.models) {
                 try {
                     const generativeModel = this.client.getGenerativeModel({ model: modelName });
-                    const result = yield generativeModel.generateContent(finalPrompt);
+                    // Add Timeout of 60s
+                    const resultFn = generativeModel.generateContent(finalPrompt);
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Gemini Request Timeout")), 60000));
+                    const result = yield Promise.race([resultFn, timeoutPromise]);
                     const response = yield result.response;
                     return response.text();
                 }
                 catch (error) {
                     console.warn(`Failed with model ${modelName}:`, error.message);
                     lastError = error;
-                    // If it's a 404, continue to next model. If it's auth error, break.
-                    if (!error.message.includes('404') && !error.message.includes('not found')) {
-                        // throw error; // Don't throw immediately, try other models if possible, unless it's Auth
-                        if (error.message.includes('API key') || error.message.includes('permission'))
-                            throw error;
+                    // Stop only on Critical Auth errors
+                    if (error.message.includes('API key') || error.message.includes('permission')) {
+                        throw error;
                     }
+                    // Continue to next model for 404, 400, 500, etc.
                 }
             }
             throw lastError; // Throw the last error if all models fail

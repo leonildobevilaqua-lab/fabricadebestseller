@@ -8,6 +8,7 @@ router.post('/webhook', payment_controller_1.handleKiwifyWebhook);
 router.post('/simulate-webhook', simulation_controller_1.simulateWebhook); // NEW: Local Simulation
 router.get('/access', payment_controller_1.checkAccess);
 router.post('/use', payment_controller_1.useCredit);
+router.post('/create-charge', payment_controller_1.createCharge);
 // Admin / Leads
 router.post('/leads', payment_controller_1.createLead);
 router.get('/leads', payment_controller_1.getLeads);

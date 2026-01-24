@@ -10,10 +10,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.simulateWebhook = void 0;
+const uuid_1 = require("uuid");
 const db_service_1 = require("../services/db.service");
 const simulateWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
+        yield (0, db_service_1.reloadDB)(); // Force sync with disk to ensure we have latest data
         const { plan, billing, user } = req.body;
         if (!user || !user.email) {
             return res.status(400).json({ error: "User data required" });
@@ -32,7 +34,7 @@ const simulateWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function
                 cardLast4: user.cardLast4
             }
         });
-        // 2. Update the Lead Status if it exists
+        // 2. Update the Lead Status if it exists, or Create if missing
         const rawLeads = (yield (0, db_service_1.getVal)('/leads')) || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
         // Find specific lead or latest
@@ -52,10 +54,40 @@ const simulateWebhook = (req, res) => __awaiter(void 0, void 0, void 0, function
                 status: 'PENDING'
             });
             yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/status`, 'SUBSCRIBER_PENDING');
-            console.log(`Simulated Subscription for ${user.email}: ${plan} (${billing}) - Pending Approval`);
+            // Ensure Payment Info is stored for visibility
+            yield (0, db_service_1.setVal)(`/leads[${leadIndex}]/paymentData`, {
+                payer: user.name,
+                method: 'SIMULATED'
+            });
+            console.log(`[SIMULATION] Existing Lead ${leadIndex} Updated for ${user.email}`);
         }
         else {
-            console.warn(`Simulated Subscription for ${user.email} but no Lead found.`);
+            console.log(`[SIMULATION] Creating NEW Lead for ${user.email}`);
+            // Create a fresh lead for the simulation
+            const newLead = {
+                id: (0, uuid_1.v4)(),
+                email: user.email,
+                name: user.name || 'Simulado',
+                phone: user.phone || '',
+                fullPhone: user.phone || '', // redundancy
+                type: 'SUBSCRIPTION', // It's a sub simulation
+                status: 'SUBSCRIBER_PENDING',
+                date: new Date(),
+                created_at: new Date(),
+                plan: {
+                    name: plan,
+                    billing,
+                    status: 'PENDING',
+                    simulated: true
+                },
+                paymentInfo: {
+                    payer: user.name,
+                    method: 'SIMULATED_WEBHOOK',
+                    date: new Date()
+                }
+            };
+            yield (0, db_service_1.pushVal)('/leads', newLead);
+            console.log(`[SIMULATION] New Lead Created: ${newLead.id}`);
         }
         res.json({ success: true, message: "Subscription Simulation Queued" });
     }

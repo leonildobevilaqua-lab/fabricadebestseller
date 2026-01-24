@@ -191,9 +191,11 @@ const generateStructure = (title_1, subtitle_1, researchContext_1, ...args_1) =>
     const prompt = `
     Context: ${researchContext}
     Book: ${title} - ${subtitle}
-    Create a 12-chapter structure.
+    Create a highly detailed 14-chapter structure.
     
-    IMPORTANT: Review content context and ensure chapters flow logically.
+    CRITICAL: The goal is to produce a thick, comprehensive book (200+ pages).
+    Ensure the chapters cover every single angle of the topic in extreme depth.
+    Do not create short or superficial chapters. Each chapter must be a deep dive.
     IMPORTANT: ALL CONTENT MUST BE IN ${langName}.
     
     Return JSON: [{ "id": 1, "title": "...", "intro": "..." }]
@@ -254,10 +256,10 @@ const writeIntroduction = (metadata_1, structure_1, researchContext_1, ...args_1
       Objective: Hook the reader IMMEDIATELY. Start with a controversial statement, a personal story, or a surprising fact.
       
       Requirements:
-      - Length: Minimum 2000 words. (CRITICAL: EXPAND EVERY POINT)
+      - Length: Approx 1500 words. (CRITICAL: Be concise but powerful)
       - Tone: Best-seller authority, confident, yet intimate.
       - Flow: Continuous, absorbing text. NO section headers within the introduction.
-      - Content: Tell a powerful, long, and detailed personal story or case study that illustrates the problem. Dive deep into the pain points.
+      - Content: Tell a powerful personal story or case study that illustrates the problem. Dive deep into the pain points.
       - LANGUAGE: ${langName} ONLY.
     `;
     const raw = yield llm.generateText(prompt);
@@ -276,7 +278,7 @@ const writeChapter = (metadata, chapter, structure, researchContext) => __awaite
     Chapter Objective: ${chapter.intro}
 
     TASK: Create a detailed outline for this chapter with exactly 5 distinct sub-sections.
-    Each sub-section must cover a specific aspect of the chapter's topic in depth.
+    Each sub-section must cover a specific aspect of the chapter's topic in EXTREME depth.
     
     Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4", "Subheading 5"]
     Output ONLY JSON.
@@ -289,10 +291,10 @@ const writeChapter = (metadata, chapter, structure, researchContext) => __awaite
     catch (e) {
         console.error("Failed to generate outline, using fallback topics", e);
         // Fallback topics if JSON fails
-        subtopics = ["Fundamentos", "Estratégias Avançadas", "Erros Comuns", "Estudos de Caso", "Plano de Ação"];
+        subtopics = ["Fundamentos", "Histórico e Evolução", "Principais Desafios", "Ferramentas e Técnicas", "Estudos de Caso"];
     }
     // Ensure we don't go overboard if AI hallucinates 10 topics
-    subtopics = subtopics.slice(0, 6);
+    subtopics = subtopics.slice(0, 5);
     // 2. Iterative Generation
     let fullChapterContent = "";
     // 2.1 Intro of Chapter
@@ -303,7 +305,7 @@ const writeChapter = (metadata, chapter, structure, researchContext) => __awaite
         Chapter: ${chapter.title}
         Objective: ${chapter.intro}
         
-        TASK: Write the INTRODUCTION for this chapter (approx 400 words).
+        TASK: Write the INTRODUCTION for this chapter (approx 250 words).
         Hook the reader, explain what will be covered, and set the stage.
         Start directly with the content.
         LANGUAGE: ${langName}.
@@ -318,8 +320,9 @@ const writeChapter = (metadata, chapter, structure, researchContext) => __awaite
             
             Current Section: "${subtopic}"
             
-            TASK: Write a detailed section for this specific topic (approx 500 words).
-            Include detailed examples, actionable advice, and deep analysis.
+            TASK: Write a DETAILED section for this specific topic (approx 450 words).
+            This is a "Deep Dive" chapter. Do not summarize.
+            Include detailed examples, actionable advice, step-by-step instructions, and deep theoretical analysis.
             Do NOT repeat the introduction. Dive deep.
             
             Previous Context:
@@ -335,7 +338,7 @@ const writeChapter = (metadata, chapter, structure, researchContext) => __awaite
         ${getHumanizationInstructions(lang)}
         Chapter: ${chapter.title}
         
-        TASK: Write a powerful CONCLUSION for this chapter (approx 300 words).
+        TASK: Write a powerful CONCLUSION for this chapter (approx 150 words).
         Summarize key points and transition to the next idea.
         
         LANGUAGE: ${langName}.
@@ -351,7 +354,9 @@ const writeChapter = (metadata, chapter, structure, researchContext) => __awaite
         Book: ${metadata.bookTitle}
         Research Context: ${researchContext}
         CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
-        TASK: Write the full content for this chapter. length: 3000 words.
+        TASK: Write the full content for this chapter.
+        CRITICAL: Write a comprehensive chapter. Target length: 2200 words.
+        Cover 5 distinct subtopics in detailed depth.
         LANGUAGE: ${langName}.
       `;
         const raw = yield llm.generateText(prompt);

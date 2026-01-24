@@ -15,7 +15,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendEmail = void 0;
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const config_service_1 = require("./config.service");
-const sendEmail = (to, subject, text, attachments) => __awaiter(void 0, void 0, void 0, function* () {
+const sendEmail = (to, subject, text, attachments, html) => __awaiter(void 0, void 0, void 0, function* () {
     const config = yield (0, config_service_1.getConfig)();
     const settings = config.email;
     // Default or Config
@@ -30,11 +30,15 @@ const sendEmail = (to, subject, text, attachments) => __awaiter(void 0, void 0, 
     const transporter = nodemailer_1.default.createTransport({
         host,
         port: Number(port),
-        secure: Number(port) === 465, // true for 465, false for other ports
+        secure: Number(port) === 465, // true for 465, false for 587
         auth: {
             user,
             pass,
         },
+        tls: {
+            // Do not fail on invalid certs (common for cPanel/Shared Hosting)
+            rejectUnauthorized: false
+        }
     });
     try {
         const info = yield transporter.sendMail({
@@ -42,6 +46,7 @@ const sendEmail = (to, subject, text, attachments) => __awaiter(void 0, void 0, 
             to,
             subject,
             text,
+            html,
             attachments
         });
         console.log("Message sent: %s", info.messageId);
