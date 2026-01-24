@@ -847,11 +847,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                         )}
                                         <div className="text-center mb-8">
                                             <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-2">
-                                                Dados do Projeto
+                                                Preencha seus dados para acessar a Fábrica de Best Seller
                                             </h2>
-                                            <p className="text-slate-400">
-                                                Preencha as informações do responsável e do livro.
-                                            </p>
                                         </div>
 
                                         <div className="space-y-6">
@@ -1288,8 +1285,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         </div>
                                                                         <div className="ml-3">
                                                                             <p className="text-sm text-yellow-700">
-                                                                                Você selecionou o plano <strong>{pName}</strong>. Para liberar o valor
-                                                                                {(window as any).discountLevel > 1 ? " com desconto progressivo" : " exclusivo de assinante"} (R$ {finalPriceStr}), primeiro ative sua assinatura.
+                                                                                Você selecionou o plano <strong>{pName}</strong>. Para DESBLOQUEAR as condições EXCLUSIVAS que o plano oferece, por favor, ative sua assinatura.
                                                                             </p>
                                                                         </div>
                                                                     </div>

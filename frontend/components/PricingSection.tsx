@@ -248,9 +248,9 @@ export const PricingSection: React.FC<PricingProps> = ({ onSelectPlan, lang }) =
                             >
                                 <div className="flex flex-col items-center leading-tight">
                                     <span className="text-[10px] font-black uppercase tracking-wide opacity-90">
-                                        JÁ É ASSINANTE DO PLANO {plan.name} {billing === 'monthly' ? 'MENSAL' : 'ANUAL'}?
+                                        JÁ É ASSINANTE DO PLANO {plan.name} {billing === 'monthly' ? 'MENSAL' : 'ANUAL'} – CLIQUE AQUI
                                     </span>
-                                    <span className="text-xs font-black border-b-2 border-slate-900 mt-0.5 pb-0.5">
+                                    <span className="hidden text-xs font-black border-b-2 border-slate-900 mt-0.5 pb-0.5">
                                         CLIQUE AQUI!
                                     </span>
                                 </div>
