@@ -630,23 +630,35 @@ const checkAccess = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         const usageCount = Math.max(leadsUsage, projectsUsage);
         // 2. DETERMINE PLAN TRUTH
         effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : pendingPlan;
+        // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
+        if (!effectivePlan && (leadStatus === 'SUBSCRIBER' || (pendingPlan && pendingPlan.status === 'ACTIVE'))) {
+            console.log(`[CHECK_ACCESS] Fallback: Found Subscriber Lead for ${safeEmail} but no /users/ plan. using Lead Plan.`);
+            effectivePlan = pendingPlan;
+            // Auto-heal: Write it back to /users/
+            if (effectivePlan) {
+                (0, db_service_1.setVal)(`/users/${safeEmail}/plan`, Object.assign(Object.assign({}, effectivePlan), { status: 'ACTIVE' }));
+            }
+        }
         if (effectivePlan) {
             // Validate Expiration only if it's the Active User Plan
             let isValid = true;
             let billing = (effectivePlan.billing || 'monthly').toLowerCase();
-            if (userPlan && userPlan.status === 'ACTIVE') {
-                const startDate = userPlan.startDate ? new Date(userPlan.startDate) : new Date();
-                let expiryDate = new Date(startDate);
-                if (billing === 'annual')
-                    expiryDate.setFullYear(startDate.getFullYear() + 1);
-                else
-                    expiryDate.setDate(startDate.getDate() + 31);
-                if (new Date() > expiryDate) {
-                    console.log(`[SUBSCRIPTION] Plan Expired for ${safeEmail}`);
+            // If we are relying on effectivePlan from lead, treat it as active for date check
+            const startDate = effectivePlan.startDate ? new Date(effectivePlan.startDate) : new Date();
+            let expiryDate = new Date(startDate);
+            if (billing === 'annual')
+                expiryDate.setFullYear(startDate.getFullYear() + 1);
+            else
+                expiryDate.setDate(startDate.getDate() + 31);
+            // 3 Days Grace Period
+            expiryDate.setDate(expiryDate.getDate() + 3);
+            if (new Date() > expiryDate) {
+                console.log(`[SUBSCRIPTION] Plan Expired for ${safeEmail}`);
+                if (userPlan) {
                     userPlan.status = 'EXPIRED';
                     (0, db_service_1.setVal)(`/users/${safeEmail}/plan`, Object.assign(Object.assign({}, userPlan), { status: 'EXPIRED' }));
-                    isValid = false;
                 }
+                isValid = false;
             }
             if (isValid) {
                 // Normalize Plan Name
@@ -665,6 +677,9 @@ const checkAccess = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
                     checkoutUrl = planConfig[cycleIndex].link;
                     discountLevel = cycleIndex + 1;
                 }
+                // FORCE ACTIVE STATUS IN RESPONSE if Valid
+                if (!userPlan)
+                    userPlan = Object.assign(Object.assign({}, effectivePlan), { status: 'ACTIVE' });
             }
         }
         // Capture effective plan for price calculation

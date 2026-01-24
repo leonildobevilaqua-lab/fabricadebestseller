@@ -119,8 +119,12 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
         <tr className={`hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-100 ${isSubscription ? 'bg-indigo-50/20' : ''}`}>
             {/* DATE & TYPE */}
             <td className="p-4 align-top w-32">
-                <div className="font-bold text-slate-700">{new Date(lead.date).toLocaleDateString()}</div>
-                <div className="text-xs text-slate-400">{new Date(lead.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                <div className="font-bold text-slate-700">
+                    {lead.date ? new Date(lead.date).toLocaleDateString('pt-BR') : 'Data Inválida'}
+                </div>
+                <div className="text-xs text-slate-400">
+                    {lead.date ? new Date(lead.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                </div>
 
                 {isSubscription ? (
                     <div className="mt-2 text-[10px] font-bold text-white bg-indigo-500 px-2 py-0.5 rounded w-fit text-center shadow-sm">
