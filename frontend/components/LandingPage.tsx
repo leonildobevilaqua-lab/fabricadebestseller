@@ -609,6 +609,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     const [debugInfo, setDebugInfo] = useState<any>(null);
     const [startPolling, setStartPolling] = useState(false);  // Manual trigger for polling
 
+    // RISING EDGE DETECTION: 
+    const [initialStatusChecked, setInitialStatusChecked] = useState(false);
+    const [wasInitiallyActive, setWasInitiallyActive] = useState(false);
+
     useEffect(() => {
         let interval: any;
         // ENABLED AUTOMATIC POLLING for Step 3 (Payment) and Step 2 (Processing)
