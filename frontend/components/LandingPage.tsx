@@ -519,6 +519,13 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
     const handleSubscribe = async () => {
         if (!selectedPlan || !formData.email) return;
+
+        // RESET SESSION TIMER and ENABLE POLLING
+        // This ensures validation starts FRESH from this click.
+        setPaymentSessionStart(Date.now());
+        setStartPolling(true);
+        setPaymentConfirmed(false); // Force reset confirmed status
+
         const baseUrl = getApiBase().replace(/\/$/, ""); // Remove trailing slash
         try {
             const res = await fetch(`${baseUrl}/api/subscription/create`, {
@@ -600,11 +607,13 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
     // --- LOGIC: CHECK PAYMENT (POLLING) ---
     const [debugInfo, setDebugInfo] = useState<any>(null);
+    const [startPolling, setStartPolling] = useState(false);  // Manual trigger for polling
 
     useEffect(() => {
         let interval: any;
-        // Poll active on Step 2, 3, 0
-        const shouldPoll = ((step === 2 || step === 3 || step === 0) && !giftSourceEmail);
+        // Poll active ONLY if manually started (after click) OR if on Step 2 (Processing)
+        // We REMOVED automatic polling on Step 3 (Payment) to prevent instant success.
+        const shouldPoll = ((startPolling && step === 3) || step === 2) && !giftSourceEmail;
 
         if (shouldPoll) {
             interval = setInterval(async () => {
