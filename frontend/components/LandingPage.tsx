@@ -843,10 +843,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             </div>
                         </div>
                         <button
-                            onClick={() => setShowPlanCelebration(false)}
+                            onClick={() => window.location.href = '/login'}
                             className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
                         >
-                            APROVEITAR AGORA
+                            ACESSAR MINHA CONTA
                         </button>
                     </div>
                 </div>
