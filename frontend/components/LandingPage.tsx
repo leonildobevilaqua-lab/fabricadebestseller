@@ -712,15 +712,19 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         const referenceTime = paymentSessionStart > 0 ? paymentSessionStart : Date.now();
                         const timeDiff = planStart - referenceTime;
 
-                        // Tolerance: Allow 30 seconds drift (Server clock vs Client clock)
-                        const TOLERANCE_MS = -30000;
+                        // Tolerance: STRICT. Plan must be created AFTER session start.
+                        // We allow 0 tolerance. The plan MUST be newer than the session.
+                        // If paymentSessionStart is now, planStart must be > now.
+                        // Since Webhook takes a few seconds, planStart will surely be > sessionStart.
+                        const TOLERANCE_MS = 0;
 
-                        if (timeDiff < TOLERANCE_MS) {
+                        if (timeDiff <= TOLERANCE_MS) {
                             console.log("Found Active Plan, but it started BEFORE this payment session.", {
                                 planStart: new Date(planStart).toISOString(),
                                 sessionStart: new Date(referenceTime).toISOString(),
                                 diffMs: timeDiff
                             });
+                            // Extra check: If it's literally the same second (highly unlikely unless clock sync issue), we wait.
                             return;
                         }
 
