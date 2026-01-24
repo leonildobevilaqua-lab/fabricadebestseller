@@ -69,7 +69,11 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
     // Manual Start Logic (Payment Confirmed)
     const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+    const paymentConfirmedRef = React.useRef(paymentConfirmed);
 
+    useEffect(() => {
+        paymentConfirmedRef.current = paymentConfirmed;
+    }, [paymentConfirmed]);
 
     // Upload Book State
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
