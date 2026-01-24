@@ -611,12 +611,13 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
     useEffect(() => {
         let interval: any;
-        // Poll active ONLY if manually started (after click) OR if on Step 2 (Processing)
-        // We REMOVED automatic polling on Step 3 (Payment) to prevent instant success.
-        const shouldPoll = ((startPolling && step === 3) || step === 2) && !giftSourceEmail;
+        // ENABLED AUTOMATIC POLLING for Step 3 (Payment) and Step 2 (Processing)
+        // We use Session Time validation inside the loop to prevent instant success from old data.
+        const shouldPoll = (step === 3 || step === 2) && !giftSourceEmail;
 
         if (shouldPoll) {
             interval = setInterval(async () => {
+                console.log('🔄 Verificando status...'); // MANDATORY DEBUG LOG
                 try {
                     console.log("Polling for:", formData.email);
 
