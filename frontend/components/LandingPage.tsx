@@ -669,12 +669,23 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     const hasAccess = data.hasAccess === true;
 
                     if (hasCredit || isApproved || hasAccess) {
-                        // STRICT VALIDATION FOR SUBSCRIBERS: 
-                        // If user is a Subscriber, we ignores generic 'hasAccess' (which might be true due to platform access).
-                        // They MUST have actual Credit or specific Approval to start generation.
                         const isSubscriber = data.plan && data.plan.status === 'ACTIVE';
-                        if (isSubscriber && !hasCredit && !isApproved) {
-                            console.log("Subscriber detected but no Credit/Approval. Blocking auto-start.");
+
+                        // IF SUBSCRIBER CONFIRMED: Redirect to Member Area logic
+                        if (isSubscriber) {
+                            if (!paymentConfirmed) {
+                                console.log("SUBSCRIBER PLAN ACTIVE. Redirecting to Dashboard...");
+                                setPaymentConfirmed(true);
+                                setTimeout(() => {
+                                    if (onLoginClick) onLoginClick();
+                                }, 2000);
+                            }
+                            return;
+                        }
+
+                        // STRICT VALIDATION FOR BOOK BUYERS (Non-Subscriber):
+                        // Requires actual credit or approval status
+                        if (!isSubscriber && !hasCredit && !isApproved) {
                             return; // Do not confirm payment yet
                         }
 
@@ -682,7 +693,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             console.log("PAYMENT CONFIRMED (POLLING)", data);
                             setPaymentConfirmed(true);
 
-                            // AUTO START BOOK GENERATION
+                            // AUTO START BOOK GENERATION (For Book Buyers)
                             if (formData.type !== 'VOUCHER' && formData.type !== 'DIAGRAMMING') {
                                 setTimeout(() => {
                                     onStart(formData, bookData);
