@@ -1594,8 +1594,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                 {
                                                     !paymentConfirmed && (
                                                         <div className="mt-4 text-center space-y-3">
-                                                            <p className="text-xs text-slate-500 animate-pulse">
-                                                                Aguardando confirmação de pagamento...
+                                                            <p className="text-xs md:text-sm text-slate-300 mb-6 leading-relaxed font-medium">
+                                                                APÓS EFETUAR O PAGAMENTO, RETORNE PARA ESTA PÁGINA E <strong className="text-yellow-400">CLIQUE NO BOTÃO ABAIXO</strong> SE VOCÊ NÃO FOR ENCAMINHADO(A) AUTOMATICAMENTE PARA A ÁREA VIP DE MEMBROS ASSINANTES.
                                                             </p>
                                                             <button
                                                                 type="button"
@@ -1630,9 +1630,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         btn.disabled = false;
                                                                     }
                                                                 }}
-                                                                className="text-xs bg-slate-800 hover:bg-slate-700 text-yellow-500 border border-yellow-500/30 px-4 py-2 rounded-full transition-colors"
+                                                                className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black text-lg md:text-xl py-4 px-6 rounded-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:-translate-y-1 hover:shadow-yellow-500/40 flex items-center justify-center gap-2"
                                                             >
-                                                                [ JÁ REALIZEI O PAGAMENTO ]
+                                                                <CheckCircle className="w-6 h-6" />
+                                                                JÁ REALIZEI O PAGAMENTO
                                                             </button>
                                                         </div>
                                                     )
