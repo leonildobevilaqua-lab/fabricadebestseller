@@ -625,8 +625,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 try {
                     console.log("Polling for:", formData.email);
 
-                    // FIXED: Use Absolute URL from environment or fallback
-                    const baseUrl = (import.meta as any).env.VITE_API_URL || '';
+                    // FIXED: FORCE Absolute URL to prevent Relative Path (SPA HTML return) issue
+                    // Use getApiBase() to switch between Localhost (Dev) and Production URL securely
+                    const baseUrl = getApiBase().replace(/\/$/, "");
                     const url = `${baseUrl}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`;
 
                     const res = await fetch(url);
