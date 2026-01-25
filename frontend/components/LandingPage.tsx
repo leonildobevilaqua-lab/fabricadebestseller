@@ -625,10 +625,15 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 try {
                     console.log("Polling for:", formData.email);
 
-                    // FIXED: FORCE Absolute URL to prevent Relative Path (SPA HTML return) issue
-                    // Use getApiBase() to switch between Localhost (Dev) and Production URL securely
-                    const baseUrl = getApiBase().replace(/\/$/, "");
-                    const url = `${baseUrl}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`;
+                    console.log("Polling for:", formData.email);
+
+                    // FORCE O ENDEREÇO DO BACKEND AQUI (HARDCODED):
+                    // Prevenindo uso acidental de variável de ambiente inválida ou localhost em produção.
+                    const API_URL = 'https://api.fabricadebestseller.com.br';
+
+                    console.log('🔗 Tentando conectar em:', API_URL); // DEBUG OBRIGATÓRIO
+
+                    const url = `${API_URL}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`;
 
                     const res = await fetch(url);
 
