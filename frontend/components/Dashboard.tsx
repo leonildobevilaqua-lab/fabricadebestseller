@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { PenTool, Download, Star, CheckCircle, Clock } from 'lucide-react'; // Assuming Lucide or similar, else inline SVGs
+import { PenTool, Download, Star, CheckCircle, Clock } from 'lucide-react';
+import { SocialShare } from './SocialShare'; // Assuming Lucide or similar, else inline SVGs
 
 // Inline Icons fallback
 const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
@@ -98,36 +99,88 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-                {/* Gamification Card */}
-                <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                {/* Gamification Card - 4 Button Cycle */}
+                <div className="bg-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
-                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div className="text-center md:text-left">
-                            <h2 className="text-2xl font-black mb-2 flex items-center justify-center md:justify-start gap-2">
-                                <span className="text-yellow-400"><IconStar /></span>
-                                CICLO DE BENEFÍCIOS
-                            </h2>
-                            <p className="text-indigo-200 text-sm max-w-md">
-                                Como assinante <strong>{planName}</strong>, você tem acesso a preços exclusivos. Continue gerando para desbloquear mais vantagens!
-                            </p>
-                        </div>
+                    <div className="relative z-10 mb-8 text-center md:text-left">
+                        <h2 className="text-2xl font-black mb-2 flex items-center justify-center md:justify-start gap-2">
+                            <span className="text-yellow-400"><IconStar /></span>
+                            CICLO DE BENEFÍCIOS PROGRESSIVOS
+                        </h2>
+                        <p className="text-slate-400 text-sm max-w-2xl">
+                            Como assinante <strong>{planName}</strong>, cada livro gerado desbloqueia um desconto maior para o próximo. Complete o ciclo de 4 livros para reiniciar os benefícios!
+                        </p>
+                    </div>
 
-                        <div className="flex-1 w-full max-w-md bg-indigo-950/50 rounded-xl p-4 border border-indigo-500/30">
-                            <div className="flex justify-between text-xs font-bold text-indigo-300 uppercase mb-2">
-                                <span>Progresso do Ciclo</span>
-                                <span>{cycleCount}/5 Livros</span>
-                            </div>
-                            <div className="w-full bg-slate-900 rounded-full h-3 mb-2 border border-slate-700">
-                                <div
-                                    className="bg-gradient-to-r from-yellow-400 to-yellow-600 h-full rounded-full transition-all duration-1000"
-                                    style={{ width: `${(cycleCount / 5) * 100}%` }}
-                                ></div>
-                            </div>
-                            <p className="text-center text-xs text-yellow-400 font-bold">
-                                🚀 Próximo livro por apenas R$ {Number(nextBookPrice).toFixed(2).replace('.', ',')}
-                            </p>
-                        </div>
+                    {/* Cycle Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+                        {[0, 1, 2, 3].map((step) => {
+                            // Define Prices based on Plan (Mirroring Backend)
+                            let prices = [24.90, 22.41, 21.17, 19.92]; // STARTER
+                            if (planName.includes('PRO')) prices = [19.90, 17.91, 16.92, 15.92];
+                            if (planName.includes('BLACK')) prices = [14.90, 13.41, 12.67, 11.92];
+
+                            const price = prices[step];
+                            const isDone = step < cycleCount;
+                            const isActive = step === cycleCount;
+                            const isLocked = step > cycleCount;
+
+                            return (
+                                <div key={step} className={`relative rounded-2xl p-4 border transition-all duration-300 flex flex-col items-center justify-center text-center group
+                                    ${isActive ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/20 scale-105 z-20' :
+                                        isDone ? 'bg-emerald-900/10 border-emerald-500/30 opacity-70' :
+                                            'bg-slate-800/50 border-slate-700 opacity-50 grayscale'}`}>
+
+                                    {/* Badge */}
+                                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap
+                                        ${isActive ? 'bg-indigo-500 text-white shadow-lg' :
+                                            isDone ? 'bg-emerald-600 text-white' :
+                                                'bg-slate-700 text-slate-400'}`}>
+                                        {isActive ? 'PRÓXIMO LIVRO' : isDone ? 'COMPLETO' : `LIVRO 0${step + 1}`}
+                                    </div>
+
+                                    {/* Icon */}
+                                    <div className="mb-3 mt-2">
+                                        {isDone ? (
+                                            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg">
+                                                <CheckCircle className="w-6 h-6" />
+                                            </div>
+                                        ) : isLocked ? (
+                                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-500">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                            </div>
+                                        ) : (
+                                            <div className="w-12 h-12 rounded-full bg-white text-indigo-600 flex items-center justify-center shadow-indigo-500/50 shadow-lg animate-pulse">
+                                                <IconBook />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Price */}
+                                    <div className="mb-3">
+                                        <p className="text-xs text-slate-400 font-bold uppercase">Valor Unitário</p>
+                                        <p className={`text-xl md:text-2xl font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>
+                                            R$ {price.toFixed(2).replace('.', ',')}
+                                        </p>
+                                    </div>
+
+                                    {/* Button */}
+                                    {isActive ? (
+                                        <button
+                                            onClick={onNewBook}
+                                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-1"
+                                        >
+                                            <span className="text-lg">⚡</span> GERAR AGORA
+                                        </button>
+                                    ) : (
+                                        <div className="h-8 flex items-center justify-center">
+                                            {isDone ? <span className="text-xs text-emerald-500 font-bold">Já Gerado</span> : <span className="text-xs text-slate-600 font-bold">Bloqueado</span>}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
@@ -253,6 +306,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             ))}
                         </div>
                     )}
+                </div>
+
+                <div className="pt-8 border-t border-slate-200">
+                    <SocialShare
+                        text="Estou criando livros incríveis com Inteligência Artificial! Conheça a Fábrica de Best Sellers."
+                        className="opacity-70 hover:opacity-100 transition-opacity"
+                    />
                 </div>
 
             </main>

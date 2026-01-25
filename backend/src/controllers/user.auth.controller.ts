@@ -75,6 +75,7 @@ export const UserAuthController = {
     },
 
     // 2. Get Me (Dados do Dashboard)
+    // 2. Get Me (Dados do Dashboard)
     async me(req: Request, res: Response) {
         // @ts-ignore
         const email = req.user?.email || req.query.email; // Support both for now
@@ -95,8 +96,8 @@ export const UserAuthController = {
                     user = {
                         profile: { name: leadFn.name, email: leadFn.email },
                         plan: leadFn.plan || null,
-                        orders: [], // TODO: Buscar orders baseadas no email
-                        stats: { purchaseCycleCount: 0 } // Mock
+                        orders: [],
+                        stats: { purchaseCycleCount: 0 }
                     };
                     // Save migration
                     await setVal(`/users/${safeEmail}`, user);
@@ -105,16 +106,48 @@ export const UserAuthController = {
 
             if (!user) return res.status(404).json({ error: "User not found" });
 
-            // Calcular dados reais
-            const daysSinceCycle = 0; // Mock
-            const nextBookPrice = user.plan?.name === 'BLACK' ? 16.90 : 29.90; // Mock logic
+            // --- REAL CALCULATION (MATCHING PAYMENT CONTROLLER) ---
+            const rawLeads = await getVal('/leads') || [];
+            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+            const leadsUsage = leads.filter((l: any) =>
+                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+                (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
+            ).length;
+
+            let projectsUsage = 0;
+            try {
+                const projects = await getVal('/projects') || {};
+                const projectList = Array.isArray(projects) ? projects : Object.values(projects);
+                projectsUsage = projectList.filter((p: any) =>
+                    p.userEmail?.toLowerCase().trim() === email.toLowerCase().trim() &&
+                    (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
+                ).length;
+            } catch (e) { }
+
+            const usageCount = Math.max(leadsUsage, projectsUsage);
+            const cycleIndex = usageCount % 4;
+
+            // Default Prices (Fallback)
+            // Ideally we import PRICING_CONFIG but for speed we duplicate or use simple defaults matching 'payment.controller'
+            // STARTER: 24.90, 22.41, 21.17, 19.92
+            // PRO: 19.90, 17.91, 16.92, 15.92
+            // BLACK: 14.90, 13.41, 12.67, 11.92
+
+            const pName = (user.plan?.name || "STARTER").toUpperCase();
+            let prices = [24.90, 22.41, 21.17, 19.92]; // STARTER DEFAULT
+            if (pName.includes('PRO')) prices = [19.90, 17.91, 16.92, 15.92];
+            if (pName.includes('BLACK')) prices = [14.90, 13.41, 12.67, 11.92];
+
+            const nextBookPrice = prices[cycleIndex] || prices[0];
 
             res.json({
                 profile: user.profile,
                 plan: user.plan,
                 stats: {
-                    purchaseCycleCount: user.stats?.purchaseCycleCount || 0,
-                    totalBooks: user.orders?.length || 0,
+                    purchaseCycleCount: cycleIndex, // 0-3
+                    totalBooksGenerated: usageCount, // TOTAL GLOBAL
+                    totalBooks: user.orders?.length || usageCount,
                     nextBookPrice: nextBookPrice
                 },
                 orders: user.orders || []

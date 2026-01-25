@@ -575,6 +575,7 @@ export const checkAccess = async (req: Request, res: Response) => {
     let leadStatus = null;
     let pendingPlan: any = null;
     let effectivePlan: any = null;
+    let usageCount = 0;
 
     // 1. FETCH LEADS TO DETERMINE USAGE AND PENDING PLANS
     try {
@@ -611,7 +612,7 @@ export const checkAccess = async (req: Request, res: Response) => {
             ).length;
         } catch (e) { }
 
-        const usageCount = Math.max(leadsUsage, projectsUsage);
+        usageCount = Math.max(leadsUsage, projectsUsage);
 
         // 2. DETERMINE PLAN TRUTH
         effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : null;
@@ -721,7 +722,8 @@ export const checkAccess = async (req: Request, res: Response) => {
             49.90,
         planLabel: effectivePlan
             ? `Plano ${planName} ${(effectivePlan.billing === 'annual' ? 'Anual' : 'Mensal')}`
-            : (pendingPlan ? `Plano ${pendingPlan.name} ${(pendingPlan.billing === 'annual' ? 'Anual' : 'Mensal')}` : 'Avulso')
+            : (pendingPlan ? `Plano ${pendingPlan.name} ${(pendingPlan.billing === 'annual' ? 'Anual' : 'Mensal')}` : 'Avulso'),
+        totalBooksGenerated: usageCount
     });
 };
 

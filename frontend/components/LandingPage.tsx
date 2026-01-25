@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { pt, en, es } from '../i18n/locales';
 import { PricingSection } from './PricingSection';
+import { SocialShare } from './SocialShare';
 import { RewardModal } from './RewardModal';
 import * as API from '../services/api';
 
@@ -592,7 +593,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
     // --- AUTOMATION: AUTO-START IF CONFIRMED ---
     // --- AUTOMATION: AUTO-START DISABLED FOR SUBSCRIBERS ---
-    // We want Subscribers to see the Celebration Modal, not be redirected to Book Data form.
+    // We want (Self-correction: I will view the file first)ion Modal, not be redirected to Book Data form.
     /*
     useEffect(() => {
         if (paymentConfirmed && step === 3) {
@@ -822,42 +823,6 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     return (
         <div className="min-h-screen font-sans bg-slate-900 text-slate-100 selection:bg-yellow-500 selection:text-slate-900 overflow-x-hidden">
             {/* PLAN CELEBRATION MODAL */}
-            {showPlanCelebration && celebratedPlan && (
-                <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/50 p-8 rounded-3xl max-w-lg text-center relative shadow-2xl shadow-indigo-500/20">
-                        <button
-                            onClick={() => setShowPlanCelebration(false)}
-                            className="absolute top-4 right-4 text-slate-400 hover:text-white"
-                        >
-                            <X />
-                        </button>
-                        <div className="text-6xl mb-4 animate-bounce">🎉</div>
-                        <h2 className="text-3xl font-black text-white mb-4">
-                            PARABÉNS! <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-                                VOCÊ AGORA É UM ASSINANTE!
-                            </span>
-                        </h2>
-                        <p className="text-slate-300 text-lg mb-8 leading-relaxed">
-                            Acabamos de desbloquear as condições exclusivas do seu plano e a
-                            <span className="text-yellow-400 font-bold"> Taxa de Geração Promocional (R$ 26,90)</span>.
-                        </p>
-                        <div className="bg-indigo-500/10 border border-indigo-500/30 p-4 rounded-xl mb-8">
-                            <span className="text-sm text-indigo-300 uppercase font-bold tracking-widest">Novo Valor Por Livro</span>
-                            <div className="text-4xl font-black text-white mt-1">
-                                R$ {fetchedPrice.toFixed(2).replace('.', ',')}
-                            </div>
-                        </div>
-                        <button
-                            onClick={() => window.location.href = '/login'}
-                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg transition-all"
-                        >
-                            ACESSAR MINHA CONTA
-                        </button>
-                    </div>
-                </div>
-            )}
-
             {/* --- HEADER --- */}
             <header className="fixed w-full z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -1545,7 +1510,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                     <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                                                                 </div>
                                                                 <h3 className="text-xl font-bold text-emerald-400 mb-2">PAGAMENTO CONFIRMADO!</h3>
-                                                                <p className="text-emerald-200">Iniciando a produção do seu livro automaticamente...</p>
+                                                                <p className="text-emerald-200 mb-4">Iniciando a produção do seu livro automaticamente...</p>
+                                                                <SocialShare className="mt-4" text="Acabei de entrar para a Fábrica de Best Sellers! 🚀" />
                                                             </div>
                                                         );
                                                     }
@@ -2135,6 +2101,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             </section>
 
             <footer className="py-12 text-center text-slate-600 border-t border-slate-800">
+                <SocialShare className="mb-8" />
                 <p>&copy; {new Date().getFullYear()} Fábrica de Best Sellers. {t[lang].footer.rights}</p>
                 <div className="flex justify-center gap-4 text-xs mt-4">
                     <a href="/privacy-policy" className="hover:text-white transition">{t[lang].footer.privacy}</a>
