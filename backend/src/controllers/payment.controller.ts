@@ -614,7 +614,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         const usageCount = Math.max(leadsUsage, projectsUsage);
 
         // 2. DETERMINE PLAN TRUTH
-        effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : pendingPlan;
+        effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : null;
 
         // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
         // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
