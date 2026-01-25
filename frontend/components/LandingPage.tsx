@@ -1593,9 +1593,48 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                                                 {
                                                     !paymentConfirmed && (
-                                                        <p className="text-center text-xs text-slate-500 mt-4 animate-pulse">
-                                                            Aguardando confirmação de pagamento...
-                                                        </p>
+                                                        <div className="mt-4 text-center space-y-3">
+                                                            <p className="text-xs text-slate-500 animate-pulse">
+                                                                Aguardando confirmação de pagamento...
+                                                            </p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={async (e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    const btn = e.currentTarget;
+                                                                    const originalText = btn.innerText;
+                                                                    btn.innerText = "Verificando...";
+                                                                    btn.disabled = true;
+
+                                                                    try {
+                                                                        const API_URL = 'https://api.fabricadebestseller.com.br';
+                                                                        console.log("Manual Check Triggered via:", API_URL);
+
+                                                                        // Force check against Auth/Me to confirm subscription
+                                                                        // Access Validation Endpoint using email
+                                                                        const res = await fetch(`${API_URL}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`);
+                                                                        const data = await res.json();
+
+                                                                        if (data.plan && data.plan.status === 'ACTIVE') {
+                                                                            window.location.href = '/login';
+                                                                        } else {
+                                                                            alert('Pagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente.');
+                                                                        }
+
+                                                                    } catch (err) {
+                                                                        console.error(err);
+                                                                        alert('Erro ao conectar. Tente novamente.');
+                                                                    } finally {
+                                                                        btn.innerText = originalText;
+                                                                        btn.disabled = false;
+                                                                    }
+                                                                }}
+                                                                className="text-xs bg-slate-800 hover:bg-slate-700 text-yellow-500 border border-yellow-500/30 px-4 py-2 rounded-full transition-colors"
+                                                            >
+                                                                [ JÁ REALIZEI O PAGAMENTO ]
+                                                            </button>
+                                                        </div>
                                                     )
                                                 }
                                             </>
