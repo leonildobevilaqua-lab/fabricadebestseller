@@ -84,12 +84,12 @@ export const createLead = async (req: Request, res: Response) => {
             phone,
             fullPhone: `${countryCode}${phone}`,
             type: type || 'BOOK', // Default to BOOK if not provided
-            status: req.body.status || 'PENDING',
+            status: 'PENDING', // Force PENDING to prevent hacking (was req.body.status)
             date: new Date(),
             topic,
             authorName,
             tag,
-            plan,
+            plan: plan ? { ...plan, status: 'PENDING' } : undefined,
             discount
         };
         await pushVal('/leads', lead);
@@ -617,8 +617,9 @@ export const checkAccess = async (req: Request, res: Response) => {
         effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : pendingPlan;
 
         // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
-        if (!effectivePlan && (leadStatus === 'SUBSCRIBER' || (pendingPlan && pendingPlan.status === 'ACTIVE'))) {
-            console.log(`[CHECK_ACCESS] Fallback: Found Subscriber Lead for ${safeEmail} but no /users/ plan. using Lead Plan.`);
+        // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
+        if (!effectivePlan && leadStatus === 'SUBSCRIBER') {
+            console.log(`[CHECK_ACCESS] Fallback: Found Subscriber Lead for ${safeEmail} but no /users/ plan. Using Lead Plan.`);
             effectivePlan = pendingPlan;
             // Auto-heal: Write it back to /users/
             if (effectivePlan) {
