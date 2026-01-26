@@ -84,6 +84,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   const [upsellOffer, setUpsellOffer] = useState<any>(null);
   const [showUpsell, setShowUpsell] = useState(false);
 
+  const [isPollingPayment, setIsPollingPayment] = useState(false);
+
   // --- NEW: PRE-VALIDATE ACCESS ON MOUNT ---
   useEffect(() => {
     const checkInitial = async () => {
@@ -91,6 +93,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         setIsLoadingAccess(false);
         return;
       }
+      if (projectId) {
+        // If we already have a project ID passed (e.g. continuing), just check if it's active
+        setIsLoadingAccess(false);
+        return;
+      }
+
       try {
         const res = await fetch(`/api/payment/check-access?email=${userContact.email}`);
         const access = await res.json();
@@ -100,42 +108,55 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           setIsManufacturing(true);
           setIsLoadingAccess(false);
         } else {
-          // Unauthorized: REDIRECT IMMEDIATELY to Checkout
-          if (access.checkoutUrl) {
-            // Keep loading state true while redirecting
-            window.location.href = access.checkoutUrl;
-            return;
-          }
-
-          // Fallback (only if no URL)
-          const isPlanActive = !!(access.plan && access.plan.status === 'ACTIVE');
-          const subPrice = isPlanActive ? 0 : (access.subscriptionPrice || 49.90);
-
+          // Unauthorized: STAY ON PAGE & SHOW PAYMENT
+          // Populate offer data for the modal
           setUpsellOffer({
-            price: access.bookPrice || 39.90,
+            price: access.bookPrice || 14.90,
             planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
             link: access.checkoutUrl,
             level: access.discountLevel,
-            subscriptionPrice: subPrice,
+            subscriptionPrice: (access.plan?.status === 'ACTIVE' ? 0 : (access.subscriptionPrice || 49.90)),
             subscriptionLink: "#"
           });
 
-          if (isPlanActive) {
-            setShowReward(true);
-          } else {
-            setShowPaymentGate(true);
-          }
+          // Force Payment Modal
+          setShowPaymentGate(true);
+          // Start Polling for confirmation
+          setIsPollingPayment(true);
+
           setIsLoadingAccess(false);
         }
       } catch (e) {
         console.error("Access Check Failed", e);
-        // Fallback to manufacturing and let initProject fail naturally
-        setIsManufacturing(true);
+        setIsManufacturing(true); // Fallback on error (or block?) - keeping fallback for robustness but maybe should block.
         setIsLoadingAccess(false);
       }
     };
     checkInitial();
-  }, []);
+  }, [projectId]);
+
+  // POLLING FOR PAYMENT CONFIRMATION
+  useEffect(() => {
+    if (!isPollingPayment || !userContact?.email) return;
+
+    const pollTimer = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/payment/check-access?email=${userContact.email}`);
+        const access = await res.json();
+        if ((access.hasAccess && access.credits > 0) || access.activeProjectId) {
+          // Payment Confirmed!
+          clearInterval(pollTimer);
+          setIsPollingPayment(false);
+          setShowPaymentGate(false);
+          setShowReward(false); // Close any others
+          // Start Factory
+          setIsManufacturing(true);
+        }
+      } catch (e) { console.error("Poll Error", e); }
+    }, 3000); // Check every 3s
+
+    return () => clearInterval(pollTimer);
+  }, [isPollingPayment]);
 
   // Factory Intro Effect
   useEffect(() => {
