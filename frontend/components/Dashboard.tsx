@@ -184,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     </div>
                 </div>
 
-                {/* PLAN OVERVIEW SECTION (CONFORME TELA 9) */}
+                {/* PLAN OVERVIEW SECTION */}
                 <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden text-center border border-slate-800 shadow-2xl">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 via-purple-500 to-indigo-500"></div>
 
@@ -192,10 +192,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         <Star className="text-slate-900 w-8 h-8 fill-current" />
                     </div>
 
-                    <h2 className="text-3xl font-black mb-1">{planName}</h2>
-                    <p className="text-slate-400 text-sm font-bold tracking-widest uppercase mb-8">
-                        {planName === 'STARTER' ? 'AUTOR INICIANTE' : planName === 'PRO' ? 'AUTOR PROFISSIONAL' : 'AUTOR BEST-SELLER'}
+                    <h2 className="text-3xl font-black mb-1 uppercase">
+                        PLANO {planName} {stats?.plan?.billing === 'annual' ? 'ANUAL' : 'MENSAL'}
+                    </h2>
+                    <p className="text-slate-400 text-sm font-bold tracking-widest uppercase mb-6">
+                        ÁREA VIP DE MEMBROS ASSINANTES
                     </p>
+
+                    {/* Expiration Logic */}
+                    {stats?.plan?.startDate && (() => {
+                        const start = new Date(stats.plan.startDate);
+                        const isAnnual = stats.plan.billing === 'annual';
+                        const expiration = new Date(start);
+                        expiration.setDate(start.getDate() + (isAnnual ? 365 : 30));
+
+                        const now = new Date();
+                        const diffTime = expiration.getTime() - now.getTime();
+                        const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        const isAlert = daysRemaining <= 5 && daysRemaining >= 0;
+
+                        return (
+                            <div className={`mb-8 p-4 rounded-xl border ${isAlert ? 'bg-red-500/10 border-red-500/50 animate-pulse' : 'bg-slate-800/50 border-slate-700'}`}>
+                                <p className="text-xs font-bold uppercase text-slate-400 mb-1">Seu plano vence em:</p>
+                                <p className={`text-xl font-black ${isAlert ? 'text-red-400' : 'text-white'}`}>
+                                    {expiration.toLocaleDateString()}
+                                </p>
+                                {isAlert && (
+                                    <p className="text-sm font-bold text-red-400 mt-2">
+                                        ⚠️ ATENÇÃO: Restam apenas {daysRemaining} dias!
+                                    </p>
+                                )}
+                            </div>
+                        );
+                    })()}
 
                     <div className="bg-slate-800/50 rounded-2xl p-6 max-w-sm mx-auto border border-slate-700 mb-8 backdrop-blur-sm">
                         <div className="text-center">
@@ -240,20 +269,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             </div>
                         ))}
                     </div>
-                </div>
-
-                {/* Main Action */}
-                <div className="text-center py-8">
-                    <button
-                        onClick={onNewBook}
-                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-6 px-12 rounded-2xl text-2xl shadow-lg shadow-indigo-500/30 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-4 mx-auto"
-                    >
-                        <span className="bg-white/20 p-2 rounded-lg"><IconBook /></span>
-                        GERAR NOVO LIVRO
-                    </button>
-                    <p className="text-slate-500 text-sm mt-4">
-                        Clique para iniciar a criação de um novo best-seller com IA.
-                    </p>
                 </div>
 
                 {/* History */}

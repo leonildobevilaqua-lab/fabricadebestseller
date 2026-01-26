@@ -58,10 +58,11 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   const [error, setError] = useState<string | null>(null);
 
   // Custom State for Factory Intro
-  const [isManufacturing, setIsManufacturing] = useState(true); // Start true to show Intro
-  const [factoryStep, setFactoryStep] = useState(0); // 0..3 for texts
-  const [showPaymentGate, setShowPaymentGate] = useState(false); // Controls the Payment Screen
-  const [showReward, setShowReward] = useState(false); // Controls the Unlock/Reward Screen
+  const [isManufacturing, setIsManufacturing] = useState(false); // Default false: Wait for Access Check
+  const [isLoadingAccess, setIsLoadingAccess] = useState(true); // New Loading State
+  const [factoryStep, setFactoryStep] = useState(0);
+  const [showPaymentGate, setShowPaymentGate] = useState(false);
+  const [showReward, setShowReward] = useState(false);
 
   // Hoist metadata extraction for Effects
   const { status, progress, statusMessage } = project?.metadata || ({} as any);
@@ -81,7 +82,54 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   // Upsell Offer State
   const [upsellOffer, setUpsellOffer] = useState<any>(null);
-  const [showUpsell, setShowUpsell] = useState(false); // Used for POST-gen upsell
+  const [showUpsell, setShowUpsell] = useState(false);
+
+  // --- NEW: PRE-VALIDATE ACCESS ON MOUNT ---
+  useEffect(() => {
+    const checkInitial = async () => {
+      if (!userContact?.email) {
+        setIsLoadingAccess(false);
+        return;
+      }
+      try {
+        const res = await fetch(`/api/payment/check-access?email=${userContact.email}`);
+        const access = await res.json();
+
+        if ((access.hasAccess && access.credits > 0) || access.activeProjectId) {
+          // Authorized: Start Animation
+          setIsManufacturing(true);
+        } else {
+          // Unauthorized: Show Payment Gate Immediately
+          const isPlanActive = !!(access.plan && access.plan.status === 'ACTIVE');
+          const subPrice = isPlanActive ? 0 : (access.subscriptionPrice || 49.90);
+
+          setUpsellOffer({
+            price: access.bookPrice || 39.90,
+            planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
+            link: access.checkoutUrl,
+            level: access.discountLevel,
+            subscriptionPrice: subPrice,
+            subscriptionLink: "#"
+          });
+
+          // If user is Subscriber but 0 credits -> Show Unit Payment (Reward Modal often used for this)
+          // If user has NO Plan -> Show Subscription Gate
+          if (isPlanActive) {
+            setShowReward(true);
+          } else {
+            setShowPaymentGate(true);
+          }
+        }
+      } catch (e) {
+        console.error("Access Check Failed", e);
+        // Fallback to manufacturing and let initProject fail naturally
+        setIsManufacturing(true);
+      } finally {
+        setIsLoadingAccess(false);
+      }
+    };
+    checkInitial();
+  }, []);
 
   // Factory Intro Effect
   useEffect(() => {
@@ -94,12 +142,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           }
           return prev + 1;
         });
-      }, 1500); // 1.5s per text
+      }, 1500);
 
       // End animation after ~6 seconds, THEN try to create project
       const finishTimer = setTimeout(() => {
-        setIsManufacturing(false); // Hide Animation
-        initProject(); // Trigger actual logic
+        setIsManufacturing(false);
+        initProject();
       }, 6000);
 
       return () => { clearInterval(timer); clearTimeout(finishTimer); };
@@ -507,6 +555,15 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   // --- END OF EFFECTS ---
 
+  if (isLoadingAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8">
+        <Spinner />
+        <p className="mt-4 text-slate-500">Conectando aos servidores de criação...</p>
+      </div>
+    );
+  }
+
   // RENDER CUSTOM FACTORY INTRO
   if (isManufacturing) {
     const messages = [
@@ -546,9 +603,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         isOpen={true}
         onClose={() => setShowReward(false)}
         onClaim={() => {
-          setShowReward(false);
-          // If we didn't have a project ID, we retry init
-          if (!projectId) initProject();
+          if (upsellOffer?.link) {
+            window.location.href = upsellOffer.link;
+          } else {
+            setShowReward(false);
+            if (!projectId) initProject();
+          }
         }}
         offer={{
           level: upsellOffer?.level || 4,
