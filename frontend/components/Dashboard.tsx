@@ -23,33 +23,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         if (!user?.email) return;
         setIsPurchasing(true);
         try {
-            // 1. Check Access Status (to see if credit exists)
-            const res = await fetch(`/api/payment/check-access?email=${user.email}`);
+            // 1. Check Access Status
+            const res = await fetch(`https://api.fabricadebestseller.com.br/api/payment/check-access?email=${user.email}`);
             const access = await res.json();
 
             if (access.credits > 0) {
                 // Already has credit -> Proceed to Factory
                 onNewBook();
             } else {
-                // 2. Need to Pay -> Create Charge
-                const purchaseRes = await fetch('/api/purchase/book-generation', {
+                // 2. Need to Pay -> Create Charge (FORCE ABSOLUTE URL)
+                const purchaseRes = await fetch('https://api.fabricadebestseller.com.br/api/purchase/book-generation', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: user.email })
                 });
+
+                if (!purchaseRes.ok) {
+                    const err = await purchaseRes.json().catch(() => ({}));
+                    throw new Error(err.error || "Erro na criação da cobrança");
+                }
+
                 const purchaseData = await purchaseRes.json();
 
                 if (purchaseData.invoiceUrl) {
                     // Redirect to Asaas
                     window.location.href = purchaseData.invoiceUrl;
                 } else {
-                    alert("Erro ao criar cobrança. Tente novamente.");
+                    alert("Erro: URL de fatura não retornada.");
                     setIsPurchasing(false);
                 }
             }
-        } catch (e) {
+        } catch (e: any) {
             console.error(e);
-            alert("Erro de conexão.");
+            alert('Erro: ' + (e.message || "Erro de conexão"));
             setIsPurchasing(false);
         }
     };
