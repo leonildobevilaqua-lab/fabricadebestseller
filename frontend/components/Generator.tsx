@@ -98,8 +98,16 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         if ((access.hasAccess && access.credits > 0) || access.activeProjectId) {
           // Authorized: Start Animation
           setIsManufacturing(true);
+          setIsLoadingAccess(false);
         } else {
-          // Unauthorized: Show Payment Gate Immediately
+          // Unauthorized: REDIRECT IMMEDIATELY to Checkout
+          if (access.checkoutUrl) {
+            // Keep loading state true while redirecting
+            window.location.href = access.checkoutUrl;
+            return;
+          }
+
+          // Fallback (only if no URL)
           const isPlanActive = !!(access.plan && access.plan.status === 'ACTIVE');
           const subPrice = isPlanActive ? 0 : (access.subscriptionPrice || 49.90);
 
@@ -112,19 +120,17 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             subscriptionLink: "#"
           });
 
-          // If user is Subscriber but 0 credits -> Show Unit Payment (Reward Modal often used for this)
-          // If user has NO Plan -> Show Subscription Gate
           if (isPlanActive) {
             setShowReward(true);
           } else {
             setShowPaymentGate(true);
           }
+          setIsLoadingAccess(false);
         }
       } catch (e) {
         console.error("Access Check Failed", e);
         // Fallback to manufacturing and let initProject fail naturally
         setIsManufacturing(true);
-      } finally {
         setIsLoadingAccess(false);
       }
     };
