@@ -17,6 +17,42 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout }) => {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [isPurchasing, setIsPurchasing] = useState(false);
+
+    const handleGenerateClick = async () => {
+        if (!user?.email) return;
+        setIsPurchasing(true);
+        try {
+            // 1. Check Access Status (to see if credit exists)
+            const res = await fetch(`/api/payment/check-access?email=${user.email}`);
+            const access = await res.json();
+
+            if (access.credits > 0) {
+                // Already has credit -> Proceed to Factory
+                onNewBook();
+            } else {
+                // 2. Need to Pay -> Create Charge
+                const purchaseRes = await fetch('/api/purchase/book-generation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: user.email })
+                });
+                const purchaseData = await purchaseRes.json();
+
+                if (purchaseData.invoiceUrl) {
+                    // Redirect to Asaas
+                    window.location.href = purchaseData.invoiceUrl;
+                } else {
+                    alert("Erro ao criar cobrança. Tente novamente.");
+                    setIsPurchasing(false);
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+            setIsPurchasing(false);
+        }
+    };
 
     useEffect(() => {
         // Fetch User Stats
@@ -168,10 +204,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     {/* Button */}
                                     {isActive ? (
                                         <button
-                                            onClick={onNewBook}
-                                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-1"
+                                            onClick={handleGenerateClick}
+                                            disabled={isPurchasing}
+                                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
-                                            <span className="text-lg">⚡</span> GERAR AGORA
+                                            {isPurchasing ? (
+                                                <span className="animate-spin">⌛</span>
+                                            ) : (
+                                                <>
+                                                    <span className="text-lg">⚡</span> GERAR AGORA
+                                                </>
+                                            )}
                                         </button>
                                     ) : (
                                         <div className="h-8 flex items-center justify-center">

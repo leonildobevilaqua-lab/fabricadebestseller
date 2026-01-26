@@ -108,55 +108,19 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           setIsManufacturing(true);
           setIsLoadingAccess(false);
         } else {
-          // Unauthorized: STAY ON PAGE & SHOW PAYMENT
-          // Populate offer data for the modal
-          setUpsellOffer({
-            price: access.bookPrice || 14.90,
-            planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
-            link: access.checkoutUrl,
-            level: access.discountLevel,
-            subscriptionPrice: (access.plan?.status === 'ACTIVE' ? 0 : (access.subscriptionPrice || 49.90)),
-            subscriptionLink: "#"
-          });
-
-          // Force Payment Modal
-          setShowPaymentGate(true);
-          // Start Polling for confirmation
-          setIsPollingPayment(true);
-
-          setIsLoadingAccess(false);
+          // Unauthorized: KICK OUT
+          alert('Você precisa adquirir um crédito de geração primeiro.');
+          if (onReset) onReset();
         }
       } catch (e) {
         console.error("Access Check Failed", e);
-        setIsManufacturing(true); // Fallback on error (or block?) - keeping fallback for robustness but maybe should block.
-        setIsLoadingAccess(false);
+        // On error, safer to kick out than allow
+        alert('Erro ao verificar acesso. Tente novamente.');
+        if (onReset) onReset();
       }
     };
     checkInitial();
-  }, [projectId]);
-
-  // POLLING FOR PAYMENT CONFIRMATION
-  useEffect(() => {
-    if (!isPollingPayment || !userContact?.email) return;
-
-    const pollTimer = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/payment/check-access?email=${userContact.email}`);
-        const access = await res.json();
-        if ((access.hasAccess && access.credits > 0) || access.activeProjectId) {
-          // Payment Confirmed!
-          clearInterval(pollTimer);
-          setIsPollingPayment(false);
-          setShowPaymentGate(false);
-          setShowReward(false); // Close any others
-          // Start Factory
-          setIsManufacturing(true);
-        }
-      } catch (e) { console.error("Poll Error", e); }
-    }, 3000); // Check every 3s
-
-    return () => clearInterval(pollTimer);
-  }, [isPollingPayment]);
+  }, [projectId, onReset]);
 
   // Factory Intro Effect
   useEffect(() => {

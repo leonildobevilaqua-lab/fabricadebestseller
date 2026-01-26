@@ -1,3 +1,4 @@
+
 import express from 'express';
 import cors from 'cors';
 import projectRoutes from './routes/project.routes';
@@ -12,7 +13,10 @@ app.use(express.json());
 
 import paymentRoutes from './routes/payment.routes';
 import subscriptionRoutes from './routes/subscription.routes';
+import purchaseRoutes from './routes/purchase.routes';
 import jwt from 'jsonwebtoken'; // Added for Golden Route
+import userRoutes from './routes/user.routes';
+import { SubscriptionController } from './controllers/subscription.controller';
 
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
 
@@ -65,11 +69,11 @@ app.get('/api/auth-master-test', (req: express.Request, res: express.Response) =
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/purchase', purchaseRoutes); // REGISTER NEW ROUTE
+
 // Alias for user's configured webhook
-import { SubscriptionController } from './controllers/subscription.controller';
 app.post('/webhook/asaas', SubscriptionController.webhook); // Direct mapping
 app.use('/api/subscription', subscriptionRoutes);
-import userRoutes from './routes/user.routes';
 app.use('/api/user', userRoutes);
 app.use('/downloads', express.static(path.join(__dirname, '../generated_books')));
 
