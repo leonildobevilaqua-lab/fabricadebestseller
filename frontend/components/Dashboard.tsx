@@ -232,7 +232,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             <div className="text-center md:text-right md:border-l md:border-slate-600 md:pl-6">
                                                 <p className="text-xs text-slate-400 font-bold uppercase">Renovação</p>
                                                 <p className="text-lg font-bold text-white">
-                                                    R$ {stats?.subscriptionPrice ? stats.subscriptionPrice.toFixed(2).replace('.', ',') : (planName === 'BLACK' ? '49,90' : '0,00')} <span className="text-xs font-normal text-slate-500">/{isAnnual ? 'ano' : 'mês'}</span>
+                                                    R$ {stats?.subscriptionPrice ? stats.subscriptionPrice.toFixed(2).replace('.', ',') : (planName === 'BLACK' ? '49,90' : planName === 'PRO' ? '34,90' : '29,90')} <span className="text-xs font-normal text-slate-500">/{isAnnual ? 'ano' : 'mês'}</span>
                                                 </p>
                                             </div>
                                         </div>
@@ -249,8 +249,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-indigo-500/30 p-6 rounded-2xl w-full relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-all"></div>
 
-                                <p className="text-yellow-400 font-bold text-xs uppercase tracking-wider mb-4">
-                                    A ESCOLHA DESTE PLANO DESBLOQUEIA <br /> O CUSTO POR LIVRO NO VALOR DE:
+                                <p className="text-yellow-400 font-bold text-xs uppercase tracking-wider mb-4 leading-relaxed">
+                                    A ATIVAÇÃO DESTE PLANO DESBLOQUEIRA O CUSTO DE GERAÇÃO DO PRIMEIRO LIVRO NO VALOR PROMOCIONAL DE:
                                 </p>
 
                                 <div className="flex flex-col gap-1 items-center lg:items-start">
