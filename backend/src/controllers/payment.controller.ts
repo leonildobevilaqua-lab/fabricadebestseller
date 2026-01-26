@@ -692,8 +692,21 @@ export const checkAccess = async (req: Request, res: Response) => {
     try {
         const project = await getProjectByEmail((email as string).toLowerCase().trim());
         if (project && project.metadata.status !== 'COMPLETED' && project.metadata.status !== 'FAILED') {
-            if (project.metadata.topic !== 'Livro Pré-Escrito') {
+            const status = project.metadata.status;
+            // STRENGTHENED SECURITY: 
+            // Only consider a project "Active" (bypassing payment) if it is actually processing.
+            // IDLE or WAITING_TITLE states might exist from abandoned attempts; they DO NOT grant access if credits are 0.
+            if (credits > 0) {
                 hasActiveProject = true;
+            } else {
+                // If no credits, restricted statuses only
+                if (status !== 'IDLE' && status !== 'WAITING_TITLE') {
+                    hasActiveProject = true;
+                }
+            }
+
+            if (project.metadata.topic === 'Livro Pré-Escrito') {
+                hasActiveProject = false;
             }
         }
     } catch (e) { }
