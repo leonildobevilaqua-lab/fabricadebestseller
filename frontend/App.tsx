@@ -35,6 +35,7 @@ const App: React.FC = () => {
   // VIEW STATE: 'landing' | 'login' | 'dashboard' | 'generator'
   const [currentView, setCurrentView] = useState(() => {
     if (window.location.pathname === '/login') return 'login';
+    if (window.location.pathname === '/factory') return 'generator'; // Support direct URL
     if (localStorage.getItem('bsf_hasAccess') === 'true') return 'dashboard'; // Default to dashboard if logged in
     return 'landing';
   });

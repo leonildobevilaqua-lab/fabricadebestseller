@@ -20,59 +20,75 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [hasCredits, setHasCredits] = useState(false);
 
-    const handleGenerateClick = async () => {
-        setIsPurchasing(true);
-
-        const getApiBase = () => {
-            const host = window.location.hostname;
-            if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-            return 'https://api.fabricadebestseller.com.br';
-        };
-
+    // FUNÇÃO 1: GERA O BOLETO/PIX E ABRE O ASAAS
+    const handleBuyCredit = async (price: number) => {
         try {
-            // 1. CHECAGEM DE SEGURANÇA: O usuário tem crédito sobrando?
-            const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
+            setLoading(true);
+            setIsPurchasing(true); // Show spinner if needed or just use logic
 
-            if (!res.ok) throw new Error("Falha de verificação");
+            const getApiBase = () => {
+                const host = window.location.hostname;
+                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+                return 'https://api.fabricadebestseller.com.br';
+            };
 
-            const access = await res.json();
-
-            if (access.credits > 0) {
-                // TEM CRÉDITO PAGO: LIBERA A FÁBRICA
-                setIsPurchasing(false);
-                onNewBook();
-                return;
-            }
-
-            // 2. NÃO TEM CRÉDITO: GERA COBRANÇA NO ASAAS
-            // Atenção: NÃO navegue para /factory aqui. Cobre primeiro.
-            const purchaseRes = await fetch(`${getApiBase()}/api/payment/purchase/book-generation`, {
+            // Chama o backend para criar a cobrança request
+            const res = await fetch(`${getApiBase()}/api/payment/purchase/book-generation`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: user.email })
             });
 
-            const purchase = await purchaseRes.json();
+            const data = await res.json();
 
-            if (purchase.invoiceUrl) {
-                // ABRE O CHECKOUT DO ASAAS EM NOVA ABA
-                const win = window.open(purchase.invoiceUrl, '_blank');
+            if (data.invoiceUrl) {
+                // OBRIGATÓRIO: Abre em nova aba
+                const win = window.open(data.invoiceUrl, '_blank');
                 if (!win) alert("Por favor, permita popups para abrir o pagamento.");
-
-                // ACIONA POLLING "MODAL" (Estado isPurchasing ativa o useEffect de polling)
-                // setShowPaymentWaitModal(true); // Mapped to isPurchasing=true
-                alert("Cobrança gerada! Realize o pagamento na nova aba. O sistema liberará seu acesso automaticamente assim que confirmar.");
+                setIsPurchasing(true); // Keep UI in "Waiting" state
             } else {
+                alert('Erro ao gerar cobrança.');
                 setIsPurchasing(false);
-                alert('Erro ao gerar cobrança. Tente novamente.');
             }
-
         } catch (error) {
-            console.error('Erro no processo de compra:', error);
+            alert('Erro de conexão com o Checkout.');
             setIsPurchasing(false);
-            alert('Erro ao conectar com o servidor de pagamentos.');
+        } finally {
+            setLoading(false);
         }
-        // finally { setIsLoading(false); } // Kept true for polling unless error
+    };
+
+    // FUNÇÃO 2: VERIFICA SE O DINHEIRO CAIU E LIBERA O ACESSO
+    const handleVerifyAndEnter = async () => {
+        try {
+            setLoading(true);
+
+            const getApiBase = () => {
+                const host = window.location.hostname;
+                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+                return 'https://api.fabricadebestseller.com.br';
+            };
+
+            // Pergunta ao servidor: "Eu tenho crédito?"
+            // Using /payment/access as it is our specialized credit checker
+            const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
+            const data = await res.json();
+
+            // SÓ ENTRA SE TIVER CRÉDITO POSITIVO
+            if (data.credits > 0) {
+                alert('Pagamento Confirmado! Iniciando Geração...');
+                // AGORA SIM pode entrar
+                onNewBook();
+                // Alternatively use window.location.href = '/factory' but onNewBook is SPA friendly
+            } else {
+                alert('⚠️ O banco ainda não confirmou seu pagamento. Aguarde alguns instantes e clique neste botão novamente.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Erro ao verificar status.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {
@@ -285,62 +301,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     {/* Button */}
                                     {isActive ? (
                                         <div className="flex flex-col gap-2 w-full">
+                                            {/* BOTÃO 1: COMPRA (Abre o Checkout) */}
                                             <button
-                                                onClick={handleGenerateClick}
-                                                disabled={isPurchasing}
-                                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                onClick={() => handleBuyCredit(price)}
+                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg mb-1 transition-all flex items-center justify-center gap-2 shadow-lg"
                                             >
-                                                {isPurchasing ? (
-                                                    <span className="animate-spin">⌛</span>
-                                                ) : hasCredits ? (
-                                                    // If user has credits, change CTA to be clear
-                                                    <>
-                                                        <span className="text-lg">⚡</span> GERAR MEU LIVRO
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <span className="text-lg">⚡</span> COMPRAR CRÉDITO
-                                                    </>
-                                                )}
+                                                <span>💳</span> COMPRAR CRÉDITO (R$ {price.toFixed(2).replace('.', ',')})
                                             </button>
 
-                                            {/* Manual Payment Check Button */}
-                                            {/* Only show check button if purchasing OR no credits (and thus intent to buy) */}
-                                            {!hasCredits && (
-                                                <button
-                                                    onClick={async () => {
-                                                        const getApiBase = () => {
-                                                            const host = window.location.hostname;
-                                                            if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-                                                            return 'https://api.fabricadebestseller.com.br';
-                                                        };
+                                            {/* BOTÃO 2: VALIDAÇÃO (Só libera se tiver pago) */}
+                                            <button
+                                                onClick={handleVerifyAndEnter}
+                                                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg"
+                                            >
+                                                <span>✅</span> JÁ PAGUEI - GERAR LIVRO AGORA
+                                            </button>
 
-                                                        if (isPurchasing) return;
-                                                        setIsPurchasing(true);
-
-                                                        try {
-                                                            const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}&_t=${Date.now()}`);
-                                                            const data = await res.json();
-
-                                                            if (data.credits > 0) {
-                                                                alert("Pagamento Confirmado! Iniciando geração...");
-                                                                setHasCredits(true);
-                                                                onNewBook();
-                                                            } else {
-                                                                alert("O banco ainda não confirmou o pagamento. Isso pode levar de 10 a 60 segundos. Por favor, aguarde um momento e clique novamente.");
-                                                            }
-                                                        } catch (e) {
-                                                            alert("Erro ao verificar conexão com o servidor.");
-                                                        } finally {
-                                                            setIsPurchasing(false);
-                                                        }
-                                                    }}
-                                                    disabled={isPurchasing}
-                                                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider disabled:opacity-50"
-                                                >
-                                                    {isPurchasing ? "Verificando..." : "JÁ PAGUEI - LIBERAR AGORA"}
-                                                </button>
-                                            )}
+                                            {/* AVISO IMPORTANTE */}
+                                            <p className="text-[10px] text-center text-gray-400 mt-1 uppercase tracking-wide">
+                                                Liberação automática após pagamento
+                                            </p>
                                         </div>
                                     ) : (
                                         <div className="h-8 flex items-center justify-center">

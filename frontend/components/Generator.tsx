@@ -109,8 +109,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           setIsLoadingAccess(false);
         } else {
           // Unauthorized: KICK OUT
-          alert('Você precisa adquirir um crédito de geração primeiro.');
-          if (onReset) onReset();
+          alert('Você precisa adquirir um crédito para acessar a fábrica.');
+          // Force redirect to dashboard
+          window.location.href = '/dashboard';
         }
       } catch (e) {
         console.error("Access Check Failed", e);
