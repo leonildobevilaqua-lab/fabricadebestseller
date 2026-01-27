@@ -516,30 +516,30 @@ export const checkAccess = async (req: Request, res: Response) => {
                 // LIST OF VALID GENERATION PRICES
                 const validPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41];
 
+                // PRE-FETCH ORDERS TO CHECK USAGE
+                const orders = await getVal('/orders') || [];
+
+                // Sort payments by date DESC (Newest first) - Asaas API usually does this but we ensure it
+                payments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+
+                // Find LATEST payment that is CONFIRMED (RECEIVED) and NOT USED
                 const missedPayment = payments.find((p: any) => {
-                    // Parse date (Asaas returns ISO for dateCreated usually)
-                    const pDateStr = p.dateCreated || p.paymentDate;
-                    const pDate = new Date(pDateStr);
-
-                    // Check if VERY recent (last 15 minutes ONLY) to allow recovery of JUST made payments
-                    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
-                    const isRecent = pDate > fifteenMinsAgo;
-
                     const isPriceMatch = validPrices.some(vp => Math.abs(vp - p.value) < 0.1);
                     const desc = (p.description || "").toLowerCase();
                     const isDescMatch = desc.includes('geração') || desc.includes('livro') || desc.includes('generation');
 
-                    return isRecent && (isPriceMatch || isDescMatch);
+                    // CHECK IF ALREADY USED
+                    const isUsed = orders.some((o: any) => o.id === p.id || (o.paymentInfo && o.paymentInfo.transactionId === p.id));
+
+                    // "Não por tempo... Validado pelo PAGAMENTO CONFIRMADO"
+                    return (isPriceMatch || isDescMatch) && !isUsed;
                 });
 
                 if (missedPayment) {
                     console.log(`[RECOVERY] Found candidate payment! ID: ${missedPayment.id} Val: ${missedPayment.value}`);
 
-                    // CHECK IF ALREADY PROCESSED
-                    const orders = await getVal('/orders') || [];
-                    const alreadyProcessed = orders.some((o: any) => o.id === missedPayment.id || (o.paymentInfo && o.paymentInfo.transactionId === missedPayment.id));
-
-                    if (!alreadyProcessed) {
+                    // Logic moved inside .find(), so we know it's not processed.
+                    if (true) {
                         console.log(`[RECOVERY] AUTO-GRANTING CREDIT FOR MISSED PAYMENT ${missedPayment.id}`);
                         credits = 1;
                         await setVal(`/credits/${safeEmail}`, 1);
