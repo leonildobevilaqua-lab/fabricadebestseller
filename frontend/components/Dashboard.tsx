@@ -32,7 +32,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 onNewBook();
             } else {
                 // 2. Need to Pay -> Create Charge (FORCE ABSOLUTE URL)
-                const purchaseRes = await fetch('https://api.fabricadebestseller.com.br/api/payment/purchase/book-generation', {
+                const purchaseRes = await fetch('https://api.fabricadebestseller.com.br/api/purchase-direct', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: user.email })

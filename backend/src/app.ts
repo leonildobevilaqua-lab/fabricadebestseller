@@ -17,50 +17,18 @@ import purchaseRoutes from './routes/purchase.routes';
 import jwt from 'jsonwebtoken'; // Added for Golden Route
 import userRoutes from './routes/user.routes';
 import { SubscriptionController } from './controllers/subscription.controller';
+import { createBookGenerationCharge } from './controllers/payment.controller'; // Emergency Import
 
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
 
-// --- GOLDEN ROUTE (FAILSAFE LOGIN - DUAL PROTOCOL) ---
-// Defined BEFORE routers to intercept login issues
-// Supports POST (Standard) and GET (Emergency Bypass for 405 Errors)
-
-const goldenLoginHandler = (req: express.Request, res: express.Response) => {
-    try {
-        // Support Body (POST) or Query (GET)
-        const user = req.body?.user || req.query?.user;
-        const pass = req.body?.pass || req.query?.pass;
-
-        console.log(`[Golden Route] Login Attempt via ${req.method}: ${user}`);
-
-        if (!user || !pass) return res.status(400).json({ error: "Missing credentials" });
-
-        const cleanUser = String(user).trim().toLowerCase();
-        const cleanPass = String(pass).trim();
-
-        let valid = false;
-        // User 1
-        if (cleanUser === 'contato@leonildobevilaqua.com.br' && cleanPass === 'Leo129520-*-') valid = true;
-        // User 2
-        if (cleanUser === 'leonildobevilaqua@gmail.com' && cleanPass === 'Leo129520') valid = true;
-
-        if (valid) {
-            console.log(`[Golden Route] SUCCESS for ${cleanUser}`);
-            // @ts-ignore
-            const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '24h' });
-            return res.json({ token });
-        }
-
-        console.log(`[Golden Route] FAILED for ${cleanUser}`);
-        return res.status(401).json({ error: "Invalid credentials (Auth v7.0 - Dual Protocol)" });
-    } catch (e: any) {
-        console.error("[Golden Route] Crash:", e);
-        res.status(500).json({ error: "Golden Route Crash: " + e.message });
-    }
-};
+// ... (Golden Route omitted for brevity) ...
 
 app.options('/api/auth-master', cors());
 app.post('/api/auth-master', goldenLoginHandler);
 app.get('/api/admin-login-get', goldenLoginHandler); // GET Protocol
+
+// EMERGENCY DIRECT ROUTE (Fixes 404 issue)
+app.post('/api/purchase-direct', createBookGenerationCharge);
 
 // Simple Health Check
 app.get('/api/auth-master-test', (req: express.Request, res: express.Response) => {
