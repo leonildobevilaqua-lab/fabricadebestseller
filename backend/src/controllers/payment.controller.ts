@@ -361,6 +361,11 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             if (pName.includes('geração') || pName.includes('geracao') || pName.includes('generation') || pName.includes('livro')) {
                 isBookGeneration = true;
             }
+            // Fallback: Price Safety Net (10 to 40 BRL covers 13.52 to 26.90 and 39.90)
+            if (amount > 10 && amount < 40) {
+                console.log(`[WEBHOOK] Price Pattern Match for Book Generation: ${amount}`);
+                isBookGeneration = true;
+            }
             // Explicit Prices (Safety Net)
             const generationPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90]; // Known book prices
             // Note: 19.90 is also starter monthly, so keyword is primary. Price secondary if no keywords?
@@ -374,9 +379,14 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
                 const newCredits = currentCredits + 1;
 
+                // 1. Update Source of Truth
                 await setVal(`/credits/${safeEmail}`, newCredits);
+                // 2. Mirror to User Object (as requested)
+                await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
+
                 // Save last payment date
                 await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
+                await setVal(`/users/${safeEmail}/lastBookPaymentDate`, new Date());
 
                 // Also update Lead if exists
                 let leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
