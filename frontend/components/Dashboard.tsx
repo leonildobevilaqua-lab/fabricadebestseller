@@ -18,12 +18,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isPurchasing, setIsPurchasing] = useState(false);
+    const [hasCredits, setHasCredits] = useState(false);
 
     const handleGenerateClick = async () => {
         if (!user?.email) return;
         setIsPurchasing(true);
 
-        // Open window immediately to avoid popup blockers
+        if (hasCredits) {
+            // User has credits, proceed directly.
+            // This prevents the "Flash" of window opening/closing if we already know they have credits.
+            setIsPurchasing(false);
+            onNewBook();
+            return;
+        }
+
+        // Open window immediately to avoid popup blockers (for Purchase flow)
         const paymentWindow = window.open('', '_blank');
         if (paymentWindow) {
             paymentWindow.document.write('<html><head><title>Processando...</title><style>body{background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;}</style></head><body><h2>Aguarde, gerando cobrança segura...</h2></body></html>');
@@ -36,6 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 return 'https://api.fabricadebestseller.com.br';
             };
 
+            // Double check credits just in case (race condition)
             const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
 
             if (!res.ok) {
@@ -46,9 +56,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             const access = await res.json();
 
             if (access.credits > 0) {
-                // Already has credit -> Proceed to Factory
+                // Unexpected credit found? (Maybe parallel update)
                 if (paymentWindow) paymentWindow.close();
                 setIsPurchasing(false);
+                setHasCredits(true);
+                // Alert user so they know why they are being redirected without paying again
+                // alert("Crédito identificado! Redirecionando...");
                 onNewBook();
             } else {
                 // 2. Need to Pay -> Create Charge
@@ -74,20 +87,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         window.open(purchaseData.invoiceUrl, '_blank');
                     }
 
-                    // Alert user to use the check button
-                    // Keep setIsPurchasing true or false?
-                    // User requested "Show checkout... Jamais... sem confirmação".
-                    // Code below has "JÁ PAGUEI" button which relies on setIsPurchasing(true) to show check logic?
-                    // Actually, the button says "JÁ PAGUEI - LIBERAR AGORA".
-                    // If we set isPurchasing(false), the button changes back to "GERAR AGORA".
-                    // We want to KEEP the "Checking" state visible or at least allow them to click "Check".
-                    // Let's keep isPurchasing(false) to reset the button to 'GERAR AGORA' but maybe we want a specific state "WAITING_PAYMENT"?
-                    // Current UI has logic: If isActive, show Buttons.
-                    // Button 1: Gerar Agora (calls handleGenerateClick)
-                    // Button 2: Já Paguei (calls check logic)
-
                     setIsPurchasing(false);
-                    // Alert is handled by the "Aguarde..." window mostly, but let's be safe.
                 } else {
                     if (paymentWindow) paymentWindow.close();
                     alert("Erro: URL de fatura não retornada.");
@@ -103,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     };
 
     useEffect(() => {
-        // Fetch User Stats
+        // Fetch User Stats AND Payment Status on mount
         const fetchMe = async () => {
             try {
                 const getApiBase = () => {
@@ -118,13 +118,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 const headers: any = { 'Content-Type': 'application/json' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
 
-                const res = await fetch(`${getApiBase()}/api/user/me?email=${user.email}`, {
-                    headers
-                });
+                // Parallel fetch
+                const [resUser, resPayment] = await Promise.all([
+                    fetch(`${getApiBase()}/api/user/me?email=${user.email}`, { headers }),
+                    fetch(`${getApiBase()}/api/payment/access?email=${user.email}`)
+                ]);
 
-                if (res.ok) {
-                    const data = await res.json();
+                if (resUser.ok) {
+                    const data = await resUser.json();
                     setStats(data);
+                }
+
+                if (resPayment.ok) {
+                    const payData = await resPayment.json();
+                    if (payData.credits > 0) setHasCredits(true);
+                    else setHasCredits(false);
                 }
             } catch (e) {
                 console.error("Failed to fetch dashboard stats", e);
@@ -160,6 +168,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             console.log("Pagamento Confirmado via Polling!");
                             clearInterval(interval);
                             setIsPurchasing(false);
+                            setHasCredits(true);
                             alert("Pagamento Confirmado! Redirecionando para a Fábrica...");
                             onNewBook();
                         }
@@ -176,13 +185,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     }, [isPurchasing, user?.email, onNewBook]);
 
     const planName = stats?.plan?.name || "FREE";
-    // Check billing from stats
-    // Note: stats from backend contains: { plan: { name, billing, ... }, stats: { ... } }
     const billing = stats?.plan?.billing || 'monthly';
-
     const cycleCount = stats?.stats?.purchaseCycleCount || 0;
-    const nextBookPrice = stats?.stats?.nextBookPrice || 16.90;
     const orders = stats?.orders || [];
+
+    // Determine Prices properly for Sidebar and Box based on Plan AND Billing
+    let currentCyclePrices = [26.90, 24.21, 22.87, 21.52]; // Default STARTER MENSAL
+    if (planName.toUpperCase().includes('STARTER')) {
+        if (billing === 'annual') currentCyclePrices = [24.90, 22.41, 21.17, 19.92];
+        else currentCyclePrices = [26.90, 24.21, 22.87, 21.52];
+    }
+    if (planName.toUpperCase().includes('PRO')) {
+        if (billing === 'annual') currentCyclePrices = [19.90, 17.91, 16.92, 15.92];
+        else currentCyclePrices = [21.90, 19.71, 18.62, 17.52];
+    }
+    if (planName.toUpperCase().includes('BLACK')) {
+        if (billing === 'annual') currentCyclePrices = [14.90, 13.41, 12.67, 11.92];
+        else currentCyclePrices = [16.90, 15.21, 14.37, 13.52];
+    }
+
+    const priceIndex = cycleCount % 4;
+    const nextBookDisplayPrice = currentCyclePrices[priceIndex] || currentCyclePrices[0];
 
     // Mock Orders if empty for demo
     const displayOrders = orders.length > 0 ? orders : [
@@ -241,27 +264,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     {/* Cycle Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
                         {[0, 1, 2, 3].map((step) => {
-                            // Define Prices based on Plan (Mirroring Backend)
-                            const isAnnual = billing === 'annual';
-                            let prices = [26.90, 24.21, 22.87, 21.52]; // STARTER MENSAL (Default)
-
-                            // Logic copied from backend/user request logic
-                            if (planName.toUpperCase().includes('STARTER')) {
-                                if (isAnnual) prices = [24.90, 22.41, 21.17, 19.92]; // STARTER ANUAL
-                                else prices = [26.90, 24.21, 22.87, 21.52]; // STARTER MENSAL
-                            }
-
-                            if (planName.toUpperCase().includes('PRO')) {
-                                if (isAnnual) prices = [19.90, 17.91, 16.92, 15.92]; // PRO ANUAL
-                                else prices = [21.90, 19.71, 18.62, 17.52]; // PRO MENSAL
-                            }
-
-                            if (planName.toUpperCase().includes('BLACK')) {
-                                if (isAnnual) prices = [14.90, 13.41, 12.67, 11.92]; // BLACK ANUAL
-                                else prices = [16.90, 15.21, 14.37, 13.52]; // BLACK MENSAL
-                            }
-
-                            const price = prices[step] !== undefined ? prices[step] : prices[0];
+                            // Use same logic as determined above for consistency
+                            const price = currentCyclePrices[step] !== undefined ? currentCyclePrices[step] : currentCyclePrices[0];
                             const isDone = step < cycleCount;
                             const isActive = step === cycleCount;
                             const isLocked = step > cycleCount;
@@ -315,6 +319,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             >
                                                 {isPurchasing ? (
                                                     <span className="animate-spin">⌛</span>
+                                                ) : hasCredits ? (
+                                                    // If user has credits, change CTA to be clear
+                                                    <>
+                                                        <span className="text-lg">⚡</span> USAR CRÉDITO
+                                                    </>
                                                 ) : (
                                                     <>
                                                         <span className="text-lg">⚡</span> GERAR AGORA
@@ -323,38 +332,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             </button>
 
                                             {/* Manual Payment Check Button */}
-                                            <button
-                                                onClick={async () => {
-                                                    const getApiBase = () => {
-                                                        const host = window.location.hostname;
-                                                        if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-                                                        return 'https://api.fabricadebestseller.com.br';
-                                                    };
+                                            {/* Only show check button if purchasing OR no credits (and thus intent to buy) */}
+                                            {!hasCredits && (
+                                                <button
+                                                    onClick={async () => {
+                                                        const getApiBase = () => {
+                                                            const host = window.location.hostname;
+                                                            if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+                                                            return 'https://api.fabricadebestseller.com.br';
+                                                        };
 
-                                                    if (isPurchasing) return;
-                                                    setIsPurchasing(true);
+                                                        if (isPurchasing) return;
+                                                        setIsPurchasing(true);
 
-                                                    try {
-                                                        const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}&_t=${Date.now()}`);
-                                                        const data = await res.json();
+                                                        try {
+                                                            const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}&_t=${Date.now()}`);
+                                                            const data = await res.json();
 
-                                                        if (data.credits > 0) {
-                                                            alert("Pagamento Confirmado! Iniciando geração...");
-                                                            onNewBook();
-                                                        } else {
-                                                            alert("O banco ainda não confirmou o pagamento. Isso pode levar de 10 a 60 segundos. Por favor, aguarde um momento e clique novamente.");
+                                                            if (data.credits > 0) {
+                                                                alert("Pagamento Confirmado! Iniciando geração...");
+                                                                setHasCredits(true);
+                                                                onNewBook();
+                                                            } else {
+                                                                alert("O banco ainda não confirmou o pagamento. Isso pode levar de 10 a 60 segundos. Por favor, aguarde um momento e clique novamente.");
+                                                            }
+                                                        } catch (e) {
+                                                            alert("Erro ao verificar conexão com o servidor.");
+                                                        } finally {
+                                                            setIsPurchasing(false);
                                                         }
-                                                    } catch (e) {
-                                                        alert("Erro ao verificar conexão com o servidor.");
-                                                    } finally {
-                                                        setIsPurchasing(false);
-                                                    }
-                                                }}
-                                                disabled={isPurchasing}
-                                                className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider disabled:opacity-50"
-                                            >
-                                                {isPurchasing ? "Verificando..." : "JÁ PAGUEI - LIBERAR AGORA"}
-                                            </button>
+                                                    }}
+                                                    disabled={isPurchasing}
+                                                    className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider disabled:opacity-50"
+                                                >
+                                                    {isPurchasing ? "Verificando..." : "JÁ PAGUEI - LIBERAR AGORA"}
+                                                </button>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="h-8 flex items-center justify-center">
@@ -440,7 +453,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     <div className="flex items-center gap-3">
                                         <span className="text-4xl">💰</span>
                                         <div>
-                                            <span className="text-4xl md:text-5xl font-black text-white tracking-tight">R$ {planName === 'BLACK' && Number(nextBookPrice) < 16.90 ? '16,90' : Number(nextBookPrice).toFixed(2).replace('.', ',')}</span>
+                                            <span className="text-4xl md:text-5xl font-black text-white tracking-tight">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</span>
                                             <span className="text-slate-400 text-sm font-bold ml-2">/geração</span>
                                         </div>
                                     </div>
@@ -485,7 +498,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 h-max self-start md:w-48">
                                         <p className="text-indigo-400 font-bold text-[10px] uppercase tracking-widest mb-4 text-center md:hidden">Valores Progressivos</p>
                                         <div className="space-y-3">
-                                            {(planName.includes('BLACK') ? [16.90, 15.21, 14.37, 13.52] : planName.includes('PRO') ? [19.90, 17.91, 16.92, 15.92] : [24.90, 22.41, 21.17, 19.92]).map((p, i) => (
+                                            {currentCyclePrices.map((p, i) => (
                                                 <div key={i} className={`flex justify-between items-center ${i === cycleCount ? 'bg-indigo-600/20 -mx-2 px-2 py-1.5 rounded border border-indigo-500/30' : 'opacity-60'}`}>
                                                     <span className="text-[10px] uppercase font-bold text-slate-400">Livro {i + 1}</span>
                                                     <span className="text-sm font-black text-white">R$ {p.toFixed(2).replace('.', ',')}</span>
