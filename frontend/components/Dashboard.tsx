@@ -254,24 +254,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                         return 'https://api.fabricadebestseller.com.br';
                                                     };
 
-                                                    setIsPurchasing(true); // Reuse loading state
+                                                    if (isPurchasing) return;
+                                                    setIsPurchasing(true);
+
                                                     try {
-                                                        const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
+                                                        // Add timestamp to prevent caching
+                                                        const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}&_t=${Date.now()}`);
                                                         const data = await res.json();
+
                                                         if (data.credits > 0) {
+                                                            alert("Pagamento Confirmado! Iniciando geração...");
                                                             onNewBook();
                                                         } else {
-                                                            alert("Pagamento ainda não confirmado. Se você já pagou, aguarde alguns instantes e tente novamente.");
+                                                            alert("O banco ainda não confirmou o pagamento. Isso pode levar de 10 a 60 segundos. Por favor, aguarde um momento e clique novamente.");
                                                         }
                                                     } catch (e) {
-                                                        alert("Erro ao verificar pagamento.");
+                                                        alert("Erro ao verificar conexão com o servidor.");
                                                     } finally {
                                                         setIsPurchasing(false);
                                                     }
                                                 }}
-                                                className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider"
+                                                disabled={isPurchasing}
+                                                className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider"
                                             >
-                                                Pagamento Efetuado - Gerar Livro Agora
+                                                {isPurchasing ? "Verificando..." : "JÁ PAGUEI - LIBERAR AGORA"}
                                             </button>
                                         </div>
                                     ) : (
