@@ -322,11 +322,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 ) : hasCredits ? (
                                                     // If user has credits, change CTA to be clear
                                                     <>
-                                                        <span className="text-lg">⚡</span> USAR CRÉDITO
+                                                        <span className="text-lg">⚡</span> GERAR MEU LIVRO
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <span className="text-lg">⚡</span> GERAR AGORA
+                                                        <span className="text-lg">⚡</span> COMPRAR CRÉDITO
                                                     </>
                                                 )}
                                             </button>
@@ -428,7 +428,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             <div className="text-center md:text-right md:border-l md:border-slate-600 md:pl-6">
                                                 <p className="text-xs text-slate-400 font-bold uppercase">Renovação</p>
                                                 <p className="text-lg font-bold text-white">
-                                                    R$ {stats?.subscriptionPrice ? stats.subscriptionPrice.toFixed(2).replace('.', ',') : (planName === 'BLACK' ? '49,90' : planName === 'PRO' ? '34,90' : '29,90')} <span className="text-xs font-normal text-slate-500">/{isAnnual ? 'ano' : 'mês'}</span>
+                                                    R$ {stats?.subscriptionPrice ? stats.subscriptionPrice.toFixed(2).replace('.', ',') : (planName === 'BLACK' ? '49,90' : planName === 'PRO' ? '34,90' : '19,90')} <span className="text-xs font-normal text-slate-500">/{isAnnual ? 'ano' : 'mês'}</span>
                                                 </p>
                                             </div>
                                         </div>
