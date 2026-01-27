@@ -8,48 +8,19 @@ const upload = multer();
 
 // --- PRICING CONFIGURATION ---
 // --- PRICING CONFIGURATION ---
-const PRICING_CONFIG: any = {
-    'STARTER': {
-        'annual': [
-            { price: 24.90, link: 'https://pay.kiwify.com.br/SpCDp2q' }, // Level 1 (Base)
-            { price: 22.41, link: 'https://pay.kiwify.com.br/0R6K3gC' }, // Level 2 (10% off)
-            { price: 21.17, link: 'https://pay.kiwify.com.br/2HYq1Ji' }, // Level 3 (15% off)
-            { price: 19.92, link: 'https://pay.kiwify.com.br/KZSbSjM' }  // Level 4 (20% off)
-        ],
-        'monthly': [
-            { price: 26.90, link: 'https://pay.kiwify.com.br/g1L85dO' }, // Level 1
-            { price: 24.21, link: 'https://pay.kiwify.com.br/iztHm1K' }, // Level 2
-            { price: 22.87, link: 'https://pay.kiwify.com.br/tdpPzXY' }, // Level 3
-            { price: 21.52, link: 'https://pay.kiwify.com.br/Up1n5lb' }  // Level 4
-        ]
+// CONFIGURAÇÃO IMUTÁVEL DE PREÇOS (Baseado no Plano Ativo e Ciclo de 4 Livros)
+const PRICING_TABLE: any = {
+    STARTER: {
+        MONTHLY: [26.90, 24.21, 22.87, 21.52], // Livro 1, 2, 3, 4
+        ANNUAL: [24.90, 22.41, 21.17, 19.92]
     },
-    'PRO': {
-        'annual': [
-            { price: 19.90, link: 'https://pay.kiwify.com.br/pH8lSvE' },
-            { price: 17.91, link: 'https://pay.kiwify.com.br/SCgOrg9' },
-            { price: 16.92, link: 'https://pay.kiwify.com.br/mChyOMF' },
-            { price: 15.92, link: 'https://pay.kiwify.com.br/t5vOuOH' }
-        ],
-        'monthly': [
-            { price: 21.90, link: 'https://pay.kiwify.com.br/dEoi760' },
-            { price: 19.71, link: 'https://pay.kiwify.com.br/93RoEg1' },
-            { price: 18.62, link: 'https://pay.kiwify.com.br/JI5Ah1E' },
-            { price: 17.52, link: 'https://pay.kiwify.com.br/EmUxPsB' }
-        ]
+    PRO: {
+        MONTHLY: [21.90, 19.71, 18.62, 17.52],
+        ANNUAL: [19.90, 17.91, 16.92, 15.92]
     },
-    'BLACK': {
-        'annual': [
-            { price: 14.90, link: 'https://pay.kiwify.com.br/ottQN4o' },
-            { price: 13.41, link: 'https://pay.kiwify.com.br/7Df9tSf' },
-            { price: 12.67, link: 'https://pay.kiwify.com.br/l41UVMk' },
-            { price: 11.92, link: 'https://pay.kiwify.com.br/LxYJjDq' }
-        ],
-        'monthly': [
-            { price: 16.90, link: 'https://pay.kiwify.com.br/Cg59pjZ' },
-            { price: 15.21, link: 'https://pay.kiwify.com.br/kSe4GqY' },
-            { price: 14.37, link: 'https://pay.kiwify.com.br/GCqdJAU' },
-            { price: 13.52, link: 'https://pay.kiwify.com.br/LcNvYD0' }
-        ]
+    BLACK: {
+        MONTHLY: [16.90, 15.21, 14.37, 13.52],
+        ANNUAL: [14.90, 13.41, 12.67, 11.92]
     }
 };
 
@@ -604,7 +575,7 @@ export const checkAccess = async (req: Request, res: Response) => {
     // --- Dynamic Pricing Logic ---
     // --- Dynamic Pricing Logic ---
     let bookPrice = 39.90; // Default Avulso
-    let checkoutUrl = 'https://pay.kiwify.com.br/QPTslcx'; // Default Checkout
+    let checkoutUrl = ''; // Default Checkout (Dynamic)
     let planName = 'NONE';
     let discountLevel = 1;
     let leadStatus = null;
@@ -696,12 +667,13 @@ export const checkAccess = async (req: Request, res: Response) => {
                 // Cycle Logic
                 const cycleIndex = usageCount % 4; // 0, 1, 2, 3
 
-                const planConfig = PRICING_CONFIG[planName]?.[billing];
-                if (planConfig && planConfig[cycleIndex]) {
-                    bookPrice = planConfig[cycleIndex].price;
-                    checkoutUrl = planConfig[cycleIndex].link;
-                    discountLevel = cycleIndex + 1;
-                }
+                const billingKey = billing === 'annual' ? 'ANNUAL' : 'MONTHLY';
+                const prices = PRICING_TABLE[planName]?.[billingKey] || PRICING_TABLE['STARTER']['MONTHLY'];
+                const priceVal = prices[cycleIndex] || prices[0];
+
+                bookPrice = priceVal;
+                checkoutUrl = ''; // Dynamic generation only
+                discountLevel = cycleIndex + 1;
 
                 // FORCE ACTIVE STATUS IN RESPONSE if Valid
                 if (!userPlan) userPlan = { ...effectivePlan, status: 'ACTIVE' };
@@ -804,7 +776,7 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         let plan = await getVal(`/users/${safeEmail}/plan`);
 
         // Fallback to searching leads if no user plan
-        if (!plan) {
+        if (!plan || plan.status !== 'ACTIVE') {
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
             const subLead = leads.find((l: any) =>
@@ -820,10 +792,10 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         if (planName.includes('BLACK')) finalPlanName = 'BLACK';
         else if (planName.includes('PRO')) finalPlanName = 'PRO';
 
-        const billing = plan ? (plan.billing || 'monthly').toLowerCase() : 'monthly';
+        const billing = plan ? (plan.billing || 'monthly').toUpperCase() : 'MONTHLY'; // Ensure UPPERCASE for Table key
+        const billingKey = billing === 'ANNUAL' || billing === 'ANUAL' ? 'ANNUAL' : 'MONTHLY';
 
         // 2. Determine Cycle Level (Usage)
-        // Count confirmed usage
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
@@ -835,14 +807,11 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         const cycleIndex = usageCount % 4; // 0, 1, 2, 3
 
         // 3. Get Price
-        const prices = PRICING_CONFIG[finalPlanName]?.[billing] || PRICING_CONFIG['STARTER']['monthly'];
-        const price = prices[cycleIndex] || prices[0];
-        // Handle object format in PRICING_CONFIG which might have {price, link} or just price if I changed it?
-        // In this file, PRICING_CONFIG has objects { price: number, link: string }.
-        const finalPrice = typeof price === 'object' ? price.price : price;
+        // PRICING_TABLE keys: STARTER, PRO, BLACK. Subkeys: MONTHLY, ANNUAL.
+        const prices = PRICING_TABLE[finalPlanName]?.[billingKey] || PRICING_TABLE['STARTER']['MONTHLY'];
+        const finalPrice = prices[cycleIndex] || prices[0];
 
         // 4. Create Asaas Charge
-        // Get/Create Customer
         const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
         const customerId = await AsaasProvider.createCustomer({
             name: userProfile.name || email.split('@')[0],
@@ -852,7 +821,6 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         });
 
         // Create Payment
-        // BillingType UNDEFINED allows user to choose PIX or BOLETO
         const payment = await AsaasProvider.createPayment(
             customerId,
             finalPrice,
