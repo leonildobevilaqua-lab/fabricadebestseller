@@ -1796,56 +1796,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             <PricingSection onSelectPlan={startWizard} lang={lang} onLoginClick={onLoginClick} />
 
             {/* --- OFFER SECTION (HIDDEN) --- */}
-            {/* 
-            <section className="py-20" id="oferta">
-                <div className="max-w-6xl mx-auto px-6">
-                    <div className="text-center mb-12">
-                        <div className="text-emerald-500 font-bold tracking-widest uppercase mb-4 text-xl md:text-2xl">
-                            {t[lang].landing.singleGeneration}
-                        </div>
-                        <h2 className="text-3xl md:text-5xl font-bold mb-4 text-white">{translations[lang].offerTitle}</h2>
-                        <p className="text-xl text-slate-400">{translations[lang].offerSubtitle}</p>
-                    </div>
-
-                    <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-3xl p-8 md:p-12 text-center shadow-2xl shadow-yellow-500/20 text-slate-900 transform hover:scale-[1.02] transition-transform relative overflow-hidden">
-                            <div className="absolute inset-0 bg-white/10 pointer-events-none"></div>
-                            <div className="relative z-10">
-                                <h3 className="text-3xl font-bold mb-2">{translations[lang].generateNow}</h3>
-                                <p className="font-medium opacity-90 mb-8 text-lg">{translations[lang].generateDesc}</p>
-                                <div className="text-6xl font-black mb-8 tracking-tighter">R$ 39,90</div>
-                                <button
-                                    onClick={() => startWizard()}
-                                    className="w-full bg-slate-900 text-white text-lg font-bold px-8 py-4 rounded-full shadow-2xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2"
-                                >
-                                    <Zap className="w-5 h-5 fill-current text-yellow-500" />
-                                    {translations[lang].heroButton}
-                                </button>
-                                <p className="text-xs mt-4 opacity-70 font-medium">{translations[lang].delivery}</p>
-                            </div>
-                        </div>
-
-                        <div className="bg-slate-800 border-2 border-slate-700 rounded-3xl p-8 md:p-12 text-center shadow-2xl relative overflow-hidden group hover:border-green-500/50 transition-colors">
-                            <div className="absolute top-0 right-0 bg-green-600 text-white text-xs font-bold px-4 py-2 rounded-bl-xl uppercase tracking-widest shadow-lg">{translations[lang].giftLabel}</div>
-
-                            <h3 className="text-3xl font-bold mb-2 text-white">{translations[lang].buyVoucher}</h3>
-                            <p className="text-slate-400 mb-8 text-lg">{translations[lang].voucherDesc}</p>
-
-                            <div className="text-6xl font-black text-white mb-8 tracking-tighter">R$ 39,90</div>
-
-                            <button
-                                onClick={() => startWizard()}
-                                className="w-full bg-green-600 hover:bg-green-500 text-white text-lg font-bold px-8 py-4 rounded-full shadow-xl transition-all flex items-center justify-center gap-2"
-                            >
-                                <span>🎟️</span>
-                                {translations[lang].buyGift}
-                            </button>
-                            <p className="text-xs text-slate-500 mt-4 font-medium">{translations[lang].voucherLinkInfo}</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
-            */}
+            {/* --- OFFER SECTION REMOVED --- */}
 
             {/* --- UPLOAD SECTION (HIDDEN TEMPORARILY) ---
             <section className="py-20 bg-slate-900 border-t border-slate-800">
