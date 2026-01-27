@@ -64,7 +64,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                 if (purchaseData.invoiceUrl) {
                     // Redirect to Asaas
-                    window.location.href = purchaseData.invoiceUrl;
+                    // Redirect to Asaas (New Tab)
+                    window.open(purchaseData.invoiceUrl, '_blank');
+                    // Alert user to use the check button
+                    alert("A página de pagamento foi aberta em uma nova aba. Após o pagamento, clique em 'PAGAMENTO EFETUADO - GERAR LIVRO AGORA'.");
+                    setIsPurchasing(false);
                 } else {
                     alert("Erro: URL de fatura não retornada.");
                     setIsPurchasing(false);
@@ -226,19 +230,50 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                                     {/* Button */}
                                     {isActive ? (
-                                        <button
-                                            onClick={handleGenerateClick}
-                                            disabled={isPurchasing}
-                                            className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {isPurchasing ? (
-                                                <span className="animate-spin">⌛</span>
-                                            ) : (
-                                                <>
-                                                    <span className="text-lg">⚡</span> GERAR AGORA
-                                                </>
-                                            )}
-                                        </button>
+                                        <div className="flex flex-col gap-2 w-full">
+                                            <button
+                                                onClick={handleGenerateClick}
+                                                disabled={isPurchasing}
+                                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {isPurchasing ? (
+                                                    <span className="animate-spin">⌛</span>
+                                                ) : (
+                                                    <>
+                                                        <span className="text-lg">⚡</span> GERAR AGORA
+                                                    </>
+                                                )}
+                                            </button>
+
+                                            {/* Manual Payment Check Button */}
+                                            <button
+                                                onClick={async () => {
+                                                    const getApiBase = () => {
+                                                        const host = window.location.hostname;
+                                                        if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+                                                        return 'https://api.fabricadebestseller.com.br';
+                                                    };
+
+                                                    setIsPurchasing(true); // Reuse loading state
+                                                    try {
+                                                        const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
+                                                        const data = await res.json();
+                                                        if (data.credits > 0) {
+                                                            onNewBook();
+                                                        } else {
+                                                            alert("Pagamento ainda não confirmado. Se você já pagou, aguarde alguns instantes e tente novamente.");
+                                                        }
+                                                    } catch (e) {
+                                                        alert("Erro ao verificar pagamento.");
+                                                    } finally {
+                                                        setIsPurchasing(false);
+                                                    }
+                                                }}
+                                                className="w-full py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider"
+                                            >
+                                                Pagamento Efetuado - Gerar Livro Agora
+                                            </button>
+                                        </div>
                                     ) : (
                                         <div className="h-8 flex items-center justify-center">
                                             {isDone ? <span className="text-xs text-emerald-500 font-bold">Já Gerado</span> : <span className="text-xs text-slate-600 font-bold">Bloqueado</span>}
