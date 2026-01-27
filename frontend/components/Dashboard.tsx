@@ -23,16 +23,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         if (!user?.email) return;
         setIsPurchasing(true);
         try {
-            // 1. Check Access Status
-            const res = await fetch(`https://api.fabricadebestseller.com.br/api/payment/check-access?email=${user.email}`);
+            // 1. Check Access Status (Corrected Endpoint)
+            // Use Helper if available, else hardcode for now as per previous pattern
+            const getApiBase = () => {
+                const host = window.location.hostname;
+                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005'; // Dev Backend Port
+                return 'https://api.fabricadebestseller.com.br';
+            };
+
+            const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
+
+            // Handle if check-access fails (e.g. 404 or 500)
+            if (!res.ok) {
+                // Fallback: If we can't check access, assume we need to buy? 
+                // Or better, show error.
+                // But sticking to flow: let's try to proceed to purchase if check fails?
+                // No, that's risky. Let's throw.
+                throw new Error("Falha ao verificar créditos.");
+            }
+
             const access = await res.json();
 
             if (access.credits > 0) {
                 // Already has credit -> Proceed to Factory
                 onNewBook();
             } else {
-                // 2. Need to Pay -> Create Charge (FORCE ABSOLUTE URL)
-                const purchaseRes = await fetch('https://api.fabricadebestseller.com.br/api/purchase-direct', {
+                // 2. Need to Pay -> Create Charge
+                const purchaseRes = await fetch(`${getApiBase()}/api/purchase-direct`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: user.email })
@@ -161,7 +178,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             // Define Prices based on Plan (Mirroring Backend)
                             let prices = [24.90, 22.41, 21.17, 19.92]; // STARTER
                             if (planName.includes('PRO')) prices = [19.90, 17.91, 16.92, 15.92];
-                            if (planName.includes('BLACK')) prices = [14.90, 13.41, 12.67, 11.92];
+                            if (planName.includes('BLACK')) prices = [16.90, 15.21, 14.37, 13.52];
 
                             const price = prices[step];
                             const isDone = step < cycleCount;
@@ -351,7 +368,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 h-max self-start md:w-48">
                                         <p className="text-indigo-400 font-bold text-[10px] uppercase tracking-widest mb-4 text-center md:hidden">Valores Progressivos</p>
                                         <div className="space-y-3">
-                                            {(planName.includes('BLACK') ? [14.90, 13.41, 12.67, 11.92] : planName.includes('PRO') ? [19.90, 17.91, 16.92, 15.92] : [24.90, 22.41, 21.17, 19.92]).map((p, i) => (
+                                            {(planName.includes('BLACK') ? [16.90, 15.21, 14.37, 13.52] : planName.includes('PRO') ? [19.90, 17.91, 16.92, 15.92] : [24.90, 22.41, 21.17, 19.92]).map((p, i) => (
                                                 <div key={i} className={`flex justify-between items-center ${i === cycleCount ? 'bg-indigo-600/20 -mx-2 px-2 py-1.5 rounded border border-indigo-500/30' : 'opacity-60'}`}>
                                                     <span className="text-[10px] uppercase font-bold text-slate-400">Livro {i + 1}</span>
                                                     <span className="text-sm font-black text-white">R$ {p.toFixed(2).replace('.', ',')}</span>
