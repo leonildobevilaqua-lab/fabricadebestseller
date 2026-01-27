@@ -299,11 +299,15 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 
             if (!email && pm.customer) {
                 try {
-                    const { AsaasProvider } = await import('../services/asaas.provider');
+                    // Use static import instead of dynamic to avoid module resolution issues
+                    console.log(`[WEBHOOK] Fetching Customer ${pm.customer} from Asaas...`);
                     const customer = await AsaasProvider.getCustomer(pm.customer);
-                    email = customer.email;
-                    payerName = customer.name;
-                    payerCpf = customer.cpfCnpj;
+                    if (customer) {
+                        email = customer.email;
+                        payerName = customer.name;
+                        payerCpf = customer.cpfCnpj;
+                        console.log(`[WEBHOOK] Customer identified: ${email}`);
+                    }
                 } catch (err) { console.error("Failed to fetch Asaas customer", err); }
             }
 

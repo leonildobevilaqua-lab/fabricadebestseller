@@ -117,6 +117,45 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         fetchMe();
     }, [user.email]);
 
+    // Auto-Polling for Payment Confirmation
+    useEffect(() => {
+        let interval: any = null;
+
+        if (isPurchasing) {
+            console.log("Iniciando monitoramento de pagamento...");
+            interval = setInterval(async () => {
+                if (!user?.email) return;
+
+                const getApiBase = () => {
+                    const host = window.location.hostname;
+                    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+                    return 'https://api.fabricadebestseller.com.br';
+                };
+
+                try {
+                    // Timestamp to bust cache
+                    const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}&_t=${Date.now()}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.credits > 0) {
+                            console.log("Pagamento Confirmado via Polling!");
+                            clearInterval(interval);
+                            setIsPurchasing(false);
+                            alert("Pagamento Confirmado! Redirecionando para a Fábrica...");
+                            onNewBook();
+                        }
+                    }
+                } catch (e) {
+                    console.error("Polling error", e);
+                }
+            }, 3000); // Check every 3 seconds
+        }
+
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isPurchasing, user?.email, onNewBook]);
+
     const planName = stats?.plan?.name || "FREE";
     const cycleCount = stats?.stats?.purchaseCycleCount || 0;
     const nextBookPrice = stats?.stats?.nextBookPrice || 16.90;
