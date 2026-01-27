@@ -8,20 +8,14 @@ const upload = multer();
 
 // --- PRICING CONFIGURATION ---
 // --- PRICING CONFIGURATION ---
-// CONFIGURAÇÃO IMUTÁVEL DE PREÇOS (Baseado no Plano Ativo e Ciclo de 4 Livros)
-const PRICING_TABLE: any = {
-    STARTER: {
-        MONTHLY: [26.90, 24.21, 22.87, 21.52], // Livro 1, 2, 3, 4
-        ANNUAL: [24.90, 22.41, 21.17, 19.92]
-    },
-    PRO: {
-        MONTHLY: [21.90, 19.71, 18.62, 17.52],
-        ANNUAL: [19.90, 17.91, 16.92, 15.92]
-    },
-    BLACK: {
-        MONTHLY: [16.90, 15.21, 14.37, 13.52],
-        ANNUAL: [14.90, 13.41, 12.67, 11.92]
-    }
+// TABELA DE PREÇOS IMUTÁVEL (Fonte da Verdade)
+const PRICING_RULES: any = {
+    'STARTER_MENSAL': [26.90, 24.21, 22.87, 21.52],
+    'STARTER_ANUAL': [24.90, 22.41, 21.17, 19.92],
+    'PRO_MENSAL': [21.90, 19.71, 18.62, 17.52],
+    'PRO_ANUAL': [19.90, 17.91, 16.92, 15.92],
+    'BLACK_MENSAL': [16.90, 15.21, 14.37, 13.52],
+    'BLACK_ANUAL': [14.90, 13.41, 12.67, 11.92]
 };
 
 const SUBSCRIPTION_PRICES: any = {
@@ -220,6 +214,8 @@ export const approveLead = async (req: Request, res: Response) => {
     }
 };
 
+
+
 export const handleKiwifyWebhook = async (req: Request, res: Response) => {
     try {
         await reloadDB();
@@ -250,9 +246,6 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             // BUT, usually we pass custom data or we use the customer creation email.
             // In createCharge we created a customer. 
             // Let's assume for now we might need to lookup or it is passed.
-            // Actually, Asaas `PAYMENT_CONFIRMED` payload often includes limited data.
-            // BUT, wait. in `createCharge` validation we can check.
-            // If email is missing, we might fail.
             // Let's check typical payload. Often `payment.details` or we have to use `payload.payment.externalReference` if we set it?
             // We didn't set externalReference in createCharge.
             // However, we can fetch customer details if needed.
@@ -667,9 +660,9 @@ export const checkAccess = async (req: Request, res: Response) => {
                 // Cycle Logic
                 const cycleIndex = usageCount % 4; // 0, 1, 2, 3
 
-                const billingKey = billing === 'annual' ? 'ANNUAL' : 'MONTHLY';
-                const prices = PRICING_TABLE[planName]?.[billingKey] || PRICING_TABLE['STARTER']['MONTHLY'];
-                const priceVal = prices[cycleIndex] || prices[0];
+                const billingKey = (billing === 'annual' || billing === 'anual') ? 'ANUAL' : 'MENSAL';
+                const priceList = PRICING_RULES[`${planName}_${billingKey}`] || PRICING_RULES['STARTER_MENSAL'];
+                const priceVal = priceList[cycleIndex] || priceList[0];
 
                 bookPrice = priceVal;
                 checkoutUrl = ''; // Dynamic generation only
@@ -765,40 +758,36 @@ export const useCredit = async (req: Request, res: Response) => {
 
 export const createBookGenerationCharge = async (req: Request, res: Response) => {
     try {
-        console.log("[PURCHASE] Initiation Request:", req.body);
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: "Email required" });
-
         const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
         await reloadDB();
 
-        // 1. Determine User Plan
+        // 1. Identificar Plano e Ciclo
         let plan = await getVal(`/users/${safeEmail}/plan`);
 
-        // Fallback to searching leads if no user plan
+        // Fallback search
         if (!plan || plan.status !== 'ACTIVE') {
             const rawLeads = await getVal('/leads') || [];
-            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-            const subLead = leads.find((l: any) =>
-                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-                l.status === 'SUBSCRIBER'
+            const actionLead = Object.values(rawLeads).find((l: any) =>
+                l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.status === 'SUBSCRIBER'
             );
-            if (subLead && subLead.plan) plan = subLead.plan;
+            if (actionLead && (actionLead as any).plan) plan = (actionLead as any).plan;
         }
 
         const planName = plan ? (plan.name || 'STARTER').toUpperCase() : 'STARTER';
-        // Normalize Plan Name
-        let finalPlanName = 'STARTER';
-        if (planName.includes('BLACK')) finalPlanName = 'BLACK';
-        else if (planName.includes('PRO')) finalPlanName = 'PRO';
+        let cleanPlan = 'STARTER';
+        if (planName.includes('BLACK')) cleanPlan = 'BLACK';
+        else if (planName.includes('PRO')) cleanPlan = 'PRO';
 
-        const billing = plan ? (plan.billing || 'monthly').toUpperCase() : 'MONTHLY'; // Ensure UPPERCASE for Table key
-        const billingKey = billing === 'ANNUAL' || billing === 'ANUAL' ? 'ANNUAL' : 'MONTHLY';
+        const billingRaw = plan ? (plan.billing || 'monthly').toLowerCase() : 'monthly';
+        const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
 
-        // 2. Determine Cycle Level (Usage)
+        const planKey = `${cleanPlan}_${billingSuffix}`;
+
+        // 2. Definir Prioridade/Ciclo
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
         const usageCount = leads.filter((l: any) =>
             l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
             (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
@@ -806,12 +795,10 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
 
         const cycleIndex = usageCount % 4; // 0, 1, 2, 3
 
-        // 3. Get Price
-        // PRICING_TABLE keys: STARTER, PRO, BLACK. Subkeys: MONTHLY, ANNUAL.
-        const prices = PRICING_TABLE[finalPlanName]?.[billingKey] || PRICING_TABLE['STARTER']['MONTHLY'];
-        const finalPrice = prices[cycleIndex] || prices[0];
+        const priceList = PRICING_RULES[planKey] || PRICING_RULES['STARTER_MENSAL'];
+        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : 29.90;
 
-        // 4. Create Asaas Charge
+        // 3. Criar Cobrança no Asaas
         const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
         const customerId = await AsaasProvider.createCustomer({
             name: userProfile.name || email.split('@')[0],
@@ -820,25 +807,17 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
             phone: userProfile.phone || undefined
         });
 
-        // Create Payment
-        const payment = await AsaasProvider.createPayment(
+        const charge = await AsaasProvider.createPayment(
             customerId,
-            finalPrice,
-            `Geração de Livro - ${finalPlanName} - Ciclo ${cycleIndex + 1}/4`
+            price,
+            `Geração de Livro - Nível ${cycleIndex + 1} (${cleanPlan})`
         );
 
-        console.log(`[PURCHASE] Created charge for ${email}: ${finalPrice} (${payment.invoiceUrl})`);
+        return res.json({ success: true, invoiceUrl: charge.invoiceUrl });
 
-        return res.json({
-            success: true,
-            invoiceUrl: payment.invoiceUrl,
-            price: finalPrice,
-            level: cycleIndex + 1
-        });
-
-    } catch (e: any) {
-        console.error("Purchase Error:", e);
-        return res.status(500).json({ error: e.message || "Failed to create charge" });
+    } catch (error: any) {
+        console.error('Falha ao criar cobrança:', error);
+        return res.status(500).json({ error: error.message || 'Falha ao criar cobrança' });
     }
 };
 

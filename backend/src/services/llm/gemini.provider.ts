@@ -3,7 +3,7 @@ import { LLMProvider } from "./provider.interface"; // Adjusted path since file 
 
 export class GeminiProvider implements LLMProvider {
     private client: GoogleGenerativeAI;
-    private models = ["gemini-2.5-flash"];
+    private models = ["gemini-1.5-flash"];
 
     constructor(apiKey: string) {
         this.client = new GoogleGenerativeAI(apiKey);
@@ -15,7 +15,14 @@ export class GeminiProvider implements LLMProvider {
         let lastError: any;
         for (const modelName of this.models) {
             try {
-                const generativeModel = this.client.getGenerativeModel({ model: modelName });
+                // FORCE CONFIG AS REQUESTED
+                const generativeModel = this.client.getGenerativeModel({
+                    model: modelName,
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 8000,
+                    }
+                });
 
                 // Add Timeout of 60s
                 const resultFn = generativeModel.generateContent(finalPrompt);
@@ -46,7 +53,11 @@ export class GeminiProvider implements LLMProvider {
                 const generativeModel = this.client.getGenerativeModel({
                     model: modelName,
                     // Only use native JSON mode for 1.5 models to avoid errors on older ones
-                    generationConfig: (modelName.includes('1.5') || modelName.includes('2.')) ? { responseMimeType: "application/json" } : undefined
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        temperature: 0.7,
+                        maxOutputTokens: 8000
+                    }
                 });
 
                 const result = await generativeModel.generateContent(prompt);

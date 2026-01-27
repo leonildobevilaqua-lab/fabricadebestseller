@@ -21,85 +21,58 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const [hasCredits, setHasCredits] = useState(false);
 
     const handleGenerateClick = async () => {
-        if (!user?.email) return;
         setIsPurchasing(true);
 
-        if (hasCredits) {
-            // User has credits, proceed directly.
-            // This prevents the "Flash" of window opening/closing if we already know they have credits.
-            setIsPurchasing(false);
-            onNewBook();
-            return;
-        }
-
-        // Open window immediately to avoid popup blockers (for Purchase flow)
-        const paymentWindow = window.open('', '_blank');
-        if (paymentWindow) {
-            paymentWindow.document.write('<html><head><title>Processando...</title><style>body{background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;}</style></head><body><h2>Aguarde, gerando cobrança segura...</h2></body></html>');
-        }
+        const getApiBase = () => {
+            const host = window.location.hostname;
+            if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+            return 'https://api.fabricadebestseller.com.br';
+        };
 
         try {
-            const getApiBase = () => {
-                const host = window.location.hostname;
-                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-                return 'https://api.fabricadebestseller.com.br';
-            };
-
-            // Double check credits just in case (race condition)
+            // 1. CHECAGEM DE SEGURANÇA: O usuário tem crédito sobrando?
             const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
 
-            if (!res.ok) {
-                if (paymentWindow) paymentWindow.close();
-                throw new Error("Falha ao verificar créditos.");
-            }
+            if (!res.ok) throw new Error("Falha de verificação");
 
             const access = await res.json();
 
             if (access.credits > 0) {
-                // Unexpected credit found? (Maybe parallel update)
-                if (paymentWindow) paymentWindow.close();
+                // TEM CRÉDITO PAGO: LIBERA A FÁBRICA
                 setIsPurchasing(false);
-                setHasCredits(true);
-                // Alert user so they know why they are being redirected without paying again
-                // alert("Crédito identificado! Redirecionando...");
                 onNewBook();
-            } else {
-                // 2. Need to Pay -> Create Charge
-                const purchaseRes = await fetch(`${getApiBase()}/api/purchase-direct`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: user.email })
-                });
-
-                if (!purchaseRes.ok) {
-                    const err = await purchaseRes.json().catch(() => ({ error: purchaseRes.statusText }));
-                    throw new Error(err.error || "Erro na criação da cobrança");
-                }
-
-                const purchaseData = await purchaseRes.json();
-
-                if (purchaseData.invoiceUrl) {
-                    // Redirect to Asaas
-                    if (paymentWindow) {
-                        paymentWindow.location.href = purchaseData.invoiceUrl;
-                    } else {
-                        // If window failed to open, try again (likely blocked)
-                        window.open(purchaseData.invoiceUrl, '_blank');
-                    }
-
-                    setIsPurchasing(false);
-                } else {
-                    if (paymentWindow) paymentWindow.close();
-                    alert("Erro: URL de fatura não retornada.");
-                    setIsPurchasing(false);
-                }
+                return;
             }
-        } catch (e: any) {
-            console.error(e);
-            if (paymentWindow) paymentWindow.close();
-            alert('Erro: ' + (e.message || "Erro de conexão"));
+
+            // 2. NÃO TEM CRÉDITO: GERA COBRANÇA NO ASAAS
+            // Atenção: NÃO navegue para /factory aqui. Cobre primeiro.
+            const purchaseRes = await fetch(`${getApiBase()}/api/payment/purchase/book-generation`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: user.email })
+            });
+
+            const purchase = await purchaseRes.json();
+
+            if (purchase.invoiceUrl) {
+                // ABRE O CHECKOUT DO ASAAS EM NOVA ABA
+                const win = window.open(purchase.invoiceUrl, '_blank');
+                if (!win) alert("Por favor, permita popups para abrir o pagamento.");
+
+                // ACIONA POLLING "MODAL" (Estado isPurchasing ativa o useEffect de polling)
+                // setShowPaymentWaitModal(true); // Mapped to isPurchasing=true
+                alert("Cobrança gerada! Realize o pagamento na nova aba. O sistema liberará seu acesso automaticamente assim que confirmar.");
+            } else {
+                setIsPurchasing(false);
+                alert('Erro ao gerar cobrança. Tente novamente.');
+            }
+
+        } catch (error) {
+            console.error('Erro no processo de compra:', error);
             setIsPurchasing(false);
+            alert('Erro ao conectar com o servidor de pagamentos.');
         }
+        // finally { setIsLoading(false); } // Kept true for polling unless error
     };
 
     useEffect(() => {
