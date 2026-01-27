@@ -32,14 +32,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 onNewBook();
             } else {
                 // 2. Need to Pay -> Create Charge (FORCE ABSOLUTE URL)
-                const purchaseRes = await fetch('https://api.fabricadebestseller.com.br/api/purchase/book-generation', {
+                const purchaseRes = await fetch('https://api.fabricadebestseller.com.br/api/payment/purchase/book-generation', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: user.email })
                 });
 
                 if (!purchaseRes.ok) {
-                    const err = await purchaseRes.json().catch(() => ({}));
+                    const err = await purchaseRes.json().catch(() => ({ error: purchaseRes.statusText }));
                     throw new Error(err.error || "Erro na criação da cobrança");
                 }
 
