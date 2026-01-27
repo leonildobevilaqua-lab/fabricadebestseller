@@ -357,17 +357,33 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             const pName = (productName || "").toLowerCase();
             let isBookGeneration = false;
 
+            // Explicit Prices (Safety Net)
+            const generationPrices = [
+                // STARTER
+                24.90, 22.41, 21.17, 19.92, // Annual
+                26.90, 24.21, 22.87, 21.52, // Monthly
+                // PRO
+                19.90, 17.91, 16.92, 15.92, // Annual
+                21.90, 19.71, 18.62, 17.52, // Monthly
+                // BLACK
+                14.90, 13.41, 12.67, 11.92, // Annual
+                16.90, 15.21, 14.37, 13.52, // Monthly
+                // Avulso / Fallbacks
+                39.90
+            ];
+
             // Explicit Keywords
             if (pName.includes('geração') || pName.includes('geracao') || pName.includes('generation') || pName.includes('livro')) {
                 isBookGeneration = true;
             }
-            // Fallback: Price Safety Net (10 to 40 BRL covers 13.52 to 26.90 and 39.90)
-            if (amount > 10 && amount < 40) {
+            // Check explicit prices (robust against keyword failure)
+            const isExactPrice = generationPrices.some(p => Math.abs(p - amount) < 0.05);
+
+            // Fallback: Price Safety Net (10 to 40 BRL covers 11.92 to 39.90)
+            if (isExactPrice || (amount > 10 && amount < 40)) {
                 console.log(`[WEBHOOK] Price Pattern Match for Book Generation: ${amount}`);
                 isBookGeneration = true;
             }
-            // Explicit Prices (Safety Net)
-            const generationPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90]; // Known book prices
             // Note: 19.90 is also starter monthly, so keyword is primary. Price secondary if no keywords?
             // Subscription prices usually have "Assinatura" or Plan name. Book gen has "Geração".
             // We trust keywords first.
