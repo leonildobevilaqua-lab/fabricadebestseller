@@ -403,7 +403,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     <div className="flex items-center gap-3">
                                         <span className="text-4xl">💰</span>
                                         <div>
-                                            <span className="text-4xl md:text-5xl font-black text-white tracking-tight">R$ {Number(nextBookPrice).toFixed(2).replace('.', ',')}</span>
+                                            <span className="text-4xl md:text-5xl font-black text-white tracking-tight">R$ {planName === 'BLACK' && Number(nextBookPrice) < 16.90 ? '16,90' : Number(nextBookPrice).toFixed(2).replace('.', ',')}</span>
                                             <span className="text-slate-400 text-sm font-bold ml-2">/geração</span>
                                         </div>
                                     </div>

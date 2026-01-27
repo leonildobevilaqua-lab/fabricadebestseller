@@ -439,6 +439,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             } else {
                 // IT IS A BOOK PURCHASE (Credit)
                 const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                console.log(`[WEBHOOK] Granting 1 Credit to ${email}. Previous: ${currentCredits}. New: ${currentCredits + 1}`);
                 await setVal(`/credits/${safeEmail}`, currentCredits + 1);
 
                 if (leadIndex !== -1) {
