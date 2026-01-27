@@ -196,5 +196,25 @@ export const AsaasProvider = {
             console.error("Create Payment Error", error.response?.data || error.message);
             throw error;
         }
+    },
+
+    async getCustomerByEmail(email: string) {
+        try {
+            const { data } = await getApi().get(`/customers?email=${email}`);
+            if (data.data && data.data.length > 0) return data.data[0];
+            return null;
+        } catch (error) { return null; }
+    },
+
+    async getPayments(params: any) {
+        try {
+            // params: { customer, status, dateAfter, etc }
+            const qs = new URLSearchParams(params).toString();
+            const { data } = await getApi().get(`/payments?${qs}`);
+            return data.data || [];
+        } catch (error: any) {
+            console.error("Asaas Get Payments Error", error.message);
+            return [];
+        }
     }
 };

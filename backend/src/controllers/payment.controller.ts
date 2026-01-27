@@ -498,7 +498,71 @@ export const checkAccess = async (req: Request, res: Response) => {
     if (bypass) return res.json({ hasAccess: true, credits: 999, hasActiveProject: false });
 
     // NOW read specific paths with fresh data
-    const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+    // NOW read specific paths with fresh data
+    let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+
+    // [EMERGENCY RECOVERY] Check Asaas if explicit local credit is 0
+    if (credits === 0) {
+        try {
+            console.log(`[RECOVERY] Checking Asaas for missed payments for ${email}`);
+            const customer = await AsaasProvider.getCustomerByEmail(email as string);
+            if (customer) {
+                // Check payments from recent history
+                const payments = await AsaasProvider.getPayments({
+                    customer: customer.id,
+                    status: 'RECEIVED'
+                });
+
+                // LIST OF VALID GENERATION PRICES
+                const validPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41];
+
+                const missedPayment = payments.find((p: any) => {
+                    // Check if recent (last 48h)
+                    // p.paymentDate is YYYY-MM-DD usually.
+                    // simplified: Just check if we have seen this ID in 'orders'.
+                    // If NOT in orders AND fits criteria -> Recover it.
+
+                    const isPriceMatch = validPrices.some(vp => Math.abs(vp - p.value) < 0.1);
+                    const desc = (p.description || "").toLowerCase();
+                    const isDescMatch = desc.includes('geração') || desc.includes('livro') || desc.includes('generation');
+
+                    return (isPriceMatch || isDescMatch);
+                });
+
+                if (missedPayment) {
+                    console.log(`[RECOVERY] Found candidate payment! ID: ${missedPayment.id} Val: ${missedPayment.value}`);
+
+                    // CHECK IF ALREADY PROCESSED
+                    const orders = await getVal('/orders') || [];
+                    const alreadyProcessed = orders.some((o: any) => o.id === missedPayment.id || (o.paymentInfo && o.paymentInfo.transactionId === missedPayment.id));
+
+                    if (!alreadyProcessed) {
+                        console.log(`[RECOVERY] AUTO-GRANTING CREDIT FOR MISSED PAYMENT ${missedPayment.id}`);
+                        credits = 1;
+                        await setVal(`/credits/${safeEmail}`, 1);
+                        await setVal(`/users/${safeEmail}/bookCredits`, 1);
+
+                        // Log order to prevent double count
+                        await pushVal('/orders', {
+                            id: missedPayment.id,
+                            date: new Date(),
+                            status: 'RECOVERED_BY_CHECK',
+                            paymentInfo: {
+                                payerEmail: email,
+                                amount: missedPayment.value,
+                                transactionId: missedPayment.id,
+                                provider: 'ASAAS',
+                                recovered: true
+                            }
+                        });
+                    } else {
+                        console.log(`[RECOVERY] Payment ${missedPayment.id} was already in orders log. Duplicate check.`);
+                    }
+                }
+            }
+        } catch (recErr: any) { console.error("Recovery check failed", recErr.message); }
+    }
+
     let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
 
     // FETCH LEADS & VERIFY PLAN INTEGRITY
