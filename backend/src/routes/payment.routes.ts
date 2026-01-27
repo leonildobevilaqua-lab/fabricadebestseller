@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { handleKiwifyWebhook, checkAccess, useCredit, createLead, getLeads, approveLead, updateLead, deleteLead, createCharge } from '../controllers/payment.controller';
+import { handleKiwifyWebhook, checkAccess, useCredit, createLead, getLeads, approveLead, updateLead, deleteLead, createCharge, createBookGenerationCharge } from '../controllers/payment.controller';
 import { simulateWebhook } from '../controllers/simulation.controller';
 
 const router = Router();
@@ -9,6 +9,9 @@ router.post('/simulate-webhook', simulateWebhook); // NEW: Local Simulation
 router.get('/access', checkAccess);
 router.post('/use', useCredit);
 router.post('/create-charge', createCharge);
+
+// SPECIFIC ROUTE FOR BOOK GENERATION PURCHASE
+router.post('/purchase/book-generation', createBookGenerationCharge);
 
 // Admin / Leads
 router.post('/leads', createLead);
