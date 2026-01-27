@@ -361,6 +361,13 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 
             if (pName.includes('anual') || pName.includes('annual') || pName.includes('ano')) billing = 'annual';
 
+            // CRITICAL FIX: Distinguish between "Subscription Purchase" and "Book Generation with Plan Name in Title"
+            // If it's a generation charge (e.g. "Geração de Livro - BLACK"), it is NOT a subscription activation.
+            if (pName.includes('geração') || pName.includes('geracao') || pName.includes('generation') || pName.includes('livro')) {
+                console.log("[WEBHOOK] Detected Book Generation Purchase. Ignoring Plan Subscription Logic.");
+                detectedPlan = null;
+            }
+
             // Fallback: If description is generic "Geração de Livro", it might be avulso.
             // If price matches subscription prices?
             if (!detectedPlan) {
