@@ -517,16 +517,32 @@ export const checkAccess = async (req: Request, res: Response) => {
                 const validPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41];
 
                 const missedPayment = payments.find((p: any) => {
-                    // Check if recent (last 48h)
-                    // p.paymentDate is YYYY-MM-DD usually.
-                    // simplified: Just check if we have seen this ID in 'orders'.
-                    // If NOT in orders AND fits criteria -> Recover it.
+                    // Parse date (Asaas returns YYYY-MM-DD or ISO)
+                    const pDateStr = p.paymentDate || p.dateCreated || p.dueDate;
+                    const pDate = new Date(pDateStr);
+
+                    // Check if recent (last 60 minutes ONLY)
+                    // If p.paymentDate is just a date (YYYY-MM-DD) it defaults to midnight UTC. 
+                    // This might be risky if today is the day.
+                    // Better to check p.dateCreated which is usually ISO timestamp if available?
+                    // Asaas API v3 payment object usually has dateCreated as ISO.
+
+                    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+                    const isRecent = pDate > oneHourAgo;
 
                     const isPriceMatch = validPrices.some(vp => Math.abs(vp - p.value) < 0.1);
                     const desc = (p.description || "").toLowerCase();
                     const isDescMatch = desc.includes('geração') || desc.includes('livro') || desc.includes('generation');
 
-                    return (isPriceMatch || isDescMatch);
+                    // If it's a date-only string (length 10), checking vs 1 hour ago is hard.
+                    // fallback: If it is TODAY's date (YYYY-MM-DD matches today), allow it.
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    const isToday = p.paymentDate === todayStr;
+
+                    // Strict logic: Must be Today OR very recent timestamp
+                    const isTimeValid = isRecent || isToday;
+
+                    return isTimeValid && (isPriceMatch || isDescMatch);
                 });
 
                 if (missedPayment) {
