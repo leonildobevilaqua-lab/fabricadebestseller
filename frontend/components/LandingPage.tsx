@@ -978,39 +978,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                             {/* --- MOVED TO STEP 1 (Post-Payment) --- */}
                                             {/* Author and Topic inputs removed from here */}
 
-                                            {/* --- GIFT SECTION: VOUCHER (Credit) --- */}
-                                            <div className="bg-gradient-to-br from-emerald-900/30 to-emerald-800/20 p-6 rounded-2xl border border-emerald-500/30 space-y-4 hover:border-emerald-400/50 transition-all">
-                                                <div className="flex justify-between items-start">
-                                                    <div className="flex-1">
-                                                        <h3 className="text-lg font-bold text-emerald-400 flex items-center gap-2 mb-1">
-                                                            <span>🎟️</span> COMPRAR VALE-PRESENTE (VOUCHER)
-                                                        </h3>
-                                                        <p className="text-xs text-emerald-200/70">
-                                                            Você compra um crédito agora e recebe um LINK especial. Você envia esse link para a pessoa e ela mesma cria o livro quando quiser.
-                                                        </p>
-                                                    </div>
-                                                </div>
 
-                                                <button
-                                                    className="w-full px-4 py-4 rounded-xl font-bold text-sm uppercase tracking-wider bg-emerald-600/90 hover:bg-emerald-500 text-white transition-all shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2 hover:scale-[1.02] disabled:opacity-50 disabled:grayscale"
-                                                    onClick={async () => {
-                                                        if (!formData.name || !formData.email || !formData.phone) {
-                                                            alert("Por favor, preencha seus dados (Nome, Email, WhatsApp) para receber o voucher.");
-                                                            return;
-                                                        }
-                                                        if (!(formData as any).lgpdConsent) {
-                                                            alert("É necessário aceitar os termos e consentir com as comunicações para prosseguir.");
-                                                            return;
-                                                        }
-                                                        setFormData(prev => ({ ...prev, type: 'VOUCHER' }));
-                                                        await handleSaveLead('VOUCHER');
-                                                        setStep(3); // Start processing/paywall for voucher
-                                                    }}
-                                                    disabled={!(formData as any).lgpdConsent}
-                                                >
-                                                    <span>💳</span> FECHAR COMPRA DO VOUCHER
-                                                </button>
-                                            </div>
 
                                             {/* --- MAIN ACTION: START PRODUCTION --- */}
                                             <div className="space-y-4 pt-2 relative">
