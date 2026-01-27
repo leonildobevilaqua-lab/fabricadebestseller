@@ -75,7 +75,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     }
 
                     // Alert user to use the check button
-                    setIsPurchasing(false); // Reset allows "Check" button to be potentially clicked
+                    // Keep setIsPurchasing true or false?
+                    // User requested "Show checkout... Jamais... sem confirmação".
+                    // Code below has "JÁ PAGUEI" button which relies on setIsPurchasing(true) to show check logic?
+                    // Actually, the button says "JÁ PAGUEI - LIBERAR AGORA".
+                    // If we set isPurchasing(false), the button changes back to "GERAR AGORA".
+                    // We want to KEEP the "Checking" state visible or at least allow them to click "Check".
+                    // Let's keep isPurchasing(false) to reset the button to 'GERAR AGORA' but maybe we want a specific state "WAITING_PAYMENT"?
+                    // Current UI has logic: If isActive, show Buttons.
+                    // Button 1: Gerar Agora (calls handleGenerateClick)
+                    // Button 2: Já Paguei (calls check logic)
+
+                    setIsPurchasing(false);
+                    // Alert is handled by the "Aguarde..." window mostly, but let's be safe.
                 } else {
                     if (paymentWindow) paymentWindow.close();
                     alert("Erro: URL de fatura não retornada.");
@@ -90,138 +102,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         }
     };
 
-    // ... (rest of code)
-
-    // ... inside return (render) ...
-    // Search for line 220ish in map loop
-
-    {/* Cycle Grid */ }
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-        {[0, 1, 2, 3].map((step) => {
-            // Define Prices based on Plan (Mirroring Backend)
-            const isAnnual = stats?.plan?.billing === 'annual';
-            let prices = [26.90, 24.21, 22.87, 21.52]; // STARTER MENSAL (Default)
-
-            if (planName.includes('STARTER')) {
-                if (isAnnual) prices = [24.90, 22.41, 21.17, 19.92]; // STARTER ANUAL
-                else prices = [26.90, 24.21, 22.87, 21.52]; // STARTER MENSAL
-            }
-
-            if (planName.includes('PRO')) {
-                if (isAnnual) prices = [19.90, 17.91, 16.92, 15.92]; // PRO ANUAL
-                else prices = [21.90, 19.71, 18.62, 17.52]; // PRO MENSAL
-            }
-
-            if (planName.includes('BLACK')) {
-                if (isAnnual) prices = [14.90, 13.41, 12.67, 11.92]; // BLACK ANUAL
-                else prices = [16.90, 15.21, 14.37, 13.52]; // BLACK MENSAL
-            }
-
-            const price = prices[step] || prices[0];
-            const isDone = step < cycleCount;
-            const isActive = step === cycleCount;
-            const isLocked = step > cycleCount;
-
-            return (
-                <div key={step} className={`relative rounded-2xl p-4 border transition-all duration-300 flex flex-col items-center justify-center text-center group
-                                    ${isActive ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/20 scale-105 z-20' :
-                        isDone ? 'bg-emerald-900/10 border-emerald-500/30 opacity-70' :
-                            'bg-slate-800/50 border-slate-700 opacity-50 grayscale'}`}>
-
-                    {/* Badge */}
-                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap
-                                        ${isActive ? 'bg-indigo-500 text-white shadow-lg' :
-                            isDone ? 'bg-emerald-600 text-white' :
-                                'bg-slate-700 text-slate-400'}`}>
-                        {isActive ? 'PRÓXIMO LIVRO' : isDone ? 'COMPLETO' : `LIVRO 0${step + 1}`}
-                    </div>
-
-                    {/* Icon */}
-                    <div className="mb-3 mt-2">
-                        {isDone ? (
-                            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg">
-                                <CheckCircle className="w-6 h-6" />
-                            </div>
-                        ) : isLocked ? (
-                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-500">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                            </div>
-                        ) : (
-                            <div className="w-12 h-12 rounded-full bg-white text-indigo-600 flex items-center justify-center shadow-indigo-500/50 shadow-lg animate-pulse">
-                                <IconBook />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Price */}
-                    <div className="mb-3">
-                        <p className="text-xs text-slate-400 font-bold uppercase">Valor Unitário</p>
-                        <p className={`text-xl md:text-2xl font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>
-                            R$ {price.toFixed(2).replace('.', ',')}
-                        </p>
-                    </div>
-
-                    {/* Button */}
-                    {isActive ? (
-                        <div className="flex flex-col gap-2 w-full">
-                            <button
-                                onClick={handleGenerateClick}
-                                disabled={isPurchasing}
-                                className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-lg hover:shadow-indigo-500/30 transition-all flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isPurchasing ? (
-                                    <span className="animate-spin">⌛</span>
-                                ) : (
-                                    <>
-                                        <span className="text-lg">⚡</span> GERAR AGORA
-                                    </>
-                                )}
-                            </button>
-
-                            {/* Manual Payment Check Button */}
-                            <button
-                                onClick={async () => {
-                                    const getApiBase = () => {
-                                        const host = window.location.hostname;
-                                        if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-                                        return 'https://api.fabricadebestseller.com.br';
-                                    };
-
-                                    if (isPurchasing) return;
-                                    setIsPurchasing(true);
-
-                                    try {
-                                        // Add timestamp to prevent caching
-                                        const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}&_t=${Date.now()}`);
-                                        const data = await res.json();
-
-                                        if (data.credits > 0) {
-                                            alert("Pagamento Confirmado! Iniciando geração...");
-                                            onNewBook();
-                                        } else {
-                                            alert("O banco ainda não confirmou o pagamento. Isso pode levar de 10 a 60 segundos. Por favor, aguarde um momento e clique novamente.");
-                                        }
-                                    } catch (e) {
-                                        alert("Erro ao verificar conexão com o servidor.");
-                                    } finally {
-                                        setIsPurchasing(false);
-                                    }
-                                }}
-                                className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider disabled:opacity-50"
-                            >
-                                {isPurchasing ? "Verificando..." : "JÁ PAGUEI - LIBERAR AGORA"}
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="h-8 flex items-center justify-center">
-                            {isDone ? <span className="text-xs text-emerald-500 font-bold">Já Gerado</span> : <span className="text-xs text-slate-600 font-bold">Bloqueado</span>}
-                        </div>
-                    )}
-                </div>
-            );
-        })}
-    </div>
-
     useEffect(() => {
         // Fetch User Stats
         const fetchMe = async () => {
@@ -234,8 +114,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     return 'https://api.fabricadebestseller.com.br';
                 };
 
-                // Get Token from somewhere? Or just use Email for MVP if backend supports it
-                // For secure impl we would use token. For now let's use the email stored in user object
                 const token = localStorage.getItem('bsf_token');
                 const headers: any = { 'Content-Type': 'application/json' };
                 if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -298,6 +176,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     }, [isPurchasing, user?.email, onNewBook]);
 
     const planName = stats?.plan?.name || "FREE";
+    // Check billing from stats
+    // Note: stats from backend contains: { plan: { name, billing, ... }, stats: { ... } }
+    const billing = stats?.plan?.billing || 'monthly';
+
     const cycleCount = stats?.stats?.purchaseCycleCount || 0;
     const nextBookPrice = stats?.stats?.nextBookPrice || 16.90;
     const orders = stats?.orders || [];
@@ -360,11 +242,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
                         {[0, 1, 2, 3].map((step) => {
                             // Define Prices based on Plan (Mirroring Backend)
-                            let prices = [24.90, 22.41, 21.17, 19.92]; // STARTER
-                            if (planName.includes('PRO')) prices = [19.90, 17.91, 16.92, 15.92];
-                            if (planName.includes('BLACK')) prices = [16.90, 15.21, 14.37, 13.52];
+                            const isAnnual = billing === 'annual';
+                            let prices = [26.90, 24.21, 22.87, 21.52]; // STARTER MENSAL (Default)
 
-                            const price = prices[step];
+                            // Logic copied from backend/user request logic
+                            if (planName.toUpperCase().includes('STARTER')) {
+                                if (isAnnual) prices = [24.90, 22.41, 21.17, 19.92]; // STARTER ANUAL
+                                else prices = [26.90, 24.21, 22.87, 21.52]; // STARTER MENSAL
+                            }
+
+                            if (planName.toUpperCase().includes('PRO')) {
+                                if (isAnnual) prices = [19.90, 17.91, 16.92, 15.92]; // PRO ANUAL
+                                else prices = [21.90, 19.71, 18.62, 17.52]; // PRO MENSAL
+                            }
+
+                            if (planName.toUpperCase().includes('BLACK')) {
+                                if (isAnnual) prices = [14.90, 13.41, 12.67, 11.92]; // BLACK ANUAL
+                                else prices = [16.90, 15.21, 14.37, 13.52]; // BLACK MENSAL
+                            }
+
+                            const price = prices[step] !== undefined ? prices[step] : prices[0];
                             const isDone = step < cycleCount;
                             const isActive = step === cycleCount;
                             const isLocked = step > cycleCount;
@@ -438,7 +335,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                     setIsPurchasing(true);
 
                                                     try {
-                                                        // Add timestamp to prevent caching
                                                         const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}&_t=${Date.now()}`);
                                                         const data = await res.json();
 
@@ -455,7 +351,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                     }
                                                 }}
                                                 disabled={isPurchasing}
-                                                className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider"
+                                                className="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold rounded-lg transition-all flex items-center justify-center gap-1 uppercase tracking-wider disabled:opacity-50"
                                             >
                                                 {isPurchasing ? "Verificando..." : "JÁ PAGUEI - LIBERAR AGORA"}
                                             </button>
@@ -484,7 +380,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                             <h2 className="text-3xl font-black mb-2 uppercase leading-tight">
                                 PLANO {planName} <br />
-                                <span className="text-indigo-400">{stats?.plan?.billing === 'annual' ? 'ANUAL' : 'MENSAL'}</span>
+                                <span className="text-indigo-400">{billing === 'annual' ? 'ANUAL' : 'MENSAL'}</span>
                             </h2>
                             <p className="text-slate-400 text-sm font-bold tracking-widest uppercase mb-8">
                                 ÁREA VIP DE MEMBROS ASSINANTES
