@@ -515,7 +515,17 @@ export const checkAccess = async (req: Request, res: Response) => {
         const usedCount = userOrders.length;
 
         // 3. Determine TRUE BALANCE
-        const theoretical = Math.max(0, paidCount - usedCount);
+        let theoretical = Math.max(0, paidCount - usedCount);
+
+        // [STRICT MODE ADJUSTMENT]
+        // User Requirement: If the LATEST invoice (current attempt) is PENDING, BLOCK access.
+        // This overrides "leftover credits" from DB resets to prevent confusion.
+        if (latestInvoiceStatus === 'PENDING' || latestInvoiceStatus === 'OVERDUE') {
+            if (theoretical > 0) {
+                console.warn(`[STRICT_MODE] Pending Invoice ${latestInvoiceNumber} detected. Freezing ${theoretical} historical credits to enforce current payment.`);
+                theoretical = 0;
+            }
+        }
 
         console.log(`[LEDGER] ${email} -> Payments: ${paidCount} (In) | Orders: ${usedCount} (Out) | Balance Should Be: ${theoretical}`);
 
