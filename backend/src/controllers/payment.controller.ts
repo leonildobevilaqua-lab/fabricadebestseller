@@ -496,13 +496,20 @@ export const checkAccess = async (req: Request, res: Response) => {
                     // CHECK IF ALREADY USED
                     const isUsed = orders.some((o: any) => o.id === p.id || (o.paymentInfo && o.paymentInfo.transactionId === p.id));
 
-                    // CHECK TIME WINDOW (Relaxed to 24 Hours to avoid Timezone issues, but strict enough to blockage old tests)
+                    // CHECK TIME WINDOW (Relaxed to 24 Hours)
                     const payDate = new Date(p.dateCreated);
                     const now = new Date();
                     const diffMs = now.getTime() - payDate.getTime();
                     const isRecent = diffMs < (24 * 60 * 60 * 1000); // 24 Hours
 
-                    console.log(`[CHECK] Found Payment ${p.id}: Val=${p.value}, Desc=${desc}, Date=${p.dateCreated}, Used=${isUsed}, Recent=${isRecent} (${Math.round(diffMs / 1000 / 60)}m ago)`);
+                    // ZOMBIE RECOVERY: If Used + Recent BUT User has 0 credits...
+                    // This means the previous attempt crashed halfway or failed to attribute credit.
+                    if (isUsed && isRecent && credits === 0) {
+                        console.log(`[ZOMBIE] Payment ${p.id} was marked used but user has 0 credits. Restoring...`);
+                        return true; // Allow it to be "found" again to restore credit
+                    }
+
+                    console.log(`[CHECK] Found Payment ${p.id}: Val=${p.value}, Desc=${desc}, Date=${p.dateCreated}, Used=${isUsed}, Recent=${isRecent}`);
 
                     return (isPriceMatch || isDescMatch) && !isUsed && isRecent;
                 });
