@@ -494,83 +494,41 @@ export const checkAccess = async (req: Request, res: Response) => {
 
     const validPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41];
 
-    // 2. RECOVERY: If 0, check if we missed a valid payment
-    if (credits === 0 && asaasPayments.length > 0) {
-        const missedPayment = asaasPayments.find((p: any) => {
-            if (p.status !== 'RECEIVED' && p.status !== 'CONFIRMED') return false;
-
-            const isPriceMatch = validPrices.some(vp => Math.abs(vp - p.value) < 0.1);
-            const desc = (p.description || "").toLowerCase();
-            const isDescMatch = desc.includes('geração') || desc.includes('livro') || desc.includes('generation');
-
-            const isUsed = orders.some((o: any) => o.id === p.id || (o.paymentInfo && o.paymentInfo.transactionId === p.id));
-
-            const payDate = new Date(p.dateCreated);
-            const isRecent = (new Date().getTime() - payDate.getTime()) < (24 * 3600 * 1000);
-
-            // ZOMBIE RECOVERY (Strictly confirmed only)
-            if (isUsed && isRecent && credits === 0) {
-                console.log(`[ZOMBIE - IGNORED] Payment ${p.id} used. Not recovering.`);
-                // Note: We used to recover here, but Audit handles "credits < calculated" better.
-                // Actually, if it IS used, we shouldn't grant credit. Correct.
-            }
-
-            return (isPriceMatch || isDescMatch) && !isUsed && isRecent;
-        });
-
-        if (missedPayment) {
-            console.log(`[RECOVERY] FOUND MISSED PAYMENT ${missedPayment.id}`);
-            credits = 1;
-            await setVal(`/credits/${safeEmail}`, 1);
-            await setVal(`/users/${safeEmail}/bookCredits`, 1); // Legacy
-            await pushVal('/orders', {
-                id: missedPayment.id,
-                title: `Geração de Livro (Recuperado)`,
-                date: new Date(),
-                status: 'COMPLETED',
-                price: missedPayment.value,
-                paymentInfo: { payerEmail: email, amount: missedPayment.value, transactionId: missedPayment.id, provider: 'ASAAS', recovered: true }
-            });
-        }
-    }
-
-    // 3. AUDIT: If > 0, verify we aren't hallucinating credits (Phantom Credit Purge)
-    if (credits > 0 && asaasPayments.length > 0) {
-        // Count CONFIRMED payments matching our criteria
+    // [UNIFIED LEDGER SYNC]
+    // Calculate effective balance based on: Confirmed Payments (In) - Books Generated (Out)
+    // Runs UNCONDITIONALLY to ensure the DB always reflects the true bank status
+    if (asaasPayments.length > 0) {
+        // 1. Calculate INFLOW (Confirmed Payments)
         const validPaidList = asaasPayments.filter((p: any) =>
             (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
-            (validPrices.some(vp => Math.abs(vp - p.value) < 0.1) || (p.description || '').toLowerCase().includes('livro') || (p.description || '').toLowerCase().includes('geração'))
+            (validPrices.some(vp => Math.abs(vp - p.value) < 0.1) ||
+                (p.description || '').toLowerCase().includes('livro') ||
+                (p.description || '').toLowerCase().includes('geração'))
         );
-
         const paidCount = validPaidList.length;
 
-        // Count how many orders this user has consumed
-        // Match by ID primarily, fallback to email IF timestamps align? No, just ID and Email.
+        // 2. Calculate OUTFLOW (Generated Books / Orders)
         const userOrders = (orders as any[]).filter((o: any) =>
             (o.paymentInfo?.payerEmail?.toLowerCase() === (email as string).toLowerCase()) ||
-            // Fallback: If we can match an ID
             validPaidList.some(p => p.id === o.id || p.id === o.paymentInfo?.transactionId)
         );
         const usedCount = userOrders.length;
 
-        // Calculate theoretical wallet balance
+        // 3. Determine TRUE BALANCE
         const theoretical = Math.max(0, paidCount - usedCount);
 
-        if (theoretical !== credits) {
-            console.log(`[AUDIT] Discrepancy detected! DB: ${credits}, Ledger: ${theoretical} (Paid ${paidCount} - Used ${usedCount}). Syncing...`);
+        console.log(`[LEDGER] ${email} -> Payments: ${paidCount} (In) | Orders: ${usedCount} (Out) | Balance Should Be: ${theoretical}`);
 
-            // Only update if theoretical is logically sound (e.g. not negative, handled by Math.max)
+        // 4. SYNC DB
+        if (theoretical !== credits) {
+            console.log(`[LEDGER] Syncing DB (Was ${credits} -> Now ${theoretical})`);
             credits = theoretical;
             await setVal(`/credits/${safeEmail}`, credits);
             await setVal(`/users/${safeEmail}/bookCredits`, credits);
 
-            if (theoretical > credits || (theoretical > 0 && credits === 0)) {
-                console.log(`[AUDIT] RECOVERED MISSING CREDIT! Access should be granted now.`);
-            } else {
-                console.warn(`[AUDIT] PHANTOM CREDIT PURGED.`);
+            if (theoretical > 0 && credits <= 0) {
+                console.log(`[LEDGER] Access Granted by Ledger Sync!`);
             }
-        } else {
-            console.log(`[AUDIT] Credits Valid. DB: ${credits}, Ledger: ${theoretical}`);
         }
     }
 
