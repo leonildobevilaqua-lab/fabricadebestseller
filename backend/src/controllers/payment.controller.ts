@@ -574,6 +574,34 @@ export const checkAccess = async (req: Request, res: Response) => {
         console.error("Error fetching leads for sync", e);
     }
 
+    // [MANUAL SUBSCRIPTION CHECK - RESILIENCE LAYER]
+    if (userPlan && (userPlan.status === 'PENDING' || userPlan.status === 'SUBSCRIBER_PENDING') && userPlan.subscriptionId) {
+        try {
+            console.log(`[CHECK_SUB] Verifying subscription ${userPlan.subscriptionId} for ${email}...`);
+            const payments = await AsaasProvider.getSubscriptionPayments(userPlan.subscriptionId);
+            // Sort by date desc
+            if (payments && Array.isArray(payments)) {
+                // Find ANY recent confirmed payment
+                const valid = payments.find((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+
+                if (valid) {
+                    console.log(`[CHECK_SUB] Payment Found (ID: ${valid.id})! Forced Activation.`);
+                    userPlan.status = 'ACTIVE';
+                    userPlan.lastPayment = new Date();
+                    await setVal(`/users/${safeEmail}/plan`, userPlan);
+
+                    // Update Lead
+                    const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'SUBSCRIBER' || l.status === 'SUBSCRIBER_PENDING'));
+                    if (leadIndex !== -1) {
+                        await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER'); // Ensure SUBSCRIBER status
+                        await setVal(`/leads[${leadIndex}]/plan`, userPlan); // Sync full plan obj
+                        console.log(`[CHECK_SUB] Lead ${leadIndex} updated to ACTIVE.`);
+                    }
+                }
+            }
+        } catch (e) { console.error("Sub Check Error", e); }
+    }
+
     // DEBUG CREDITS
     const allCredits = await getVal('/credits');
     console.log(`[CHECK_ACCESS] Email: ${email} -> Safe: ${safeEmail}`);
