@@ -74,8 +74,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
             const data = await res.json();
 
-            // SÓ ENTRA SE TIVER CRÉDITO POSITIVO
-            if (data.credits > 0) {
+            // SÓ ENTRA SE TIVER CRÉDITO POSITIVO OU PROJETO ATIVO
+            if (data.credits > 0 || data.hasActiveProject || data.activeProjectId) {
                 alert('Pagamento Confirmado! Iniciando Geração...');
                 // AGORA SIM pode entrar
                 onNewBook();
