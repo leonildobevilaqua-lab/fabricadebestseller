@@ -476,7 +476,7 @@ export const checkAccess = async (req: Request, res: Response) => {
     try {
         const customer = await AsaasProvider.getCustomerByEmail(email as string);
         if (customer) {
-            asaasPayments = await AsaasProvider.getPayments({ customer: customer.id });
+            asaasPayments = await AsaasProvider.getPayments({ customer: customer.id, limit: 100 });
             // Sort Newest First
             asaasPayments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
 
@@ -521,12 +521,13 @@ export const checkAccess = async (req: Request, res: Response) => {
 
         // 4. SYNC DB
         if (theoretical !== credits) {
-            console.log(`[LEDGER] Syncing DB (Was ${credits} -> Now ${theoretical})`);
+            const oldCredits = credits;
+            console.log(`[LEDGER] Syncing DB (Was ${oldCredits} -> Now ${theoretical})`);
             credits = theoretical;
             await setVal(`/credits/${safeEmail}`, credits);
             await setVal(`/users/${safeEmail}/bookCredits`, credits);
 
-            if (theoretical > 0 && credits <= 0) {
+            if (theoretical > 0 && oldCredits === 0) {
                 console.log(`[LEDGER] Access Granted by Ledger Sync!`);
             }
         }
