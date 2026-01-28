@@ -493,6 +493,27 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 return;
             }
 
+            // SUBSCRIPTION CHECK (New Logic)
+            if (selectedPlan) {
+                console.log("Checking Subscription Status for:", currentForm.email);
+                const statusRes = await fetch(`/api/payment/access?email=${currentForm.email}&_t=${Date.now()}`);
+                const status = await statusRes.json();
+
+                if (status.plan && status.plan.status === 'ACTIVE') {
+                    // PLANO ATIVO!
+                    // Redirecionar para Login conforme solicitado
+                    // "deveria aparecer para ele a tela de login e senha"
+                    onLoginClick();
+                    return;
+                } else {
+                    // Not active yet
+                    // Check ZOMBIE/Recuperação de Assinatura also?
+                    // No, subscription logic is stricter. Just wait for webhook.
+                    alert("A assinatura ainda não foi confirmada pelo banco. Aguarde alguns instantes.");
+                    return;
+                }
+            }
+
             console.log("Starting generation...");
             const success = await API.useCredit(currentForm.email);
 
