@@ -115,9 +115,10 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         }
       } catch (e) {
         console.error("Access Check Failed", e);
-        // On error, safer to kick out than allow
-        alert('Erro ao verificar acesso. Tente novamente.');
-        if (onReset) onReset();
+        // Instead of alerting, set clean error state to allow retry
+        // alert('Erro ao verificar acesso. Tente novamente.'); 
+        setError("Não foi possível sincronizar com o servidor. Por favor, verifique sua conexão e recarregue a página.");
+        setIsLoadingAccess(false);
       }
     };
     checkInitial();

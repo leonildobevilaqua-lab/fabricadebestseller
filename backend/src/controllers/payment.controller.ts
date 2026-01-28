@@ -510,11 +510,13 @@ export const checkAccess = async (req: Request, res: Response) => {
                         await setVal(`/credits/${safeEmail}`, 1);
                         await setVal(`/users/${safeEmail}/bookCredits`, 1);
 
-                        // Log order to prevent double count
+                        // Log order to prevent double count - USE 'COMPLETED' FOR ADMIN VISIBILITY
                         await pushVal('/orders', {
                             id: missedPayment.id,
+                            title: `Geração de Livro (Recuperado)`,
                             date: new Date(),
-                            status: 'RECOVERED_BY_CHECK',
+                            status: 'COMPLETED', // Changed from RECOVERED_BY_CHECK so Admin sees it
+                            price: missedPayment.value, // Direct root property for some dashboards
                             paymentInfo: {
                                 payerEmail: email,
                                 amount: missedPayment.value,
