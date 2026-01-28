@@ -468,104 +468,104 @@ export const checkAccess = async (req: Request, res: Response) => {
     let latestInvoiceStatus = null;
     let latestInvoiceNumber = null;
 
-    // [EMERGENCY RECOVERY] Check Asaas if explicit local credit is 0
-    // RE-ENABLED FOR MANUAL CHECK BUTTON: We need to verify against Asaas API if webhook failed
-    if (credits === 0) {
-        try {
-            console.log(`[RECOVERY] Checking Asaas for missed payments for ${email}`);
-            const customer = await AsaasProvider.getCustomerByEmail(email as string);
-            if (customer) {
-                // Check payments from recent history - FETCH ALL to detect PENDING
-                const payments = await AsaasProvider.getPayments({
-                    customer: customer.id
-                });
+    // [STRICT AUDIT & RECOVERY SYSTEM]
+    // 1. Unconditionally fetch external truth (Asaas) and local history (Orders)
+    const orders = await getVal('/orders') || [];
+    let asaasPayments: any[] = [];
 
-                // Sort by date DESC (Newest first)
-                payments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+    try {
+        const customer = await AsaasProvider.getCustomerByEmail(email as string);
+        if (customer) {
+            asaasPayments = await AsaasProvider.getPayments({ customer: customer.id });
+            // Sort Newest First
+            asaasPayments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
 
-                // Capture Latest Generation Payment Status
-                const latestGen = payments.find((p: any) => {
-                    const d = (p.description || "").toLowerCase();
-                    return d.includes('geração') || d.includes('livro');
-                });
-                if (latestGen) {
-                    latestInvoiceStatus = latestGen.status;
-                    latestInvoiceNumber = latestGen.invoiceNumber || latestGen.id;
-                    console.log(`[CHECK] Latest Invoice: ${latestInvoiceNumber} Status: ${latestInvoiceStatus}`);
-                }
-
-                // LIST OF VALID GENERATION PRICES
-                const validPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41];
-
-                // PRE-FETCH ORDERS TO CHECK USAGE
-                const orders = await getVal('/orders') || [];
-
-                // Sort payments by date DESC (Newest first) - Asaas API usually does this but we ensure it
-                payments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
-
-                // Find LATEST payment that is CONFIRMED (RECEIVED), NOT USED, and RECENT (< 24 Hours)
-                const missedPayment = payments.find((p: any) => {
-                    // CRITICAL: Strict Status Check
-                    if (p.status !== 'RECEIVED' && p.status !== 'CONFIRMED') {
-                        return false;
-                    }
-
-                    const isPriceMatch = validPrices.some(vp => Math.abs(vp - p.value) < 0.1);
-                    const desc = (p.description || "").toLowerCase();
-                    const isDescMatch = desc.includes('geração') || desc.includes('livro') || desc.includes('generation');
-
-                    // CHECK IF ALREADY USED
-                    const isUsed = orders.some((o: any) => o.id === p.id || (o.paymentInfo && o.paymentInfo.transactionId === p.id));
-
-                    // CHECK TIME WINDOW (Relaxed to 24 Hours)
-                    const payDate = new Date(p.dateCreated);
-                    const now = new Date();
-                    const diffMs = now.getTime() - payDate.getTime();
-                    const isRecent = diffMs < (24 * 60 * 60 * 1000); // 24 Hours
-
-                    // ZOMBIE RECOVERY: If Used + Recent BUT User has 0 credits...
-                    // This means the previous attempt crashed halfway or failed to attribute credit.
-                    if (isUsed && isRecent && credits === 0) {
-                        console.log(`[ZOMBIE] Payment ${p.id} was marked used but user has 0 credits. Restoring...`);
-                        return true; // Allow it to be "found" again to restore credit
-                    }
-
-                    console.log(`[CHECK] Found Payment ${p.id}: Val=${p.value}, Desc=${desc}, Date=${p.dateCreated}, Used=${isUsed}, Recent=${isRecent}`);
-
-                    return (isPriceMatch || isDescMatch) && !isUsed && isRecent;
-                });
-
-                if (missedPayment) {
-                    console.log(`[RECOVERY] Found candidate payment! ID: ${missedPayment.id} Val: ${missedPayment.value}`);
-
-                    // Logic moved inside .find(), so we know it's not processed.
-                    if (true) {
-                        console.log(`[RECOVERY] AUTO-GRANTING CREDIT FOR MISSED PAYMENT ${missedPayment.id}`);
-                        credits = 1;
-                        await setVal(`/credits/${safeEmail}`, 1);
-                        await setVal(`/users/${safeEmail}/bookCredits`, 1);
-
-                        // Log order to prevent double count - USE 'COMPLETED' FOR ADMIN VISIBILITY
-                        await pushVal('/orders', {
-                            id: missedPayment.id,
-                            title: `Geração de Livro (Recuperado)`,
-                            date: new Date(),
-                            status: 'COMPLETED', // Changed from RECOVERED_BY_CHECK so Admin sees it
-                            price: missedPayment.value, // Direct root property for some dashboards
-                            paymentInfo: {
-                                payerEmail: email,
-                                amount: missedPayment.value,
-                                transactionId: missedPayment.id,
-                                provider: 'ASAAS',
-                                recovered: true
-                            }
-                        });
-                    } else {
-                        console.log(`[RECOVERY] Payment ${missedPayment.id} was already in orders log. Duplicate check.`);
-                    }
-                }
+            // Capture Latest Status
+            const latestGen = asaasPayments.find((p: any) => {
+                const d = (p.description || "").toLowerCase();
+                return d.includes('geração') || d.includes('livro');
+            });
+            if (latestGen) {
+                latestInvoiceStatus = latestGen.status;
+                latestInvoiceNumber = latestGen.invoiceNumber || latestGen.id;
             }
-        } catch (recErr: any) { console.error("Recovery check failed", recErr.message); }
+        }
+    } catch (e) { console.error("Asaas Fetch Error", e); }
+
+    const validPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41];
+
+    // 2. RECOVERY: If 0, check if we missed a valid payment
+    if (credits === 0 && asaasPayments.length > 0) {
+        const missedPayment = asaasPayments.find((p: any) => {
+            if (p.status !== 'RECEIVED' && p.status !== 'CONFIRMED') return false;
+
+            const isPriceMatch = validPrices.some(vp => Math.abs(vp - p.value) < 0.1);
+            const desc = (p.description || "").toLowerCase();
+            const isDescMatch = desc.includes('geração') || desc.includes('livro') || desc.includes('generation');
+
+            const isUsed = orders.some((o: any) => o.id === p.id || (o.paymentInfo && o.paymentInfo.transactionId === p.id));
+
+            const payDate = new Date(p.dateCreated);
+            const isRecent = (new Date().getTime() - payDate.getTime()) < (24 * 3600 * 1000);
+
+            // ZOMBIE RECOVERY (Strictly confirmed only)
+            if (isUsed && isRecent && credits === 0) {
+                console.log(`[ZOMBIE - IGNORED] Payment ${p.id} used. Not recovering.`);
+                // Note: We used to recover here, but Audit handles "credits < calculated" better.
+                // Actually, if it IS used, we shouldn't grant credit. Correct.
+            }
+
+            return (isPriceMatch || isDescMatch) && !isUsed && isRecent;
+        });
+
+        if (missedPayment) {
+            console.log(`[RECOVERY] FOUND MISSED PAYMENT ${missedPayment.id}`);
+            credits = 1;
+            await setVal(`/credits/${safeEmail}`, 1);
+            await setVal(`/users/${safeEmail}/bookCredits`, 1); // Legacy
+            await pushVal('/orders', {
+                id: missedPayment.id,
+                title: `Geração de Livro (Recuperado)`,
+                date: new Date(),
+                status: 'COMPLETED',
+                price: missedPayment.value,
+                paymentInfo: { payerEmail: email, amount: missedPayment.value, transactionId: missedPayment.id, provider: 'ASAAS', recovered: true }
+            });
+        }
+    }
+
+    // 3. AUDIT: If > 0, verify we aren't hallucinating credits (Phantom Credit Purge)
+    if (credits > 0 && asaasPayments.length > 0) {
+        // Count CONFIRMED payments matching our criteria
+        const validPaidList = asaasPayments.filter((p: any) =>
+            (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
+            (validPrices.some(vp => Math.abs(vp - p.value) < 0.1) || (p.description || '').toLowerCase().includes('livro') || (p.description || '').toLowerCase().includes('geração'))
+        );
+
+        const paidCount = validPaidList.length;
+
+        // Count how many orders this user has consumed
+        // Match by ID primarily, fallback to email IF timestamps align? No, just ID and Email.
+        const userOrders = (orders as any[]).filter((o: any) =>
+            (o.paymentInfo?.payerEmail?.toLowerCase() === (email as string).toLowerCase()) ||
+            // Fallback: If we can match an ID
+            validPaidList.some(p => p.id === o.id || p.id === o.paymentInfo?.transactionId)
+        );
+        const usedCount = userOrders.length;
+
+        // Calculate theoretical wallet balance
+        const theoretical = Math.max(0, paidCount - usedCount);
+
+        if (theoretical < credits) {
+            console.warn(`[AUDIT] PHANTOM CREDIT DETECTED! DB says ${credits}, Ledger says ${theoretical} (Paid ${paidCount} - Used ${usedCount}). PURGING.`);
+            if (latestInvoiceStatus === 'PENDING') {
+                console.warn(`[AUDIT] Pending Invoice detected (${latestInvoiceNumber}). This confirms the user expects 0.`);
+            }
+            credits = theoretical;
+            await setVal(`/credits/${safeEmail}`, credits);
+        } else {
+            console.log(`[AUDIT] Credits Valid. DB: ${credits}, Ledger: ${theoretical}`);
+        }
     }
 
     let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
