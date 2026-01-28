@@ -423,6 +423,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       }
     } catch (e: any) {
       console.error("Project Init Error:", e);
+
+      // If error is strictly payment related
+      if (e.message?.includes('Payment Required') || e.message?.includes('PAYMENT_REQUIRED')) {
+        // Rely on the fetch inside to show Gate
+      }
+
       if (userContact?.email) {
         fetch(`/api/payment/check-access?email=${userContact.email}`)
           .then(r => r.json())
@@ -433,11 +439,18 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               link: access.checkoutUrl,
               level: access.discountLevel
             });
-            setShowPaymentGate(true); // Show Gate
+            setShowPaymentGate(true);
+            // Do NOT set generic error if we are showing Gate
+            setError(null);
           })
-          .catch(err => console.error(err));
+          .catch(err => {
+            console.error(err);
+            setError(t.serverConnectionError);
+          });
         return;
       }
+
+      // Only set generic error if we didn't handle payment gate above
       setError(t.serverConnectionError);
     }
   };

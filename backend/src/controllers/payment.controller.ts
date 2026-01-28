@@ -488,8 +488,13 @@ export const checkAccess = async (req: Request, res: Response) => {
                 // Sort payments by date DESC (Newest first) - Asaas API usually does this but we ensure it
                 payments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
 
-                // Find LATEST payment that is CONFIRMED (RECEIVED), NOT USED, and RECENT (< 3 Hours)
+                // Find LATEST payment that is CONFIRMED (RECEIVED), NOT USED, and RECENT (< 24 Hours)
                 const missedPayment = payments.find((p: any) => {
+                    // CRITICAL: Strict Status Check
+                    if (p.status !== 'RECEIVED' && p.status !== 'CONFIRMED') {
+                        return false;
+                    }
+
                     const isPriceMatch = validPrices.some(vp => Math.abs(vp - p.value) < 0.1);
                     const desc = (p.description || "").toLowerCase();
                     const isDescMatch = desc.includes('geração') || desc.includes('livro') || desc.includes('generation');
