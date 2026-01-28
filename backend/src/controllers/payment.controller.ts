@@ -457,7 +457,8 @@ export const checkAccess = async (req: Request, res: Response) => {
     const { email } = req.query;
     if (!email) return res.status(400).json({ error: "Email required" });
 
-    const safeEmail = (email as string).toLowerCase().trim().replace(/\./g, '_');
+    // CRITICAL FIX: Use same regex as Subscription/Admin controllers to match DB keys
+    const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
     const bypass = await getVal('/settings/payment_bypass');
     if (bypass) return res.json({ hasAccess: true, credits: 999, hasActiveProject: false });
 
