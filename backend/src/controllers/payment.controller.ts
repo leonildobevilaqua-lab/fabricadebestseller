@@ -487,7 +487,7 @@ export const checkAccess = async (req: Request, res: Response) => {
                 // Sort payments by date DESC (Newest first) - Asaas API usually does this but we ensure it
                 payments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
 
-                // Find LATEST payment that is CONFIRMED (RECEIVED) and NOT USED
+                // Find LATEST payment that is CONFIRMED (RECEIVED), NOT USED, and RECENT (< 3 Hours)
                 const missedPayment = payments.find((p: any) => {
                     const isPriceMatch = validPrices.some(vp => Math.abs(vp - p.value) < 0.1);
                     const desc = (p.description || "").toLowerCase();
@@ -496,8 +496,14 @@ export const checkAccess = async (req: Request, res: Response) => {
                     // CHECK IF ALREADY USED
                     const isUsed = orders.some((o: any) => o.id === p.id || (o.paymentInfo && o.paymentInfo.transactionId === p.id));
 
-                    // "Não por tempo... Validado pelo PAGAMENTO CONFIRMADO"
-                    return (isPriceMatch || isDescMatch) && !isUsed;
+                    // CHECK TIME WINDOW (Strict 3 Hours to allow for small delays but block old tests)
+                    // Asaas dateCreated is YYYY-MM-DD or full ISO. new Date() handles ISO.
+                    const payDate = new Date(p.dateCreated);
+                    const now = new Date();
+                    const diffMs = now.getTime() - payDate.getTime();
+                    const isRecent = diffMs < (3 * 60 * 60 * 1000); // 3 Hours
+
+                    return (isPriceMatch || isDescMatch) && !isUsed && isRecent;
                 });
 
                 if (missedPayment) {
