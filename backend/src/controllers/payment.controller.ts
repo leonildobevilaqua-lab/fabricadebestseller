@@ -496,12 +496,13 @@ export const checkAccess = async (req: Request, res: Response) => {
                     // CHECK IF ALREADY USED
                     const isUsed = orders.some((o: any) => o.id === p.id || (o.paymentInfo && o.paymentInfo.transactionId === p.id));
 
-                    // CHECK TIME WINDOW (Strict 3 Hours to allow for small delays but block old tests)
-                    // Asaas dateCreated is YYYY-MM-DD or full ISO. new Date() handles ISO.
+                    // CHECK TIME WINDOW (Relaxed to 24 Hours to avoid Timezone issues, but strict enough to blockage old tests)
                     const payDate = new Date(p.dateCreated);
                     const now = new Date();
                     const diffMs = now.getTime() - payDate.getTime();
-                    const isRecent = diffMs < (3 * 60 * 60 * 1000); // 3 Hours
+                    const isRecent = diffMs < (24 * 60 * 60 * 1000); // 24 Hours
+
+                    console.log(`[CHECK] Found Payment ${p.id}: Val=${p.value}, Desc=${desc}, Date=${p.dateCreated}, Used=${isUsed}, Recent=${isRecent} (${Math.round(diffMs / 1000 / 60)}m ago)`);
 
                     return (isPriceMatch || isDescMatch) && !isUsed && isRecent;
                 });
