@@ -76,8 +76,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
             // STRICT CHECK: Only entry if credits are actually confirmed.
             // Ignore 'hasActiveProject' here because this button is specifically for validating a NEW payment.
+            // STRICT CHECK: Only entry if credits are actually confirmed.
             if (data.credits > 0) {
-                alert('Pagamento Confirmado! Iniciando Geração...');
+                if (data.latestInvoiceStatus === 'PENDING') {
+                    // Clarify that access is due to PREVIOUS balance, not the new invoice
+                    alert(`⚠️ A fatura atual ${data.latestInvoiceNumber || ''} ainda está PENDENTE no banco.\n\nPorém, você possui CRÉDITOS ANTERIORES válidos.\n\nLiberando acesso com saldo anterior...`);
+                } else {
+                    alert('Pagamento Confirmado! Iniciando Geração...');
+                }
                 onNewBook();
             } else {
                 if (data.latestInvoiceStatus === 'PENDING') {
