@@ -237,11 +237,11 @@ export const update = async (req: Request, res: Response) => {
 
 export const startResearch = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { language } = req.body;
+    const { language, email: bodyEmail } = req.body;
     const project = await QueueService.getProject(id);
     if (!project) return res.status(404).json({ error: "Not found" });
 
-    const userEmail = project.metadata.contact?.email;
+    const userEmail = project.metadata.contact?.email || bodyEmail;
     if (userEmail) {
         await reloadDB(); // Force sync to see Admin Approval
 
@@ -284,8 +284,8 @@ export const startResearch = async (req: Request, res: Response) => {
         }
 
         if (!hasAccess) {
-            console.warn(`Blocked startResearch for ${userEmail}: Payment not confirmed. Lead Status: ${currentStatus}`);
-            return res.status(402).json({ error: "Aguardando confirmação de pagamento." });
+            console.warn(`[startResearch] BLOCKED ${userEmail}. Ledger: ${Number((await getVal(`/credits/${userEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_')}`)) || 0)} Status: ${currentStatus}`);
+            return res.status(402).json({ error: "Aguardando confirmação de pagamento.", code: "PAYMENT_REQUIRED" });
         }
     }
 

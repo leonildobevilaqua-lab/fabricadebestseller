@@ -397,7 +397,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         const accessCheck = await fetch(`/api/payment/check-access?email=${userContact.email}`).then(r => r.json());
 
         if (accessCheck.hasAccess) {
-          await API.startResearch(p.id, language);
+          await API.startResearch(p.id, language, userContact?.email);
         } else {
           // Access Denied -> Show Payment Gate (User must pay or Admin must approve)
           const isPlanActive = !!(accessCheck.plan && accessCheck.plan.status === 'ACTIVE');
@@ -424,8 +424,17 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     } catch (e: any) {
       console.error("Project Init Error:", e);
 
+      // Robust check for Payment Error (String or JSON)
+      let isPaymentError = e.message?.includes('Payment Required') || e.message?.includes('PAYMENT_REQUIRED');
+      if (!isPaymentError && e.message?.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(e.message);
+          if (parsed.code === 'PAYMENT_REQUIRED') isPaymentError = true;
+        } catch (_) { console.warn("Failed to parse error JSON", _); }
+      }
+
       // If error is strictly payment related
-      if (e.message?.includes('Payment Required') || e.message?.includes('PAYMENT_REQUIRED')) {
+      if (isPaymentError) {
         // Rely on the fetch inside to show Gate
       }
 

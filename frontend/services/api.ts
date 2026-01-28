@@ -31,12 +31,17 @@ export const getProject = async (id: string): Promise<BookProject> => {
     return res.json();
 };
 
-export const startResearch = async (id: string, language?: string): Promise<void> => {
-    await fetch(`${API_URL}/${id}/research`, {
+export const startResearch = async (id: string, language?: string, email?: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/${id}/research`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language })
+        body: JSON.stringify({ language, email })
     });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.code ? JSON.stringify({ code: err.code, message: err.error }) : (err.error || res.statusText);
+        throw new Error(msg);
+    }
 };
 
 export const selectTitle = async (id: string, title: string, subtitle: string): Promise<void> => {
