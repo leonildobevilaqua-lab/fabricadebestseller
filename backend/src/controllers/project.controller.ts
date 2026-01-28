@@ -237,9 +237,14 @@ export const update = async (req: Request, res: Response) => {
 
 export const startResearch = async (req: Request, res: Response) => {
     const { id } = req.params;
+    console.log(`[startResearch] Initiating for Project ID: ${id}`);
     const { language, email: bodyEmail } = req.body;
     const project = await QueueService.getProject(id);
-    if (!project) return res.status(404).json({ error: "Not found" });
+
+    if (!project) {
+        console.error(`[startResearch] Project ${id} NOT FOUND in QueueService.`);
+        return res.status(404).json({ error: "Not found" });
+    }
 
     const userEmail = project.metadata.contact?.email || bodyEmail;
     if (userEmail) {
