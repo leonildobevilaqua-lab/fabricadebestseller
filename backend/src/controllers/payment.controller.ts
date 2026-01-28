@@ -465,6 +465,8 @@ export const checkAccess = async (req: Request, res: Response) => {
     // NOW read specific paths with fresh data
     // NOW read specific paths with fresh data
     let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+    let latestInvoiceStatus = null;
+    let latestInvoiceNumber = null;
 
     // [EMERGENCY RECOVERY] Check Asaas if explicit local credit is 0
     // RE-ENABLED FOR MANUAL CHECK BUTTON: We need to verify against Asaas API if webhook failed
@@ -473,11 +475,24 @@ export const checkAccess = async (req: Request, res: Response) => {
             console.log(`[RECOVERY] Checking Asaas for missed payments for ${email}`);
             const customer = await AsaasProvider.getCustomerByEmail(email as string);
             if (customer) {
-                // Check payments from recent history
+                // Check payments from recent history - FETCH ALL to detect PENDING
                 const payments = await AsaasProvider.getPayments({
-                    customer: customer.id,
-                    status: 'RECEIVED'
+                    customer: customer.id
                 });
+
+                // Sort by date DESC (Newest first)
+                payments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+
+                // Capture Latest Generation Payment Status
+                const latestGen = payments.find((p: any) => {
+                    const d = (p.description || "").toLowerCase();
+                    return d.includes('geração') || d.includes('livro');
+                });
+                if (latestGen) {
+                    latestInvoiceStatus = latestGen.status;
+                    latestInvoiceNumber = latestGen.invoiceNumber || latestGen.id;
+                    console.log(`[CHECK] Latest Invoice: ${latestInvoiceNumber} Status: ${latestInvoiceStatus}`);
+                }
 
                 // LIST OF VALID GENERATION PRICES
                 const validPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41];
@@ -779,6 +794,8 @@ export const checkAccess = async (req: Request, res: Response) => {
         bookPrice,
         checkoutUrl,
         discountLevel,
+        latestInvoiceStatus,
+        latestInvoiceNumber,
         activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,
         // Helper for frontend total sum
         subscriptionPrice: (effectivePlan && SUBSCRIPTION_PRICES[planName]?.[(effectivePlan.billing || 'monthly').toLowerCase()]?.price) ||

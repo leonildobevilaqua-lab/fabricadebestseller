@@ -74,14 +74,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
             const data = await res.json();
 
-            // SÓ ENTRA SE TIVER CRÉDITO POSITIVO OU PROJETO ATIVO
-            if (data.credits > 0 || data.hasActiveProject || data.activeProjectId) {
+            // STRICT CHECK: Only entry if credits are actually confirmed.
+            // Ignore 'hasActiveProject' here because this button is specifically for validating a NEW payment.
+            if (data.credits > 0) {
                 alert('Pagamento Confirmado! Iniciando Geração...');
-                // AGORA SIM pode entrar
                 onNewBook();
-                // Alternatively use window.location.href = '/factory' but onNewBook is SPA friendly
             } else {
-                alert('⚠️ O banco ainda não confirmou seu pagamento. Aguarde alguns instantes e clique neste botão novamente.');
+                if (data.latestInvoiceStatus === 'PENDING') {
+                    alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação.`);
+                } else {
+                    alert('⚠️ O banco ainda não confirmou seu pagamento. Aguarde alguns instantes e clique neste botão novamente.');
+                }
             }
         } catch (error) {
             console.error(error);
@@ -137,7 +140,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     /*
     useEffect(() => {
         let interval: any = null;
-
+    
         if (isPurchasing) {
              // ... polling logic removed ...
         }
