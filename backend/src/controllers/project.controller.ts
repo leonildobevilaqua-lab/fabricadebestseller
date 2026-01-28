@@ -246,6 +246,12 @@ export const startResearch = async (req: Request, res: Response) => {
         return res.status(404).json({ error: "Not found" });
     }
 
+    // IDEMPOTENCY: If project is already running, don't restart or block.
+    if (['RESEARCHING', 'WRITING_CHAPTERS', 'COMPLETED', 'LIVRO ENTREGUE'].includes(project.metadata.status)) {
+        console.log(`[startResearch] Project ${id} already active (${project.metadata.status}). Skipping init.`);
+        return res.json({ success: true, message: "Already active" });
+    }
+
     const userEmail = project.metadata.contact?.email || bodyEmail;
     if (userEmail) {
         await reloadDB(); // Force sync to see Admin Approval
