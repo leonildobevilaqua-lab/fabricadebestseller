@@ -556,13 +556,19 @@ export const checkAccess = async (req: Request, res: Response) => {
         // Calculate theoretical wallet balance
         const theoretical = Math.max(0, paidCount - usedCount);
 
-        if (theoretical < credits) {
-            console.warn(`[AUDIT] PHANTOM CREDIT DETECTED! DB says ${credits}, Ledger says ${theoretical} (Paid ${paidCount} - Used ${usedCount}). PURGING.`);
-            if (latestInvoiceStatus === 'PENDING') {
-                console.warn(`[AUDIT] Pending Invoice detected (${latestInvoiceNumber}). This confirms the user expects 0.`);
-            }
+        if (theoretical !== credits) {
+            console.log(`[AUDIT] Discrepancy detected! DB: ${credits}, Ledger: ${theoretical} (Paid ${paidCount} - Used ${usedCount}). Syncing...`);
+
+            // Only update if theoretical is logically sound (e.g. not negative, handled by Math.max)
             credits = theoretical;
             await setVal(`/credits/${safeEmail}`, credits);
+            await setVal(`/users/${safeEmail}/bookCredits`, credits);
+
+            if (theoretical > credits || (theoretical > 0 && credits === 0)) {
+                console.log(`[AUDIT] RECOVERED MISSING CREDIT! Access should be granted now.`);
+            } else {
+                console.warn(`[AUDIT] PHANTOM CREDIT PURGED.`);
+            }
         } else {
             console.log(`[AUDIT] Credits Valid. DB: ${credits}, Ledger: ${theoretical}`);
         }
