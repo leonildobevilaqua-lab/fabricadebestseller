@@ -247,8 +247,9 @@ export const startResearch = async (req: Request, res: Response) => {
     }
 
     // IDEMPOTENCY: If project is already running, don't restart or block.
-    if (['RESEARCHING', 'WRITING_CHAPTERS', 'COMPLETED', 'LIVRO ENTREGUE'].includes(project.metadata.status)) {
-        console.log(`[startResearch] Project ${id} already active (${project.metadata.status}). Skipping init.`);
+    const pStatus = project.metadata.status as string;
+    if (['RESEARCHING', 'WRITING_CHAPTERS', 'COMPLETED', 'LIVRO ENTREGUE'].includes(pStatus)) {
+        console.log(`[startResearch] Project ${id} already active (${pStatus}). Skipping init.`);
         return res.json({ success: true, message: "Already active" });
     }
 
