@@ -146,11 +146,18 @@ export const getProjectByEmail = async (email: string): Promise<BookProject | nu
         console.log(`Example ${i}: ID ${p.id} | Title: ${p.book_title} | Structure Len: ${sLen}`);
     });
 
-    // STRICT FIX: Always return the LATEST project (index 0). 
-    // Do NOT try to be smart and find "non-empty" ones, because that causes "Wrong Book" bugs if the new project is empty/buggy.
-    const data = projects[0];
+    // SMART FIX: Prioritize the latest UNFINISHED project.
+    // If the user has a "working" project (IDLE, RESEARCHING, WRITING), return that one so they resume it.
+    // If all top 5 projects are COMPLETED/FAILED, then return the absolute latest (index 0) so they see their history or can start new.
+    const activeProject = projects.find((p: any) =>
+        p.status !== 'COMPLETED' &&
+        p.status !== 'LIVRO ENTREGUE' &&
+        p.status !== 'FAILED'
+    );
 
-    console.log(`getProjectByEmail: Selected ID ${data.id}`);
+    const data = activeProject || projects[0];
+
+    console.log(`getProjectByEmail: Selected ID ${data.id} (Status: ${data.status})`);
 
     if (error || !data) return null;
 
