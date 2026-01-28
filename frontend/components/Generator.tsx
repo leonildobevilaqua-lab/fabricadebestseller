@@ -433,34 +433,38 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         } catch (_) { console.warn("Failed to parse error JSON", _); }
       }
 
-      // If error is strictly payment related
-      if (isPaymentError) {
-        // Rely on the fetch inside to show Gate
-      }
-
       if (userContact?.email) {
+        // Always attempt to refresh access status to show correct Gate/Error
         fetch(`/api/payment/check-access?email=${userContact.email}`)
           .then(r => r.json())
           .then(access => {
-            setUpsellOffer({
-              price: access.bookPrice,
-              planName: access.plan?.name || "STARTER",
-              link: access.checkoutUrl,
-              level: access.discountLevel
-            });
-            setShowPaymentGate(true);
-            // Do NOT set generic error if we are showing Gate
-            setError(null);
+            // If we confirmed it's a payment error, OR if access check says no access
+            if (isPaymentError || !access.hasAccess) {
+              setUpsellOffer({
+                price: access.bookPrice,
+                planName: access.plan?.name || "STARTER",
+                link: access.checkoutUrl,
+                level: access.discountLevel
+              });
+              setShowPaymentGate(true);
+              setError(null); // Clear generic error
+            } else {
+              // Access seems OK, but startResearch failed for other reasons
+              const msg = isPaymentError ? "Pagamento necessário." : (e.message || t.serverConnectionError);
+              // Don't show generic sync error if we have a specific message
+              setError(msg === "Failed to fetch" ? t.serverConnectionError : msg);
+            }
           })
           .catch(err => {
-            console.error(err);
+            console.error("Check Access Failed:", err);
+            // If even the check fails, we are offline or server is dead
             setError(t.serverConnectionError);
           });
         return;
       }
 
-      // Only set generic error if we didn't handle payment gate above
-      setError(t.serverConnectionError);
+      // Fallback
+      setError(e.message || t.serverConnectionError);
     }
   };
 
