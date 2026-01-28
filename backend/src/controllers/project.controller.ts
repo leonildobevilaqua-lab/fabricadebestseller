@@ -256,16 +256,28 @@ export const startResearch = async (req: Request, res: Response) => {
         }
 
         if (!hasAccess) {
-            const rawLeads = await getVal('/leads') || [];
-            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+            // 1. Check Unified Ledger Credits (Source of Truth)
+            const safeEmail = userEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+            const ledgerCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
 
-            for (let i = leads.length - 1; i >= 0; i--) {
-                const l = leads[i] as any;
-                if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
-                    currentStatus = l.status;
-                    if (l.status === 'APPROVED' || l.status === 'IN_PROGRESS' || l.status === 'LIVRO ENTREGUE' || (l.credits || 0) > 0) {
-                        hasAccess = true;
-                        break;
+            if (ledgerCredits > 0) {
+                hasAccess = true;
+                console.log(`[startResearch] Granted Access via Ledger Credits: ${ledgerCredits}`);
+            }
+
+            // 2. Check Legacy Leads Status
+            if (!hasAccess) {
+                const rawLeads = await getVal('/leads') || [];
+                const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+                for (let i = leads.length - 1; i >= 0; i--) {
+                    const l = leads[i] as any;
+                    if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
+                        currentStatus = l.status;
+                        if (l.status === 'APPROVED' || l.status === 'IN_PROGRESS' || l.status === 'LIVRO ENTREGUE' || (l.credits || 0) > 0) {
+                            hasAccess = true;
+                            break;
+                        }
                     }
                 }
             }
