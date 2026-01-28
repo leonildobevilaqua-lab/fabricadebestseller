@@ -86,7 +86,7 @@ app.get('/health', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.send('Bestseller Factory API is Running on Port 3001. Go to frontend at http://localhost:3002');
+    res.send('Bestseller Factory API is Running on Port 3005. Go to frontend at http://localhost:3002');
 });
 
 export default app;
