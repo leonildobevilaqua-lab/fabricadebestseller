@@ -100,6 +100,12 @@ export const getConfig = async (): Promise<AppConfig> => {
         finalConfig.admin.pass = process.env.ADMIN_PASS;
     }
 
+    // --- LLM PROVIDER OVERRIDES VIA ENV ---
+    if (process.env.GEMINI_API_KEY) finalConfig.providers.gemini = process.env.GEMINI_API_KEY;
+    if (process.env.OPENAI_API_KEY) finalConfig.providers.openai = process.env.OPENAI_API_KEY;
+    if (process.env.ANTHROPIC_API_KEY) finalConfig.providers.anthropic = process.env.ANTHROPIC_API_KEY;
+
+
     return finalConfig;
 };
 
