@@ -484,9 +484,14 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   const handleApproveStructure = async () => {
     if (!projectId || !project) return;
-    await API.generateBookContent(projectId);
-    setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', progress: 41 } });
-    setAppStep(3);
+    try {
+      await API.generateBookContent(projectId, undefined, userContact?.email);
+      setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', progress: 41 } });
+      setAppStep(3);
+    } catch (e: any) {
+      console.error("Structure Approve Error", e);
+      setError("Erro ao iniciar escrita. Tente novamente.");
+    }
   };
 
   const [retryCount, setRetryCount] = useState(0);
