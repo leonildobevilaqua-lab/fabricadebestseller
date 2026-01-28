@@ -466,7 +466,7 @@ export const checkAccess = async (req: Request, res: Response) => {
     let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
 
     // [EMERGENCY RECOVERY] Check Asaas if explicit local credit is 0
-    if (credits === 0) {
+    if (credits === 0 && false) { // DISABLED BY NUCLEAR ORDER: PREVENT GHOST CREDITS
         try {
             console.log(`[RECOVERY] Checking Asaas for missed payments for ${email}`);
             const customer = await AsaasProvider.getCustomerByEmail(email as string);
