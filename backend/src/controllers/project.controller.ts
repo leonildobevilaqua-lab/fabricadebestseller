@@ -268,7 +268,7 @@ export const startResearch = async (req: Request, res: Response) => {
 
         if (!hasAccess) {
             // 1. Check Unified Ledger Credits (Source of Truth)
-            const safeEmail = userEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+            const safeEmail = (userEmail as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             const ledgerCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
 
             if (ledgerCredits > 0) {
