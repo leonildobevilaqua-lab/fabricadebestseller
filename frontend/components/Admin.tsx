@@ -968,6 +968,20 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 <nav className="flex-1 overflow-y-auto py-4">
                     <div className="px-4 space-y-1">
                         <button
+                            onClick={() => {
+                                if (confirm("Abrir a Fábrica de Best Sellers?")) {
+                                    localStorage.setItem('bsf_hasAccess', 'true');
+                                    if (!localStorage.getItem('bsf_userContact')) {
+                                        localStorage.setItem('bsf_userContact', JSON.stringify({ name: 'Admin', email: 'admin@local.com' }));
+                                    }
+                                    window.location.href = '/factory';
+                                }
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold rounded-lg transition-colors bg-emerald-900/30 text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-300 mb-4 border border-emerald-900/50"
+                        >
+                            <span>🏭</span> ACESSAR FÁBRICA
+                        </button>
+                        <button
                             onClick={() => setActiveSection('dashboard')}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'dashboard' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                         >
