@@ -464,7 +464,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       }
 
       // Fallback
-      setError(e.message || t.serverConnectionError);
+      const rawMsg = e.message || String(e);
+      // DEBUG MODE: Show exact error
+      setError(`Erro Técnico: ${rawMsg}`);
     }
   };
 
