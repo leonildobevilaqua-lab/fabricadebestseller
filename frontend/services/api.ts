@@ -7,7 +7,7 @@ export const getApiBase = () => {
     const custom = localStorage.getItem('admin_api_url');
     if (custom) return custom.trim();
     const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return '';
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://127.0.0.1:3005';
     return window.location.origin;
 };
 

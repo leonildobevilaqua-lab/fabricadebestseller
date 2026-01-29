@@ -100,7 +100,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       }
 
       try {
-        const res = await fetch(`/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`);
+        const res = await fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`);
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") === -1) {
           const text = await res.text();
@@ -355,11 +355,11 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
         // Payment Required Logic
         if (userContact?.email) {
-          fetch(`/api/payment/check-access?email=${userContact.email}`)
+          fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`)
             .then(r => r.json())
             .then(access => {
               if (access.hasAccess && access.credits > 0) {
-                setError("Erro ao iniciar projeto, mas você tem créditos. Tente recarregar.");
+                setError(`Erro Criação: ${(p as any).error || JSON.stringify(p)}`);
                 return;
               }
 
@@ -400,7 +400,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
       // STRICT CHECK: Only start research if explicitly authorized via Payment/Admin
       if (p.metadata.status === 'IDLE') {
-        const accessCheck = await fetch(`/api/payment/check-access?email=${userContact.email}`).then(r => r.json());
+        const accessCheck = await fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`).then(r => r.json());
 
         if (accessCheck.hasAccess) {
           await API.startResearch(p.id, language, userContact?.email);
@@ -441,7 +441,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
       if (userContact?.email) {
         // Always attempt to refresh access status to show correct Gate/Error
-        fetch(`/api/payment/check-access?email=${userContact.email}`)
+        fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`)
           .then(r => r.json())
           .then(access => {
             // If we confirmed it's a payment error, OR if access check says no access
@@ -936,7 +936,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         <div className="mb-6 inline-flex bg-green-100 p-4 rounded-full text-green-600 shadow-sm animate-bounce-slow">
           <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </div>
-        <h2 className="text-4xl font-serif font-bold mb-2 text-slate-900">{t.workFinished}</h2>
+        <h2 className="text-4xl font-serif font-bold mb-2 text-slate-900">FABRICAÇÃO FINALIZADA... PARABÉNS, AGORA VOCÊ É AUTOR!</h2>
         <p className="mb-8 text-slate-600 text-xl font-light">"{project.metadata.bookTitle}"</p>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8 text-left">
@@ -1372,7 +1372,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 5 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 30 ? <CheckIcon /> : <EmptyCircle />}
               <span className={progress >= 30 ? 'text-slate-500' : 'text-slate-700'}>
-                PESQUISA AVANÇADA
+                Pesquisa Avançanda Youtube / Google / Amazon
                 {progress < 30 && progress > 0 && <span className="ml-2 text-xs text-brand-500 animate-pulse">...</span>}
               </span>
             </div>
@@ -1381,7 +1381,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 30 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 45 ? <CheckIcon /> : <EmptyCircle />}
               <span className={progress >= 45 ? 'text-slate-500' : 'text-slate-700'}>
-                {t.status2}
+                Construindo a Estrutura Profissional com Engenharia Reversa p/ 14 Capítulos
               </span>
             </div>
 
@@ -1389,7 +1389,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 45 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 95 ? <CheckIcon /> : <div className={`w-5 h-5 flex items-center justify-center ${progress >= 45 ? '' : ''}`}>{progress >= 45 && <div className="w-2 h-2 bg-brand-500 rounded-full animate-ping"></div>}</div>}
               <span className={progress >= 95 ? 'text-slate-500' : 'text-slate-700'}>
-                PESQUISA VIRAL PROFISSIONAL
+                Fabricação Profissional do Livro de Forma VIRAL e OTIMIZADA
               </span>
             </div>
 
@@ -1408,10 +1408,28 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               </div>
             )}
 
-            {/* Marketing Step */}
+            {/* New Step: Persuasive Writing */}
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 95 ? 'opacity-100' : 'opacity-40'}`}>
+              {progress >= 96 ? <CheckIcon /> : <EmptyCircle />}
+              <span className={progress >= 96 ? 'text-slate-500' : 'text-slate-700'}>
+                Desenvolvimento de Escrita Persuasiva (SEO & Sinopse Profissional)
+              </span>
+            </div>
+
+            {/* New Step: Config Amazon */}
+            <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 96 ? 'opacity-100' : 'opacity-40'}`}>
+              {progress >= 98 ? <CheckIcon /> : <EmptyCircle />}
+              <span className={progress >= 98 ? 'text-slate-500' : 'text-slate-700'}>
+                Configuração dos Materiais p/ Publicação na Amazon KDP
+              </span>
+            </div>
+
+            {/* Final Processing Step */}
+            <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 98 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 100 ? <CheckIcon /> : <EmptyCircle />}
-              <span className={progress >= 100 ? 'text-slate-500' : 'text-slate-700'}>{t.status4}</span>
+              <span className={progress >= 100 ? 'text-slate-500' : 'text-slate-700'}>
+                Processando todo o Material e Organizando para entregar o Projeto Finalizado.
+              </span>
             </div>
 
           </div>

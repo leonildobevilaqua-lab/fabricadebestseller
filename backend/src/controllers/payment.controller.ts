@@ -459,6 +459,14 @@ export const checkAccess = async (req: Request, res: Response) => {
 
     // CRITICAL FIX: Use same regex as Subscription/Admin controllers to match DB keys
     const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+
+    // LOCALHOST BYPASS FOR TESTING
+    const isLocal = req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1');
+    if (isLocal) {
+        console.log(`[DEV] Localhost Access Bypass for ${email}`);
+        return res.json({ hasAccess: true, credits: 999, hasActiveProject: false, plan: { name: 'DEV_UNLIMITED', status: 'ACTIVE' } });
+    }
+
     const bypass = await getVal('/settings/payment_bypass');
     if (bypass) return res.json({ hasAccess: true, credits: 999, hasActiveProject: false });
 

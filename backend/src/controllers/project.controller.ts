@@ -45,7 +45,12 @@ export const create = async (req: Request, res: Response) => {
 
         // --- PAYMENT ENFORCEMENT ---
         // If we are NOT resuming an existing active project, we MUST consume a credit.
-        if (!isResuming && safeEmail) {
+
+        // DEV BYPASS
+        const isLocal = req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1');
+        if (isLocal) console.log(`[PROJECT] DEV MODE DETECTED: Bypassing Credit Check for ${authorName}`);
+
+        if (!isResuming && safeEmail && !isLocal) {
             const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
 
             // Check for any manually APPROVED leads (Voucher/Manual) that haven't been consumed?
