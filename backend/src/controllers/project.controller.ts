@@ -10,6 +10,7 @@ import path from 'path';
 import mammoth from 'mammoth';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import { AsaasProvider } from '../services/asaas.provider';
 
 const upload = multer();
 
@@ -272,6 +273,13 @@ export const startResearch = async (req: Request, res: Response) => {
             console.log(`[VIP] Access Granted for ${userEmail}`);
         }
 
+        // LOCALHOST BYPASS
+        const isLocal = req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1');
+        if (isLocal) {
+            hasAccess = true;
+            console.log(`[startResearch] DEV MODE: Bypassing Payment Check for ${userEmail}`);
+        }
+
         if (!hasAccess) {
             // 1. Check Unified Ledger Credits (Source of Truth)
             const safeEmail = (userEmail as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
@@ -296,6 +304,33 @@ export const startResearch = async (req: Request, res: Response) => {
                             break;
                         }
                     }
+                }
+            }
+
+            // 3. EMERGENCY CHECK: VALIDATE RECENT PAYMENTS DIRECTLY FROM ASAAS (Last 60 mins)
+            if (!hasAccess) {
+                try {
+                    console.log(`[startResearch] Local checks failed. Validating directly with Asaas for ${userEmail}...`);
+                    const customer = await AsaasProvider.getCustomerByEmail(userEmail);
+                    if (customer) {
+                        const payments = await AsaasProvider.getPayments({ customer: customer.id, limit: 10 });
+                        if (payments && Array.isArray(payments)) {
+                            const recentPayment = payments.find((p: any) => {
+                                if (p.status !== 'CONFIRMED' && p.status !== 'RECEIVED') return false;
+                                // Checking creation date usually
+                                const pDate = new Date(p.dateCreated);
+                                const diffMins = (new Date().getTime() - pDate.getTime()) / 60000;
+                                return diffMins < 60; // 1 Hour Tolerance
+                            });
+
+                            if (recentPayment) {
+                                hasAccess = true;
+                                console.log(`[startResearch] SECURITY OVERRIDE: Found recent valid payment ${recentPayment.id}. Access Granted.`);
+                            }
+                        }
+                    }
+                } catch (asaasErr) {
+                    console.error("[startResearch] Asaas Emergency Check Failed:", asaasErr);
                 }
             }
         }
