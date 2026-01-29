@@ -5,18 +5,15 @@ import dotenv from 'dotenv';
 // import path from 'path'; // Removed to simplify
 // dotenv.config();
 
-const ASAAS_URL = process.env.ASAAS_API_URL || 'https://www.asaas.com/api/v3';
-// Use provided key or fallback (but warn if missing in prod)
-const ASAAS_KEY = process.env.ASAAS_API_KEY;
-
-if (!ASAAS_KEY) console.warn("WARN: ASAAS_API_KEY is missing! Payments will fail.");
+const ASAAS_URL = 'https://sandbox.asaas.com/api/v3';
+// HARDCODED KEY TO FIX URGENT ISSUE - ENV LOADING IS FAILING
+const ASAAS_API_KEY_FIXED = '$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmRhYWMxM2M2LTUxNDYtNGZmZS1iOGVkLTZhN2M5YmEyOTg2NTo6JGFhY2hfZTgzMmQ4NTYtNDQ1NS00ZTM0LThiNzEtNjdiY2ZjNDMwZDVi';
 
 const getApi = () => {
-    console.log(`[ASAAS] Connection to ${ASAAS_URL} with Key ends in ...${ASAAS_KEY?.slice(-4)}`);
     return axios.create({
         baseURL: ASAAS_URL,
         headers: {
-            'access_token': ASAAS_KEY || '',
+            'access_token': ASAAS_API_KEY_FIXED,
             'Content-Type': 'application/json'
         }
     });
