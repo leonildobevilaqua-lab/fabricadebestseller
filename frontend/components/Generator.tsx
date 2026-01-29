@@ -100,7 +100,14 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       }
 
       try {
-        const res = await fetch(`/api/payment/check-access?email=${userContact.email}`);
+        const res = await fetch(`/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`);
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.indexOf("application/json") === -1) {
+          const text = await res.text();
+          console.error("HTML Response:", text.substring(0, 100));
+          throw new Error(`Backend returned HTML (Router Error) at ${res.url}. Check Console.`);
+        }
+        if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
         const access = await res.json();
 
         if ((access.hasAccess && access.credits > 0) || access.activeProjectId) {
