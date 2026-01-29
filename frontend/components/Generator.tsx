@@ -450,15 +450,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               setError(null); // Clear generic error
             } else {
               // Access seems OK, but startResearch failed for other reasons
-              const msg = isPaymentError ? "Pagamento necessário." : (e.message || t.serverConnectionError);
-              // Don't show generic sync error if we have a specific message
-              setError(msg === "Failed to fetch" ? t.serverConnectionError : msg);
+              const msg = isPaymentError ? "Pagamento necessário." : (e.message || String(e));
+              setError(`Debug Loop 1: ${msg}`);
             }
           })
           .catch(err => {
-            console.error("Check Access Failed:", err);
-            // If even the check fails, we are offline or server is dead
-            setError(t.serverConnectionError);
+            console.error("Access check fail", err);
+            setError(`Debug Loop 2: ${err.message || String(err)}`);
           });
         return;
       }
