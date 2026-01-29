@@ -327,76 +327,84 @@ export const startResearch = async (req: Request, res: Response) => {
         console.error("Error updating lead status:", e);
     }
 
+    // Respond to client IMMEDIATELY to prevent timeout
     res.json({ message: "Research started" });
 
-    // Background Process with Granular Updates
-    try {
-        const topic = project.metadata.topic;
-        const targetLang = language || project.metadata.language || 'pt';
-
-        // Step 1: YouTube
-        await QueueService.updateMetadata(id, {
-            progress: 5,
-            statusMessage: `📡 Calibrando sensores para varredura no YouTube: "${topic}"...`
-        });
-        let ytResearch = "";
+    // Background Process (Fire-and-Forget)
+    // This allows the main request handler to complete instantly (exit code 200)
+    // while the generation continues in the background.
+    (async () => {
         try {
-            ytResearch = await AIService.researchYoutube(topic, targetLang);
-        } catch (ytError: any) {
-            console.error("YouTube Research Failed (Continuing anyway):", ytError);
-            ytResearch = "Pesquisa YouTube indisponível no momento. Seguindo com Google Search.";
+            const topic = project.metadata.topic;
+            const targetLang = language || project.metadata.language || 'pt';
+
+            /* [BACKGROUND TASK START] */
+
+            // Step 1: YouTube
+            await QueueService.updateMetadata(id, {
+                progress: 5,
+                statusMessage: `📡 Calibrando sensores para varredura no YouTube: "${topic}"...`
+            });
+            let ytResearch = "";
+            try {
+                ytResearch = await AIService.researchYoutube(topic, targetLang);
+            } catch (ytError: any) {
+                console.error("YouTube Research Failed (Continuing anyway):", ytError);
+                ytResearch = "Pesquisa YouTube indisponível no momento. Seguindo com Google Search.";
+            }
+
+            await QueueService.updateMetadata(id, {
+                progress: 12,
+                statusMessage: `⚙️ Processando dados brutos de vídeo e extraindo insights virais...`
+            });
+
+            // Step 2: Google
+            await QueueService.updateMetadata(id, {
+                progress: 15,
+                statusMessage: `🔍 Iniciando mineração profunda no Google Search...`
+            });
+            const googleResearch = await AIService.researchGoogle(topic, ytResearch, targetLang);
+
+
+            await QueueService.updateMetadata(id, {
+                progress: 22,
+                statusMessage: `📊 Refinando minério de dados e identificando padrões de busca...`
+            });
+
+            // Step 3: Competitors
+            await QueueService.updateMetadata(id, {
+                progress: 25,
+                statusMessage: `🏆 Desconstruindo engenharia reversa dos Best-Sellers atuais...`
+            });
+            const compResearch = await AIService.analyzeCompetitors(topic, ytResearch + "\n" + googleResearch, targetLang);
+
+            const fullContext = `### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch} `;
+            await QueueService.updateProject(id, { researchContext: fullContext });
+
+            // Auto-proceed to Titles
+            await QueueService.updateMetadata(id, {
+                progress: 28,
+                statusMessage: "🏗️ Moldando estruturas de títulos de alta conversão..."
+            });
+
+            const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang);
+            await QueueService.updateProject(id, { titleOptions: titles });
+
+            await QueueService.updateMetadata(id, {
+                status: 'WAITING_TITLE',
+                progress: 30,
+                statusMessage: "✅ Pesquisa industrial concluída. Matéria-prima pronta para seleção."
+            });
+
+        } catch (error: any) {
+            console.error("Research Error:", error);
+            const errorMessage = error?.message || "Erro desconhecido";
+            await QueueService.updateMetadata(id, {
+                status: 'FAILED',
+                statusMessage: `⚠️ Falha na linha de produção: ${errorMessage} `
+            });
         }
-
-        await QueueService.updateMetadata(id, {
-            progress: 12,
-            statusMessage: `⚙️ Processando dados brutos de vídeo e extraindo insights virais...`
-        });
-
-        // Step 2: Google
-        await QueueService.updateMetadata(id, {
-            progress: 15,
-            statusMessage: `🔍 Iniciando mineração profunda no Google Search...`
-        });
-        const googleResearch = await AIService.researchGoogle(topic, ytResearch, targetLang);
-
-        await QueueService.updateMetadata(id, {
-            progress: 22,
-            statusMessage: `📊 Refinando minério de dados e identificando padrões de busca...`
-        });
-
-        // Step 3: Competitors
-        await QueueService.updateMetadata(id, {
-            progress: 25,
-            statusMessage: `🏆 Desconstruindo engenharia reversa dos Best-Sellers atuais...`
-        });
-        const compResearch = await AIService.analyzeCompetitors(topic, ytResearch + "\n" + googleResearch, targetLang);
-
-        const fullContext = `### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch} `;
-        await QueueService.updateProject(id, { researchContext: fullContext });
-
-        // Auto-proceed to Titles
-        await QueueService.updateMetadata(id, {
-            progress: 28,
-            statusMessage: "🏗️ Moldando estruturas de títulos de alta conversão..."
-        });
-
-        const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang);
-        await QueueService.updateProject(id, { titleOptions: titles });
-
-        await QueueService.updateMetadata(id, {
-            status: 'WAITING_TITLE',
-            progress: 30,
-            statusMessage: "✅ Pesquisa industrial concluída. Matéria-prima pronta para seleção."
-        });
-
-    } catch (error: any) {
-        console.error("Research Error:", error);
-        const errorMessage = error?.message || "Erro desconhecido";
-        await QueueService.updateMetadata(id, {
-            status: 'FAILED',
-            statusMessage: `⚠️ Falha na linha de produção: ${errorMessage} `
-        });
-    }
+    })();
 };
 
 export const selectTitle = async (req: Request, res: Response) => {
@@ -452,6 +460,7 @@ export const selectTitle = async (req: Request, res: Response) => {
             statusMessage: "Estrutura pronta para aprovação."
         });
     } catch (error) {
+        console.error("Background Research Error:", error);
         await QueueService.updateMetadata(id, { status: 'FAILED', statusMessage: "Erro ao gerar estrutura." });
     }
 };
