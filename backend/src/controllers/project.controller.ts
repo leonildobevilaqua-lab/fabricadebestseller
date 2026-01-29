@@ -307,27 +307,34 @@ export const startResearch = async (req: Request, res: Response) => {
                 }
             }
 
-            // 3. EMERGENCY CHECK: VALIDATE RECENT PAYMENTS DIRECTLY FROM ASAAS (Last 60 mins)
+            // 3. EMERGENCY CHECK: VALIDATE RECENT PAYMENTS DIRECTLY FROM ASAAS (Last 24h)
             if (!hasAccess) {
                 try {
-                    console.log(`[startResearch] Local checks failed. Validating directly with Asaas for ${userEmail}...`);
+                    console.log(`[startResearch] Validating Asaas for ${userEmail}...`);
                     const customer = await AsaasProvider.getCustomerByEmail(userEmail);
                     if (customer) {
-                        const payments = await AsaasProvider.getPayments({ customer: customer.id, limit: 10 });
+                        const payments = await AsaasProvider.getPayments({ customer: customer.id, limit: 20 });
                         if (payments && Array.isArray(payments)) {
+                            console.log(`[startResearch] Found ${payments.length} payments for customer.`);
+
                             const recentPayment = payments.find((p: any) => {
+                                console.log(`[PAYMENT CHECK] ID: ${p.id}, Status: ${p.status}, Date: ${p.dateCreated}`);
+
+                                // STRICT STATUS CHECK (User confirmed payment)
                                 if (p.status !== 'CONFIRMED' && p.status !== 'RECEIVED') return false;
-                                // Checking creation date usually
+
                                 const pDate = new Date(p.dateCreated);
                                 const diffMins = (new Date().getTime() - pDate.getTime()) / 60000;
-                                return diffMins < 60; // 1 Hour Tolerance
+                                return diffMins < 1440; // 24 Hours Tolerance
                             });
 
                             if (recentPayment) {
                                 hasAccess = true;
-                                console.log(`[startResearch] SECURITY OVERRIDE: Found recent valid payment ${recentPayment.id}. Access Granted.`);
+                                console.log(`[startResearch] SECURITY OVERRIDE: Found verified payment ${recentPayment.id}. Access Granted.`);
                             }
                         }
+                    } else {
+                        console.log(`[startResearch] Customer not found in Asaas for ${userEmail}`);
                     }
                 } catch (asaasErr) {
                     console.error("[startResearch] Asaas Emergency Check Failed:", asaasErr);
