@@ -410,8 +410,9 @@ export const writeChapter = async (
     subtopics = ["Fundamentos", "Histórico e Evolução", "Principais Desafios", "Ferramentas e Técnicas", "Estudos de Caso"];
   }
 
-  // Ensure we don't go overboard if AI hallucinates 10 topics
-  subtopics = subtopics.slice(0, 5);
+  // Ensure we don't go overboard if AI hallucinates many topics
+  // FIX: Limit to 3 subtopics to control book length (aiming for ~180 pages total)
+  subtopics = subtopics.slice(0, 3);
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -431,7 +432,7 @@ export const writeChapter = async (
         Chapter: ${chapter.title}
         Objective: ${chapter.intro}
         
-        TASK: Write the INTRODUCTION for this chapter (approx 250 words).
+        TASK: Write the INTRODUCTION for this chapter (approx 300 words).
         Hook the reader, explain what will be covered, and set the stage.
         Make cross-references ("Como vimos anteriormente...").
         Start directly with the content.
@@ -453,7 +454,12 @@ export const writeChapter = async (
             Current Section: "${subtopic}"
             
             TAREFA: Escreva o conteúdo desta seção.
-            REGRAS:
+            REGRAS INTERNAS DE TAMANHO:
+            - Escreva APROXIMADAMENTE 400-500 palavras para esta seção.
+            - NÃO ultrapasse 600 palavras.
+            - Seja conciso e direto ao ponto.
+            
+            REGRAS DE TOM:
             - Use tom conversacional e prático.
             - Foco total em resolver as dores listadas acima.
             
@@ -471,7 +477,7 @@ export const writeChapter = async (
         ${getHumanizationInstructions(lang, style, tone)}
         Chapter: ${chapter.title}
         
-        TASK: Write a powerful CONCLUSION for this chapter (approx 150 words).
+        TASK: Write a powerful CONCLUSION for this chapter (approx 200 words).
         Summarize key points and transition to the next idea.
         
         LANGUAGE: ${langName}.
@@ -492,8 +498,11 @@ export const writeChapter = async (
         CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
         
         TAREFA: Escreva o Capítulo Completo.
-        REGRAS:
-        - Mínimo de 2000 palavras.
+        REGRAS DE TAMANHO:
+        - O capítulo deve ter entre 1500 e 2000 palavras no TOTAL.
+        - NÃO ULTRAPASSE 2000 palavras.
+        
+        REGRAS DE ESTILO:
         - Use tom conversacional e prático.
         - Foco total em resolver as dores listadas na pesquisa.
         
@@ -711,12 +720,64 @@ export const generateExtras = async (
     IMPORTANT: ALL TEXT MUST BE IN ${langName}.
   `;
 
-  const res = await llm.generateJSON<{ dedication: string; acknowledgments: string; aboutAuthor: string }>(prompt);
-  return {
-    dedication: cleanText(res.dedication),
-    acknowledgments: cleanText(res.acknowledgments),
-    aboutAuthor: cleanText(res.aboutAuthor || "")
-  };
+  try {
+    const res = await llm.generateJSON<{ dedication: string; acknowledgments: string; aboutAuthor: string }>(prompt);
+    return {
+      dedication: cleanText(res.dedication),
+      acknowledgments: cleanText(res.acknowledgments),
+      aboutAuthor: cleanText(res.aboutAuthor || "")
+    };
+  } catch (e) {
+    console.error("Extras JSON Generation Failed. Fallbacking to Text Extraction...", e);
+    // FALLBACK TO TEXT PARSING
+    const textPrompt = `
+      Generate the following sections for the book "${metadata.bookTitle}" by ${metadata.authorName}.
+      Language: ${langName}
+      
+      SECTION 1: DEDICATION
+      Target: ${dedicationTo || "Family and Friends"}
+      Marker: ===DEDICATION===
+      
+      SECTION 2: ACKNOWLEDGMENTS
+      Target: ${ackTo || "Everyone who helped"}
+      Marker: ===ACKNOWLEDGMENTS===
+      
+      SECTION 3: ABOUT THE AUTHOR
+      Context: ${aboutAuthorContext || "Professional expert"}
+      Marker: ===ABOUT_AUTHOR===
+      
+      OUTPUT FORMAT:
+      ===DEDICATION===
+      (Write dedication here)
+      ===ACKNOWLEDGMENTS===
+      (Write acknowledgments here)
+      ===ABOUT_AUTHOR===
+      (Write bio here)
+    `;
+
+    try {
+      const text = await llm.generateText(textPrompt);
+      const extract = (marker: string, nextMarker: string) => {
+        const start = text.indexOf(marker);
+        if (start === -1) return "Conteúdo padrão gerado devido a erro.";
+        const end = nextMarker ? text.indexOf(nextMarker, start) : text.length;
+        return text.substring(start + marker.length, end !== -1 ? end : undefined).trim();
+      };
+
+      return {
+        dedication: extract("===DEDICATION===", "===ACKNOWLEDGMENTS==="),
+        acknowledgments: extract("===ACKNOWLEDGMENTS===", "===ABOUT_AUTHOR==="),
+        aboutAuthor: extract("===ABOUT_AUTHOR===", "")
+      };
+    } catch (fallbackError) {
+      console.error("Critical Failure in Extras Generation:", fallbackError);
+      return {
+        dedication: `Dedico este livro a todos que sonham e realizam.`,
+        acknowledgments: `Agradeço à minha família e amigos pelo apoio incondicional.`,
+        aboutAuthor: `${metadata.authorName} é um apaixonado pelo conhecimento e transformação pessoal.`
+      };
+    }
+  }
 };
 
 export const structureBookFromText = async (fullText: string): Promise<any> => {

@@ -40,34 +40,37 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
     // Helper: Calculate Value based on User Rules
     const calculateLeadValue = (lead: any) => {
         // 1. If explicit payment info exists (from Webhook), use it.
-        if (lead.paymentInfo?.amount) {
-            // Asaas usually sends float (19.90). Kiwify sends cents?
-            // If > 1000, likely cents. Wait, if it's annual 199.00?
-            // If provider is ASAAS, trust amount.
-            if (lead.paymentInfo.provider === 'ASAAS') return Number(lead.paymentInfo.amount);
+        // BUT: If it's a BOOK and user is SUBSCRIBER, we must ensure visual consistency if payment info is missing or generic.
+        // Actually, let's prioritize the LOGIC first if payment info is not absolute reliable (e.g. 0.00).
 
-            // Kiwify logic (legacy check)
+        if (lead.paymentInfo?.amount) {
+            if (lead.paymentInfo.provider === 'ASAAS') return Number(lead.paymentInfo.amount);
             const amt = Number(lead.paymentInfo.amount);
             return amt > 1000 ? amt / 100 : amt;
         }
 
         // 2. Check Plans (Distinguish Book vs Sub)
-        if (lead.type === 'BOOK') {
-            // FIX: Check if lead has plan OR is a known subscriber
-            if (lead.plan || subscriberSet.has(lead.email)) return 16.90; // Subscriber Price
-            return 39.90; // Regular Price
+        if (lead.type === 'BOOK' || lead.title === 'Crédito de Livro (Disponível)' || (lead.credits && lead.credits > 0)) {
+            // CRITICAL FIX: If email is in subscriberSet, it IS a subscriber purchase (16.90)
+            if (subscriberSet.has(lead.email) || (lead.plan && lead.plan.status === 'ACTIVE')) {
+                return 16.90;
+            }
+            return 39.90; // Regular Price (Avulso)
         }
 
-        if (lead.plan) {
-            const pName = lead.plan.name?.toUpperCase();
-            const billing = lead.plan.billing?.toLowerCase(); // 'monthly' or 'annual'
+        if (lead.plan || lead.status === 'SUBSCRIBER') {
+            const pName = (lead.plan?.name || 'STARTER').toUpperCase();
+            const billing = (lead.plan?.billing || 'monthly').toLowerCase();
 
-            if (pName === 'STARTER') return billing === 'annual' ? 118.80 : 19.90;
-            if (pName === 'PRO') return billing === 'annual' ? 238.80 : 34.90;
-            if (pName === 'BLACK') return billing === 'annual' ? 358.80 : 49.90;
+            if (pName.includes('BLACK')) return billing === 'annual' ? 358.80 : 49.90;
+            if (pName.includes('PRO')) return billing === 'annual' ? 238.80 : 34.90;
+            if (pName.includes('STARTER')) return billing === 'annual' ? 118.80 : 19.90;
+
+            // Fallback for generic subscriber status without plan details yet
+            return 19.90;
         }
 
-        // 3. Default (Avulso / Credit) - Request: R$ 39,90
+        // 3. Default (Avulso / Credit) 
         return 39.90;
     };
 
