@@ -1,0 +1,596 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generateBookDocx = void 0;
+const docx_1 = require("docx");
+const archiver_1 = __importDefault(require("archiver"));
+const StorageService = __importStar(require("./storage.service"));
+const stream_1 = require("stream");
+// Measurements for 6" x 9" (152.4mm x 228.6mm)
+const TWIPS_PER_INCH = 1440;
+const TWIPS_PER_CM = 567;
+const PAGE_WIDTH = 6 * TWIPS_PER_INCH;
+const PAGE_HEIGHT = 9 * TWIPS_PER_INCH;
+// Margins (User Requested)
+const MARGIN_TOP = Math.round(1.52 * TWIPS_PER_CM);
+const MARGIN_BOTTOM = Math.round(1.52 * TWIPS_PER_CM);
+const MARGIN_INSIDE = Math.round(1.93 * TWIPS_PER_CM);
+const MARGIN_OUTSIDE = Math.round(1.52 * TWIPS_PER_CM);
+const MARGIN_HEADER = Math.round(0.89 * TWIPS_PER_CM);
+const MARGIN_FOOTER = Math.round(0.89 * TWIPS_PER_CM);
+const generateBookDocx = (project) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    console.log(`[DocService] Generating DOCX for ID: ${project.id} | Title: ${project.metadata.bookTitle}`);
+    if (!project.structure) {
+        console.error("[DocService] FATAL: project.structure is UNDEFINED");
+        project.structure = [];
+    }
+    // 1. Prepare Content Object
+    const introChapter = project.structure.find(c => c.id === 0 || ['introdução', 'introduction', 'intro'].some(term => c.title.toLowerCase().includes(term)));
+    const mainChapters = project.structure.filter(c => c.id !== 0 && !['introdução', 'introduction', 'intro'].some(term => c.title.toLowerCase().includes(term)));
+    mainChapters.sort((a, b) => a.id - b.id);
+    const content = {
+        introduction: introChapter ? introChapter.content : "",
+        chapters: mainChapters,
+        conclusion: "",
+        dedication: project.metadata.dedication || "",
+        acknowledgments: project.metadata.acknowledgments || "",
+        aboutAuthor: project.metadata.aboutAuthor || "",
+        marketing: project.marketing || { text: "", viralHooks: [], description: "", keywords: [], targetAudience: "", salesSynopsis: "", youtubeDescription: "", backCover: "" }
+    };
+    // 2. Generate Buffer
+    const buffer = yield createDocxBuffer(project.metadata, content);
+    // 3. Save File to Supabase Storage
+    const safeEmail = ((_b = (_a = project.metadata.contact) === null || _a === void 0 ? void 0 : _a.email) === null || _b === void 0 ? void 0 : _b.replace(/[^a-zA-Z0-9._-]/g, '_')) || `project_${project.id}`;
+    // Path: books/user_email/book_title.docx
+    const filename = `book_${safeEmail}_${project.id}.docx`;
+    const storagePath = `generated/${filename}`;
+    const publicUrl = yield StorageService.uploadFile(storagePath, buffer, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    if (!publicUrl) {
+        throw new Error("Failed to upload generated book to storage.");
+    }
+    console.log(`Generated High-Quality DOCX at ${publicUrl}`);
+    let finalArtifactPath = publicUrl;
+    // 4. Generate Extras & Zip (If Marketing exists)
+    if (project.marketing) {
+        try {
+            const zipName = `kit_completo_${safeEmail}_${project.id}.zip`;
+            const zipStoragePath = `generated/${zipName}`;
+            const archive = (0, archiver_1.default)('zip', { zlib: { level: 9 } });
+            // Buffer the zip stream
+            const buffers = [];
+            // Use a simple Writable stream to capture data
+            const converter = new stream_1.Writable({
+                write(chunk, encoding, callback) {
+                    buffers.push(Buffer.from(chunk));
+                    callback();
+                }
+            });
+            archive.pipe(converter);
+            // Add Book
+            archive.append(buffer, { name: project.metadata.bookTitle ? `${project.metadata.bookTitle}.docx` : 'Livro.docx' });
+            // Helper to add docx string
+            const addDoc = (name, title, content) => __awaiter(void 0, void 0, void 0, function* () {
+                const b = yield createSimpleDocx(title, content);
+                archive.append(b, { name: name });
+            });
+            const m = project.marketing;
+            if (m.salesSynopsis)
+                yield addDoc('Sinopse_Amazon.docx', 'Sinopse Amazon', m.salesSynopsis);
+            if (m.backCover)
+                yield addDoc('Texto_Contra_Capa.docx', 'Texto da Contra Capa', m.backCover);
+            if (m.flapCopy)
+                yield addDoc('Texto_Orelha_Capa.docx', 'Texto da Orelha da Capa', m.flapCopy);
+            if (m.backFlapCopy)
+                yield addDoc('Texto_Orelha_Contra_Capa.docx', 'Texto da Orelha da Contra Capa', m.backFlapCopy);
+            if (m.youtubeDescription)
+                yield addDoc('Youtube_Descricao.docx', 'Descrição Youtube', m.youtubeDescription);
+            if (m.keywords && m.keywords.length > 0)
+                yield addDoc('Palavras_Chave.docx', 'Palavras Chave', m.keywords.join(', '));
+            if (content.marketing && content.marketing.description)
+                yield addDoc('Descricao_Geral.docx', 'Descrição Geral', content.marketing.description);
+            // Close archive
+            yield archive.finalize();
+            // Wait for stream to finish? 
+            // Writable finish event
+            yield new Promise((resolve) => converter.on('finish', resolve));
+            const zipBuffer = Buffer.concat(buffers);
+            const zipUrl = yield StorageService.uploadFile(zipStoragePath, zipBuffer, 'application/zip');
+            if (zipUrl) {
+                console.log(`Generated ZIP Package at ${zipUrl}`);
+                finalArtifactPath = zipUrl; // Prefer ZIP if available
+            }
+        }
+        catch (err) {
+            console.error("Error zipping extras:", err);
+        }
+    }
+    return finalArtifactPath; // Returns URL now
+});
+exports.generateBookDocx = generateBookDocx;
+const createSimpleDocx = (title, content) => __awaiter(void 0, void 0, void 0, function* () {
+    // robust split by newline pattern
+    const lines = content.split(/\r?\n/);
+    const children = [];
+    // Add Title
+    children.push(new docx_1.Paragraph({
+        children: [new docx_1.TextRun({ text: title, bold: true, size: 36, font: "Arial", color: "2E74B5" })],
+        spacing: { after: 400 },
+        alignment: docx_1.AlignmentType.CENTER
+    }));
+    // Process Lines
+    lines.forEach(line => {
+        const text = line.trim();
+        if (!text) {
+            // Empty line = Spacing
+            children.push(new docx_1.Paragraph({ children: [], spacing: { after: 200 } }));
+            return;
+        }
+        // Check for "___" separator (User wants literal lines sometimes, but borders are nicer in Word)
+        // User example explicitly used "________________________________________"
+        // Let's replace with a real border for professional look
+        if (text.match(/^_{3,}/) || text.match(/^-{3,}/)) {
+            children.push(new docx_1.Paragraph({
+                border: { bottom: { color: "CCCCCC", space: 10, style: docx_1.BorderStyle.SINGLE, size: 6 } },
+                spacing: { after: 240, before: 120 },
+                children: []
+            }));
+            return;
+        }
+        // Check for Headers (ALL CAPS ending in ? or :) or starting with Emojis like 📘, 🔥, 🛑
+        // Also check explicitly for lines starting with 'Task', 'Step' etc if we wanted, but sticking to visual cues.
+        const isHeader = /^[A-ZÁÉÍÓÚÃÕÀÂÊÔÇ0-9\s\?(!)]+[:\?]$/.test(text) ||
+            /^[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u.test(text);
+        children.push(new docx_1.Paragraph({
+            children: [new docx_1.TextRun({
+                    text: text,
+                    size: 24,
+                    font: "Arial",
+                    bold: isHeader // Auto-bold potential headers
+                })],
+            spacing: { after: isHeader ? 120 : 200 } // Tighter spacing for headers to body
+        }));
+    });
+    const doc = new docx_1.Document({
+        sections: [{
+                properties: {},
+                children: children
+            }]
+    });
+    return docx_1.Packer.toBuffer(doc);
+});
+const createDocxBuffer = (metadata, content) => __awaiter(void 0, void 0, void 0, function* () {
+    // Helper: Load Asset safely
+    const loadAsset = (filename) => {
+        try {
+            // Check assets folder? Or just skip for now as we don't have frontend public folder access easily.
+            // But we might have them in backend/assets?
+            // User didn't specify backend assets.
+            // Let's assume we skip logo/qr for now or use placeholders if we could.
+            // Logic in frontend: fetch('/logo_editora.png').
+            // We can't fetch localhost easily inside docker/process if not running static server for it.
+            return null;
+        }
+        catch (e) {
+            return null;
+        }
+    };
+    const logoBuffer = loadAsset('logo_editora.png');
+    const qrBuffer = loadAsset('qr_code.png');
+    // --- Helper Functions ---
+    const createHeader = (text) => {
+        return new docx_1.Header({
+            children: [
+                new docx_1.Paragraph({
+                    children: [new docx_1.TextRun({ text, font: "Garamond", size: 24 })], // 12pt Header
+                    alignment: docx_1.AlignmentType.CENTER,
+                    spacing: { after: 160 },
+                }),
+            ],
+        });
+    };
+    const createFooter = () => {
+        return new docx_1.Footer({
+            children: [
+                new docx_1.Paragraph({
+                    children: [
+                        new docx_1.TextRun({
+                            children: [docx_1.PageNumber.CURRENT],
+                            font: "Garamond",
+                            size: 24,
+                        }),
+                    ],
+                    alignment: docx_1.AlignmentType.CENTER,
+                }),
+            ],
+        });
+    };
+    const sanitizeText = (text) => {
+        let clean = text || "";
+        clean = clean.replace(/#{1,6}\s?/g, "");
+        clean = clean.replace(/^\s*[-_*]{3,}\s*$/gm, "");
+        clean = clean.replace(/\n{3,}/g, "\n\n"); // Squash excessive whitespace
+        return clean;
+    };
+    const createTextParams = (text) => {
+        let cleanText = sanitizeText(text);
+        // Safety Net 3.0: Density-based Wall of Text Detection
+        const newlineCount = (cleanText.match(/\n/g) || []).length;
+        const avgCharsPerLine = cleanText.length / (newlineCount + 1);
+        // If average chars per paragraph is > 600 (approx 10 lines), OR total length > 400 with 0 newlines
+        if (avgCharsPerLine > 600 || (cleanText.length > 400 && newlineCount < 2)) {
+            console.log(`[DocService] Wall of Text Detected! Avg: ${avgCharsPerLine}, Length: ${cleanText.length}. Splitting...`);
+            // Strategy: Force split every ~2 sentences or ~350 chars to create visual breathing room
+            const sentences = cleanText.match(/[^.!?\n]+[.!?\n]+["']?|[^.!?\n]+$/g) || [cleanText];
+            // Regex updated to include \n as a delimiter to preserve existing (rare) breaks if any
+            let newText = "";
+            let buffer = "";
+            let sentenceCount = 0;
+            sentences.forEach((s) => {
+                const trimmed = s.trim();
+                if (!trimmed)
+                    return;
+                buffer += trimmed + " ";
+                sentenceCount++;
+                // Break every 2 sentences OR if buffer > 350 chars
+                // Also break immediately if the sentence itself was huge (which shouldn't happen with sentence split but safe to check)
+                if (sentenceCount >= 2 || buffer.length > 350) {
+                    newText += buffer.trim() + "\n\n";
+                    buffer = "";
+                    sentenceCount = 0;
+                }
+            });
+            if (buffer.trim())
+                newText += buffer.trim();
+            cleanText = newText;
+        }
+        // FORCE SPLIT BY SINGLE NEWLINE TO ENSURE PARAGRAPHS
+        const paragraphs = cleanText.split('\n').filter(p => p.trim().length > 0);
+        return paragraphs.map(p => {
+            const parts = p.split(/(\*\*.*?\*\*)/g);
+            const children = parts.map(part => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    return new docx_1.TextRun({ text: part.slice(2, -2).replace(/\*/g, ''), bold: true, font: "Garamond", size: 27 }); // 13.5pt
+                }
+                return new docx_1.TextRun({ text: part.replace(/\*/g, ''), font: "Garamond", size: 27 }); // 13.5pt
+            });
+            return new docx_1.Paragraph({
+                children: children,
+                alignment: docx_1.AlignmentType.JUSTIFIED,
+                spacing: { after: 200, line: 360 }, // 1.5 Line Spacing
+                indent: { firstLine: 708 }, // 1.25 cm
+            });
+        });
+    };
+    const createTitle = (title, breakPage = false) => {
+        const cleanTitle = sanitizeText(title).replace(/\*/g, '');
+        return new docx_1.Paragraph({
+            children: [new docx_1.TextRun({ text: cleanTitle, bold: true, font: "Garamond", size: 48 })],
+            heading: docx_1.HeadingLevel.HEADING_1,
+            alignment: docx_1.AlignmentType.CENTER,
+            spacing: { before: 2400, after: 1200 },
+            pageBreakBefore: breakPage
+        });
+    };
+    const createChapterNumberTitle = (num, title, bookmarkName) => {
+        const cleanTitle = sanitizeText(title).replace(/\*/g, '');
+        const capChildren = [new docx_1.TextRun({ text: `CAPÍTULO ${num}`, bold: true, font: "Garamond", size: 48 })];
+        if (bookmarkName) {
+            // Fix: BookmarkStart(name: string, id: number) based on type feedback
+            capChildren.unshift(new docx_1.BookmarkStart(bookmarkName, num));
+            capChildren.push(new docx_1.BookmarkEnd(num));
+        }
+        return [
+            new docx_1.Paragraph({
+                children: capChildren,
+                heading: docx_1.HeadingLevel.HEADING_2,
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 2400, after: 400 },
+                pageBreakBefore: false
+            }),
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: cleanTitle, bold: true, font: "Garamond", size: 48 })], // Removed .toUpperCase()
+                heading: docx_1.HeadingLevel.HEADING_1,
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 200, after: 1200 },
+            })
+        ];
+    };
+    const sections = [];
+    const basePageConfig = {
+        size: { width: PAGE_WIDTH, height: PAGE_HEIGHT },
+        margin: {
+            top: MARGIN_TOP,
+            bottom: MARGIN_BOTTOM,
+            left: MARGIN_INSIDE,
+            right: MARGIN_OUTSIDE,
+            header: MARGIN_HEADER,
+            footer: MARGIN_FOOTER,
+            mirror: true
+        },
+    };
+    // 1. Half Title (Página 1 - Ímpar)
+    sections.push({
+        properties: {
+            page: Object.assign(Object.assign({}, basePageConfig), { pageNumbers: { start: 1, formatType: docx_1.NumberFormat.LOWER_ROMAN } }),
+            type: docx_1.SectionType.NEXT_PAGE,
+            verticalAlign: docx_1.VerticalAlign.CENTER // Ensure Perfect Vertical Centering
+        },
+        children: [
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: metadata.bookTitle || "TÍTULO", bold: true, font: "Garamond", size: 52 })],
+                alignment: docx_1.AlignmentType.CENTER,
+            }),
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: metadata.subTitle || "", italics: false, font: "Garamond", size: 32 })],
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 400 },
+            }),
+        ],
+        headers: { default: new docx_1.Header({ children: [] }) },
+        footers: { default: new docx_1.Footer({ children: [] }) },
+    });
+    // 2. Blank Page
+    sections.push({
+        properties: { type: docx_1.SectionType.NEXT_PAGE, page: basePageConfig },
+        children: [
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: "[ATENÇÃO ESTÁ PÁGINA DEVERÁ ESTAR EM BRANCO]", color: "FFFFFF", size: 20 })],
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 4000 }
+            })
+        ],
+        headers: { default: new docx_1.Header({ children: [] }) },
+        footers: { default: new docx_1.Footer({ children: [] }) },
+    });
+    // 3. Title Page - Vertically Centered
+    sections.push({
+        properties: {
+            type: docx_1.SectionType.NEXT_PAGE,
+            page: basePageConfig,
+            verticalAlign: docx_1.VerticalAlign.CENTER
+        },
+        children: [
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: metadata.authorName || "Autor", font: "Garamond", bold: true, size: 32 })],
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 0 }, // Top
+            }),
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: metadata.bookTitle || "", bold: true, font: "Garamond", size: 52 })],
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 400 }, // Reduced spacing
+            }),
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: metadata.subTitle || "", font: "Garamond", size: 32 })],
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 200 }, // Reduced spacing
+            }),
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: "Editora 360 Express", bold: true, font: "Garamond", size: 32, color: "000000" })],
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 400 }, // Reduced closer to subtitle
+            }),
+        ],
+        headers: { default: new docx_1.Header({ children: [] }) },
+        footers: { default: new docx_1.Footer({ children: [] }) },
+    });
+    // 4. Credits & CIP - Center, Simple text
+    sections.push({
+        properties: {
+            type: docx_1.SectionType.NEXT_PAGE,
+            page: basePageConfig,
+            verticalAlign: docx_1.VerticalAlign.CENTER
+        },
+        children: [
+            new docx_1.Paragraph({
+                children: [
+                    new docx_1.TextRun({ text: "[PÁGINA DESTINADA PARA FICHA CATALOGRÁFICA E ISBN DO LIVRO]", font: "Arial", size: 24, bold: true, color: "888888" }),
+                ],
+                alignment: docx_1.AlignmentType.CENTER,
+            }),
+        ],
+        headers: { default: new docx_1.Header({ children: [] }) },
+        footers: { default: new docx_1.Footer({ children: [] }) },
+    });
+    // 5. Acknowledgments
+    if (content.acknowledgments) {
+        sections.push({
+            properties: { type: docx_1.SectionType.NEXT_PAGE, page: basePageConfig },
+            children: [
+                createTitle("AGRADECIMENTO"),
+                ...createTextParams(content.acknowledgments)
+            ],
+            headers: { default: new docx_1.Header({ children: [] }) },
+            footers: { default: new docx_1.Footer({ children: [] }) },
+        });
+        // Blank after
+        sections.push({
+            properties: { type: docx_1.SectionType.NEXT_PAGE, page: basePageConfig },
+            children: [new docx_1.Paragraph({ children: [new docx_1.TextRun({ text: ".", color: "FFFFFF" })] })],
+            headers: { default: new docx_1.Header({ children: [] }) },
+            footers: { default: new docx_1.Footer({ children: [] }) },
+        });
+    }
+    // 6. Dedication
+    if (content.dedication) {
+        sections.push({
+            properties: { type: docx_1.SectionType.NEXT_PAGE, page: basePageConfig },
+            children: [
+                createTitle("DEDICATÓRIA"),
+                new docx_1.Paragraph({
+                    children: [new docx_1.TextRun({ text: content.dedication, italics: false, font: "Garamond", size: 27 })],
+                    alignment: docx_1.AlignmentType.CENTER,
+                    spacing: { before: 4000 },
+                })
+            ],
+            headers: { default: new docx_1.Header({ children: [] }) },
+            footers: { default: new docx_1.Footer({ children: [] }) },
+        });
+        // Blank after
+        sections.push({
+            properties: { type: docx_1.SectionType.NEXT_PAGE, page: basePageConfig },
+            children: [new docx_1.Paragraph({ children: [new docx_1.TextRun({ text: ".", color: "FFFFFF" })] })],
+            headers: { default: new docx_1.Header({ children: [] }) },
+            footers: { default: new docx_1.Footer({ children: [] }) },
+        });
+    }
+    // 7. Table of Contents (Dynamic with PageReference)
+    sections.push({
+        properties: { type: docx_1.SectionType.NEXT_PAGE, page: basePageConfig },
+        children: [
+            new docx_1.Paragraph({
+                children: [new docx_1.TextRun({ text: "SUMÁRIO", bold: true, font: "Garamond", size: 48 })],
+                alignment: docx_1.AlignmentType.CENTER,
+                spacing: { before: 1200, after: 800 }
+            }),
+            ...content.chapters.map((c, i) => new docx_1.Paragraph({
+                children: [
+                    new docx_1.TextRun({ text: `CAPÍTULO ${i + 1}: `, bold: true, font: "Garamond", size: 24 }),
+                    new docx_1.TextRun({ text: c.title.toUpperCase(), font: "Garamond", size: 24 }),
+                    new docx_1.TextRun({ text: "\t", font: "Garamond", size: 24 }),
+                    new docx_1.TextRun({ children: [new docx_1.PageReference(`chapter_${i + 1}`)], font: "Garamond", size: 24 }),
+                ],
+                tabStops: [{ type: docx_1.TabStopType.RIGHT, position: 9000, leader: "dot" }],
+                spacing: { after: 200 },
+                alignment: docx_1.AlignmentType.LEFT
+            })),
+        ],
+        headers: { default: new docx_1.Header({ children: [] }) },
+        footers: { default: new docx_1.Footer({ children: [] }) },
+    });
+    // 8. Introduction
+    if (content.introduction) {
+        sections.push({
+            properties: {
+                page: Object.assign(Object.assign({}, basePageConfig), { pageNumbers: { start: 1, formatType: docx_1.NumberFormat.DECIMAL } }), // Restart numeric here? Frontend restart at 11.
+                type: docx_1.SectionType.ODD_PAGE,
+                titlePage: true,
+            },
+            children: [
+                createTitle("Introdução"),
+                ...createTextParams(content.introduction)
+            ],
+            headers: {
+                default: createHeader(metadata.bookTitle || ""),
+                even: createHeader(metadata.authorName),
+                first: new docx_1.Header({ children: [] }),
+            },
+            footers: {
+                default: createFooter(),
+                even: createFooter(),
+                first: createFooter(),
+            }
+        });
+    }
+    // 9. Chapters
+    content.chapters.forEach((chapter, index) => {
+        sections.push({
+            properties: {
+                page: basePageConfig,
+                type: docx_1.SectionType.ODD_PAGE,
+                titlePage: true,
+            },
+            children: [
+                ...createChapterNumberTitle(index + 1, chapter.title, `chapter_${index + 1}`),
+                ...createTextParams(chapter.content)
+            ],
+            headers: {
+                default: createHeader(metadata.bookTitle || ""),
+                even: createHeader(metadata.authorName),
+                first: new docx_1.Header({ children: [] }),
+            },
+            footers: {
+                default: createFooter(),
+                even: createFooter(),
+                first: createFooter(),
+            }
+        });
+    });
+    // 10. Conclusion
+    if (content.conclusion) {
+        sections.push({
+            properties: {
+                page: basePageConfig,
+                type: docx_1.SectionType.ODD_PAGE,
+                titlePage: true,
+            },
+            children: [
+                createTitle("Conclusão"),
+                ...createTextParams(content.conclusion)
+            ],
+            headers: {
+                default: createHeader(metadata.bookTitle || ""),
+                even: createHeader(metadata.authorName),
+                first: new docx_1.Header({ children: [] }),
+            },
+            footers: {
+                default: createFooter(),
+                even: createFooter(),
+                first: createFooter(),
+            }
+        });
+    }
+    const doc = new docx_1.Document({
+        creator: "Book Factory AI",
+        title: metadata.bookTitle,
+        description: metadata.subTitle,
+        features: {
+            updateFields: true
+        },
+        sections: sections,
+        styles: {
+            default: {
+                document: {
+                    run: { font: "Garamond", size: 27 }, // 13.5pt
+                    paragraph: { spacing: { line: 360 } }
+                }
+            }
+        }
+    });
+    return docx_1.Packer.toBuffer(doc);
+});

@@ -1,0 +1,4 @@
+--- Discovery Schema ---
+Available Columns: ["id","created_at","updated_at","author_name","topic","book_title","sub_title","dedication","status","progress","status_message","current_step","research_context","title_options","structure","marketing","email"]
+
+--- Recent Logs (based on updated_at) ---

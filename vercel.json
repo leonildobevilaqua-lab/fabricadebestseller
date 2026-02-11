@@ -1,0 +1,25 @@
+{
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/api/(.*)",
+            "destination": "/backend/api/index.ts"
+        },
+        {
+            "source": "/downloads/(.*)",
+            "destination": "/backend/api/index.ts"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/frontend/index.html"
+        }
+    ],
+    "functions": {
+        "backend/api/index.ts": {
+            "maxDuration": 60
+        }
+    },
+    "buildCommand": "cd frontend && npm install && npm run build -- --base=/",
+    "outputDirectory": "frontend/dist",
+    "framework": "vite"
+}

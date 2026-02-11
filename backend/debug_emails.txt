@@ -1,0 +1,5 @@
+contato@leonildobevilaqua.com.br | FAILED | 2026-01-29T23:17:53.48+00:00
+contato@leonildobevilaqua.com.br | WAITING_TITLE | 2026-01-29T23:09:09.976+00:00
+contato@leonildobevilaqua.com.br | FAILED | 2026-01-29T17:10:46.314+00:00
+contato@leonildobevilaqua.com.br | FAILED | 2026-01-29T16:40:48.919+00:00
+admin@local.com | COMPLETED | 2026-01-29T16:16:46.47+00:00

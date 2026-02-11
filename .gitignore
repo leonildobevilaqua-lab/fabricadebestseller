@@ -1,0 +1,12 @@
+node_modules/
+*.zip
+*.tmp
+.env
+backend/.env
+frontend/.env
+*.env
+database.json
+backups/
+generated_books/
+
+backend/database.json

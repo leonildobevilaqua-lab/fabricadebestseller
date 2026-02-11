@@ -1,0 +1,228 @@
+{
+    "providers": {
+        "gemini": "",
+        "openai": "",
+        "anthropic": "",
+        "deepseek": "",
+        "llama": ""
+    },
+    "activeProvider": "gemini",
+    "admin": {
+        "user": "contato@leonildobevilaqua.com.br",
+        "pass": ""
+    },
+    "products": {
+        "english_book": "https://pay.kiwify.com.br/VqifT9S",
+        "spanish_book": "https://pay.kiwify.com.br/1Aj655e",
+        "cover_printed": "https://pay.kiwify.com.br/i45JRf1",
+        "cover_ebook": "https://pay.kiwify.com.br/NxPHXje",
+        "pub_amazon_printed": "https://pay.kiwify.com.br/QbQGtgm",
+        "pub_amazon_digital": "https://pay.kiwify.com.br/FOxvupC",
+        "pub_uiclap": "https://pay.kiwify.com.br/5MZbxZi",
+        "catalog_card": "https://pay.kiwify.com.br/hv6UVlU",
+        "isbn_printed": "https://pay.kiwify.com.br/rZdo3Jv",
+        "isbn_digital": "https://pay.kiwify.com.br/qoM41Tt",
+        "complete_package": "https://pay.kiwify.com.br/IHk1tZd",
+        "sales_page": "",
+        "hosting": ""
+    },
+    "leads": [],
+    "credits": {
+        "contato@leonildobevilaqua_com_br": -2,
+        "leonildobevilaqua@gmail_com": -6,
+        "emaisbusinessoficial@gmail_com": 0,
+        "rhanye@gmail_com": 0,
+        "subevilaqua@gmail_com": 0,
+        "leonildobevilaqua_gmail_com": 15,
+        "contato_leonildobevilaqua_com_br": 32
+    },
+    "users": {
+        "contato@leonildobevilaqua_com_br": {
+            "plan": null
+        },
+        "suelenbevilaqua@gmail_com": {
+            "plan": {
+                "name": "STARTER",
+                "billing": "monthly",
+                "status": "ACTIVE",
+                "startDate": "2026-01-14T13:55:11.674Z",
+                "lastPayment": "2026-01-14T13:55:11.674Z"
+            }
+        },
+        "subevilaqua@gmail_com": {
+            "plan": null
+        },
+        "leonildobevilaqua@gmail_com": {
+            "plan": null
+        },
+        "leonildobevilaqua_gmail_com": {
+            "profile": {
+                "name": "NILDO SILVA",
+                "email": "leonildobevilaqua@gmail.com",
+                "cpf": "",
+                "phone": "11994781486"
+            },
+            "auth": {
+                "passwordHash": "$2b$10$EkJW39AbczJtPMwL3tu4fuQ80wh7MBMH9juXEBziS.7Q7VvL1djvi"
+            },
+            "plan": {
+                "name": "PRO",
+                "status": "ACTIVE",
+                "startDate": "2026-01-30T17:27:24.684Z",
+                "subscriptionId": "sub_zcdloy8iz0qaiecq",
+                "features": {
+                    "aiFrontMatter": true,
+                    "marketingKit": true,
+                    "communityAccess": true,
+                    "prioritySupport": true,
+                    "freeTranslations": 1,
+                    "mentoring": false
+                },
+                "billing": "monthly",
+                "lastPayment": "2026-01-30T17:27:54.372Z"
+            },
+            "orders": [],
+            "stats": {
+                "purchaseCycleCount": 0,
+                "createdAt": "2026-01-30T17:27:17.113Z"
+            },
+            "bookCredits": 15
+        },
+        "admin@local_com": {
+            "plan": null
+        },
+        "contato_leonildobevilaqua_com_br": {
+            "profile": {
+                "name": "Leonildo Bevilaqua da Silva",
+                "email": "contato@leonildobevilaqua.com.br",
+                "cpf": "",
+                "phone": "11994781486"
+            },
+            "auth": {
+                "passwordHash": "$2b$10$UW12zuytur7Xq56sFonzqul/0/13lBfF4LY9Rhwn6u.FoE8y3P3p."
+            },
+            "plan": {
+                "name": "BLACK",
+                "status": "ACTIVE",
+                "startDate": "2026-02-08T16:56:48.984Z",
+                "subscriptionId": "sub_rrydrzfsctd9iaab",
+                "features": {
+                    "aiFrontMatter": true,
+                    "marketingKit": true,
+                    "communityAccess": true,
+                    "prioritySupport": true,
+                    "freeTranslations": 2,
+                    "mentoring": true
+                },
+                "billing": "monthly",
+                "lastPayment": "2026-02-08T16:57:19.181Z"
+            },
+            "orders": [
+                {
+                    "id": "pay_3th4k4jz0suijwdf",
+                    "title": "Crédito de Livro (Disponível)",
+                    "status": "CREDIT_AVAILABLE",
+                    "date": "2026-02-08",
+                    "price": 16.9,
+                    "invoiceNumber": "12960911",
+                    "paymentInfo": {
+                        "transactionId": "pay_3th4k4jz0suijwdf",
+                        "payerEmail": "contato@leonildobevilaqua.com.br",
+                        "method": "BOLETO",
+                        "value": 16.9
+                    }
+                }
+            ],
+            "stats": {
+                "purchaseCycleCount": 0,
+                "createdAt": "2026-02-08T16:56:40.946Z"
+            },
+            "bookCredits": 32
+        },
+        "contato_emaisbusiness_com_br": {
+            "profile": {
+                "name": "NILDO SILVA",
+                "email": "contato@emaisbusiness.com.br",
+                "cpf": "",
+                "phone": "11994781486"
+            },
+            "auth": {
+                "passwordHash": "$2b$10$WXf79JXJEIbeprnbf1chzel.XpCqO2xoZbaECFqMtC0jbl3x40hNy"
+            },
+            "plan": {
+                "name": "STARTER",
+                "status": "ACTIVE",
+                "startDate": "2026-01-30T15:28:42.160Z",
+                "subscriptionId": "sub_zhqzgf0lhfx8r2s6",
+                "features": {
+                    "aiFrontMatter": false,
+                    "marketingKit": false,
+                    "communityAccess": false,
+                    "prioritySupport": false,
+                    "freeTranslations": 0,
+                    "mentoring": false
+                },
+                "billing": "monthly",
+                "lastPayment": "2026-01-30T15:32:55.081Z"
+            },
+            "orders": [],
+            "stats": {
+                "purchaseCycleCount": 0,
+                "createdAt": "2026-01-30T15:28:27.563Z"
+            }
+        },
+        "contato@emaisbusiness_com_br": {
+            "plan": null
+        },
+        "leonildobevilaqua_com_br": {
+            "profile": {
+                "name": "NILDO SILVA",
+                "email": "leonildobevilaqua.com.br",
+                "cpf": "",
+                "phone": "11994781486"
+            },
+            "auth": {
+                "passwordHash": "$2b$10$T7ZQzTfNczBR4CLbo2Qm/eRc5vBnMPZDJg8mdCYwpTRW/z08YEXci"
+            },
+            "plan": null,
+            "orders": [],
+            "stats": {
+                "purchaseCycleCount": 0,
+                "createdAt": "2026-01-30T15:42:52.891Z"
+            }
+        }
+    },
+    "email": {
+        "user": "suporte@fabricadebestseller.com.br",
+        "pass": "",
+        "host": "mail.fabricadebestseller.com.br",
+        "port": "465"
+    },
+    "settings": {
+        "providers": {
+            "gemini": "",
+            "openai": ""
+        },
+        "activeProvider": "gemini",
+        "products": {
+            "english_book": "https://pay.kiwify.com.br/VqifT9S",
+            "spanish_book": "https://pay.kiwify.com.br/1Aj655e",
+            "cover_printed": "https://pay.kiwify.com.br/i45JRf1",
+            "cover_ebook": "https://pay.kiwify.com.br/NxPHXje",
+            "pub_amazon_printed": "https://pay.kiwify.com.br/QbQGtgm",
+            "pub_amazon_digital": "https://pay.kiwify.com.br/FOxvupC",
+            "pub_uiclap": "https://pay.kiwify.com.br/5MZbxZi",
+            "catalog_card": "https://pay.kiwify.com.br/hv6UVlU",
+            "isbn_printed": "https://pay.kiwify.com.br/rZdo3Jv",
+            "isbn_digital": "https://pay.kiwify.com.br/qoM41Tt",
+            "complete_package": "https://pay.kiwify.com.br/IHk1tZd",
+            "sales_page": "",
+            "hosting": ""
+        },
+        "email": {
+            "host": "mail.fabricadebestseller.com.br",
+            "pass": ""
+        }
+    },
+    "projects": {}
+}
