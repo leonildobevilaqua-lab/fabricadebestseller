@@ -1396,56 +1396,54 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               <ProgressTicker messages={(() => {
                 const msg = (statusMessage || "").toLowerCase();
 
-                // 1. Research Phase (0-30%)
-                if (progress < 15) return [
-                  "Calibrando sensores neurolinguísticos...",
-                  "Iniciando mineração profunda no Google Search...",
-                  "Acessando base de dados global de conhecimento...",
-                  "Identificando padrões de comportamento do consumidor..."
+                // 1. Research Phase (0-20%) - YouTube/Google Focus
+                if (progress < 20) return [
+                  "Analisando tendências de mercado...",
+                  "Identificando vídeos virais no YouTube...",
+                  "Extraindo padrões de best-sellers...",
+                  "Mapeando o comportamento do público-alvo...",
+                  "Calibrando sensores neurolinguísticos..."
                 ];
 
-                if (progress < 30) return [
-                  "Desconstruindo engenharia reversa dos Best-Sellers atuais...",
-                  "Analisando metadados de 10.000+ livros de sucesso...",
-                  "Identificando gaps de mercado que seu livro vai preencher...",
-                  "Mapeando as dores ocultas do seu público-alvo..."
-                ];
-
-                // 2. Structuring Phase (30-40%)
+                // 2. Deep Analysis (20-40%) - Structure/Reverse Engineering
                 if (progress < 40) return [
-                  "Moldando estruturas de títulos de alta conversão...",
-                  "Criando arquitetura lógica dos capítulos...",
-                  "Desen desenhando a jornada do herói para o leitor...",
-                  "Otimizando o sumário para retenção máxima..."
+                  "Desconstruindo a engenharia de títulos de sucesso...",
+                  "Criando a arquitetura persuasiva do livro...",
+                  "Validando a jornada do herói...",
+                  "Estruturando os ganchos mentais de cada capítulo...",
+                  "Otimizando a lógica de retenção do leitor..."
                 ];
 
-                // 3. Writing Phase (40-90%)
+                // 3. Writing Phase (40-90%) - Content Generation
                 if (progress < 60) return [
-                  "Escrevendo capítulos com PNL aplicada...",
-                  "Injetando gatilhos mentais de autoridade...",
+                  "Escrevendo conteúdo de alto impacto...",
                   "Desenvolvendo argumentos irrefutáveis...",
-                  "Criando conexões emocionais profundas com o leitor..."
+                  "Criando conexões emocionais profundas...",
+                  "Aplicando técnicas de PNL na narrativa...",
+                  "Expandindo os tópicos em parágrafos fluidos..."
                 ];
 
                 if (progress < 80) return [
-                  "Refinando a prosa para leitura fluida...",
+                  "Refinando o tom de voz para máxima autoridade...",
                   "Adicionando exemplos práticos e estudos de caso...",
                   "Eliminando redundâncias e clichês...",
-                  "Polindo o tom de voz para máxima autoridade..."
+                  "Polindo a prosa para leitura envolvente...",
+                  "Conectando as ideias entre os capítulos..."
                 ];
 
                 if (progress < 90) return [
-                  "Aplicando técnicas de copywriting avançado...",
+                  "Aplicando gatilhos mentais de copywriting...",
                   "Finalizando os últimos capítulos com chave de ouro...",
-                  "Revisando coerência e coesão textual...",
-                  "Garantindo que a promessa do livro seja entregue..."
+                  "Revisando a coerência textual...",
+                  "Garantindo a promessa de transformação do livro..."
                 ];
 
-                // 4. Finalization (90-100%)
+                // 4. Finalization (90-100%) - Formatting/Marketing
                 return [
                   "Diagramando seu livro para formato profissional...",
                   "Criando materiais de marketing de alta conversão...",
                   "Gerando sinopse magnética para vendas...",
+                  "Otimizando palavras-chave para SEO...",
                   "Finalizando o pacote completo do seu Best-Seller!"
                 ];
               })()} />
