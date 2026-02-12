@@ -40,9 +40,6 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
     // Helper: Calculate Value based on User Rules
     const calculateLeadValue = (lead: any) => {
         // 1. If explicit payment info exists (from Webhook), use it.
-        // BUT: If it's a BOOK and user is SUBSCRIBER, we must ensure visual consistency if payment info is missing or generic.
-        // Actually, let's prioritize the LOGIC first if payment info is not absolute reliable (e.g. 0.00).
-
         if (lead.paymentInfo?.amount) {
             if (lead.paymentInfo.provider === 'ASAAS') return Number(lead.paymentInfo.amount);
             const amt = Number(lead.paymentInfo.amount);
@@ -51,11 +48,12 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
         // 2. Check Plans (Distinguish Book vs Sub)
         if (lead.type === 'BOOK' || lead.title === 'Crédito de Livro (Disponível)' || (lead.credits && lead.credits > 0)) {
-            // CRITICAL FIX: If email is in subscriberSet, it IS a subscriber purchase (16.90)
+            // Se é assinante confirmado (Lista VIP ou Plano Ativo), valor é benefício:
             if (subscriberSet.has(lead.email) || (lead.plan && lead.plan.status === 'ACTIVE')) {
                 return 16.90;
             }
-            return 39.90; // Regular Price (Avulso)
+            // Se não é assinante, é Avulso (começa em 39.90)
+            return 39.90;
         }
 
         if (lead.plan || lead.status === 'SUBSCRIBER') {

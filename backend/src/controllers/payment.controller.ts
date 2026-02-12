@@ -10,6 +10,7 @@ const upload = multer();
 // --- PRICING CONFIGURATION ---
 // TABELA DE PREÇOS IMUTÁVEL (Fonte da Verdade)
 const PRICING_RULES: any = {
+    'AVULSO': [39.90, 39.90, 35.90, 32.90], // Preço padrão para não assinantes
     'STARTER_MENSAL': [26.90, 24.21, 22.87, 21.52],
     'STARTER_ANUAL': [24.90, 22.41, 21.17, 19.92],
     'PRO_MENSAL': [21.90, 19.71, 18.62, 17.52],
@@ -214,8 +215,95 @@ export const approveLead = async (req: Request, res: Response) => {
     }
 };
 
+export const createBookGenerationCharge = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: "Email required" });
+        const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
+        await reloadDB();
 
+        // 1. Identificar Plano e Ciclo
+        let plan = await getVal(`/users/${safeEmail}/plan`);
 
+        // Fallback search
+        if (!plan || plan.status !== 'ACTIVE') {
+            const rawLeads = await getVal('/leads') || [];
+            const actionLead = Object.values(rawLeads).find((l: any) =>
+                l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.status === 'SUBSCRIBER'
+            );
+            if (actionLead && (actionLead as any).plan) plan = (actionLead as any).plan;
+        }
+
+        // DETERMINAR CHAVE DE PREÇO
+        let planKey = 'AVULSO'; // Default para quem não tem plano ativo
+
+        if (plan && plan.status === 'ACTIVE') {
+            const planName = (plan.name || 'STARTER').toUpperCase();
+            let cleanPlan = 'STARTER';
+            if (planName.includes('BLACK')) cleanPlan = 'BLACK';
+            else if (planName.includes('PRO')) cleanPlan = 'PRO';
+
+            const billingRaw = (plan.billing || 'monthly').toLowerCase();
+            const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
+
+            planKey = `${cleanPlan}_${billingSuffix}`;
+        }
+
+        // 2. Definir Prioridade/Ciclo (Quantos livros JÁ FEZ)
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+        // Contar leads aprovados/completos deste email
+        const leadsUsage = leads.filter((l: any) =>
+            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
+        ).length;
+
+        // Contar projetos completados (redundancia)
+        let projectsUsage = 0;
+        try {
+            const projects = await getVal('/projects') || {};
+            const projectList = Array.isArray(projects) ? projects : Object.values(projects);
+            projectsUsage = projectList.filter((p: any) => {
+                const pEmail = (p.metadata?.contact?.email || p.userEmail || "").toLowerCase().trim();
+                const targetEmail = email.toLowerCase().trim();
+                const status = p.metadata?.status;
+                return pEmail === targetEmail &&
+                    (status === 'COMPLETED' || status === 'LIVRO ENTREGUE');
+            }).length;
+        } catch (e) { console.error("Error calculating project usage", e); }
+
+        const usageCount = Math.max(leadsUsage, projectsUsage);
+
+        // 3. Calcular Preço Baseado no Ciclo (0, 1, 2, 3...)
+        const cycleIndex = usageCount % 4; // Reinicia ciclo a cada 4 livros
+        const priceList = PRICING_RULES[planKey] || PRICING_RULES['AVULSO'];
+        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : priceList[0];
+
+        console.log(`[Pricing] Email: ${email} | Plan: ${planKey} | Count: ${usageCount} | Index: ${cycleIndex} | FINAL PRICE: ${price}`);
+
+        // 4. Criar Cobrança no Asaas
+        const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
+        const customerId = await AsaasProvider.createCustomer({
+            name: userProfile.name || email.split('@')[0],
+            email: email,
+            cpfCnpj: userProfile.cpf || undefined,
+            phone: userProfile.phone || undefined
+        });
+
+        const charge = await AsaasProvider.createPayment(
+            customerId,
+            price,
+            `Geração de Livro - ${planKey !== 'AVULSO' ? 'Plano ' + planKey : 'Avulso'} (Vol. ${usageCount + 1})`
+        );
+
+        return res.json({ success: true, invoiceUrl: charge.invoiceUrl });
+
+    } catch (error: any) {
+        console.error('Falha ao criar cobrança:', error);
+        return res.status(500).json({ error: error.message || 'Falha ao criar cobrança' });
+    }
+};
 export const handleKiwifyWebhook = async (req: Request, res: Response) => {
     try {
         await reloadDB();
@@ -896,90 +984,7 @@ export const useCredit = async (req: Request, res: Response) => {
     }
 };
 
-export const createBookGenerationCharge = async (req: Request, res: Response) => {
-    try {
-        const { email } = req.body;
-        if (!email) return res.status(400).json({ error: "Email required" });
-        const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
-        await reloadDB();
 
-        // 1. Identificar Plano e Ciclo
-        let plan = await getVal(`/users/${safeEmail}/plan`);
-
-        // Fallback search
-        if (!plan || plan.status !== 'ACTIVE') {
-            const rawLeads = await getVal('/leads') || [];
-            const actionLead = Object.values(rawLeads).find((l: any) =>
-                l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.status === 'SUBSCRIBER'
-            );
-            if (actionLead && (actionLead as any).plan) plan = (actionLead as any).plan;
-        }
-
-        const planName = plan ? (plan.name || 'STARTER').toUpperCase() : 'STARTER';
-        let cleanPlan = 'STARTER';
-        if (planName.includes('BLACK')) cleanPlan = 'BLACK';
-        else if (planName.includes('PRO')) cleanPlan = 'PRO';
-
-        const billingRaw = plan ? (plan.billing || 'monthly').toLowerCase() : 'monthly';
-        const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
-
-        const planKey = `${cleanPlan}_${billingSuffix}`;
-
-        // 2. Definir Prioridade/Ciclo
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
-        // Match logic with checkAccess to ensure consistent pricing
-        const leadsUsage = leads.filter((l: any) =>
-            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
-        ).length;
-
-        // Also count completed projects (robustness against broken lead links)
-        let projectsUsage = 0;
-        try {
-            const projects = await getVal('/projects') || {};
-            const projectList = Array.isArray(projects) ? projects : Object.values(projects);
-            projectsUsage = projectList.filter((p: any) => {
-                const pEmail = (p.metadata?.contact?.email || p.userEmail || "").toLowerCase().trim();
-                const targetEmail = email.toLowerCase().trim();
-                const status = p.metadata?.status;
-                return pEmail === targetEmail &&
-                    (status === 'COMPLETED' || status === 'LIVRO ENTREGUE');
-            }).length;
-            console.log(`[PaymentDebug] Leads Usage: ${leadsUsage}, Projects Usage: ${projectsUsage} for ${email}`);
-        } catch (e) { console.error("Error calculating project usage", e); }
-
-        const usageCount = Math.max(leadsUsage, projectsUsage);
-
-        // RESTORED DYNAMIC PRICING (Cycles 0-3)
-        const cycleIndex = usageCount % 4;
-
-        const priceList = PRICING_RULES[planKey] || PRICING_RULES['STARTER_MENSAL'];
-        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : priceList[0];
-
-        // 3. Criar Cobrança no Asaas
-        const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
-        const customerId = await AsaasProvider.createCustomer({
-            name: userProfile.name || email.split('@')[0],
-            email: email,
-            cpfCnpj: userProfile.cpf || undefined,
-            phone: userProfile.phone || undefined
-        });
-
-        const charge = await AsaasProvider.createPayment(
-            customerId,
-            price,
-            `Geração de Livro - ${cleanPlan}`
-        );
-
-        return res.json({ success: true, invoiceUrl: charge.invoiceUrl });
-
-    } catch (error: any) {
-        console.error('Falha ao criar cobrança:', error);
-        return res.status(500).json({ error: error.message || 'Falha ao criar cobrança' });
-    }
-};
 
 
 // DUMMY IMPLEMENTATION TO FIX BUILD (config.service missing)

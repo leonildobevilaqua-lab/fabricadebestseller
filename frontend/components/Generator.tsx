@@ -42,13 +42,23 @@ const ProgressTicker = ({ messages }: { messages: string[] }) => {
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex(prev => (prev + 1) % validMessages.length);
-    }, 4000); // 4s for faster feel
+    }, 4000);
     return () => clearInterval(interval);
   }, [validMessages]);
 
+  // HARD FILTER FOR GHOST MESSAGES
+  const currentMsg = validMessages[index] || validMessages[0];
+  if (currentMsg.includes("Pesquisando os vídeos mais visualizados")) {
+    return (
+      <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in">
+        "Processando dados..."
+      </p>
+    );
+  }
+
   return (
     <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in">
-      "{validMessages[index] || validMessages[0]}"
+      "{currentMsg}"
     </p>
   );
 };
