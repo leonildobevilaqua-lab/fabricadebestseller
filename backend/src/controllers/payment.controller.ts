@@ -1094,7 +1094,36 @@ export const checkAccess = async (req: Request, res: Response) => {
         }
     }
 
+
+
+    // CHECK PENDING IF REQUESTED
+    let pendingInvoice = null;
+    if (req.query.checkPending === 'true' && email) {
+        try {
+            const safeEmail = (email as string).trim();
+            const customer = await AsaasProvider.getCustomerByEmail(safeEmail);
+            if (customer) {
+                const payments = await AsaasProvider.getPayments({
+                    customer: customer.id,
+                    status: 'PENDING',
+                    limit: 1
+                });
+                if (payments.length > 0) {
+                    const p = payments[0];
+                    pendingInvoice = {
+                        id: p.id, // invoice number usually? Or Asaas ID.
+                        invoiceNumber: p.invoiceNumber, // If available
+                        status: p.status,
+                        url: p.bankSlipUrl || p.invoiceUrl,
+                        value: p.value
+                    };
+                }
+            }
+        } catch (e) { console.error("Error checking pending invoice", e); }
+    }
+
     res.json({
+        pendingInvoice,
         hasAccess: credits > 0 || hasActiveProject,
         credits,
         activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,

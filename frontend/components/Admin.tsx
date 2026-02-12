@@ -34,25 +34,32 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
     // Pre-calculate Subscribers Set for fast lookup
     const subscriberSet = new Set(
-        safeLeads.filter(l => l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE')).map(l => l.email)
+        safeLeads.filter(l => l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
+            .map(l => (l.email || "").toLowerCase().trim())
     );
 
     // Helper: Calculate Value based on User Rules
     const calculateLeadValue = (lead: any) => {
-        // 1. If explicit payment info exists (from Webhook), use it.
+        // 1. Explicit Amount from DB (Trust Source of Truth)
+        if (lead.amount !== undefined && lead.amount !== null) {
+            const val = Number(lead.amount);
+            if (!isNaN(val) && val > 0) return val;
+        }
+
+        // 2. Payment Info
         if (lead.paymentInfo?.amount) {
-            if (lead.paymentInfo.provider === 'ASAAS') return Number(lead.paymentInfo.amount);
             const amt = Number(lead.paymentInfo.amount);
+            // Sanity check: Asaas sometimes returns cents? usually float.
             return amt > 1000 ? amt / 100 : amt;
         }
 
-        // 2. Check Plans (Distinguish Book vs Sub)
+        // 3. Fallback Logic
         if (lead.type === 'BOOK' || lead.title === 'Crédito de Livro (Disponível)' || (lead.credits && lead.credits > 0)) {
-            // Se é assinante confirmado (Lista VIP ou Plano Ativo), valor é benefício:
-            if (subscriberSet.has(lead.email) || (lead.plan && lead.plan.status === 'ACTIVE')) {
+            const email = (lead.email || "").toLowerCase().trim();
+            // Subscriber Discount Check
+            if (subscriberSet.has(email) || (lead.plan && lead.plan.status === 'ACTIVE')) {
                 return 16.90;
             }
-            // Se não é assinante, é Avulso (começa em 39.90)
             return 39.90;
         }
 
@@ -60,15 +67,12 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
             const pName = (lead.plan?.name || 'STARTER').toUpperCase();
             const billing = (lead.plan?.billing || 'monthly').toLowerCase();
 
-            if (pName.includes('BLACK')) return billing === 'annual' ? 358.80 : 49.90;
-            if (pName.includes('PRO')) return billing === 'annual' ? 238.80 : 34.90;
-            if (pName.includes('STARTER')) return billing === 'annual' ? 118.80 : 19.90;
-
-            // Fallback for generic subscriber status without plan details yet
+            if (pName.includes('BLACK')) return billing.includes('ann') ? 358.80 : 49.90;
+            if (pName.includes('PRO')) return billing.includes('ann') ? 238.80 : 34.90;
+            if (pName.includes('STARTER')) return billing.includes('ann') ? 118.80 : 19.90;
             return 19.90;
         }
 
-        // 3. Default (Avulso / Credit) 
         return 39.90;
     };
 

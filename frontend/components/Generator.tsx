@@ -215,10 +215,11 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     }
   };
 
-  const checkAccessStatus = () => {
+  const checkAccessStatus = (manualCheck = false) => {
     if (!userContact?.email) return;
 
-    fetch(`/api/payment/check-access?email=${userContact.email}`)
+    const query = manualCheck ? '&checkPending=true' : '';
+    fetch(`/api/payment/check-access?email=${userContact.email}${query}`)
       .then(r => r.json())
       .then(access => {
         if (access.hasAccess) {
@@ -241,8 +242,23 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 }
               }
             });
-          } else {
-            // setShowReward(true); // Premature upsell disabled
+          }
+        } else {
+          // Manual Check Feedback
+          if (manualCheck) {
+            if (access.pendingInvoice) {
+              const inv = access.pendingInvoice;
+              const statusMap: any = { 'PENDING': 'PENDENTE', 'OVERDUE': 'VENCIDA', 'CONFIRMED': 'PAGA' };
+              const statusPT = statusMap[inv.status] || inv.status;
+
+              alert(`O Banco informou que a fatura nº ${inv.invoiceNumber || inv.id || 'N/A'} no valor de R$ ${inv.value} ainda consta como ${statusPT}.\n\nAssim que o pagamento for compensado, o acesso será liberado automaticamente.`);
+
+              if (inv.url && confirm("Deseja abrir a 2ª via do boleto/PIX?")) {
+                window.open(inv.url, '_blank');
+              }
+            } else {
+              alert("O sistema ainda não identificou o pagamento. Se você pagou via Boleto, pode levar até 1 dia útil. PIX é instantâneo.");
+            }
           }
         }
       })
