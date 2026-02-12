@@ -79,7 +79,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose, userEmail }
                             <span className="text-4xl font-bold text-green-400">R$ {bookPrice.toFixed(2).replace('.', ',')}</span>
                         </div>
                         <p className="text-xs text-indigo-300 mt-2 font-semibold tracking-wide uppercase">
-                            Preço garantido para o {config.discountLevel || 1}º Livro da Geração
+                            Preço garantido para o PRÓXIMO Livro da Geração
                         </p>
                     </div>
 

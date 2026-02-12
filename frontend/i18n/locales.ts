@@ -164,7 +164,7 @@ export const pt = {
         acknowledgmentsPlaceholder: "Ex: Deus, mentores, amigos...",
         dedicationToLabel: "Para quem dedicar? (Opcional)",
         ackToLabel: "Para quem agradecer? (Opcional)",
-        generateWithAI: "Gerar Textos com I.A.",
+        generateWithAI: "Gerar Textos Finais (IA)",
         writing: "Escrevendo...",
         finalizeAndGenerate: "Finalizar & Gerar Arquivos",
         workFinished: "Obra Finalizada!",
@@ -188,7 +188,7 @@ export const pt = {
             "Analisando os padrões de escrita dos top 1 best-sellers...",
             "Refinando a copy para máxima retenção do leitor.",
             "Ajustando o tom de voz para conexão emocional...",
-            "Formatando parágrafos para leitura fluida..."
+            "Formateando parágrafos para leitura fluida..."
         ],
         processInterrupted: "Processo Interrompido",
         startingIntelligence: "Iniciando inteligência...",
@@ -196,7 +196,7 @@ export const pt = {
         errorSendingEmail: "Erro ao enviar e-mail. Verifique o console.",
         emailSentSuccess: "Livro enviado para seu e-mail com sucesso!",
         errorCreatingDocx: "Erro ao criar arquivo DOCX. Tente novamente.",
-        errorGeneratingExtras: "Ocorreu uma instabilidade momentânea na IA, mas preenchemos com dados padrão para você continuar.",
+        errorGeneratingExtras: "Se este erro aparecer, recarregue a página (Cache Antigo).",
         fillAuthInfo: "Informe para quem você deseja dedicar ou agradecer.",
         serverConnectionError: "Não foi possível conectar ao servidor. Verifique se o backend (porta 3001) está rodando.",
         stuckStatus: "Parece que o status travou?",
