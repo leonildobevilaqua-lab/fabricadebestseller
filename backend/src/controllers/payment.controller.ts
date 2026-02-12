@@ -9,8 +9,8 @@ const upload = multer();
 // --- PRICING CONFIGURATION ---
 // --- PRICING CONFIGURATION ---
 // TABELA DE PREÇOS IMUTÁVEL (Fonte da Verdade)
+// REMOVIDO AVULSO - APENAS ASSINANTES PODEM GERAR
 const PRICING_RULES: any = {
-    'AVULSO': [39.90, 39.90, 35.90, 32.90], // Preço padrão para não assinantes
     'STARTER_MENSAL': [26.90, 24.21, 22.87, 21.52],
     'STARTER_ANUAL': [24.90, 22.41, 21.17, 19.92],
     'PRO_MENSAL': [21.90, 19.71, 18.62, 17.52],
@@ -225,29 +225,40 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         // 1. Identificar Plano e Ciclo
         let plan = await getVal(`/users/${safeEmail}/plan`);
 
-        // Fallback search
+        // Robustez: Se status não for explicitamente ACTIVE, verificar se é assinante em transição
         if (!plan || plan.status !== 'ACTIVE') {
             const rawLeads = await getVal('/leads') || [];
-            const actionLead = Object.values(rawLeads).find((l: any) =>
-                l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.status === 'SUBSCRIBER'
+            const subLead = Object.values(rawLeads).find((l: any) =>
+                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+                (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
             );
-            if (actionLead && (actionLead as any).plan) plan = (actionLead as any).plan;
+
+            if (subLead && (subLead as any).plan) {
+                plan = (subLead as any).plan;
+                // Auto-fix user record if missing
+                await setVal(`/users/${safeEmail}/plan`, plan);
+            }
         }
 
-        // DETERMINAR CHAVE DE PREÇO
-        let planKey = 'AVULSO'; // Default para quem não tem plano ativo
-
-        if (plan && plan.status === 'ACTIVE') {
-            const planName = (plan.name || 'STARTER').toUpperCase();
-            let cleanPlan = 'STARTER';
-            if (planName.includes('BLACK')) cleanPlan = 'BLACK';
-            else if (planName.includes('PRO')) cleanPlan = 'PRO';
-
-            const billingRaw = (plan.billing || 'monthly').toLowerCase();
-            const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
-
-            planKey = `${cleanPlan}_${billingSuffix}`;
+        // STRICT CHECK: SE NÃO TEM PLANO, NÃO GERA COBRANÇA DE LIVRO.
+        // O USUÁRIO DEVE ASSINAR PRIMEIRO.
+        if (!plan || plan.status !== 'ACTIVE') {
+            return res.status(403).json({
+                error: "PLAN_REQUIRED",
+                message: "Você precisa ter uma assinatura ativa para gerar livros.",
+                redirect: '/plans' // Frontend deve tratar isso
+            });
         }
+
+        const planName = (plan.name || 'STARTER').toUpperCase();
+        let cleanPlan = 'STARTER';
+        if (planName.includes('BLACK')) cleanPlan = 'BLACK';
+        else if (planName.includes('PRO')) cleanPlan = 'PRO';
+
+        const billingRaw = (plan.billing || 'monthly').toLowerCase();
+        const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
+
+        const planKey = `${cleanPlan}_${billingSuffix}`;
 
         // 2. Definir Prioridade/Ciclo (Quantos livros JÁ FEZ)
         const rawLeads = await getVal('/leads') || [];
@@ -277,8 +288,16 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
 
         // 3. Calcular Preço Baseado no Ciclo (0, 1, 2, 3...)
         const cycleIndex = usageCount % 4; // Reinicia ciclo a cada 4 livros
-        const priceList = PRICING_RULES[planKey] || PRICING_RULES['AVULSO'];
-        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : priceList[0];
+        const priceList = PRICING_RULES[planKey];
+
+        if (!priceList) {
+            console.error(`Pricing rule not found for ${planKey}, defaulting to STARTER_MENSAL`);
+            // Safety fallback just in case, but really shouldn't happen with strict check
+            const fallback = PRICING_RULES['STARTER_MENSAL'];
+            var price = fallback[0];
+        } else {
+            var price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : priceList[0];
+        }
 
         console.log(`[Pricing] Email: ${email} | Plan: ${planKey} | Count: ${usageCount} | Index: ${cycleIndex} | FINAL PRICE: ${price}`);
 
@@ -294,7 +313,7 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         const charge = await AsaasProvider.createPayment(
             customerId,
             price,
-            `Geração de Livro - ${planKey !== 'AVULSO' ? 'Plano ' + planKey : 'Avulso'} (Vol. ${usageCount + 1})`
+            `Geração Extra - Plano ${cleanPlan} (Vol. ${usageCount + 1})`
         );
 
         return res.json({ success: true, invoiceUrl: charge.invoiceUrl });
@@ -944,26 +963,47 @@ export const checkAccess = async (req: Request, res: Response) => {
         }
     }
 
+    // ... (logic above remains)
+
+    // DETERMINAR PREÇO DA ASSINATURA (Para o Frontend saber se bloqueia ou não)
+    let finalSubscriptionPrice = 49.90;
+    let subscriptionLink = "https://pay.kiwify.com.br/SpCDp2q"; // Default Starter Monthly
+
+    if (userPlan && userPlan.status === 'ACTIVE') {
+        finalSubscriptionPrice = 0; // JÁ É ASSINANTE!
+    } else {
+        // Se não é assinante, qual o preço para virar?
+        // Se ele tentou assinar um plano específico (pendingPlan), mostramos aquele.
+        if (pendingPlan) {
+            const pName = (pendingPlan.name || 'STARTER').toUpperCase();
+            const pBilling = (pendingPlan.billing || 'monthly').toLowerCase();
+
+            if (SUBSCRIPTION_PRICES[pName]) {
+                finalSubscriptionPrice = SUBSCRIPTION_PRICES[pName][pBilling]?.price || 49.90;
+                subscriptionLink = SUBSCRIPTION_PRICES[pName][pBilling]?.link || subscriptionLink;
+            }
+        }
+    }
+
     res.json({
         hasAccess: credits > 0 || hasActiveProject,
         credits,
-        hasActiveProject,
-        leadStatus,
-        plan: userPlan,
-        pendingPlan,
-        bookPrice,
-        checkoutUrl,
-        discountLevel,
-        latestInvoiceStatus,
-        latestInvoiceNumber,
         activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,
-        // Helper for frontend total sum
-        subscriptionPrice: (effectivePlan && SUBSCRIPTION_PRICES[planName]?.[(effectivePlan.billing || 'monthly').toLowerCase()]?.price) ||
-            (pendingPlan && pendingPlan.price) ||
-            49.90,
+        plan: userPlan,
+
+        // Prices
+        bookPrice, // Preço do livro extra (calculado antes)
+        subscriptionPrice: finalSubscriptionPrice, // 0 = Assinante, >0 = Não Assinante
+
+        // Links
+        subscriptionLink, // Link Kiwify
+        bookCheckoutUrl: `/api/payment/pay-book?email=${email}`, // Link Asaas (Backend gera)
+
+        // Metadata
         planLabel: effectivePlan
-            ? `Plano ${planName} ${(effectivePlan.billing === 'annual' ? 'Anual' : 'Mensal')}`
-            : (pendingPlan ? `Plano ${pendingPlan.name} ${(pendingPlan.billing === 'annual' ? 'Anual' : 'Mensal')}` : 'Avulso'),
+            ? `Plano ${(effectivePlan.name || 'STARTER').toUpperCase()}`
+            : "Assinatura Necessária",
+        discountLevel,
         totalBooksGenerated: usageCount
     });
 };

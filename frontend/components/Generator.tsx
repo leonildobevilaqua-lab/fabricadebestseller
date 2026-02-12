@@ -443,15 +443,15 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               }
 
               const isPlanActive = !!(access.plan && access.plan.status === 'ACTIVE');
-              const subPrice = isPlanActive ? 0 : (access.subscriptionPrice || 49.90);
+              const subPrice = access.subscriptionPrice !== undefined ? access.subscriptionPrice : (isPlanActive ? 0 : 49.90);
 
               setUpsellOffer({
                 price: access.bookPrice,
                 planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
-                link: access.checkoutUrl,
+                link: access.bookCheckoutUrl || access.checkoutUrl, // Prefer specific book link
                 level: access.discountLevel,
                 subscriptionPrice: subPrice,
-                subscriptionLink: "#"
+                subscriptionLink: access.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"
               });
 
               // Flow: If Plan Active -> Show Reward (User clicks -> Go to Book Checkout)
@@ -486,15 +486,15 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         } else {
           // Access Denied -> Show Payment Gate (User must pay or Admin must approve)
           const isPlanActive = !!(accessCheck.plan && accessCheck.plan.status === 'ACTIVE');
-          const subPrice = isPlanActive ? 0 : (accessCheck.subscriptionPrice || 49.90);
+          const subPrice = accessCheck.subscriptionPrice !== undefined ? accessCheck.subscriptionPrice : (isPlanActive ? 0 : 49.90);
 
           setUpsellOffer({
             price: accessCheck.bookPrice,
             planName: accessCheck.planLabel || (accessCheck.plan?.name ? `Plano ${accessCheck.plan.name}` : "STARTER"),
-            link: accessCheck.checkoutUrl,
+            link: accessCheck.bookCheckoutUrl || accessCheck.checkoutUrl,
             level: accessCheck.discountLevel,
             subscriptionPrice: subPrice,
-            subscriptionLink: "#"
+            subscriptionLink: accessCheck.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"
           });
 
           if (isPlanActive) {
@@ -527,9 +527,11 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             if (isPaymentError || !access.hasAccess) {
               setUpsellOffer({
                 price: access.bookPrice,
-                planName: access.plan?.name || "STARTER",
-                link: access.checkoutUrl,
-                level: access.discountLevel
+                planName: access.planLabel || "STARTER",
+                link: access.bookCheckoutUrl || access.checkoutUrl,
+                level: access.discountLevel,
+                subscriptionPrice: access.subscriptionPrice,
+                subscriptionLink: access.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"
               });
               setShowPaymentGate(true);
               setError(null); // Clear generic error
