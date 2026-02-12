@@ -33,9 +33,21 @@ const EmptyCircle = () => (
 );
 
 const ProgressTicker = ({ messages }: { messages: string[] }) => {
-  // FILTER OUT GHOST MESSAGES TO PREVENT CACHE ISSUE
-  const safeMessages = messages.filter(m => !m.toLowerCase().includes("pesquisando") && !m.toLowerCase().includes("youtube"));
-  const validMessages = safeMessages.length > 0 ? safeMessages : messages;
+  // ROBUST GHOST FILTER
+  // 1. Filter out unwanted phrases
+  const safeMessages = messages.filter(m => {
+    const lower = m.toLowerCase();
+    return !lower.includes("pesquisando os v") &&
+      !lower.includes("youtube") &&
+      !lower.includes("videos mais") &&
+      !lower.includes("vídeos mais");
+  });
+
+  // 2. If all messages were filtered (or input was empty), use safe defaults
+  // This prevents falling back to the original tainted 'messages' array
+  const validMessages = safeMessages.length > 0
+    ? safeMessages
+    : ["Processando dados da sua obra...", "Estruturando engenharia reversa...", "Otimizando conteúdo viral..."];
 
   const [index, setIndex] = useState(0);
 
@@ -46,18 +58,10 @@ const ProgressTicker = ({ messages }: { messages: string[] }) => {
     return () => clearInterval(interval);
   }, [validMessages]);
 
-  // HARD FILTER FOR GHOST MESSAGES
   const currentMsg = validMessages[index] || validMessages[0];
-  if (currentMsg.includes("Pesquisando os vídeos mais visualizados")) {
-    return (
-      <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in">
-        "Processando dados..."
-      </p>
-    );
-  }
 
   return (
-    <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in">
+    <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in transition-opacity duration-500">
       "{currentMsg}"
     </p>
   );
