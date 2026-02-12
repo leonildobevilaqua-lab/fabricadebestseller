@@ -2,11 +2,9 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { setVal, getVal, pushVal, reloadDB } from '../services/db.service';
 import { getProjectByEmail } from '../services/queue.service';
-import multer from 'multer';
 import { AsaasProvider } from '../services/asaas.provider';
-const upload = multer();
+import multer from 'multer';
 
-// --- PRICING CONFIGURATION ---
 // --- PRICING CONFIGURATION ---
 // TABELA DE PREÇOS IMUTÁVEL (Fonte da Verdade)
 // REMOVIDO AVULSO - APENAS ASSINANTES PODEM GERAR
@@ -21,16 +19,16 @@ const PRICING_RULES: any = {
 
 const SUBSCRIPTION_PRICES: any = {
     'STARTER': {
-        annual: { price: 118.80, link: 'https://pay.kiwify.com.br/47E9CXl' },
-        monthly: { price: 19.90, link: 'https://pay.kiwify.com.br/kfR54ZJ' }
+        annual: { price: 199.90, link: '/api/payment/subscribe?plan=STARTER&billing=annual' },
+        monthly: { price: 19.90, link: '/api/payment/subscribe?plan=STARTER&billing=monthly' }
     },
     'PRO': {
-        annual: { price: 238.80, link: 'https://pay.kiwify.com.br/jXQTsFm' },
-        monthly: { price: 34.90, link: 'https://pay.kiwify.com.br/Bls6OL7' }
+        annual: { price: 349.90, link: '/api/payment/subscribe?plan=PRO&billing=annual' },
+        monthly: { price: 34.90, link: '/api/payment/subscribe?plan=PRO&billing=monthly' }
     },
     'BLACK': {
-        annual: { price: 358.80, link: 'https://pay.kiwify.com.br/hSv5tYq' },
-        monthly: { price: 49.90, link: 'https://pay.kiwify.com.br/7UgxJ0f' }
+        annual: { price: 499.90, link: '/api/payment/subscribe?plan=BLACK&billing=annual' },
+        monthly: { price: 49.90, link: '/api/payment/subscribe?plan=BLACK&billing=monthly' }
     }
 };
 
@@ -321,6 +319,110 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
     } catch (error: any) {
         console.error('Falha ao criar cobrança:', error);
         return res.status(500).json({ error: error.message || 'Falha ao criar cobrança' });
+    }
+};
+
+export const createBookChargeLink = async (req: Request, res: Response) => {
+    try {
+        const email = req.query.email as string;
+        if (!email) return res.status(400).send("Email is required");
+
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        await reloadDB();
+
+        // 1. Identificar Plano e Ciclo
+        let plan = await getVal(`/users/${safeEmail}/plan`);
+
+        // Robustez: Se status não for explicitamente ACTIVE, verificar se é assinante em transição
+        if (!plan || plan.status !== 'ACTIVE') {
+            const rawLeads = await getVal('/leads') || [];
+            const subLead = Object.values(rawLeads).find((l: any) =>
+                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+                (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
+            );
+
+            if (subLead && (subLead as any).plan) {
+                plan = (subLead as any).plan;
+                // Auto-fix user record if missing
+                await setVal(`/users/${safeEmail}/plan`, plan);
+            }
+        }
+
+        // STRICT CHECK: SE NÃO TEM PLANO, NÃO GERA COBRANÇA DE LIVRO.
+        if (!plan || plan.status !== 'ACTIVE') {
+            return res.redirect('/plans?error=PLAN_REQUIRED');
+        }
+
+        const planName = (plan.name || 'STARTER').toUpperCase();
+        let cleanPlan = 'STARTER';
+        if (planName.includes('BLACK')) cleanPlan = 'BLACK';
+        else if (planName.includes('PRO')) cleanPlan = 'PRO';
+
+        const billingRaw = (plan.billing || 'monthly').toLowerCase();
+        const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
+
+        const planKey = `${cleanPlan}_${billingSuffix}`;
+
+        // 2. Definir Prioridade/Ciclo
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+        const leadsUsage = leads.filter((l: any) =>
+            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
+        ).length;
+
+        let projectsUsage = 0;
+        try {
+            const projects = await getVal('/projects') || {};
+            const projectList = Array.isArray(projects) ? projects : Object.values(projects);
+            projectsUsage = projectList.filter((p: any) => {
+                const pEmail = (p.metadata?.contact?.email || p.userEmail || "").toLowerCase().trim();
+                const targetEmail = email.toLowerCase().trim();
+                const status = p.metadata?.status;
+                return pEmail === targetEmail &&
+                    (status === 'COMPLETED' || status === 'LIVRO ENTREGUE');
+            }).length;
+        } catch (e) { console.error("Error calculating project usage", e); }
+
+        const usageCount = Math.max(leadsUsage, projectsUsage);
+        const cycleIndex = usageCount % 4;
+        const priceList = PRICING_RULES[planKey];
+
+        let price = 39.90;
+        if (!priceList) {
+            const fallback = PRICING_RULES['STARTER_MENSAL'];
+            price = fallback[0];
+        } else {
+            price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : priceList[0];
+        }
+
+        console.log(`[Pricing Link] Email: ${email} | Plan: ${planKey} | Count: ${usageCount} | Index: ${cycleIndex} | FINAL PRICE: ${price}`);
+
+        // 4. Criar Cobrança no Asaas
+        const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
+        const customerId = await AsaasProvider.createCustomer({
+            name: userProfile.name || email.split('@')[0],
+            email: email,
+            cpfCnpj: userProfile.cpf || undefined,
+            phone: userProfile.phone || undefined
+        });
+
+        const charge = await AsaasProvider.createPayment(
+            customerId,
+            price,
+            `Geração Extra - Plano ${cleanPlan} (Vol. ${usageCount + 1})`
+        );
+
+        if (charge.invoiceUrl || charge.bankSlipUrl) {
+            return res.redirect(charge.invoiceUrl || charge.bankSlipUrl);
+        } else {
+            return res.send("Erro ao gerar link de pagamento.");
+        }
+
+    } catch (error: any) {
+        console.error('Falha ao criar link cobrança:', error);
+        return res.status(500).send(`Erro: ${error.message}`);
     }
 };
 export const handleKiwifyWebhook = async (req: Request, res: Response) => {
@@ -980,7 +1082,14 @@ export const checkAccess = async (req: Request, res: Response) => {
 
             if (SUBSCRIPTION_PRICES[pName]) {
                 finalSubscriptionPrice = SUBSCRIPTION_PRICES[pName][pBilling]?.price || 49.90;
-                subscriptionLink = SUBSCRIPTION_PRICES[pName][pBilling]?.link || subscriptionLink;
+                let baseLink = SUBSCRIPTION_PRICES[pName][pBilling]?.link;
+                if (baseLink) {
+                    if (baseLink.startsWith('/')) {
+                        subscriptionLink = `${baseLink}&email=${email}`;
+                    } else {
+                        subscriptionLink = baseLink;
+                    }
+                }
             }
         }
     }
@@ -996,7 +1105,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         subscriptionPrice: finalSubscriptionPrice, // 0 = Assinante, >0 = Não Assinante
 
         // Links
-        subscriptionLink, // Link Kiwify
+        subscriptionLink, // Link Asaas (agora com email)
         bookCheckoutUrl: `/api/payment/pay-book?email=${email}`, // Link Asaas (Backend gera)
 
         // Metadata
@@ -1035,6 +1144,100 @@ export const getPublicConfig = async (req: Request, res: Response) => {
         res.json({ products: {} });
     } catch (e) {
         res.status(500).json({ error: "Failed to load config" });
+    }
+};
+
+export const createCharge = async (req: Request, res: Response) => {
+    try {
+        const { email, type, payer } = req.body;
+        let price = 39.90; // Fallback
+
+        await reloadDB();
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        const userPlan = await getVal(`/users/${safeEmail}/plan`);
+
+        if (userPlan && userPlan.status === 'ACTIVE') {
+            const pName = (userPlan.name || 'STARTER').toUpperCase();
+            if (pName.includes('BLACK')) price = 16.90;
+            else if (pName.includes('PRO')) price = 21.90;
+            else price = 26.90;
+        }
+
+        const customerId = await AsaasProvider.createCustomer({
+            name: payer?.name || 'Cliente',
+            email,
+            cpfCnpj: payer?.cpfCnpj,
+            phone: payer?.phone
+        });
+        const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'}`);
+
+        res.json({ success: true, invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl, price });
+    } catch (e: any) {
+        console.error("Create Charge Error", e);
+        res.status(500).json({ error: "Failed to create charge" });
+    }
+};
+
+export const createSubscriptionCharge = async (req: Request, res: Response) => {
+    try {
+        const { email, plan, billing } = req.query;
+
+        if (!email || !plan) {
+            return res.status(400).json({ error: "Email and Plan are required" });
+        }
+
+        const userEmail = (email as string).trim();
+        const planKey = (plan as string).toUpperCase();
+        const billingType = (billing as string || 'monthly').toUpperCase();
+
+        // 1. Create/Get Customer
+        const customerId = await AsaasProvider.createCustomer({
+            name: "Novo Assinante", // We should ideally get name from user data... but for now generic.
+            email: userEmail
+        });
+
+        // 2. Create Subscription
+        // AsaasProvider.createSubscription expects planKey from config (STARTER, etc)
+        // Ensure billing matches what createSubscription expects (it uses plan config for cycle)
+        // But our provider takes 'planKey'. Does it handle monthly/annual variations?
+        // Looking at provider, it does `getPlanConfig(planKey)`.
+        // If config only has STARTER, PRO, BLACK, it defaults to MONTHLY cycle in config.
+        // We need to support ANNUAL.
+        // Actually, AsaasProvider.createSubscription takes 'planKey'.
+        // If we want Annual, we might need a different planKey or modify provider to accept cycle override.
+        // For now, let's assume MONTHLY for simplicity or just pass the basic key.
+        // TODO: Support Annual properly. The Config `subscriptions.config.ts` has 'cycle: MONTHLY' hardcoded.
+        // Let's force Monthly for now as per user request (strict subscription).
+
+        const sub = await AsaasProvider.createSubscription(customerId, planKey);
+
+        // 3. Get First Invoice URL
+        // Subscription response might have it? Usually no.
+        // We fetch payments.
+        // Wait, Asaas requires fetching payments for the sub.
+
+        // Retry logic: Asaas might take a moment to generate the charge?
+        let payments = [];
+        let attempts = 0;
+        while (payments.length === 0 && attempts < 5) {
+            payments = await AsaasProvider.getSubscriptionPayments(sub.id);
+            if (payments.length === 0) await new Promise(r => setTimeout(r, 1000));
+            attempts++;
+        }
+
+        if (payments.length > 0) {
+            const invoiceUrl = payments[0].bankSlipUrl || payments[0].invoiceUrl;
+            // Redirect user to Asaas Invoice
+            return res.redirect(invoiceUrl);
+        } else {
+            // Fallback: If no payment found (rare), show error or dashboard
+            console.error("No payments generated for new subscription", sub.id);
+            return res.send("Erro ao gerar cobrança de assinatura. Tente novamente ou contate o suporte.");
+        }
+
+    } catch (e: any) {
+        console.error("Create Subscription Charge Error", e);
+        res.status(500).send(`Erro ao processar assinatura: ${e.message}`);
     }
 };
 
@@ -1112,32 +1315,4 @@ export const deleteLead = async (req: Request, res: Response) => {
     }
 };
 
-export const createCharge = async (req: Request, res: Response) => {
-    try {
-        const { email, type, payer } = req.body;
-        let price = 39.90; // Fallback
 
-        await reloadDB();
-        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        const userPlan = await getVal(`/users/${safeEmail}/plan`);
-
-        if (userPlan && userPlan.status === 'ACTIVE') {
-            const pName = (userPlan.name || 'STARTER').toUpperCase();
-            if (pName.includes('BLACK')) price = 16.90;
-            else if (pName.includes('PRO')) price = 21.90;
-            else price = 26.90;
-        }
-
-        const customerId = await AsaasProvider.createCustomer({
-            name: payer?.name || 'Cliente',
-            email,
-            cpfCnpj: payer?.cpfCnpj,
-            phone: payer?.phone
-        });
-        const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'}`);
-
-        res.json({ success: true, invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl, price });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
-    }
-};

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { handleKiwifyWebhook, checkAccess, useCredit, createLead, getLeads, approveLead, updateLead, deleteLead, createCharge, createBookGenerationCharge } from '../controllers/payment.controller';
+import { handleKiwifyWebhook, checkAccess, useCredit, createLead, getLeads, approveLead, updateLead, deleteLead, createCharge, createBookGenerationCharge, createSubscriptionCharge, createBookChargeLink } from '../controllers/payment.controller';
 import { simulateWebhook } from '../controllers/simulation.controller';
 
 const router = Router();
@@ -11,7 +11,11 @@ router.get('/check-access', checkAccess);
 router.post('/use', useCredit);
 router.post('/create-charge', createCharge);
 
-// SPECIFIC ROUTE FOR BOOK GENERATION PURCHASE
+// ASAAS GET REDIRECTS (Friendly Links)
+router.get('/subscribe', createSubscriptionCharge);
+router.get('/pay-book', createBookChargeLink);
+
+// SPECIFIC ROUTE FOR BOOK GENERATION PURCHASE (POST/JSON)
 router.post('/purchase/book-generation', createBookGenerationCharge);
 
 // Admin / Leads
