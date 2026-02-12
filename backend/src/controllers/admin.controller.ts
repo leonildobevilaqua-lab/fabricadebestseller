@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt';
 import { sendEmail } from '../services/email.service';
 import { getVal, setVal, reloadDB } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
+import * as DocService from '../services/doc.service';
 
 // ... (Login logic)
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
@@ -393,5 +394,56 @@ export const getOrders = async (req: Request, res: Response) => {
     } catch (e: any) {
         console.error("Error getting orders:", e);
         res.json([]);
+    }
+};
+
+export const recoverBooks = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        console.log(`[RecoverBooks] Starting recovery for ${email || 'ALL'}`);
+
+        const projects = await getVal('/projects') || {};
+        const list = Object.values(projects) as any[];
+
+        const targetEmail = email ? email.toLowerCase().trim() : null;
+        const recovered: any[] = [];
+
+        for (const p of list) {
+            // Filter by Email if provided
+            if (targetEmail) {
+                const pEmail = p.metadata?.contact?.email?.toLowerCase().trim();
+                // Loose check: contains or equal
+                if (!pEmail || !pEmail.includes(targetEmail)) continue;
+            }
+
+            // Check if valid for regeneration
+            // Include IN_PROGRESS if structure exists (maybe user got stuck)
+            if (p.structure && p.structure.length > 0) {
+                try {
+                    console.log(`Regenerating DOCX for Project ${p.id} (${p.metadata.bookTitle})...`);
+                    const filePath = await DocService.generateBookDocx(p);
+                    const fileName = path.basename(filePath);
+
+                    // Construct URL
+                    const baseUrl = process.env.VITE_API_URL || 'http://localhost:3000';
+                    const downloadUrl = `${baseUrl}/downloads/${fileName}`;
+
+                    recovered.push({
+                        projectId: p.id,
+                        title: p.metadata.bookTitle || "Sem Título",
+                        status: p.metadata.status,
+                        url: downloadUrl,
+                        date: p.metadata.created_at || new Date()
+                    });
+                } catch (err) {
+                    console.error(`Failed to regenerate project ${p.id}`, err);
+                }
+            }
+        }
+
+        res.json({ recovered, count: recovered.length });
+    } catch (e: any) {
+        console.error(e);
+        res.status(500).json({ error: e.message });
     }
 };

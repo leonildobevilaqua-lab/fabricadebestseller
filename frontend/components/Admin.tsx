@@ -597,6 +597,36 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
+    const handleRecoverBooks = async () => {
+        const email = prompt("RESTAURAÇÃO DE LIVROS PERDIDOS\n\nDigite o email do usuário para recuperar os arquivos (ou deixe em branco para processar TODOS os livros concluídos do sistema):");
+        if (email === null) return;
+
+        try {
+            setMsg("Iniciando recuperação... aguarde...");
+            const res = await fetch(`${getAdminUrl()}/recover-books`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+
+            if (data.recovered && data.recovered.length > 0) {
+                const confirmOpen = confirm(`Encontrados ${data.count} livros!\n\nDeseja abrir os links de download agora? (Certifique-se de permitir pop-ups)`);
+                if (confirmOpen) {
+                    data.recovered.forEach((r: any) => window.open(r.url, '_blank'));
+                } else {
+                    alert("Links gerados:\n" + data.recovered.map((r: any) => r.url).join("\n"));
+                }
+            } else {
+                alert("Nenhum livro concluído encontrado para recuperação no banco de dados.");
+            }
+            setMsg(null);
+        } catch (e: any) {
+            alert("Erro ao recuperar: " + e.message);
+            setMsg(null);
+        }
+    };
+
     const [leads, setLeads] = useState<any[]>([]);
     const [orders, setOrders] = useState<any[]>([]);
 
@@ -1108,6 +1138,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         }}
                                         className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 transition"
                                     >
+                                        <button
+                                            onClick={handleRecoverBooks}
+                                            className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-yellow-500 text-white hover:bg-yellow-600 flex items-center gap-2 transition"
+                                        >
+                                            <span>🔄</span> Restaurar Livros
+                                        </button>
                                         <span>📊</span> Exportar Excel
                                     </button>
                                 </div>

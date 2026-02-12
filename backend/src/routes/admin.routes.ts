@@ -23,4 +23,6 @@ router.get('/backups', AdminController.listBackups);
 router.post('/backups/restore', AdminController.restoreBackup);
 router.get('/orders', AdminController.getOrders);
 
+router.post('/recover-books', AdminController.recoverBooks);
+
 export default router;
