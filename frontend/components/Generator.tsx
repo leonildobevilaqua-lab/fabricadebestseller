@@ -985,7 +985,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             {generatingExtras ? <span className="animate-spin">⚙️</span> : "✨"}
             {generatingExtras ? t.writing : t.generateWithAI}
           </button>
-          <p className="text-[10px] text-slate-300 text-center mt-2 opacity-50">System v5.1 - Cache Bust</p>
+          <p className="text-[10px] text-slate-300 text-center mt-2 opacity-50">System v5.2 - FIX CARREGADO</p>
 
           <div className="mb-6 relative">
             <label className="block font-bold text-slate-700 mb-2">{t.dedication}</label>

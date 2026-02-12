@@ -5,12 +5,13 @@ import { getApiBase } from '../services/api';
 const Edit = ({ className }: { className?: string }) => <span>✏️</span>;
 const Trash = ({ className }: { className?: string }) => <span>🗑️</span>;
 
-export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
+export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, calculatedValue }: {
     lead: any,
     onApprove: (email: string, type?: string) => Promise<boolean>,
     onDelete: (id: string) => Promise<void>,
     onEdit: (id: string, updates: any) => Promise<void>,
-    onDiagram: (id: string) => Promise<boolean>
+    onDiagram: (id: string) => Promise<boolean>,
+    calculatedValue?: number
 }) => {
     // Initial state based on passed props
     const hasCredits = (lead.credits || 0) > 0;
@@ -97,7 +98,9 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
 
     // Resolve Amount
     let displayAmount = 'R$ 0,00';
-    if (lead.paymentInfo?.amount) {
+    if (calculatedValue !== undefined) {
+        displayAmount = formatMoney(calculatedValue);
+    } else if (lead.paymentInfo?.amount) {
         displayAmount = formatMoney(lead.paymentInfo.amount);
     } else if (isSubscription && lead.plan) {
         // Fallback Plan Prices

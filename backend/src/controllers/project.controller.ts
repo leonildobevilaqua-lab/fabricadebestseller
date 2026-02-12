@@ -885,10 +885,20 @@ export const generateExtras = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { dedicationTo, ackTo, aboutAuthorContext, language } = req.body;
 
-    const project = await QueueService.getProject(id);
-    if (!project) return res.status(404).json({ error: "Not found" });
+    // Define fallback safe object immediately
+    const safeExtras = {
+        dedication: typeof dedicationTo === 'string' && dedicationTo.length > 5 ? `Dedico este livro a ${dedicationTo}.` : "",
+        acknowledgments: typeof ackTo === 'string' && ackTo.length > 5 ? `Agradeço a ${ackTo} por todo o apoio.` : "",
+        aboutAuthor: typeof aboutAuthorContext === 'string' && aboutAuthorContext.length > 5 ? aboutAuthorContext : ""
+    };
 
     try {
+        const project = await QueueService.getProject(id);
+        if (!project) {
+            console.error(`Project ${id} not found for extras generation. Returning safe fallback.`);
+            return res.json(safeExtras);
+        }
+
         const lang = language || project.metadata.language || 'pt';
         const extras = await AIService.generateExtras(project.metadata, dedicationTo, ackTo, aboutAuthorContext, lang);
         res.json(extras);

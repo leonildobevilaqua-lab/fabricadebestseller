@@ -33,9 +33,13 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
     const safeOrders = Array.isArray(orders) ? orders : [];
 
     // Pre-calculate Subscribers Set for fast lookup
-    const subscriberSet = new Set(
-        safeLeads.filter(l => l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
-            .map(l => (l.email || "").toLowerCase().trim())
+    // Unified Subscriber Set for Accurate Pricing
+    const subscriberEmails = new Set(
+        safeLeads.filter(l =>
+            l.status === 'SUBSCRIBER' ||
+            (l.plan && l.plan.status === 'ACTIVE') ||
+            (l.type === 'SUBSCRIPTION' && ['ACTIVE', 'PAID', 'COMPLETED'].includes(l.status))
+        ).map(l => (l.email || "").toLowerCase().trim())
     );
 
     // Helper: Calculate Value based on User Rules
@@ -57,7 +61,7 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         if (lead.type === 'BOOK' || lead.title === 'Crédito de Livro (Disponível)' || (lead.credits && lead.credits > 0)) {
             const email = (lead.email || "").toLowerCase().trim();
             // Subscriber Discount Check
-            if (subscriberSet.has(email) || (lead.plan && lead.plan.status === 'ACTIVE')) {
+            if (subscriberEmails.has(email) || (lead.plan && lead.plan.status === 'ACTIVE')) {
                 return 16.90;
             }
             return 39.90;
@@ -630,6 +634,37 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [leads, setLeads] = useState<any[]>([]);
     const [orders, setOrders] = useState<any[]>([]);
 
+    // Unified Pricing Logic for Layout
+    const subscriberEmails = new Set(
+        (leads || []).filter((l: any) =>
+            l.status === 'SUBSCRIBER' ||
+            (l.plan && l.plan.status === 'ACTIVE') ||
+            (l.type === 'SUBSCRIPTION' && ['ACTIVE', 'PAID', 'COMPLETED'].includes(l.status))
+        ).map((l: any) => (l.email || "").toLowerCase().trim())
+    );
+
+    const calculateLeadValue = (lead: any) => {
+        if (lead.amount && lead.amount > 0) return Number(lead.amount);
+        if (lead.paymentInfo?.amount) {
+            const amt = Number(lead.paymentInfo.amount);
+            return amt > 1000 ? amt / 100 : amt;
+        }
+        if (lead.type === 'BOOK' || lead.title === 'Crédito de Livro (Disponível)' || (lead.credits && lead.credits > 0)) {
+            const email = (lead.email || "").toLowerCase().trim();
+            if (subscriberEmails.has(email) || (lead.plan && lead.plan.status === 'ACTIVE')) return 16.90;
+            return 39.90;
+        }
+        if (lead.plan || lead.status === 'SUBSCRIBER') {
+            const pName = (lead.plan?.name || 'STARTER').toUpperCase();
+            const billing = (lead.plan?.billing || 'monthly').toLowerCase();
+            if (pName.includes('BLACK')) return billing.includes('ann') ? 358.80 : 49.90;
+            if (pName.includes('PRO')) return billing.includes('ann') ? 238.80 : 34.90;
+            if (pName.includes('STARTER')) return billing.includes('ann') ? 118.80 : 19.90;
+            return 19.90;
+        }
+        return 39.90;
+    };
+
     useEffect(() => {
         if (token) {
             loadSettings();
@@ -1171,6 +1206,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 <LeadRow
                                                     key={lead.id}
                                                     lead={lead}
+                                                    calculatedValue={calculateLeadValue(lead)}
                                                     onApprove={handleApproveLead}
                                                     onDelete={handleDelete}
                                                     onEdit={handleEdit}
