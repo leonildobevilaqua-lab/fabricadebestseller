@@ -686,6 +686,7 @@ export const checkAccess = async (req: Request, res: Response) => {
     let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
     let latestInvoiceStatus = null;
     let latestInvoiceNumber = null;
+    let lastPaymentDate = null;
 
     // [STRICT AUDIT & RECOVERY SYSTEM]
     // 1. Unconditionally fetch external truth (Asaas) and local history (Orders)
@@ -735,6 +736,10 @@ export const checkAccess = async (req: Request, res: Response) => {
                 (p.description || '').toLowerCase().includes('geração'))
         );
         const paidCount = validPaidList.length;
+
+        if (paidCount > 0) {
+            lastPaymentDate = validPaidList[0].confirmedDate || validPaidList[0].paymentDate || validPaidList[0].clientPaymentDate || validPaidList[0].dateCreated;
+        }
 
         // 2. Calculate OUTFLOW (Generated Books / Orders)
         const userOrders = (orders as any[]).filter((o: any) =>
@@ -1142,7 +1147,8 @@ export const checkAccess = async (req: Request, res: Response) => {
             ? `Plano ${(effectivePlan.name || 'STARTER').toUpperCase()}`
             : "Assinatura Necessária",
         discountLevel,
-        totalBooksGenerated: usageCount
+        totalBooksGenerated: usageCount,
+        lastPaymentDate
     });
 };
 

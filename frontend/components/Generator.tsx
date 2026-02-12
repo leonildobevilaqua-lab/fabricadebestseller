@@ -250,14 +250,15 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               const inv = access.pendingInvoice;
               const statusMap: any = { 'PENDING': 'PENDENTE', 'OVERDUE': 'VENCIDA', 'CONFIRMED': 'PAGA' };
               const statusPT = statusMap[inv.status] || inv.status;
+              const invNum = inv.invoiceNumber || inv.id || 'N/A';
 
-              alert(`O Banco informou que a fatura nº ${inv.invoiceNumber || inv.id || 'N/A'} no valor de R$ ${inv.value} ainda consta como ${statusPT}.\n\nAssim que o pagamento for compensado, o acesso será liberado automaticamente.`);
+              alert(`A Fatura nº ${invNum} ainda consta como ${statusPT}.\n\nPor gentileza finalize o pagamento para prosseguir ou aguarde a compensação pelo Banco.\n\n(Valor: R$ ${inv.value})`);
 
               if (inv.url && confirm("Deseja abrir a 2ª via do boleto/PIX?")) {
                 window.open(inv.url, '_blank');
               }
             } else {
-              alert("O sistema ainda não identificou o pagamento. Se você pagou via Boleto, pode levar até 1 dia útil. PIX é instantâneo.");
+              alert("O sistema ainda não identificou o pagamento recente. Se você pagou via Boleto, pode levar até 1 dia útil. PIX é instantâneo. Tente novamente em alguns segundos.");
             }
           }
         }
@@ -1429,12 +1430,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 const msg = (statusMessage || "").toLowerCase();
 
                 // 1. Research Phase (0-20%) - YouTube/Google Focus
+                // 1. Research Phase (0-20%) - Market Focus (No YouTube)
                 if (progress < 20) return [
-                  "Analisando tendências de mercado...",
-                  "Identificando vídeos virais no YouTube...",
-                  "Extraindo padrões de best-sellers...",
+                  "Analisando tendências de mercado editorial...",
+                  "Identificando padrões de best-sellers na Amazon...",
                   "Mapeando o comportamento do público-alvo...",
-                  "Calibrando sensores neurolinguísticos..."
+                  "Estruturando os pilares do conteúdo...",
+                  "Calibrando o tom de voz da obra..."
                 ];
 
                 // 2. Deep Analysis (20-40%) - Structure/Reverse Engineering

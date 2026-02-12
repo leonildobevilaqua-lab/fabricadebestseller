@@ -78,18 +78,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             // Ignore 'hasActiveProject' here because this button is specifically for validating a NEW payment.
             // STRICT CHECK: Only entry if credits are actually confirmed.
             if (data.credits > 0) {
-                if (data.latestInvoiceStatus === 'PENDING') {
-                    // Clarify that access is due to PREVIOUS balance, not the new invoice
-                    alert(`⚠️ A fatura atual ${data.latestInvoiceNumber || ''} ainda está PENDENTE no banco.\n\nPorém, você possui CRÉDITOS ANTERIORES válidos.\n\nLiberando acesso com saldo anterior...`);
-                } else {
-                    alert('Pagamento Confirmado! Iniciando Geração...');
+                // Check Recency preventing false positives (Stale Credit vs New Payment)
+                let isRecent = false;
+                if (data.lastPaymentDate) {
+                    const paymentTime = new Date(data.lastPaymentDate).getTime();
+                    const now = new Date().getTime();
+                    const hoursDiff = (now - paymentTime) / (1000 * 60 * 60);
+                    if (hoursDiff < 24) isRecent = true;
                 }
-                onNewBook();
-            } else {
-                if (data.latestInvoiceStatus === 'PENDING') {
-                    alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação.`);
+
+                if (isRecent) {
+                    alert('Pagamento Confirmado! Iniciando Geração...');
+                    onNewBook();
                 } else {
-                    alert('⚠️ O banco ainda não confirmou seu pagamento. Aguarde alguns instantes e clique neste botão novamente.');
+                    // Stale Credit Logic - Ask user instead of confusing them
+                    const dateStr = data.lastPaymentDate ? new Date(data.lastPaymentDate).toLocaleDateString() : 'Desconhecida';
+                    if (confirm(`Encontramos 1 crédito anterior disponível na sua conta (Data: ${dateStr}).\n\nDeseja utilizar este crédito agora?`)) {
+                        onNewBook();
+                    }
+                }
+            } else {
+                if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
+                    const statusPT = data.latestInvoiceStatus === 'PENDING' ? 'PENDENTE' : 'VENCIDA';
+                    alert(`A Fatura nº ${data.latestInvoiceNumber || 'N/A'} ainda consta como ${statusPT}.\n\nPor gentileza finalize o pagamento para prosseguir ou aguarde a compensação pelo Banco.`);
+                } else {
+                    alert('⚠️ O banco ainda não confirmou seu pagamento recente. Tente novamente em alguns instantes.\n\nSe pagou via Boleto, pode levar até 1 dia útil.');
                 }
             }
         } catch (error) {
