@@ -506,10 +506,21 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     onLoginClick();
                     return;
                 } else {
-                    // Not active yet
-                    // Check ZOMBIE/Recuperação de Assinatura also?
-                    // No, subscription logic is stricter. Just wait for webhook.
-                    alert("A assinatura ainda não foi confirmada pelo banco. Aguarde alguns instantes.");
+                    // Not active yet - Check for Pending Invoice to give better feedback
+                    if (status.pendingInvoice) {
+                        const inv = status.pendingInvoice;
+                        const statusPT = inv.status === 'PENDING' ? 'PENDENTE' : (inv.status === 'OVERDUE' ? 'VENCIDA' : inv.status);
+                        const invValue = inv.value ? `R$ ${inv.value}` : '';
+
+                        alert(`A Fatura nº ${inv.id || inv.invoiceNumber} ainda consta como ${statusPT}.\n\nPor favor, aguarde a compensação bancária.\n${invValue}`);
+
+                        // Option to open invoice
+                        if (inv.url && confirm("Deseja abrir a 2ª via do boleto/PIX agora?")) {
+                            window.open(inv.url, '_blank');
+                        }
+                    } else {
+                        alert("Pagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente.");
+                    }
                     return;
                 }
             }
@@ -522,7 +533,27 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             } else {
                 console.warn("Start prevented: No internal credits available or API Error.");
                 setPaymentConfirmed(false);
-                alert("Não foi possível iniciar a produção. Verifique se seu pagamento foi confirmado ou se possui créditos.");
+
+                // Try to get specific reason (Pending Invoice?)
+                try {
+                    const checkRes = await fetch(`/api/payment/check-access?email=${currentForm.email}`);
+                    const checkData = await checkRes.json();
+
+                    if (checkData.pendingInvoice) {
+                        const inv = checkData.pendingInvoice;
+                        const statusMap: any = { 'PENDING': 'PENDENTE', 'OVERDUE': 'VENCIDA', 'CONFIRMED': 'PAGA' };
+                        const statusPT = statusMap[inv.status] || inv.status;
+
+                        alert(`A Fatura nº ${inv.invoiceNumber || inv.id} ainda consta como ${statusPT}.\n\nPor gentileza finalize o pagamento para prosseguir.\nValor: R$ ${inv.value}`);
+
+                        if (inv.url && confirm("Deseja abrir a fatura para pagamento?")) {
+                            window.open(inv.url, '_blank');
+                        }
+                        return;
+                    }
+                } catch (e) { }
+
+                alert("Não foi possível iniciar. Verifique se o pagamento foi concluído ou tente novamente em instantes.");
             }
 
         } catch (e) {
