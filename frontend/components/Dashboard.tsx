@@ -247,10 +247,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     <div className="relative z-10">
                         <div className="text-center mb-10">
                             <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-2">
-                                <span className="text-yellow-400">🎁</span> Sua Jornada de Benefícios
+                                <span className="text-yellow-400">★</span> BENEFÍCIO EXCLUSIVO {planName}
                             </h2>
                             <p className="text-slate-400 max-w-2xl mx-auto">
-                                Desbloqueie descontos progressivos a cada livro gerado. Seu status atual está destacado abaixo.
+                                Como assinante, você desbloqueou o <strong className="text-white">Melhor Preço Garantido</strong> para todas as suas gerações de livros.
                             </p>
                         </div>
 
