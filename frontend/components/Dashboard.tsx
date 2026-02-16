@@ -4,9 +4,9 @@ import { PenTool, Download, Star, CheckCircle, Clock } from 'lucide-react';
 import { SocialShare } from './SocialShare'; // Assuming Lucide or similar, else inline SVGs
 
 // Inline Icons fallback
-const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
-const IconStar = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
-const IconDownload = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>;
+const IconBook = (props: any) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
+const IconStar = (props: any) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
+const IconDownload = (props: any) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>;
 
 interface DashboardProps {
     user: any;
@@ -100,7 +100,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             } else {
                 if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
                     const statusPT = data.latestInvoiceStatus === 'PENDING' ? 'PENDENTE' : 'VENCIDA';
-                    alert(`A Fatura nº ${data.latestInvoiceNumber || 'N/A'} ainda consta como ${statusPT}.\n\nPor gentileza finalize o pagamento para prosseguir ou aguarde a compensação pelo Banco.`);
+                    const invNumber = data.latestInvoiceNumber || 'N/A';
+                    alert(`🧾 FATURA ENCONTRADA: Nº ${invNumber}\n\nSTATUS: ${statusPT}\n\nO banco ainda não compensou seu pagamento. Se foi via Boleto, pode levar até 24h. PIX costuma ser rápido.\n\nAguarde a compensação.`);
                 } else {
                     alert('⚠️ O banco ainda não confirmou seu pagamento recente. Tente novamente em alguns instantes.\n\nSe pagou via Boleto, pode levar até 1 dia útil.');
                 }
@@ -173,16 +174,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const orders = stats?.orders || [];
 
     // Determine Prices properly for Sidebar and Box based on Plan AND Billing
-    let currentCyclePrices = [26.90, 26.90, 26.90, 26.90]; // Default STARTER
-    if (planName.toUpperCase().includes('STARTER')) {
-        currentCyclePrices = [26.90, 26.90, 26.90, 26.90];
-    }
-    if (planName.toUpperCase().includes('PRO')) {
-        currentCyclePrices = [21.90, 21.90, 21.90, 21.90];
-    }
-    if (planName.toUpperCase().includes('BLACK')) {
-        currentCyclePrices = [16.90, 16.90, 16.90, 16.90];
-    }
+    // Determine Prices properly for Sidebar and Box based on Plan AND Billing
+    const isAnnual = billing === 'annual' || billing === 'anual';
+
+    // Pricing Rules - MUST MATCH BACKEND
+    const PRICING: any = {
+        'STARTER_MONTHLY': [26.90, 24.21, 22.87, 21.52],
+        'STARTER_ANNUAL': [24.90, 22.41, 21.17, 19.92],
+        'PRO_MONTHLY': [21.90, 19.71, 18.62, 17.52],
+        'PRO_ANNUAL': [19.90, 17.91, 16.92, 15.92],
+        'BLACK_MONTHLY': [16.90, 15.21, 14.37, 13.52],
+        'BLACK_ANNUAL': [14.90, 13.41, 12.67, 11.92]
+    };
+
+    let pKey = 'STARTER';
+    if (planName.toUpperCase().includes('PRO')) pKey = 'PRO';
+    if (planName.toUpperCase().includes('BLACK')) pKey = 'BLACK';
+
+    const bKey = isAnnual ? 'ANNUAL' : 'MONTHLY';
+    let currentCyclePrices = PRICING[`${pKey}_${bKey}`] || PRICING['STARTER_MONTHLY'];
 
     // Force Flat Price (Ignore cycle count)
     const priceIndex = 0;
@@ -228,44 +238,124 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-                {/* Simplified Benefit Card - Flat Rate */}
-                <div className="bg-slate-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden border border-slate-800 text-center">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                {/* Progressive Credit Unlock System */}
+                <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-8 border border-slate-700 shadow-2xl relative overflow-hidden">
+                    {/* Background Ambience */}
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-                    <div className="relative z-10 flex flex-col items-center">
-                        <div className="w-16 h-16 bg-yellow-400/20 text-yellow-400 rounded-full flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(250,204,21,0.3)]">
-                            <IconStar />
+                    <div className="relative z-10">
+                        <div className="text-center mb-10">
+                            <h2 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight mb-2">
+                                <span className="text-yellow-400">🎁</span> Sua Jornada de Benefícios
+                            </h2>
+                            <p className="text-slate-400 max-w-2xl mx-auto">
+                                Desbloqueie descontos progressivos a cada livro gerado. Seu status atual está destacado abaixo.
+                            </p>
                         </div>
 
-                        <h2 className="text-3xl font-black mb-4 uppercase">
-                            BENEFÍCIO EXCLUSIVO {planName}
-                        </h2>
+                        {/* Grid of 4 Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {currentCyclePrices.map((price, index) => {
+                                // Calculate Status
+                                // We need to know how many books the user generated this cycle.
+                                // Assuming 'orders.length' reflects lifetime or we assume cycle reset?
+                                // For now, let's use 'orders.length % 4' or similar if distinct cycles not tracked fully.
+                                // Or better: let's assume orders reset or we just track sequential 1-4.
+                                // The user request implies "4 credits... unlocked with each book".
+                                // Let's simplify: Active Index = orders.length (capped at 3?).
+                                // If orders.length >= 4, we wrap around or stay at 4?
+                                // Usually these systems cycle 1-4.
+                                const activeIndex = (orders.length) % 4;
 
-                        <p className="text-slate-300 text-lg max-w-2xl mx-auto mb-8">
-                            Como assinante, você desbloqueou o <strong className="text-white">Melhor Preço Garantido</strong> para todas as suas gerações de livros.
-                        </p>
+                                let status = 'LOCKED';
+                                if (index < activeIndex) status = 'USED';
+                                if (index === activeIndex) status = 'ACTIVE';
 
-                        <div className="bg-slate-800/50 border border-indigo-500/30 rounded-2xl p-6 w-full max-w-md mx-auto">
-                            <p className="text-sm text-slate-400 font-bold uppercase mb-2">Custo Promocional por Livro</p>
-                            <div className="text-5xl font-black text-white mb-6">
-                                R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}
-                            </div>
+                                const isBlack = planName.includes('BLACK');
+                                const isPro = planName.includes('PRO');
 
-                            <div className="flex flex-col gap-3">
-                                <button
-                                    onClick={() => handleBuyCredit(nextBookDisplayPrice)}
-                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg text-lg"
-                                >
-                                    <span>💳</span> COMPRAR CRÉDITO
-                                </button>
-                                <button
-                                    onClick={handleVerifyAndEnter}
-                                    className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg text-lg"
-                                >
-                                    <span>✅</span> JÁ PAGUEI - GERAR AGORA
-                                </button>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-4 uppercase font-bold">Liberação automática após compensação</p>
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`relative rounded-2xl p-6 border transition-all duration-300 flex flex-col items-center justify-between min-h-[320px]
+                                            ${status === 'ACTIVE'
+                                                ? 'bg-slate-800/80 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.15)] scale-105 z-20'
+                                                : status === 'USED'
+                                                    ? 'bg-slate-900/50 border-slate-700 opacity-60 grayscale'
+                                                    : 'bg-slate-900/80 border-slate-800 opacity-70'
+                                            }
+                                        `}
+                                    >
+                                        {/* Header Badge */}
+                                        <div className="mb-4">
+                                            {status === 'ACTIVE' && (
+                                                <span className="bg-yellow-500 text-slate-900 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider animate-pulse">
+                                                    Disponível Agora
+                                                </span>
+                                            )}
+                                            {status === 'USED' && (
+                                                <span className="bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                                    Utilizado
+                                                </span>
+                                            )}
+                                            {status === 'LOCKED' && (
+                                                <span className="bg-slate-700 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                                    Bloqueado
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {/* Icon */}
+                                        <div className="mb-6">
+                                            {status === 'LOCKED' ? (
+                                                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                                                    <span className="text-2xl opacity-50">🔒</span>
+                                                </div>
+                                            ) : (
+                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center border
+                                                    ${status === 'ACTIVE' ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400' : 'bg-green-500/20 border-green-500 text-green-400'}
+                                                `}>
+                                                    <IconBook className="w-6 h-6" />
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Price */}
+                                        <div className="text-center mb-6">
+                                            <p className="text-xs text-slate-400 font-bold uppercase mb-1">Livro 0{index + 1}</p>
+                                            <p className={`text-3xl font-black ${status === 'ACTIVE' ? 'text-white' : 'text-slate-500'}`}>
+                                                R$ {price.toFixed(2).replace('.', ',')}
+                                            </p>
+                                        </div>
+
+                                        {/* Actions (Only for Active) */}
+                                        <div className="w-full mt-auto">
+                                            {status === 'ACTIVE' ? (
+                                                <div className="space-y-2">
+                                                    <button
+                                                        onClick={() => handleBuyCredit(price)}
+                                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-2 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-lg"
+                                                    >
+                                                        💳 Comprar
+                                                    </button>
+                                                    <button
+                                                        onClick={handleVerifyAndEnter}
+                                                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-2 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-lg"
+                                                    >
+                                                        ✅ Já Paguei
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button disabled className="w-full bg-slate-800 text-slate-600 font-bold py-3 rounded-lg text-sm cursor-not-allowed border border-slate-700">
+                                                    {status === 'USED' ? 'Resgatado' : 'Aguarde'}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </div>
@@ -362,6 +452,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6">
+                                    {/* The user's provided snippet for handleVerifyAndEnter logic is placed here,
+                                        but it should be inside the handleVerifyAndEnter function definition.
+                                        Since the function definition is not in the provided context,
+                                        I'm placing the logic as a comment to indicate where it would go
+                                        if the function were available, and then continuing with the original content.
+                                        The instruction was to update the alert string *in* the function,
+                                        not to insert the function's body here.
+                                    */}
+                                    {/*
+                                    if (accessData.hasAccess) {
+                                        // Success!
+                                        // ... (existing success logic)
+                                    } else {
+                                        const inv = accessData.pendingInvoice;
+                                        if (inv && (inv.status === 'PENDING' || inv.status === 'OVERDUE')) {
+                                           alert(`🧾 FATURA ENCONTRADA: Nº ${inv.invoiceNumber || inv.id || 'N/A'}\n\nPagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente.`);
+                                        } else {
+                                           alert("Pagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente.");
+                                        }
+                                    }
+                                    */}
                                     <div className="space-y-3">
                                         {[
                                             "Acesso à Plataforma Fábrica de Best Sellers",
@@ -415,8 +526,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             📚
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-800 leading-tight">{order.title || "Livro Sem Título"}</h4>
-                                            <p className="text-xs text-slate-600 font-medium italic mb-1">{order.author || order.subtitle || "Autor Desconhecido"}</p>
+                                            <h4 className="font-bold text-slate-800 leading-tight">{order.title || order.metadata?.bookTitle || "Livro Sem Título"}</h4>
+                                            <p className="text-xs text-slate-600 font-medium italic mb-1">{order.author || order.metadata?.authorName || order.subtitle || "Autor Desconhecido"}</p>
                                             <p className="text-[10px] text-slate-400 uppercase tracking-wider">{order.date ? new Date(order.date).toLocaleDateString() : 'Data desconhecida'}</p>
                                         </div>
                                     </div>

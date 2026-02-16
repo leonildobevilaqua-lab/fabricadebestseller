@@ -845,6 +845,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 <p className="text-sm text-slate-600 italic mb-4 relative z-10">{opt.subtitle}</p>
                 <div className="text-xs bg-slate-50 p-3 rounded text-slate-500 border border-slate-100 relative z-10 flex items-start gap-2">
                   <span className="text-yellow-500 text-base">★</span>
+                  <span className="font-bold text-slate-700 mr-1">I.A. Expert:</span>
                   <span>{opt.reason}</span>
                 </div>
               </button>
@@ -980,7 +981,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
           <button
             onClick={handleGenerateExtrasV2}
-            disabled={generatingExtras || (!dedicationTo && !ackTo)}
+            disabled={generatingExtras || (!dedicationTo && !ackTo && !aboutAuthorContext)}
             className="w-full mb-8 bg-indigo-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-indigo-700 transition disabled:opacity-50 flex justify-center items-center gap-2"
           >
             {generatingExtras ? <span className="animate-spin">⚙️</span> : "✨"}

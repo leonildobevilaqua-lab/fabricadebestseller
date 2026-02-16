@@ -219,12 +219,21 @@ export const update = async (req: Request, res: Response) => {
     const updates = req.body; // Expect { metadata: { ... } } or partials
 
     try {
-        if (updates.metadata) {
-            await QueueService.updateMetadata(id, updates.metadata);
+        // Robustness: Handle flat updates that should be in metadata (e.g. from simpler frontend calls)
+        const metaUpdates = updates.metadata || {};
+        const flatMetaKeys = ['dedication', 'aboutAuthor', 'acknowledgments', 'status', 'progress', 'bookTitle', 'subTitle'];
+
+        flatMetaKeys.forEach(k => {
+            if (updates[k] !== undefined) metaUpdates[k] = updates[k];
+        });
+
+        if (Object.keys(metaUpdates).length > 0) {
+            await QueueService.updateMetadata(id, metaUpdates);
         }
 
         // --- TRIGGER DOCX GENERATION ON COMPLETION ---
-        if (updates.metadata?.status === 'COMPLETED') {
+        // Use consolidated metaUpdates to catch flat status updates too
+        if (metaUpdates.status === 'COMPLETED' || updates.status === 'COMPLETED') {
             console.log(`Project ${id} marked COMPLETED. Generating final artifact...`);
             const fullProject = await QueueService.getProject(id);
             if (fullProject) {

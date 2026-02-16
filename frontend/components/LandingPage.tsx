@@ -1605,10 +1605,18 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         if (data.plan && data.plan.status === 'ACTIVE') {
                                                                             window.location.href = '/login';
                                                                         } else {
-                                                                            if (data.latestInvoiceNumber) {
+                                                                            const inv = data.pendingInvoice || {};
+                                                                            if (inv && (inv.status === 'PENDING' || inv.status === 'OVERDUE')) {
+                                                                                const statusPT = inv.status === 'PENDING' ? 'PENDENTE' : 'VENCIDA';
+                                                                                const msg = `🧾 FATURA ENCONTRADA: Nº ${inv.invoiceNumber || inv.id || 'N/A'}\n\nSTATUS: ${statusPT}\nVALOR: R$ ${inv.value}\n\nO banco ainda não compensou seu pagamento. Se foi via Boleto, pode levar até 24h. PIX costuma ser rápido.\n\nDeseja visualizar o BOLETO/PIX novamente?`;
+
+                                                                                if (confirm(msg)) {
+                                                                                    if (inv.url) window.open(inv.url, '_blank');
+                                                                                }
+                                                                            } else if (data.latestInvoiceNumber) {
                                                                                 alert(`A fatura ${data.latestInvoiceNumber} ainda consta como pendente no banco. Aguarde a compensação.`);
                                                                             } else {
-                                                                                alert('Pagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente.');
+                                                                                alert('Pagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente. Se pagou via Boleto, aguarde aprovação bancária (até 1 dia útil).');
                                                                             }
                                                                         }
 

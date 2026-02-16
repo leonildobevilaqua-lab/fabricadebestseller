@@ -572,8 +572,8 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     if (content.introduction) {
         sections.push({
             properties: {
-                page: { ...basePageConfig, pageNumbers: { start: 11, formatType: NumberFormat.DECIMAL } }, // FORCE START 11
-                type: SectionType.ODD_PAGE, // Ensure it falls on odd page (11 usually is)
+                page: { ...basePageConfig, formatType: NumberFormat.DECIMAL }, // Natural Flow (Don't restart at 1)
+                type: SectionType.ODD_PAGE, // Ensure it falls on odd page
                 titlePage: true,
             },
             children: [
@@ -681,7 +681,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     const isProOrBlack = planTag.includes('PRO') || planTag.includes('BLACK') ||
         explicitPlan.includes('PRO') || explicitPlan.includes('BLACK');
 
-    const aboutContent = isProOrBlack && content.aboutAuthor
+    const aboutContent = content.aboutAuthor
         ? createTextParams(content.aboutAuthor)
         : [new Paragraph({
             children: [new TextRun({ text: "[Espaço para Sobre o Autor]", color: "000000", italics: false })],

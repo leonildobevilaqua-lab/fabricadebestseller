@@ -1148,7 +1148,9 @@ export const checkAccess = async (req: Request, res: Response) => {
             : "Assinatura Necessária",
         discountLevel,
         totalBooksGenerated: usageCount,
-        lastPaymentDate
+        lastPaymentDate,
+        latestInvoiceStatus,
+        latestInvoiceNumber
     });
 };
 
