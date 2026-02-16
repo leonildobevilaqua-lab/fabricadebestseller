@@ -3,14 +3,29 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // ENSURE DATA DIRECTORY EXISTS (Critical for Coolify/Docker Persistence)
+console.log(`[DB] Current Working Directory: ${process.cwd()}`);
 const DATA_DIR = path.join(process.cwd(), 'data');
+console.log(`[DB] Target Data Directory: ${DATA_DIR}`);
+
 if (!fs.existsSync(DATA_DIR)) {
     try {
         fs.mkdirSync(DATA_DIR, { recursive: true });
         console.log(`[DB] Created persistent data directory at: ${DATA_DIR}`);
     } catch (e) {
-        console.error(`[DB] Failed to create data directory:`, e);
+        console.error(`[DB] CRITICAL: Failed to create data directory:`, e);
     }
+} else {
+    console.log(`[DB] Data directory already exists.`);
+}
+
+// PERMISSION CHECK
+try {
+    const testFile = path.join(DATA_DIR, 'perm_test.txt');
+    fs.writeFileSync(testFile, 'write_test');
+    fs.unlinkSync(testFile);
+    console.log(`[DB] ✅ Write Permission Verified for ${DATA_DIR}`);
+} catch (e) {
+    console.error(`[DB] ❌ CRITICAL: NO WRITE PERMISSION for ${DATA_DIR}. Data will NOT persist!`, e);
 }
 
 // Database file will be at /app/data/database.json
