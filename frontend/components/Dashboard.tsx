@@ -256,24 +256,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                         {/* Grid of 4 Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {currentCyclePrices.map((price, index) => {
-                                // Calculate Status
-                                // We need to know how many books the user generated this cycle.
-                                // Assuming 'orders.length' reflects lifetime or we assume cycle reset?
-                                // For now, let's use 'orders.length % 4' or similar if distinct cycles not tracked fully.
-                                // Or better: let's assume orders reset or we just track sequential 1-4.
-                                // The user request implies "4 credits... unlocked with each book".
-                                // Let's simplify: Active Index = orders.length (capped at 3?).
-                                // If orders.length >= 4, we wrap around or stay at 4?
-                                // Usually these systems cycle 1-4.
+                            {/* Always render 4 cards for the cycle */}
+                            {Array.from({ length: 4 }).map((_, index) => {
+                                // Determine Price for this step
+                                const price = currentCyclePrices[index] || currentCyclePrices[currentCyclePrices.length - 1];
+
+                                // Calculate Status based on orders/cycle
+                                // We want to show progress 1->2->3->4
+                                // If I have 0 orders, index 0 is ACTIVE, 1-3 LOCKED
+                                // If I have 1 order, index 0 is USED, 1 is ACTIVE, 2-3 LOCKED
                                 const activeIndex = (orders.length) % 4;
 
                                 let status = 'LOCKED';
                                 if (index < activeIndex) status = 'USED';
                                 if (index === activeIndex) status = 'ACTIVE';
 
-                                const isBlack = planName.includes('BLACK');
-                                const isPro = planName.includes('PRO');
+                                // If user has effectively 'completed' a cycle (e.g. 4 orders), 
+                                // the logic above sets index 0 to ACTIVE (4 % 4 = 0), which is correct for the start of NEXT cycle.
+                                // But visually, if they just finished the 4th, maybe we want to show all USED?
+                                // Standard pattern: Always show next available. So 4 orders -> Start of new cycle (Book 1 Active). Correct.
 
                                 return (
                                     <div
