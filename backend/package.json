@@ -5,7 +5,7 @@
     "scripts": {
         "start": "node dist/src/index.js",
         "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-        "build": "tsc"
+        "build": "tsc --diagnostics"
     },
     "dependencies": {
         "@anthropic-ai/sdk": "^0.12.0",
