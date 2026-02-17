@@ -281,10 +281,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         key={index}
                                         className={`relative rounded-2xl p-6 border transition-all duration-300 flex flex-col items-center justify-between min-h-[320px]
                                             ${status === 'ACTIVE'
-                                                ? 'bg-slate-800/80 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.15)] scale-105 z-20'
+                                                ? 'bg-slate-800/90 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.25)] scale-105 z-20'
                                                 : status === 'USED'
-                                                    ? 'bg-slate-900/50 border-slate-700 opacity-60 grayscale'
-                                                    : 'bg-slate-900/80 border-slate-800 opacity-70'
+                                                    ? 'bg-slate-900/40 border-slate-800 opacity-50 grayscale blur-[1px]'
+                                                    : 'bg-slate-900/60 border-slate-800 opacity-40'
                                             }
                                         `}
                                     >
