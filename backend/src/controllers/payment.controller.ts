@@ -390,11 +390,27 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
             const projects = await getVal('/projects') || {};
             const projectList = Array.isArray(projects) ? projects : Object.values(projects);
             projectsUsage = projectList.filter((p: any) => {
-                const pEmail = (p.metadata?.contact?.email || p.userEmail || "").toLowerCase().trim();
+                const pUserEmail = (p.userEmail || "").toLowerCase().trim();
+                const pMetaEmail = (p.metadata?.contact?.email || "").toLowerCase().trim();
                 const targetEmail = email.toLowerCase().trim();
+
+                // Robust Email Match
+                const isMatch = pUserEmail === targetEmail || pMetaEmail === targetEmail;
+
                 const status = p.metadata?.status;
-                return pEmail === targetEmail &&
-                    (status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || status === 'WRITING_CHAPTERS' || status === 'REVIEW_STRUCTURE' || status === 'GENERATING_STRUCTURE' || status === 'WAITING_DETAILS' || status === 'GENERATING_MARKETING' || status === 'RESEARCHING' || status === 'WAITING_TITLE');
+                const isValidStatus = (
+                    status === 'COMPLETED' ||
+                    status === 'LIVRO ENTREGUE' ||
+                    status === 'WRITING_CHAPTERS' ||
+                    status === 'REVIEW_STRUCTURE' ||
+                    status === 'GENERATING_STRUCTURE' ||
+                    status === 'WAITING_DETAILS' ||
+                    status === 'GENERATING_MARKETING' ||
+                    status === 'RESEARCHING' ||
+                    status === 'WAITING_TITLE'
+                );
+
+                return isMatch && isValidStatus;
             }).length;
         } catch (e) { console.error("Error calculating project usage", e); }
 

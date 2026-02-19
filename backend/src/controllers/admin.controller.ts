@@ -437,13 +437,63 @@ export const recoverBooks = async (req: Request, res: Response) => {
                     });
                 } catch (err) {
                     console.error(`Failed to regenerate project ${p.id}`, err);
+                    res.json({ recovered, count: recovered.length });
+                } catch (e: any) {
+                    console.error(e);
+                    res.status(500).json({ error: e.message });
                 }
-            }
-        }
+            };
 
-        res.json({ recovered, count: recovered.length });
-    } catch (e: any) {
-        console.error(e);
-        res.status(500).json({ error: e.message });
-    }
-};
+            export const resetUser = async (req: Request, res: Response) => {
+                const { email } = req.body;
+                if (!email) return res.status(400).json({ error: "Email required" });
+
+                const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                console.log(`[RESET] Wiping data for ${email} / ${safeEmail}`);
+
+                try {
+                    await reloadDB();
+
+                    // 1. Clear Orders
+                    await setVal(`/users/${safeEmail}/orders`, []);
+
+                    // 2. Clear Credits
+                    await setVal(`/credits/${safeEmail}`, 0);
+
+                    // 3. Mark Projects as DELETED
+                    const allProjects = await getVal('/projects') || {};
+                    const projectList = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
+
+                    let count = 0;
+                    for (const p of projectList as any[]) {
+                        const pUserEmail = (p.userEmail || "").toLowerCase().trim();
+                        const pMetaEmail = (p.metadata?.contact?.email || "").toLowerCase().trim();
+                        const targetEmail = email.toLowerCase().trim();
+
+                        if (pUserEmail === targetEmail || pMetaEmail === targetEmail) {
+                            // Soft Delete
+                            await setVal(`/projects[${projectList.indexOf(p)}]/metadata/status`, 'DELETED');
+                            count++;
+                        }
+                    }
+
+                    // 4. Clear Leads (Book History in Admin)
+                    const rawLeads = await getVal('/leads') || [];
+                    const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+                    for (let i = 0; i < leads.length; i++) {
+                        const l = leads[i] as any;
+                        if (l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.type === 'BOOK') {
+                            // Mark as DELETED or just remove? Let's mark as DELETED status
+                            await setVal(`/leads[${i}]/status`, 'DELETED');
+                        }
+                    }
+
+                    console.log(`[RESET] Complete for ${email}. Deleted ${count} projects.`);
+                    res.json({ success: true, message: `User progress reset. ${count} projects deleted.` });
+
+                } catch (e: any) {
+                    console.error("Reset Error", e);
+                    res.status(500).json({ error: e.message });
+                }
+            };
