@@ -601,6 +601,35 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
+
+    const handleResetUser = async () => {
+        const email = prompt("RESET TOTAL DE USUÁRIO\n\nDigite o email do usuário para ZERAR créditos, projetos e histórico de compras.\n\nATENÇÃO: Ação irreversível para fins de teste.");
+        if (!email) return;
+
+        if (!confirm(`Tem certeza que deseja apagar TUDO de ${email}?`)) return;
+
+        try {
+            setMsg("Resetando usuário... aguarde...");
+            const res = await fetch(`${getAdminUrl()}/reset-user`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ email })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert("SUCESSO: " + data.message);
+                window.location.reload();
+            } else {
+                alert("Erro: " + data.error);
+            }
+            setMsg(null);
+        } catch (e: any) {
+            alert("Erro de conexão: " + e.message);
+            setMsg(null);
+        }
+    };
+
     const handleRecoverBooks = async () => {
         const email = prompt("RESTAURAÇÃO DE LIVROS PERDIDOS\n\nDigite o email do usuário para recuperar os arquivos (ou deixe em branco para processar TODOS os livros concluídos do sistema):");
         if (email === null) return;
@@ -1390,9 +1419,32 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </div>
                     )}
 
+
                     {/* BACKUPS SECTION */}
                     {activeSection === 'backups' && (
                         <div className="space-y-6 animate-fade-in max-w-3xl">
+                            {/* User Tools */}
+                            <div className="bg-red-50 p-6 rounded-xl border border-red-200 shadow-sm mb-6">
+                                <h3 className="font-bold text-red-800 mb-4 flex items-center gap-2">
+                                    <span className="text-xl">🛠️</span> Ferramentas de Usuário e Teste
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <button
+                                        onClick={handleRecoverBooks}
+                                        className="w-full flex items-center justify-center gap-2 p-3 bg-white text-orange-600 font-bold text-sm border border-orange-200 rounded-lg hover:bg-orange-50 shadow-sm transition"
+                                    >
+                                        📂 Recuperar Livros (Download)
+                                    </button>
+
+                                    <button
+                                        onClick={handleResetUser}
+                                        className="w-full flex items-center justify-center gap-2 p-3 bg-white text-red-600 font-bold text-sm border border-red-200 rounded-lg hover:bg-red-50 shadow-sm transition"
+                                    >
+                                        💣 Resetar Usuário (Zerar Tudo)
+                                    </button>
+                                </div>
+                            </div>
+
                             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <div className="flex justify-between items-center mb-6 border-b pb-4">
                                     <div>
