@@ -1216,6 +1216,22 @@ export const regenerateDocx = async (req: Request, res: Response) => {
     }
 };
 
+export const deleteProject = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    try {
+        const project = await QueueService.getProject(id);
+        if (!project) return res.status(404).json({ error: "Project not found" });
+
+        // Soft Delete
+        await QueueService.updateMetadata(id, { status: 'DELETED' as any });
+
+        res.json({ success: true, message: "Project deleted successfully" });
+    } catch (e: any) {
+        console.error("Error deleting project:", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
 export const findIdByEmail = async (req: Request, res: Response) => {
     const { email } = req.body;
     console.log(`Find ID by Email requested for: ${email}`);

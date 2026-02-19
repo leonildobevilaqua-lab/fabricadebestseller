@@ -168,7 +168,7 @@ export const UserAuthController = {
                 const projectList = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
 
                 userProjects = projectList
-                    .filter((p: any) => p.userEmail?.toLowerCase().trim() === email.toLowerCase().trim())
+                    .filter((p: any) => p.userEmail?.toLowerCase().trim() === email.toLowerCase().trim() && p.metadata?.status !== 'DELETED')
                     .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
                     .map((p: any) => ({
                         id: p.id,

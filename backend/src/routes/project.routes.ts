@@ -22,5 +22,6 @@ router.post('/process-diagram-lead', ProjectController.processDiagramLead);
 router.post('/:id/regenerate-docx', ProjectController.regenerateDocx);
 router.post('/find-id-by-email', ProjectController.findIdByEmail);
 router.post('/:id/translate', TranslationController.translateBook);
+router.delete('/:id', ProjectController.deleteProject);
 
 export default router;
