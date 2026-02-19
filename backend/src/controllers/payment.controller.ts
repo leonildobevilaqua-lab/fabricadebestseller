@@ -258,11 +258,18 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
 
         const planKey = `${cleanPlan}_${billingSuffix}`;
 
-        // 2. Definir Prioridade/Ciclo (Quantos livros JÁ FEZ)
+        // 2. Definir Prioridade/Ciclo (Quantos livros JÁ FEZ ou PAGOU)
+        // ALINHADO COM DASHBOARD: Conta Pedidos Pagos (Credits) + Projetos Reais
+
+        // Carregar pedidos do usuário
+        const user = await getVal(`/users/${safeEmail}`);
+        const userOrders = user?.orders || [];
+        const paidOrdersCount = userOrders.length;
+
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
-        // Contar leads aprovados/completos deste email
+        // Contar leads aprovados/completos deste email (Legacy)
         const leadsUsage = leads.filter((l: any) =>
             l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
             (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
@@ -282,7 +289,8 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
             }).length;
         } catch (e) { console.error("Error calculating project usage", e); }
 
-        const usageCount = Math.max(leadsUsage, projectsUsage);
+        // MÁXIMO entre Pedidos Pagos, Leads e Projetos
+        const usageCount = Math.max(paidOrdersCount, leadsUsage, projectsUsage);
 
         // 3. Calcular Preço Baseado no Ciclo (0, 1, 2, 3...)
         const cycleIndex = usageCount % 4; // Reinicia ciclo a cada 4 livros
@@ -364,9 +372,14 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
         const planKey = `${cleanPlan}_${billingSuffix}`;
 
         // 2. Definir Prioridade/Ciclo
+        const user = await getVal(`/users/${safeEmail}`);
+        const userOrders = user?.orders || [];
+        const paidOrdersCount = userOrders.length;
+
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
+        // Contar leads aprovados/completos deste email (Legacy)
         const leadsUsage = leads.filter((l: any) =>
             l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
             (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
@@ -385,7 +398,7 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
             }).length;
         } catch (e) { console.error("Error calculating project usage", e); }
 
-        const usageCount = Math.max(leadsUsage, projectsUsage);
+        const usageCount = Math.max(paidOrdersCount, leadsUsage, projectsUsage);
         const cycleIndex = usageCount % 4;
         const priceList = PRICING_RULES[planKey];
 

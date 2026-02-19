@@ -263,9 +263,16 @@ export const UserAuthController = {
             // If strict, usageCount = projectsUsage.
             // Let's use projectsUsage for the "Visual Progress", but allow buying ahead?
             // Let's keep it based on PROJECTS to force the "Game".
+            // NO. User reported bug: "O cliente assinou o plano starter... a geração do 4º livro deve sair por R$ 21,52... Só que a fatura está sendo gerada R$ 26,90".
+            // If the user PAID for 3 books, the next price MUST be the 4th book price.
+            // Even if they haven't generated them yet.
+            // So we MUST use Math.max(paidOrdersCount, projectsUsage).
 
-            const strictUsageCount = projectsUsage;
+            const strictUsageCount = Math.max(paidOrdersCount, projectsUsage);
             const cycleIndex = strictUsageCount % 4; // 0, 1, 2, 3
+
+            // Recalculate next price based on TRUE usage
+            const realNextPrice = prices[cycleIndex] || prices[0];
 
             res.json({
                 profile: user.profile,
@@ -274,7 +281,7 @@ export const UserAuthController = {
                     purchaseCycleCount: cycleIndex,
                     totalBooksGenerated: strictUsageCount,
                     totalBooks: finalOrders.length,
-                    nextBookPrice: nextBookPrice
+                    nextBookPrice: realNextPrice
                 },
                 orders: finalOrders
             });
