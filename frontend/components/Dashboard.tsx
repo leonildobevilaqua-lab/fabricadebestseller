@@ -293,15 +293,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 // Determine Price for this step
                                 const price = currentCyclePrices[index] || currentCyclePrices[currentCyclePrices.length - 1];
 
-                                // Calculate Status based on orders/cycle
-                                // We want to show progress 1->2->3->4
-                                // If I have 0 orders, index 0 is ACTIVE, 1-3 LOCKED
-                                // If I have 1 order, index 0 is USED, 1 is ACTIVE, 2-3 LOCKED
-                                const activeIndex = (orders.length) % 4;
+                                // Calculate Status based on projects generated (Strict User Request)
+                                // Only unlock next box if previous project is generated.
+                                const completedProjects = stats?.stats?.totalBooksGenerated || 0;
+                                const activeIndex = (completedProjects) % 4;
 
-                                let status = 'LOCKED';
+                                let status: 'LOCKED' | 'ACTIVE' | 'USED' = 'LOCKED';
+
+                                // Visual Cycle Logic:
+                                // If I have 0 projects: Index 0 is ACTIVE.
+                                // If I have 1 project: Index 0 is USED, 1 is ACTIVE.
                                 if (index < activeIndex) status = 'USED';
-                                if (index === activeIndex) status = 'ACTIVE';
+                                else if (index === activeIndex) status = 'ACTIVE';
+                                else status = 'LOCKED';
 
                                 // If user has effectively 'completed' a cycle (e.g. 4 orders), 
                                 // the logic above sets index 0 to ACTIVE (4 % 4 = 0), which is correct for the start of NEXT cycle.

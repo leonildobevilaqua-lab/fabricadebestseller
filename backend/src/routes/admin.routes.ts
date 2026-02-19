@@ -25,5 +25,6 @@ router.get('/orders', AdminController.getOrders);
 
 router.post('/recover-books', AdminController.recoverBooks);
 router.post('/reset-user', AdminController.resetUser);
+router.post('/manage-credits', AdminController.manageCredits);
 
 export default router;

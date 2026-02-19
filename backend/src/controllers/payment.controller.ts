@@ -414,8 +414,12 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
             }).length;
         } catch (e) { console.error("Error calculating project usage", e); }
 
-        const usageCount = Math.max(paidOrdersCount, leadsUsage, projectsUsage);
-        const cycleIndex = usageCount % 4;
+
+        const usageCount = projectsUsage; // STRICT: Only count generated projects as per user request (Step 342)
+        // If user buys credit but doesn't generate, next discount is NOT enabled.
+        // So pricing is strictly tied to Generation Count.
+
+        const cycleIndex = usageCount % 4; // 0, 1, 2, 3
         const priceList = PRICING_RULES[planKey];
 
         let price = 39.90;
@@ -427,6 +431,17 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
         }
 
         console.log(`[Pricing Link] Email: ${email} | Plan: ${planKey} | Count: ${usageCount} | Index: ${cycleIndex} | FINAL PRICE: ${price}`);
+
+        // Format Description: "Nível 1/2 I Plano Black Mensal"
+        const level = cycleIndex + 1; // 1, 2, 3, 4
+        const cycle = Math.floor(usageCount / 4) + 1; // 1, 2...
+
+        // Clean Plan Name for Display
+        const displayPlan = `${cleanPlan} ${billingSuffix === 'ANUAL' ? 'Anual' : 'Mensal'}`;
+        // Add capitalization
+        const nicePlan = displayPlan.charAt(0).toUpperCase() + displayPlan.slice(1).toLowerCase().replace('black', 'Black').replace('pro', 'Pro').replace('starter', 'Starter');
+
+        const description = `Nível ${level}/${cycle} I Plano ${nicePlan}`;
 
         // 4. Criar Cobrança no Asaas
         const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
@@ -440,7 +455,7 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
         const charge = await AsaasProvider.createPayment(
             customerId,
             price,
-            `Geração Extra - Plano ${cleanPlan} (Vol. ${usageCount + 1})`
+            description
         );
 
         if (charge.invoiceUrl || charge.bankSlipUrl) {

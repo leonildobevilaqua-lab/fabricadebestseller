@@ -630,6 +630,37 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
+    const handleManageCredits = async () => {
+        const email = prompt("GERENCIAR CRÉDITOS MANUAIS\n\nDigite o email do usuário:");
+        if (!email) return;
+
+        const action = prompt("Digite a ação (add / remove):", "add");
+        if (action !== 'add' && action !== 'remove') return alert("Ação inválida");
+
+        const amount = prompt("Quantidade de créditos:", "1");
+        if (!amount) return;
+
+        try {
+            setMsg("Atualizando créditos... aguarde...");
+            const res = await fetch(`${getAdminUrl()}/manage-credits`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ email, action, amount })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert("SUCESSO: " + data.message);
+            } else {
+                alert("Erro: " + data.error);
+            }
+            setMsg(null);
+        } catch (e: any) {
+            alert("Erro de conexão: " + e.message);
+            setMsg(null);
+        }
+    };
+
     const handleRecoverBooks = async () => {
         const email = prompt("RESTAURAÇÃO DE LIVROS PERDIDOS\n\nDigite o email do usuário para recuperar os arquivos (ou deixe em branco para processar TODOS os livros concluídos do sistema):");
         if (email === null) return;
@@ -1436,11 +1467,19 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         📂 Recuperar Livros (Download)
                                     </button>
 
+
                                     <button
                                         onClick={handleResetUser}
                                         className="w-full flex items-center justify-center gap-2 p-3 bg-white text-red-600 font-bold text-sm border border-red-200 rounded-lg hover:bg-red-50 shadow-sm transition"
                                     >
                                         💣 Resetar Usuário (Zerar Tudo)
+                                    </button>
+
+                                    <button
+                                        onClick={handleManageCredits}
+                                        className="w-full md:col-span-2 flex items-center justify-center gap-2 p-3 bg-white text-emerald-600 font-bold text-sm border border-emerald-200 rounded-lg hover:bg-emerald-50 shadow-sm transition"
+                                    >
+                                        🎟️ Gerenciar Créditos (Add/Remove)
                                     </button>
                                 </div>
                             </div>

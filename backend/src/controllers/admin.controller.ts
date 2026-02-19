@@ -501,3 +501,33 @@ export const resetUser = async (req: Request, res: Response) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+export const manageCredits = async (req: Request, res: Response) => {
+    const { email, action, amount } = req.body;
+    // action: 'add' | 'remove'
+    if (!email || !action) return res.status(400).json({ error: "Email and action required" });
+
+    const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+
+    try {
+        await reloadDB();
+        let currentCredits = await getVal(`/credits/${safeEmail}`) || 0;
+
+        const val = amount ? parseInt(amount) : 1;
+
+        if (action === 'add') {
+            currentCredits += val;
+        } else if (action === 'remove') {
+            currentCredits = Math.max(0, currentCredits - val);
+        }
+
+        await setVal(`/credits/${safeEmail}`, currentCredits);
+
+        // Log action (optional)
+        console.log(`[ADMIN] Manual Credit ${action} for ${email}. New Balance: ${currentCredits}`);
+
+        res.json({ success: true, credits: currentCredits, message: `Créditos atualizados. Novo saldo: ${currentCredits}` });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+};
