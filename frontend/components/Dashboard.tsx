@@ -305,6 +305,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                     Bloqueado
                                                 </span>
                                             )}
+                                            {/* Discount Badges */}
+                                            {index === 1 && (
+                                                <span className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                                    -10%
+                                                </span>
+                                            )}
+                                            {index === 2 && (
+                                                <span className="absolute top-4 right-4 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                                    -15%
+                                                </span>
+                                            )}
+                                            {index === 3 && (
+                                                <span className="absolute top-4 right-4 bg-red-700 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                                    -20%
+                                                </span>
+                                            )}
                                         </div>
 
                                         {/* Icon */}

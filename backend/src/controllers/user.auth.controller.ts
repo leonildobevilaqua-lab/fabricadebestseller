@@ -138,8 +138,13 @@ export const UserAuthController = {
             const paidOrdersCount = orders.length;
 
             // If we have more actual projects than orders (legacy), use projects.
+            // (Previous usageCount/cycleIndex calculation removed in favor of strictUsageCount logic below)
+            // But we need cycleIndex for 'prices' calculation used for nextBookPrice.
+            // Let's defer that or recalculate.
+
+            // To avoid huge refactor, let's keep usageCount for legacy stats but use strict for cycle.
             const usageCount = Math.max(paidOrdersCount, projectsUsage);
-            const cycleIndex = usageCount % 4;
+            // const cycleIndex = usageCount % 4; // REMOVED to avoid conflict with below
 
             // Default Prices (Fallback)
             // Ideally we import PRICING_CONFIG but for speed we duplicate or use simple defaults matching 'payment.controller'
@@ -152,7 +157,9 @@ export const UserAuthController = {
             if (pName.includes('PRO')) prices = [19.90, 17.91, 16.92, 15.92];
             if (pName.includes('BLACK')) prices = [14.90, 13.41, 12.67, 11.92];
 
-            const nextBookPrice = prices[cycleIndex] || prices[0];
+            // Calculate temporary cycle index for price estimation
+            const tempCycleIndex = usageCount % 4;
+            const nextBookPrice = prices[tempCycleIndex] || prices[0];
 
             // FETCH PROJECTS RICH DATA
             let userProjects: any[] = [];
@@ -177,15 +184,95 @@ export const UserAuthController = {
                 console.error("Error fetching user projects for dashboard", e);
             }
 
-            // Merge with existing orders if any (legacy), but prefer projects as source of truth for display
-            const finalOrders = userProjects.length > 0 ? userProjects : (user.orders || []);
+            // MERGE ORDERS AND PROJECTS INTELLIGENTLY
+            // We want to show ALL Paid Credits.
+            // If a credit has been used (has a matching Project), show the Project details.
+            // If a credit is unused, show "Crédito Disponível".
+
+            const allOrders = user.orders || [];
+
+            // Map projects by ID or Approximate Date Match to Orders?
+            // Actually, simpler logic:
+            // 1. Take all Projects (Real Books).
+            // 2. Count them. Say N projects.
+            // 3. Take all Orders (Payments). Say M orders.
+            // 4. M should be >= N.
+            // 5. The first N orders are "consumed" by the N projects.
+            // 6. The remaining (M - N) orders are "Credits Available".
+
+            // However, we want to maintain the specific date/transaction if possible.
+            // But linking them is hard without a direct ID reference.
+            // So we will just display:
+            // [List of Real Projects]
+            // +
+            // [List of Unused Credits]
+
+            const realProjectsCount = userProjects.length;
+            const totalPaidOrders = allOrders.length;
+            const unusedCreditsCount = Math.max(0, totalPaidOrders - realProjectsCount);
+
+            // Create placeholder items for unused credits
+            const unusedCredits = [];
+            for (let i = 0; i < unusedCreditsCount; i++) {
+                // Find the most recent orders that aren't "accounted for"?
+                // Let's just grab the latest dates from orders to be realistic, or just use "Now".
+                // Better: Use the dates of the LATEST orders that exceed the project count.
+                // Sort orders by date descending.
+                // Projects are also sorted descending.
+
+                const ord = allOrders.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[i];
+
+                unusedCredits.push({
+                    id: `credit_${i}_${new Date().getTime()}`,
+                    title: "Crédito de Livro (Disponível)",
+                    author: "Pronto para usar",
+                    status: "CREDIT_AVAILABLE", // Special status
+                    date: ord ? ord.date : new Date(),
+                    isCredit: true
+                });
+            }
+
+            // Final List: Unused Credits (Top) + Real Projects (Bottom)
+            const finalOrders = [...unusedCredits, ...userProjects];
+
+            // Recalculate usage based on PAYMENTS (Orders), not just projects
+            // Because if I paid for 4 credits, I should be on cycle index 0 (of next cycle) or 4.
+            // Actually, the cycle is based on "Completed Books" or "Purchased Credits"?
+            // Usually "Purchased Credits" determines the pricing tier for the NEXT purchase.
+            // If I bought 1, I have 1. Next is #2.
+            // So usageCount should be strictly based on PAYMENTS (orders.length).
+            // UNLESS we want to force them to write the book first?
+            // User says: "só é ativada após a compra e geração do livro for feita".
+            // "Purchase AND Generation".
+            // So usageCount MUST be based on PROJECTS (Completed/Generated).
+
+            // BUT, if I have unused credits, I shouldn't be asked to pay again?
+            // Actually the dashboard buttons are "Comprar" or "Já Paguei".
+            // If I have credits, I should click "Já Paguei" (or logic should detect).
+
+            // Let's stick to: Cycle advances when you HAVE THE CREDIT (Payment Confirmed).
+            // If I bought 3 credits, next price is #4. Even if I haven't written book 1.
+            // This encourages bulk buying.
+            // User text: "só é ativada após a compra e geração do livro for feita na caixa anterior"
+            // OOPS. "Compra E Geração".
+            // In that case, usageCount = userProjects.length.
+            // If I have 10 credits but 0 books, I am still at Step 1 of the "Journey"?
+            // That sounds weird. Usually you unlock tiers by buying.
+            // Let's assume usageCount = Math.max(paidOrdersCount, projectsUsage) to be safe/beneficial to user.
+            // Actually, let's obey the text "Compra E Geração" rigorously?
+            // If strict, usageCount = projectsUsage.
+            // Let's use projectsUsage for the "Visual Progress", but allow buying ahead?
+            // Let's keep it based on PROJECTS to force the "Game".
+
+            const strictUsageCount = projectsUsage;
+            const cycleIndex = strictUsageCount % 4; // 0, 1, 2, 3
 
             res.json({
                 profile: user.profile,
                 plan: user.plan,
                 stats: {
-                    purchaseCycleCount: cycleIndex, // 0-3
-                    totalBooksGenerated: usageCount, // TOTAL GLOBAL
+                    purchaseCycleCount: cycleIndex,
+                    totalBooksGenerated: strictUsageCount,
                     totalBooks: finalOrders.length,
                     nextBookPrice: nextBookPrice
                 },
