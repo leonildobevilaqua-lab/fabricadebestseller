@@ -283,8 +283,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             ${status === 'ACTIVE'
                                                 ? 'bg-slate-800/90 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.25)] scale-105 z-20'
                                                 : status === 'USED'
-                                                    ? 'bg-slate-900/40 border-slate-800 opacity-50 grayscale blur-[1px]'
-                                                    : 'bg-slate-900/60 border-slate-800 opacity-40'
+                                                    ? 'bg-slate-800 border-slate-700 opacity-80 grayscale blur-[0.5px]'
+                                                    : 'bg-slate-900 border-slate-800 opacity-70'
                                             }
                                         `}
                                     >
@@ -461,19 +461,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         The instruction was to update the alert string *in* the function,
                                         not to insert the function's body here.
                                     */}
-                                    {/*
-                                    if (accessData.hasAccess) {
-                                        // Success!
-                                        // ... (existing success logic)
-                                    } else {
-                                        const inv = accessData.pendingInvoice;
-                                        if (inv && (inv.status === 'PENDING' || inv.status === 'OVERDUE')) {
-                                           alert(`🧾 FATURA ENCONTRADA: Nº ${inv.invoiceNumber || inv.id || 'N/A'}\n\nPagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente.`);
-                                        } else {
-                                           alert("Pagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente.");
-                                        }
-                                    }
-                                    */}
+                                    {/* Benefits List Content */}
                                     <div className="space-y-3">
                                         {[
                                             "Acesso à Plataforma Fábrica de Best Sellers",
