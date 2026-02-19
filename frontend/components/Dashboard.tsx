@@ -194,9 +194,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const bKey = isAnnual ? 'ANNUAL' : 'MONTHLY';
     let currentCyclePrices = PRICING[`${pKey}_${bKey}`] || PRICING['STARTER_MONTHLY'];
 
-    // Force Flat Price (Ignore cycle count)
-    const priceIndex = 0;
-    const nextBookDisplayPrice = currentCyclePrices[0];
+    // Dynamic Price based on Cycle
+    // Use cycleCount from stats (calculated in backend)
+    const activeIndex = (orders.length) % 4; // Sync with grid logic
+    const nextBookDisplayPrice = currentCyclePrices[activeIndex] || currentCyclePrices[0];
 
     // Mock Orders if empty for demo
     const displayOrders = orders.length > 0 ? orders : [
