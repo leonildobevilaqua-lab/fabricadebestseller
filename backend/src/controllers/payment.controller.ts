@@ -394,7 +394,7 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
                 const targetEmail = email.toLowerCase().trim();
                 const status = p.metadata?.status;
                 return pEmail === targetEmail &&
-                    (status === 'COMPLETED' || status === 'LIVRO ENTREGUE');
+                    (status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || status === 'WRITING_CHAPTERS' || status === 'REVIEW_STRUCTURE' || status === 'GENERATING_STRUCTURE' || status === 'WAITING_DETAILS' || status === 'GENERATING_MARKETING' || status === 'RESEARCHING' || status === 'WAITING_TITLE');
             }).length;
         } catch (e) { console.error("Error calculating project usage", e); }
 
