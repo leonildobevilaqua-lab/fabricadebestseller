@@ -118,8 +118,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, calculat
         if (lead.amount) displayAmount = formatMoney(lead.amount);
         else if (lead.details?.price) displayAmount = formatMoney(lead.details.price);
         else {
-            // Se não tem valor, tenta inferir pelo plano mas não assume 16,90 como lei
-            displayAmount = planContext.includes('Avulso') ? 'R$ 39,90' : 'Sob Plano';
+            displayAmount = 'Sob Plano';
         }
     }
 

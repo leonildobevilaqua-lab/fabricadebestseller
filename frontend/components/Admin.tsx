@@ -68,7 +68,7 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
         // 5. Book (Levels)
         if (lead.type === 'BOOK' || (lead.credits && lead.credits > 0)) {
-            return 39.90; // Default Full Price if no specific data is found
+            return 0;
         }
 
         return 0;
@@ -721,9 +721,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             return 19.90;
         }
 
-        // 5. Book Fallback (Based on latest paid levels)
+        // 5. Book Fallback
         if (lead.type === 'BOOK' || (lead.credits && lead.credits > 0)) {
-            return 39.90;
+            return 0;
         }
 
         return 0;

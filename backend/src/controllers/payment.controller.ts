@@ -313,6 +313,39 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         );
 
         if (charge && (charge.invoiceUrl || charge.bankSlipUrl)) {
+            // --- ATUALIZAÇÃO IMEDIATA DO LEAD PARA O PAINEL ADMIN ---
+            try {
+                const rawLeads = await getVal('/leads') || [];
+                const leadsList = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+                let targetIdx = -1;
+
+                // Prioritize finding the LATEST lead of type BOOK for this email
+                for (let i = leadsList.length - 1; i >= 0; i--) {
+                    const l = leadsList[i] as any;
+                    if (l.email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                        if (l.type === 'BOOK') {
+                            targetIdx = i;
+                            break;
+                        }
+                        // Fallback if no BOOK lead found yet, take the last one
+                        if (targetIdx === -1) targetIdx = i;
+                    }
+                }
+
+                if (targetIdx !== -1) {
+                    await setVal(`/leads[${targetIdx}]/amount`, price);
+                    await setVal(`/leads[${targetIdx}]/tag`, description);
+                    await setVal(`/leads[${targetIdx}]/details`, {
+                        level: safeIndex + 1,
+                        price,
+                        description,
+                        status: 'PAYMENT_LINK_SENT',
+                        updatedAt: new Date()
+                    });
+                    console.log(`[CHARGE] Lead ${targetIdx} updated with Price R$ ${price} and Tag: ${description}`);
+                }
+            } catch (e) { console.error("Err Lead Update:", e); }
+
             return res.json({ url: charge.invoiceUrl || charge.bankSlipUrl });
         } else {
             console.error("Asaas Empty Response", charge);
@@ -528,53 +561,27 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             const pm = payload.payment;
 
             if (evt === 'PAYMENT_CONFIRMED' || evt === 'PAYMENT_RECEIVED') status = 'paid';
-            email = pm.customerEmail || (payload.customer && payload.customer.email); // Asaas sometimes sends customer object or just email? Usually we need to query customer or it's in payload? 
-            // Asaas 'payment' object usually doesn't have email directly, but the top level payload might have logic or we need to rely on what we have.
-            // Actually Asaas webhook has payment.customer (ID). We might need to fetch customer logic?
-            // BUT, usually we pass custom data or we use the customer creation email.
-            // In createCharge we created a customer. 
-            // Let's assume for now we might need to lookup or it is passed.
-            // Let's check typical payload. Often `payment.details` or we have to use `payload.payment.externalReference` if we set it?
-            // We didn't set externalReference in createCharge.
-            // However, we can fetch customer details if needed.
-            // For MVP, Asaas often sends detailed payload if configured? No.
-            // We will try to extract what we can.
 
-            // Asaas typically doesn't send email in the payment event payload directly, only customer ID.
-            // Logic hack: We might have to fetch the customer from Asaas API or rely on local lookup?
-            // Wait, we don't have a local mapping of CustomerID -> Email in `payment.controller`.
-
-            // CRITICAL: We need the email to activate the plan.
-            // If we can't get it from payload, we must fetch from Asaas.
-            // We will use AsaasProvider (need to import getCustomer if exists, or adding it).
-            // Let's assume we can import AsaasProvider.
-
-            if (!email && pm.customer) {
-                try {
-                    // Use static import instead of dynamic to avoid module resolution issues
-                    console.log(`[WEBHOOK] Fetching Customer ${pm.customer} from Asaas...`);
-                    const customer = await AsaasProvider.getCustomer(pm.customer);
-                    if (customer) {
-                        email = customer.email;
-                        payerName = customer.name;
-                        payerCpf = customer.cpfCnpj;
-                        console.log(`[WEBHOOK] Customer identified: ${email}`);
-                    }
-                } catch (err) { console.error("Failed to fetch Asaas customer", err); }
+            try {
+                console.log(`[WEBHOOK] Fetching Customer ${pm.customer} from Asaas...`);
+                const customer = await AsaasProvider.getCustomer(pm.customer);
+                if (customer) {
+                    email = customer.email;
+                    payerName = customer.name;
+                    payerCpf = customer.cpfCnpj;
+                    console.log(`[WEBHOOK] Customer identified: ${email}`);
+                }
+            } catch (err) {
+                console.error("Failed to fetch Asaas customer", err);
             }
 
             amount = pm.value;
-            productName = pm.description || "Assinatura"; // Asaas description
+            productName = pm.description || "Assinatura";
         } else {
             // KIWIFY (Default)
-            // Check for Token (User provided: 9f1su6po412)
             const token = req.query.token || req.body.token || req.params.token;
-            if (token) {
-                console.log("Kiwify Token present:", token);
-                if (token === '9f1su6po412') console.log("Token MATCHES production key.");
-                else console.warn("Token mismatch! Expected 9f1su6po412");
-            } else {
-                console.log("No Kiwify token found in request (Safe to ignore if not configured in dashboard, but user provided one).");
+            if (token === '9f1su6po412') {
+                console.log("Kiwify Token MATCHES production key.");
             }
 
             status = payload.order_status;
@@ -664,6 +671,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     await setVal(`/leads[${leadIndex}]/amount`, amount); // Specific Amount
                     await setVal(`/leads[${leadIndex}]/status`, 'APPROVED'); // Unblock access if pending
 
+                    await setVal(`/leads[${leadIndex}]/tag`, productName);
                     // If description contains level/cycle, parse it
                     if (productName.includes('Nível')) {
                         await setVal(`/leads[${leadIndex}]/tag`, productName);
