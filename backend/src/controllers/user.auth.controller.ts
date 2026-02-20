@@ -127,19 +127,44 @@ export const UserAuthController = {
             try {
                 const allProjects = await getVal('/projects') || {};
                 const projectList = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
+                const rawLeads = await getVal('/leads') || [];
+                const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
-                userProjects = projectList
+                userProjects = await Promise.all(projectList
                     .filter((p: any) => p.userEmail?.toLowerCase().trim() === email.toLowerCase().trim() && p.metadata?.status !== 'DELETED')
                     .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-                    .map((p: any) => ({
-                        id: p.id,
-                        title: p.metadata?.bookTitle || p.metadata?.topic || "Projeto Sem Título",
-                        author: p.metadata?.authorName || "Autor Desconhecido",
-                        status: p.metadata?.status || 'PENDING',
-                        date: p.createdAt || new Date(),
-                        downloadUrl: p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE' || p.metadata?.status === 'WAITING_DETAILS'
-                            ? `${process.env.API_URL || 'https://api.fabricadebestseller.com.br'}/downloads/book_${(p.userEmail || "").replace(/[^a-zA-Z0-9._-]/g, '_')}.docx`
-                            : null
+                    .map(async (p: any) => {
+                        // RECOVERY LOGIC: If project metadata is missing valuation/tag, look for it in the latest lead
+                        let valuation = p.metadata?.valuation;
+                        let pricingTag = p.metadata?.pricingTag;
+                        let author = p.metadata?.authorName || "Autor Desconhecido";
+                        let title = p.metadata?.bookTitle || p.metadata?.topic || "Projeto Sem Título";
+
+                        if (!valuation || !pricingTag) {
+                            // Find matching lead to recover info
+                            const matchedLead = leads.slice().reverse().find((l: any) =>
+                                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+                                (l.tag?.includes('Nível') || l.tag?.includes('Plano'))
+                            );
+                            if (matchedLead) {
+                                valuation = valuation || matchedLead.amount || matchedLead.details?.price;
+                                pricingTag = pricingTag || matchedLead.tag || matchedLead.details?.description;
+                                author = author === "Autor Desconhecido" ? (matchedLead.authorName || author) : author;
+                            }
+                        }
+
+                        return {
+                            id: p.id,
+                            title,
+                            author,
+                            status: p.metadata?.status || 'PENDING',
+                            date: p.createdAt || new Date(),
+                            valuation,
+                            pricingTag,
+                            downloadUrl: p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE' || p.metadata?.status === 'WAITING_DETAILS'
+                                ? `/api/admin/books/download/${p.id}`
+                                : null
+                        };
                     }));
             } catch (e) {
                 console.error("Error fetching user projects for dashboard", e);

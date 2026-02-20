@@ -124,8 +124,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             setLoading(true);
             const getApiBase = () => {
                 const host = window.location.hostname;
-                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-                return 'https://api.fabricadebestseller.com.br';
+                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000';
+                return ''; // Relative path for production
             };
 
             const res = await fetch(`${getApiBase()}/api/projects/${id}`, {
@@ -622,23 +622,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             <div className="flex-1 space-y-2">
                                                 <div className="flex items-center gap-2 mb-1">
                                                     <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded uppercase">Livro Gerado</span>
+                                                    {order.pricingTag && (
+                                                        <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded uppercase border border-slate-200">
+                                                            {order.pricingTag}
+                                                        </span>
+                                                    )}
                                                     <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                                         {order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE' ? 'Concluído' : 'Processando...'}
                                                     </span>
                                                 </div>
 
                                                 <div className="space-y-1">
-                                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                                                        <span className="text-slate-900 uppercase text-xs tracking-wide font-black min-w-[100px]">Autor:</span>
-                                                        <span className="text-slate-700 font-medium">{order.author || "N/A"}</span>
+                                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4 border-b border-slate-50 pb-1">
+                                                        <span className="text-slate-400 uppercase text-[10px] tracking-widest font-bold min-w-[80px]">Autor:</span>
+                                                        <span className="text-slate-800 font-bold text-sm tracking-tight">{order.author}</span>
+                                                    </div>
+                                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4 border-b border-slate-50 pb-1">
+                                                        <span className="text-slate-400 uppercase text-[10px] tracking-widest font-bold min-w-[80px]">Título:</span>
+                                                        <span className="text-base font-serif font-black text-indigo-900 leading-tight">{order.title}</span>
                                                     </div>
                                                     <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                                                        <span className="text-slate-900 uppercase text-xs tracking-wide font-black min-w-[100px]">Título:</span>
-                                                        <span className="text-lg font-serif font-bold text-slate-800">{order.title}</span>
-                                                    </div>
-                                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
-                                                        <span className="text-slate-900 uppercase text-xs tracking-wide font-black min-w-[100px]">Geração:</span>
-                                                        <span className="text-xs text-slate-500">{new Date(order.date).toLocaleDateString()}</span>
+                                                        <span className="text-slate-400 uppercase text-[10px] tracking-widest font-bold min-w-[80px]">Geração:</span>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-xs text-slate-500 font-medium">
+                                                                {new Date(order.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                                                            </span>
+                                                            {order.valuation && (
+                                                                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">
+                                                                    R$ {order.valuation.toFixed(2).replace('.', ',')}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

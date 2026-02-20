@@ -139,14 +139,23 @@ export const create = async (req: Request, res: Response) => {
                 }
 
                 if (leadIndex !== -1) {
+                    const matchedLead = leads[leadIndex] as any;
                     // Update existing BOOK Lead
                     await setVal(`/leads[${leadIndex}]/status`, 'IN_PROGRESS');
                     await setVal(`/leads[${leadIndex}]/topic`, topic);
                     // If name was missing, update it
-                    if (!(leads[leadIndex] as any).name) {
+                    if (!matchedLead.name) {
                         await setVal(`/leads[${leadIndex}]/name`, authorName);
                     }
                     console.log(`Linked Project to existing Book Lead ${leadIndex}`);
+
+                    // --- ATTACH PRICE CONTEXT TO PROJECT ---
+                    if (matchedLead.amount || matchedLead.tag) {
+                        await QueueService.updateMetadata(project.id, {
+                            valuation: matchedLead.amount,
+                            pricingTag: matchedLead.tag
+                        });
+                    }
                 } else {
                     // Create NEW Lead so it shows in Admin as a separate row from Subscription
                     const newLead = {

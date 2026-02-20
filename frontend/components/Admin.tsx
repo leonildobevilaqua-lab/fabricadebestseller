@@ -44,40 +44,34 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
     // Helper: Calculate Value based on User Rules
     const calculateLeadValue = (lead: any) => {
-        // 1. Explicit Amount from DB (Trust Source of Truth)
-        if (lead.amount !== undefined && lead.amount !== null) {
-            const val = Number(lead.amount);
-            if (!isNaN(val) && val > 0) return val;
-        }
+        // 1. Explicit Amount
+        if (lead.amount && lead.amount > 0) return Number(lead.amount);
 
-        // 2. Payment Info
+        // 2. Metadata Context
+        if (lead.details?.price) return Number(lead.details.price);
+
+        // 3. Payment Info
         if (lead.paymentInfo?.amount) {
             const amt = Number(lead.paymentInfo.amount);
-            // Sanity check: Asaas sometimes returns cents? usually float.
             return amt > 1000 ? amt / 100 : amt;
         }
 
-        // 3. Fallback Logic
-        if (lead.type === 'BOOK' || lead.title === 'Crédito de Livro (Disponível)' || (lead.credits && lead.credits > 0)) {
-            const email = (lead.email || "").toLowerCase().trim();
-            // Subscriber Discount Check
-            if (subscriberEmails.has(email) || (lead.plan && lead.plan.status === 'ACTIVE')) {
-                return 16.90;
-            }
-            return 39.90;
-        }
-
+        // 4. Subscription
         if (lead.plan || lead.status === 'SUBSCRIBER') {
             const pName = (lead.plan?.name || 'STARTER').toUpperCase();
             const billing = (lead.plan?.billing || 'monthly').toLowerCase();
-
             if (pName.includes('BLACK')) return billing.includes('ann') ? 358.80 : 49.90;
             if (pName.includes('PRO')) return billing.includes('ann') ? 238.80 : 34.90;
             if (pName.includes('STARTER')) return billing.includes('ann') ? 118.80 : 19.90;
             return 19.90;
         }
 
-        return 39.90;
+        // 5. Book (Levels)
+        if (lead.type === 'BOOK' || (lead.credits && lead.credits > 0)) {
+            return 39.90; // Default Full Price if no specific data is found
+        }
+
+        return 0;
     };
 
     // Filter Paid Leads (Include SUBSCRIBERS)
@@ -704,16 +698,20 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     );
 
     const calculateLeadValue = (lead: any) => {
+        // 1. Explicit Amount (Highest priority)
         if (lead.amount && lead.amount > 0) return Number(lead.amount);
+
+        // 2. Payment Info from Gateway
         if (lead.paymentInfo?.amount) {
             const amt = Number(lead.paymentInfo.amount);
+            // Verify if it's already in decimals or needs conversion from cents (BRL is usually decimal in Asaas API unless specific fields)
             return amt > 1000 ? amt / 100 : amt;
         }
-        if (lead.type === 'BOOK' || lead.title === 'Crédito de Livro (Disponível)' || (lead.credits && lead.credits > 0)) {
-            const email = (lead.email || "").toLowerCase().trim();
-            if (subscriberEmails.has(email) || (lead.plan && lead.plan.status === 'ACTIVE')) return 16.90;
-            return 39.90;
-        }
+
+        // 3. Metadata Detail
+        if (lead.details?.price) return Number(lead.details.price);
+
+        // 4. Plan Fallbacks (Subscription only)
         if (lead.plan || lead.status === 'SUBSCRIBER') {
             const pName = (lead.plan?.name || 'STARTER').toUpperCase();
             const billing = (lead.plan?.billing || 'monthly').toLowerCase();
@@ -722,7 +720,13 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             if (pName.includes('STARTER')) return billing.includes('ann') ? 118.80 : 19.90;
             return 19.90;
         }
-        return 39.90;
+
+        // 5. Book Fallback (Based on latest paid levels)
+        if (lead.type === 'BOOK' || (lead.credits && lead.credits > 0)) {
+            return 39.90;
+        }
+
+        return 0;
     };
 
     useEffect(() => {

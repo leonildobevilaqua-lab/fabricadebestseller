@@ -20,6 +20,8 @@ export interface BookMetadata {
     translations?: any;
     contentStyle?: string;
     writingTone?: string;
+    valuation?: number;
+    pricingTag?: string;
 }
 
 export type JobStatus = 'IDLE' | 'RESEARCHING' | 'WAITING_TITLE' | 'GENERATING_STRUCTURE' | 'WAITING_STRUCTURE' | 'WRITING' | 'WAITING_DETAILS' | 'COMPLETED' | 'FAILED' | 'REVIEW_STRUCTURE' | 'WRITING_CHAPTERS' | 'GENERATING_MARKETING' | 'LIVRO ENTREGUE';

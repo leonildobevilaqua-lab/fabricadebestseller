@@ -93,6 +93,9 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, calculat
         await onEdit(lead.id, { name: newName, email: newEmail });
     };
 
+    // Infer context for Book
+    const planContext = lead.tag || (lead.plan?.name ? `Plano ${lead.plan.name} (${lead.plan.billing === 'annual' ? 'Anual' : 'Mensal'})` : 'Avulso');
+
     // --- RENDER HELPERS ---
     const formatMoney = (val: number) => `R$ ${val?.toFixed(2).replace('.', ',')}`;
 
@@ -101,7 +104,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, calculat
     if (calculatedValue !== undefined) {
         displayAmount = formatMoney(calculatedValue);
     } else if (lead.paymentInfo?.amount) {
-        displayAmount = formatMoney(lead.paymentInfo.amount);
+        displayAmount = formatMoney(Number(lead.paymentInfo.amount) > 1000 ? lead.paymentInfo.amount / 100 : lead.paymentInfo.amount);
     } else if (isSubscription && lead.plan) {
         // Fallback Plan Prices
         const name = (lead.plan.name || '').toUpperCase();
@@ -111,12 +114,14 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, calculat
         else if (name.includes('STARTER')) displayAmount = billing === 'annual' ? 'R$ 118,80' : 'R$ 19,90';
         else displayAmount = 'N/A';
     } else if (isBook) {
-        // Default Book Price
-        displayAmount = 'R$ 16,90'; // Default for Pending Books
+        // Use pricing metadata if available
+        if (lead.amount) displayAmount = formatMoney(lead.amount);
+        else if (lead.details?.price) displayAmount = formatMoney(lead.details.price);
+        else {
+            // Se não tem valor, tenta inferir pelo plano mas não assume 16,90 como lei
+            displayAmount = planContext.includes('Avulso') ? 'R$ 39,90' : 'Sob Plano';
+        }
     }
-
-    // Infer context for Book
-    const planContext = lead.tag || (lead.plan?.name ? `Plano ${lead.plan.name} (${lead.plan.billing === 'annual' ? 'Anual' : 'Mensal'})` : 'Avulso');
 
     return (
         <tr className={`hover:bg-slate-50 transition-colors border-b last:border-0 border-slate-100 ${isSubscription ? 'bg-indigo-50/20' : ''}`}>
@@ -191,9 +196,17 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, calculat
                             {/* Level & Context */}
                             <div className="flex items-center gap-3 text-sm">
                                 <div className="px-3 py-1 rounded bg-slate-800 text-white font-bold text-xs flex items-center gap-2">
-                                    <span>Nível 1</span> {/* Logic to detect level could be added here if backend provides it */}
+                                    <span>
+                                        {lead.tag && lead.tag.includes('Nível')
+                                            ? lead.tag.split(' I ')[0]
+                                            : (lead.details?.level ? `Nível ${lead.details.level}/${lead.details.cycle || 1}` : 'Nível 1')}
+                                    </span>
                                     <span className="w-px h-3 bg-slate-600"></span>
-                                    <span className="font-normal text-slate-300">{planContext}</span>
+                                    <span className="font-normal text-slate-300">
+                                        {lead.tag && lead.tag.includes('Plano')
+                                            ? lead.tag.split(' I ')[1]
+                                            : (lead.details?.description || planContext)}
+                                    </span>
                                 </div>
                                 <div className="font-bold text-emerald-600">{displayAmount}</div>
                             </div>

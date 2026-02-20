@@ -471,6 +471,24 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
         );
 
         if (charge && (charge.invoiceUrl || charge.bankSlipUrl)) {
+            // ATUALIZAÇÃO IMEDIATA DO LEAD
+            try {
+                const rawLeads = await getVal('/leads') || [];
+                const leadsList = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+                let targetIdx = -1;
+                for (let i = leadsList.length - 1; i >= 0; i--) {
+                    if ((leadsList[i] as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                        targetIdx = i;
+                        break;
+                    }
+                }
+                if (targetIdx !== -1) {
+                    await setVal(`/leads[${targetIdx}]/amount`, price);
+                    await setVal(`/leads[${targetIdx}]/tag`, description);
+                    await setVal(`/leads[${targetIdx}]/details`, { level, cycle, price, description });
+                }
+            } catch (e) { console.error("Err Lead Update:", e); }
+
             return res.json({ url: charge.invoiceUrl || charge.bankSlipUrl });
         } else {
             console.error("Asaas Charge Failed (Empty URL):", charge);
@@ -639,11 +657,17 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 await setVal(`/users/${safeEmail}/lastBookPaymentDate`, new Date());
 
                 // Also update Lead if exists
-                let leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
+                let leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.type === 'BOOK');
                 if (leadIndex !== -1) {
                     // Register the payment
                     await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
+                    await setVal(`/leads[${leadIndex}]/amount`, amount); // Specific Amount
                     await setVal(`/leads[${leadIndex}]/status`, 'APPROVED'); // Unblock access if pending
+
+                    // If description contains level/cycle, parse it
+                    if (productName.includes('Nível')) {
+                        await setVal(`/leads[${leadIndex}]/tag`, productName);
+                    }
                 }
 
                 console.log(`[WEBHOOK] SUCCESS: Credits updated ${currentCredits} -> ${newCredits}`);
