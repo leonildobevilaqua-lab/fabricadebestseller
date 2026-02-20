@@ -748,6 +748,8 @@ export const checkAccess = async (req: Request, res: Response) => {
     let latestInvoiceStatus = null;
     let latestInvoiceNumber = null;
     let lastPaymentDate = null;
+    let totalPaidCount = 0;
+    let unexpiredCount = 0;
 
     // [STRICT AUDIT & RECOVERY SYSTEM]
     // 1. Unconditionally fetch external truth (Asaas) and local history (Orders)
@@ -769,7 +771,7 @@ export const checkAccess = async (req: Request, res: Response) => {
                 return d.includes('geração') || d.includes('livro') ||
                     d.includes('assinatura') || d.includes('plano') ||
                     d.includes('starter') || d.includes('pro') || d.includes('black') ||
-                    d.includes('nível'); // Added to catch all generation invoices
+                    d.includes('nível') || d.includes('crédito'); // Added 'crédito' to catch book purchase invoices
             });
             if (latestGen) {
                 latestInvoiceStatus = latestGen.status;
@@ -800,8 +802,8 @@ export const checkAccess = async (req: Request, res: Response) => {
             return diffDays <= 30; // 30 days expiration
         });
 
-        const totalPaidCount = allConfirmedPayments.length;
-        const unexpiredCount = unexpiredPaidList.length;
+        totalPaidCount = allConfirmedPayments.length;
+        unexpiredCount = unexpiredPaidList.length;
 
         if (unexpiredCount > 0) {
             lastPaymentDate = unexpiredPaidList[0].confirmedDate || unexpiredPaidList[0].paymentDate || unexpiredPaidList[0].clientPaymentDate || unexpiredPaidList[0].dateCreated;
@@ -986,7 +988,7 @@ export const checkAccess = async (req: Request, res: Response) => {
             console.log(`[CheckAccessDebug] Leads Usage: ${leadsUsage}, Projects Usage: ${projectsUsage} for ${email}`);
         } catch (e) { console.error("Error calculating project usage in checkAccess", e); }
 
-        usageCount = Math.max(leadsUsage, projectsUsage);
+        usageCount = Math.max(leadsUsage, projectsUsage, (typeof totalPaidCount !== 'undefined' ? totalPaidCount : 0));
 
         // 2. DETERMINE PLAN TRUTH
         effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : null;

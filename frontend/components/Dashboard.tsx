@@ -608,116 +608,75 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     ) : (
                         <div className="divide-y divide-slate-100">
                             {displayOrders.map((order: any, idx: number) => {
-                                const isCredit = order.isCredit || order.status === 'CREDIT_AVAILABLE';
-
+                                // Real Projects Only (Backend already filters, but we ensure frontend logic is book-centric)
                                 return (
                                     <div key={idx} className="p-6 hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
-                                        {isCredit ? (
-                                            // LAYOUT PARA CRÉDITO DISPONÍVEL
-                                            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                                                <div className="flex items-center gap-4 w-full md:w-auto">
-                                                    <div className="w-16 h-16 bg-emerald-100/50 rounded-xl flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-emerald-100">
-                                                        🎟️
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-slate-800 text-lg leading-tight">Crédito de Livro (Disponível)</h4>
-                                                        <p className="text-sm text-slate-500 font-medium italic mb-1">Pronto para usar</p>
-                                                        <div className="space-y-0.5">
-                                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
-                                                                Data da compra: {order.date ? new Date(order.date).toLocaleDateString() : 'Recente'}
-                                                            </p>
-                                                            {order.date && (() => {
-                                                                const exp = new Date(order.date);
-                                                                exp.setDate(exp.getDate() + 30);
-                                                                return (
-                                                                    <p className="text-[10px] text-red-400 uppercase tracking-wider font-bold">
-                                                                        Expira em: {exp.toLocaleDateString()}
-                                                                    </p>
-                                                                );
-                                                            })()}
-                                                        </div>
-                                                    </div>
+                                        {/* LAYOUT PARA LIVRO GERADO */}
+                                        <div className="flex flex-col md:flex-row gap-6">
+                                            {/* Ícone / Capa Placeholder */}
+                                            <div className="w-20 h-28 bg-slate-800 rounded shadow-lg flex-shrink-0 hidden md:flex items-center justify-center text-4xl border border-slate-700">
+                                                📕
+                                            </div>
+
+                                            {/* Informações */}
+                                            <div className="flex-1 space-y-2">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded uppercase">Livro Gerado</span>
+                                                    <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                        {order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE' ? 'Concluído' : 'Processando...'}
+                                                    </span>
                                                 </div>
 
-                                                <div className="flex items-center gap-4">
-                                                    <span className="bg-emerald-100 text-emerald-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide">
-                                                        Disponível
-                                                    </span>
+                                                <div className="space-y-1">
+                                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
+                                                        <span className="text-slate-900 uppercase text-xs tracking-wide font-black min-w-[100px]">Autor:</span>
+                                                        <span className="text-slate-700 font-medium">{order.author || "N/A"}</span>
+                                                    </div>
+                                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
+                                                        <span className="text-slate-900 uppercase text-xs tracking-wide font-black min-w-[100px]">Título:</span>
+                                                        <span className="text-lg font-serif font-bold text-slate-800">{order.title}</span>
+                                                    </div>
+                                                    <div className="flex flex-col md:flex-row md:items-baseline gap-1 md:gap-4">
+                                                        <span className="text-slate-900 uppercase text-xs tracking-wide font-black min-w-[100px]">Geração:</span>
+                                                        <span className="text-xs text-slate-500">{new Date(order.date).toLocaleDateString()}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Botões de Ação */}
+                                            <div className="flex flex-col gap-4 min-w-[240px] border-l border-slate-100 pl-0 md:pl-6">
+                                                {/* Download */}
+                                                {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl ? (
+                                                    <div className="space-y-1">
+                                                        <a
+                                                            href={order.downloadUrl}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-md"
+                                                        >
+                                                            <IconDownload className="w-4 h-4" /> Download do Livro
+                                                        </a>
+                                                        <p className="text-[10px] text-slate-400 text-center leading-tight px-1">
+                                                            Arquivo disponível para download imediato.
+                                                        </p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="w-full bg-slate-100 text-slate-400 font-bold py-3 rounded-lg text-sm text-center cursor-not-allowed">
+                                                        Processando Geração...
+                                                    </div>
+                                                )}
+
+                                                {/* Excluir */}
+                                                <div className="space-y-1 mt-auto">
                                                     <button
-                                                        onClick={onNewBook}
-                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-6 rounded-lg text-sm transition shadow-lg shadow-emerald-200"
+                                                        onClick={() => handleDeleteProject(order.id)}
+                                                        className="w-full bg-white border border-red-200 hover:bg-red-50 text-red-500 hover:text-red-600 font-bold py-2 px-4 rounded-lg text-sm transition text-center"
                                                     >
-                                                        Gerar Livro Agora 🚀
+                                                        Excluir Definitivamente
                                                     </button>
                                                 </div>
                                             </div>
-                                        ) : (
-                                            // LAYOUT PARA LIVRO GERADO (Conforme solicitado)
-                                            <div className="flex flex-col md:flex-row gap-6">
-                                                {/* Ícone / Capa Placeholder */}
-                                                <div className="w-20 h-28 bg-slate-800 rounded shadow-lg flex-shrink-0 hidden md:flex items-center justify-center text-4xl border border-slate-700">
-                                                    📕
-                                                </div>
-
-                                                {/* Informações */}
-                                                <div className="flex-1 space-y-2">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded uppercase">Livro Gerado</span>
-                                                        <span className={`text-[10px] font-black px-2 py-0.5 rounded uppercase ${order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                            {order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE' ? 'Concluído' : 'Processando...'}
-                                                        </span>
-                                                    </div>
-
-                                                    <div className="space-y-1">
-                                                        <p className="text-sm text-slate-700"><strong className="text-slate-900 uppercase text-xs tracking-wide block mb-0.5">Autor:</strong> {order.author || "Desconhecido"}</p>
-                                                        <p className="text-sm text-slate-700"><strong className="text-slate-900 uppercase text-xs tracking-wide block mb-0.5">Título do Livro:</strong> <span className="text-lg font-serif font-bold text-slate-800">{order.title}</span></p>
-                                                    </div>
-
-                                                    <div className="pt-2 flex flex-wrap gap-4 text-xs text-slate-500 border-t border-slate-100 mt-2">
-                                                        {/* Tentativa de mostrar Data da Compra se disponível, senão omite */}
-                                                        {/* <p><strong>Data da compra do Crédito:</strong> {order.purchaseDate || 'N/A'}</p> */}
-                                                        <p><strong>Data da utilização do Crédito:</strong> {new Date(order.date).toLocaleDateString()}</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Botões de Ação */}
-                                                <div className="flex flex-col gap-4 min-w-[240px] border-l border-slate-100 pl-0 md:pl-6">
-                                                    {/* Download */}
-                                                    {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl ? (
-                                                        <div className="space-y-1">
-                                                            <a
-                                                                href={order.downloadUrl}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-md"
-                                                            >
-                                                                <IconDownload className="w-4 h-4" /> Download do Livro
-                                                            </a>
-                                                            <p className="text-[10px] text-slate-400 text-center leading-tight px-1">
-                                                                Os arquivos ficarão disponíveis para download pelo prazo de 30 dias, após este prazo o arquivo será excluido da nossa base. <strong>POR FAVOR, faça o download do seu livro agora!</strong>
-                                                            </p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="w-full bg-slate-100 text-slate-400 font-bold py-3 rounded-lg text-sm text-center cursor-not-allowed">
-                                                            Processando Geração...
-                                                        </div>
-                                                    )}
-
-                                                    {/* Excluir */}
-                                                    <div className="space-y-1 mt-auto">
-                                                        <button
-                                                            onClick={() => handleDeleteProject(order.id)}
-                                                            className="w-full bg-white border border-red-200 hover:bg-red-50 text-red-500 hover:text-red-600 font-bold py-2 px-4 rounded-lg text-sm transition text-center"
-                                                        >
-                                                            Excluir Definitivamente
-                                                        </button>
-                                                        <p className="text-[10px] text-red-400 text-center leading-tight px-1">
-                                                            <strong>ATENÇÃO:</strong> A Exclusão do arquivo é definitiva, você não terá como fazer o download deste arquivo novamente.
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                                        </div>
                                     </div>
                                 );
                             })}
