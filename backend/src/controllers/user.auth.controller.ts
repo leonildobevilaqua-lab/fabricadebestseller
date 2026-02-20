@@ -207,9 +207,18 @@ export const UserAuthController = {
             // +
             // [List of Unused Credits]
 
-            const realProjectsCount = userProjects.length;
+            const now = new Date();
+            const unexpiredOrders = allOrders.filter((o: any) => {
+                const orderDate = new Date(o.date);
+                const diffDays = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24);
+                return diffDays <= 30; // 30 days expiration
+            });
+
             const totalPaidOrders = allOrders.length;
-            const unusedCreditsCount = Math.max(0, totalPaidOrders - realProjectsCount);
+            const realProjectsCount = userProjects.length;
+
+            // Formula: Balance = Min(Unexpired, Total - Used)
+            const unusedCreditsCount = Math.max(0, Math.min(unexpiredOrders.length, totalPaidOrders - realProjectsCount));
 
             // Create placeholder items for unused credits
             const unusedCredits = [];
@@ -220,7 +229,8 @@ export const UserAuthController = {
                 // Sort orders by date descending.
                 // Projects are also sorted descending.
 
-                const ord = allOrders.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[i];
+                // Use the dates of the unexpired orders for the credit placeholders
+                const ord = unexpiredOrders.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[i];
 
                 unusedCredits.push({
                     id: `credit_${i}_${new Date().getTime()}`,

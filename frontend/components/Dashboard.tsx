@@ -88,42 +88,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 return 'https://api.fabricadebestseller.com.br';
             };
 
-            // Pergunta ao servidor: "Eu tenho crédito?"
-            // Using /payment/access as it is our specialized credit checker
+            // Pergunta ao servidor o status atual
             const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
             const data = await res.json();
 
-            // STRICT CHECK: Only entry if credits are actually confirmed.
-            // Ignore 'hasActiveProject' here because this button is specifically for validating a NEW payment.
-            // STRICT CHECK: Only entry if credits are actually confirmed.
-            if (data.credits > 0) {
-                // Check Recency preventing false positives (Stale Credit vs New Payment)
-                let isRecent = false;
-                if (data.lastPaymentDate) {
-                    const paymentTime = new Date(data.lastPaymentDate).getTime();
-                    const now = new Date().getTime();
-                    const hoursDiff = (now - paymentTime) / (1000 * 60 * 60);
-                    if (hoursDiff < 24) isRecent = true;
-                }
+            // PRIORIDADE 1: Verificar se existe fatura em aberto
+            if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
+                const statusPT = data.latestInvoiceStatus === 'PENDING' ? 'PENDENTE' : 'VENCIDA';
+                const invNumber = data.latestInvoiceNumber || 'N/A';
+                alert(`🧾 FATURA EM ABERTO: Nº ${invNumber}\n\nSTATUS: ${statusPT}\n\nO sistema identificou uma fatura aguardando pagamento. O banco ainda não compensou seu pagamento.\n\nSe foi via Boleto, pode levar até 24h. PIX costuma ser rápido.\n\nPOR FAVOR, AGUARDE A COMPENSAÇÃO OU PAGUE A FATURA GERADA.`);
+                return;
+            }
 
-                if (isRecent) {
-                    alert('Pagamento Confirmado! Iniciando Geração...');
-                    onNewBook();
-                } else {
-                    // Stale Credit Logic - Ask user instead of confusing them
-                    const dateStr = data.lastPaymentDate ? new Date(data.lastPaymentDate).toLocaleDateString() : 'Desconhecida';
-                    if (confirm(`Encontramos 1 crédito anterior disponível na sua conta (Data: ${dateStr}).\n\nDeseja utilizar este crédito agora?`)) {
-                        onNewBook();
-                    }
-                }
+            // PRIORIDADE 2: Verificar se o pagamento caiu agora (créditos > 0)
+            if (data.credits > 0) {
+                alert('Pagamento Confirmado! Iniciando Geração...');
+                onNewBook();
             } else {
-                if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
-                    const statusPT = data.latestInvoiceStatus === 'PENDING' ? 'PENDENTE' : 'VENCIDA';
-                    const invNumber = data.latestInvoiceNumber || 'N/A';
-                    alert(`🧾 FATURA ENCONTRADA: Nº ${invNumber}\n\nSTATUS: ${statusPT}\n\nO banco ainda não compensou seu pagamento. Se foi via Boleto, pode levar até 24h. PIX costuma ser rápido.\n\nAguarde a compensação.`);
-                } else {
-                    alert('⚠️ O banco ainda não confirmou seu pagamento recente. Tente novamente em alguns instantes.\n\nSe pagou via Boleto, pode levar até 1 dia útil.');
-                }
+                alert('⚠️ O banco ainda não confirmou seu pagamento recente. Tente novamente em alguns instantes.\n\nSe pagou via Boleto, pode levar até 1 dia útil.');
             }
         } catch (error) {
             console.error(error);
@@ -250,6 +232,59 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const nextBookDisplayPrice = currentCyclePrices[activeIndex] || currentCyclePrices[0];
 
     const displayOrders = orders; // Use real orders
+
+    // Plan benefits mapping
+    const PLAN_BENEFITS: any = {
+        'STARTER': [
+            "Acesso à Plataforma Fábrica de Best Sellers",
+            "Geração de Livros (12 Capítulos)",
+            "Conteúdo Robusto (+160 Páginas)",
+            "Diagramação Automática Profissional",
+            "Folha de Rosto & Título Diagramadas",
+            "Sumário: Semi-automático",
+            "Histórico de livros gerados",
+            "NÃO - ⚠️ Pág. Agradecimento, Dedicatória e Sobre o Autor (Manuais)",
+            "NÃO - Acesso à Comunidade",
+            "NÃO - Kit de Marketing e Vendas"
+        ],
+        'PRO': [
+            "Acesso à Plataforma Fábrica de Best Sellers",
+            "Geração de Livros (12 Capítulos)",
+            "Conteúdo Robusto (+160 Páginas)",
+            "Diagramação Automática Profissional",
+            "Folha de Rosto & Título Diagramadas",
+            "Sumário Automático",
+            "Histórico de livros gerados",
+            "Automação: Pág. Agradecimento, Dedicatória, Sobre o Autor (IA)",
+            "Kit de Marketing Completo (Sinopse, Orelhas, SEO, YouTube)",
+            "Grupo Exclusivo Networking (WhatsApp)",
+            "Suporte Prioritário por Email",
+            "1 Tradução de Livro Gratuita por Mês 🌎"
+        ],
+        'BLACK': [
+            "Acesso à Plataforma Fábrica de Best Sellers",
+            "Geração de Livros (12 Capítulos)",
+            "Conteúdo Robusto (+160 Páginas)",
+            "Diagramação Automática Profissional",
+            "Folha de Rosto & Título Diagramadas",
+            "Sumário Automático",
+            "Histórico de livros gerados",
+            "Automação: Pág. Agradecimento, Dedicatória, Sobre o Autor (IA)",
+            "Kit de Marketing Completo (Sinopse, Orelhas, SEO, YouTube)",
+            "Grupo Exclusivo Networking (WhatsApp)",
+            "Suporte Prioritário por Email",
+            "Prioridade Máxima nos Servidores",
+            "Comunidade VIP no Discord",
+            "Mentoria: Capas Profissionais",
+            "Mentoria: Publicação Uiclap",
+            "Mentoria: Venda Amazon KDP",
+            "Suporte Pessoal Dedicado (Discord)",
+            "Acesso Antecipado a Novas Features",
+            "2 Traduções de Livro Gratuitas por Mês 🌎"
+        ]
+    };
+
+    const benefits = PLAN_BENEFITS[pKey] || PLAN_BENEFITS['STARTER'];
 
 
     return (
@@ -532,25 +567,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     */}
                                     {/* Benefits List Content */}
                                     <div className="space-y-3">
-                                        {[
-                                            "Acesso à Plataforma Fábrica de Best Sellers",
-                                            "Geração de Livros (14 Capítulos)",
-                                            "Conteúdo Robusto (+160 Páginas)",
-                                            "Diagramação Automática Profissional",
-                                            "Folha de Rosto & Título Diagramadas",
-                                            "Sumário Automático",
-                                            "Histórico de livros gerados",
-                                            "Pág. Agradecimento, Dedicatória e Sobre o Autor",
-                                            "Acesso à Comunidade",
-                                            "Kit de Marketing e Vendas",
-                                            "Suporte Prioritário",
-                                            "Mentoria"
-                                        ].map((item, idx) => (
-                                            <div key={idx} className="flex items-start gap-3 text-sm text-slate-300">
-                                                <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                                                <span className="leading-tight">{item}</span>
-                                            </div>
-                                        ))}
+                                        {benefits.map((item: string, idx: number) => {
+                                            const isNegative = item.startsWith('NÃO -');
+                                            return (
+                                                <div key={idx} className={`flex items-start gap-3 text-sm ${isNegative ? 'text-slate-500 italic' : 'text-slate-300'}`}>
+                                                    {isNegative ? (
+                                                        <span className="w-4 h-4 flex items-center justify-center text-red-500 font-bold">✕</span>
+                                                    ) : (
+                                                        <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+                                                    )}
+                                                    <span className="leading-tight">{item}</span>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
 
                                     {/* Progressive List Column REMOVED */}
@@ -592,9 +621,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                     <div>
                                                         <h4 className="font-bold text-slate-800 text-lg leading-tight">Crédito de Livro (Disponível)</h4>
                                                         <p className="text-sm text-slate-500 font-medium italic mb-1">Pronto para usar</p>
-                                                        <p className="text-xs text-slate-400 uppercase tracking-wider">
-                                                            Data da compra: {order.date ? new Date(order.date).toLocaleDateString() : 'Recente'}
-                                                        </p>
+                                                        <div className="space-y-0.5">
+                                                            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">
+                                                                Data da compra: {order.date ? new Date(order.date).toLocaleDateString() : 'Recente'}
+                                                            </p>
+                                                            {order.date && (() => {
+                                                                const exp = new Date(order.date);
+                                                                exp.setDate(exp.getDate() + 30);
+                                                                return (
+                                                                    <p className="text-[10px] text-red-400 uppercase tracking-wider font-bold">
+                                                                        Expira em: {exp.toLocaleDateString()}
+                                                                    </p>
+                                                                );
+                                                            })()}
+                                                        </div>
                                                     </div>
                                                 </div>
 

@@ -790,42 +790,40 @@ export const checkAccess = async (req: Request, res: Response) => {
     // Runs UNCONDITIONALLY to ensure the DB always reflects the true bank status
     if (asaasPayments.length > 0) {
         // 1. Calculate INFLOW (Confirmed Payments)
-        const validPaidList = asaasPayments.filter((p: any) =>
-            (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
-            (validPrices.some(vp => Math.abs(vp - p.value) < 0.1) ||
-                (p.description || '').toLowerCase().includes('livro') ||
-                (p.description || '').toLowerCase().includes('geração'))
-        );
-        const paidCount = validPaidList.length;
+        const now = new Date();
+        const allConfirmedPayments = asaasPayments.filter((p: any) => (p.status === 'RECEIVED' || p.status === 'CONFIRMED'));
 
-        if (paidCount > 0) {
-            lastPaymentDate = validPaidList[0].confirmedDate || validPaidList[0].paymentDate || validPaidList[0].clientPaymentDate || validPaidList[0].dateCreated;
+        const unexpiredPaidList = allConfirmedPayments.filter((p: any) => {
+            const paymentDate = new Date(p.confirmedDate || p.paymentDate || p.clientPaymentDate || p.dateCreated);
+            const diffDays = (now.getTime() - paymentDate.getTime()) / (1000 * 60 * 60 * 24);
+            return diffDays <= 30; // 30 days expiration
+        });
+
+        const totalPaidCount = allConfirmedPayments.length;
+        const unexpiredCount = unexpiredPaidList.length;
+
+        if (unexpiredCount > 0) {
+            lastPaymentDate = unexpiredPaidList[0].confirmedDate || unexpiredPaidList[0].paymentDate || unexpiredPaidList[0].clientPaymentDate || unexpiredPaidList[0].dateCreated;
         }
 
         // 2. Calculate OUTFLOW (Generated Books / Orders)
         const userOrders = (orders as any[]).filter((o: any) =>
             (o.paymentInfo?.payerEmail?.toLowerCase() === (email as string).toLowerCase()) ||
-            validPaidList.some(p => p.id === o.id || p.id === o.paymentInfo?.transactionId)
+            allConfirmedPayments.some(p => p.id === o.id || p.id === o.paymentInfo?.transactionId)
         );
-        const usedCount = userOrders.length;
+        const totalUsedCount = orders.filter((o: any) =>
+            o.status === 'COMPLETED' || o.status === 'PROCESSING' || o.status === 'LIVRO ENTREGUE' || o.status === 'IN_PROGRESS'
+        ).length;
 
         // [ORDER RECONCILIATION]
-        // User Requirement: "Sum value ... Include Invoice Number ... Show immediately"
-        // Cycle through all VALID PAYMENTS. If a payment is NOT linked to an existing order, create a "Credit" order.
         let ordersUpdated = false;
-
-        for (const payment of validPaidList) {
-            // Check if this payment ID exists in user orders (as id or transactionId)
+        for (const payment of unexpiredPaidList) {
             const exists = orders.some((o: any) => o.id === payment.id || o.paymentInfo?.transactionId === payment.id);
-
             if (!exists) {
-                console.log(`[LEDGER] Found unlinked payment ${payment.id} (${payment.value}). Creating Order placeholder.`);
-
-                // Create a "Credit Purchased" order
                 const newOrder = {
-                    id: payment.id, // Use Payment ID as Order ID for tracking
+                    id: payment.id,
                     title: "Crédito de Livro (Disponível)",
-                    status: "CREDIT_AVAILABLE", // Special status for unused credits
+                    status: "CREDIT_AVAILABLE",
                     date: payment.paymentDate || new Date(),
                     price: payment.value,
                     invoiceNumber: payment.invoiceNumber || payment.id,
@@ -836,28 +834,19 @@ export const checkAccess = async (req: Request, res: Response) => {
                         value: payment.value
                     }
                 };
-
-                orders.push(newOrder); // Add to local array
+                orders.push(newOrder);
                 ordersUpdated = true;
             }
         }
 
         if (ordersUpdated) {
-            console.log(`[LEDGER] Saving reconciled orders for ${email}`);
             await setVal(`/users/${safeEmail}/orders`, orders);
-            // Force reload local variable for accurate accounting if needed downstream
         }
 
         // 3. Determine TRUE BALANCE
-        // Balance = Confirmed Payments - (Orders that are NOT just 'Keyholders')
-        // We count ALL confirmed payments. 
-        // We subtract orders that are USED (i.e., have a real book status, not just CREDIT_AVAILABLE).
-
-        const usedOrdersCount = orders.filter((o: any) =>
-            o.status === 'COMPLETED' || o.status === 'PROCESSING' || o.status === 'LIVRO ENTREGUE'
-        ).length;
-
-        let theoretical = Math.max(0, paidCount - usedOrdersCount);
+        // Balance = Confirmed unexpired payments that haven't been used yet.
+        // Cap is unexpired count, base is total paid - total used.
+        let theoretical = Math.max(0, Math.min(unexpiredCount, totalPaidCount - totalUsedCount));
 
         // [STRICT MODE ADJUSTMENT - UPDATED]
         // User Requirement: "Sum value ... Include Invoice Number."
@@ -876,7 +865,7 @@ export const checkAccess = async (req: Request, res: Response) => {
             console.log(`[LEDGER] Pending Invoice ${latestInvoiceNumber} exists, but user has ${theoretical} valid credits from previous payments. Access Allowed.`);
         }
 
-        console.log(`[LEDGER] ${email} -> Payments: ${paidCount} (In) | Used Orders: ${usedOrdersCount} (Out) | Balance: ${theoretical}`);
+        console.log(`[LEDGER] ${email} -> Payments: ${totalPaidCount} (In) | Used Orders: ${totalUsedCount} (Out) | Balance: ${theoretical}`);
 
         // 4. SYNC DB
         if (theoretical !== credits) {
