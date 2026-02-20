@@ -768,7 +768,8 @@ export const checkAccess = async (req: Request, res: Response) => {
                 const d = (p.description || "").toLowerCase();
                 return d.includes('geração') || d.includes('livro') ||
                     d.includes('assinatura') || d.includes('plano') ||
-                    d.includes('starter') || d.includes('pro') || d.includes('black');
+                    d.includes('starter') || d.includes('pro') || d.includes('black') ||
+                    d.includes('nível'); // Added to catch all generation invoices
             });
             if (latestGen) {
                 latestInvoiceStatus = latestGen.status;
@@ -845,27 +846,18 @@ export const checkAccess = async (req: Request, res: Response) => {
 
         // 3. Determine TRUE BALANCE
         // Balance = Confirmed unexpired payments that haven't been used yet.
-        // Cap is unexpired count, base is total paid - total used.
         let theoretical = Math.max(0, Math.min(unexpiredCount, totalPaidCount - totalUsedCount));
 
-        // [STRICT MODE ADJUSTMENT - UPDATED]
-        // User Requirement: "Sum value ... Include Invoice Number."
-        // BUG FIX: Do NOT freeze credits if a newer invoice is PENDING. The user might have paid Invoice A, then clicked Buy again (Invoice B).
-        // Invoice B being Pending should not block Invoice A's credit.
-        /*
+        // [STRICT LOCKING - USER REQUEST]
+        // If a PENDING or OVERDUE invoice exists, we block EVERYTHING (even old credits).
         if (latestInvoiceStatus === 'PENDING' || latestInvoiceStatus === 'OVERDUE') {
             if (theoretical > 0) {
-                console.warn(`[STRICT_MODE] Pending Invoice ${latestInvoiceNumber} detected. Freezing ${theoretical} historical credits to enforce current payment.`);
-                theoretical = 0;
+                console.warn(`[STRICT_MODE] LATEST INVOICE IS ${latestInvoiceStatus} (${latestInvoiceNumber}) FOR ${email}. FREEZING ${theoretical} CREDITS.`);
             }
-        }
-        */
-        // Instead, just log it. Access is granted based on CONFIRMED payments matching Used Orders.
-        if (latestInvoiceStatus === 'PENDING' && theoretical > 0) {
-            console.log(`[LEDGER] Pending Invoice ${latestInvoiceNumber} exists, but user has ${theoretical} valid credits from previous payments. Access Allowed.`);
+            theoretical = 0; // The only way to bypass is to pay or cancel the invoice at Asaas.
         }
 
-        console.log(`[LEDGER] ${email} -> Payments: ${totalPaidCount} (In) | Used Orders: ${totalUsedCount} (Out) | Balance: ${theoretical}`);
+        console.log(`[LEDGER] ${email} -> Payments: ${totalPaidCount} (In) | Used: ${totalUsedCount} (Out) | Balance: ${theoretical} | Status: ${latestInvoiceStatus}`);
 
         // 4. SYNC DB
         if (theoretical !== credits) {

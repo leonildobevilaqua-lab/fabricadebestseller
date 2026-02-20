@@ -92,20 +92,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
             const data = await res.json();
 
-            // PRIORIDADE 1: Verificar se existe fatura em aberto
+            // PRIORIDADE 1: Verificar se existe fatura em aberto (O SERVIDOR JÁ ZERA OS CRÉDITOS SE EXISTIR)
             if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
                 const statusPT = data.latestInvoiceStatus === 'PENDING' ? 'PENDENTE' : 'VENCIDA';
                 const invNumber = data.latestInvoiceNumber || 'N/A';
-                alert(`🧾 FATURA EM ABERTO: Nº ${invNumber}\n\nSTATUS: ${statusPT}\n\nO sistema identificou uma fatura aguardando pagamento. O banco ainda não compensou seu pagamento.\n\nSe foi via Boleto, pode levar até 24h. PIX costuma ser rápido.\n\nPOR FAVOR, AGUARDE A COMPENSAÇÃO OU PAGUE A FATURA GERADA.`);
+                alert(`🧾 FATURA EM ABERTO DETECTADA\n\nIdentificamos a fatura Nº ${invNumber} aguardando pagamento.\n\nSTATUS: ${statusPT}\n\nPara segurança do processo, o sistema bloqueia o uso de créditos anteriores enquanto houver uma fatura nova gerada.\n\nPOR FAVOR, PAGUE A FATURA OU AGUARDE A COMPENSAÇÃO BANCÁRIA.`);
                 return;
             }
 
             // PRIORIDADE 2: Verificar se o pagamento caiu agora (créditos > 0)
             if (data.credits > 0) {
-                alert('Pagamento Confirmado! Iniciando Geração...');
+                alert('✅ PAGAMENTO CONFIRMADO!\n\nSeu crédito foi liberado com sucesso. Iniciando a geração do seu livro...');
                 onNewBook();
             } else {
-                alert('⚠️ O banco ainda não confirmou seu pagamento recente. Tente novamente em alguns instantes.\n\nSe pagou via Boleto, pode levar até 1 dia útil.');
+                // Caso créditos seja 0 e não tenha fatura pendente
+                alert('⚠️ PAGAMENTO NÃO LOCALIZADO\n\nNão identificamos compensação bancária nem faturas em aberto no momento.\n\n- Se pagou agora via PIX: Tente novamente em 1 minuto.\n- Se pagou via BOLETO: A compensação leva de 24h a 48h.\n- Se você já tinha créditos: O projeto pode estar aguardando a finalização da fatura atual.');
             }
         } catch (error) {
             console.error(error);
