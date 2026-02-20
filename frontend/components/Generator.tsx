@@ -763,7 +763,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       <PaymentGate
         isOpen={true}
         planName={upsellOffer?.planName || "STARTER"}
-        bookPrice={upsellOffer?.price || 39.90}
+        bookPrice={upsellOffer?.price || 24.21}
         subscriptionPrice={upsellOffer?.subscriptionPrice || 49.90}
         checkoutUrl={upsellOffer?.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"} // FIX: Ensure this is the PLAN Link not Book Link? 
         // Logic: If user is Pending Sub, they need PLAN link. If they are Sub but no credits, they need BOOK link.
@@ -1095,31 +1095,30 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           <button
             onClick={async () => {
               // Trigger Download
-              if (project) {
-                if (project && project.id) {
-                  window.open(`${API.getApiBase()}/api/admin/books/${project.id}`, '_blank');
-                }
-
-                // REFRESH OFFER DATA (Fix Stale State) - Fetch fresh pricing for NEXT book
-                if (userContact?.email) {
-                  try {
-                    const res = await fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`);
-                    const access = await res.json();
-
-                    // Update offer with fresh data
-                    setUpsellOffer({
-                      price: access.bookPrice,
-                      planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
-                      link: access.checkoutUrl,
-                      level: access.discountLevel,
-                      subscriptionPrice: access.subscriptionPrice || 49.90,
-                      subscriptionLink: "#"
-                    });
-                  } catch (e) { console.error("Upsell Refresh Failed", e); }
-                }
-
-                setShowUpsell(true); // Enabled for Next Book Discount
+              if (project && project.id) {
+                // Use robust direct download link via static folder
+                window.open(`${API.getApiBase()}/downloads/kit_completo_project_${project.id}.zip`, '_blank');
               }
+
+              // REFRESH OFFER DATA (Fix Stale State) - Fetch fresh pricing for NEXT book
+              if (userContact?.email) {
+                try {
+                  const res = await fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`);
+                  const access = await res.json();
+
+                  // Update offer with fresh data
+                  setUpsellOffer({
+                    price: access.bookPrice,
+                    planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
+                    link: access.checkoutUrl,
+                    level: access.discountLevel,
+                    subscriptionPrice: access.subscriptionPrice || 49.90,
+                    subscriptionLink: "#"
+                  });
+                } catch (e) { console.error("Upsell Refresh Failed", e); }
+              }
+
+              setShowUpsell(true); // Enabled for Next Book Discount
             }}
             className="bg-[#0284c7] text-white px-10 py-4 rounded-xl font-bold shadow-xl shadow-[#0ea5e9]/20 hover:bg-[#0369a1] hover:-translate-y-1 transition-all flex items-center gap-2"
           >
@@ -1331,7 +1330,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
           </div>
         </div>
-      </div>
+      </div >
     );
   }
 

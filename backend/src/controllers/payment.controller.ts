@@ -19,15 +19,15 @@ const PRICING_RULES: any = {
 
 const SUBSCRIPTION_PRICES: any = {
     'STARTER': {
-        annual: { price: 199.90, link: '/api/payment/subscribe?plan=STARTER&billing=annual' },
+        annual: { price: 118.80, link: '/api/payment/subscribe?plan=STARTER&billing=annual' },
         monthly: { price: 19.90, link: '/api/payment/subscribe?plan=STARTER&billing=monthly' }
     },
     'PRO': {
-        annual: { price: 349.90, link: '/api/payment/subscribe?plan=PRO&billing=annual' },
+        annual: { price: 238.80, link: '/api/payment/subscribe?plan=PRO&billing=annual' },
         monthly: { price: 34.90, link: '/api/payment/subscribe?plan=PRO&billing=monthly' }
     },
     'BLACK': {
-        annual: { price: 499.90, link: '/api/payment/subscribe?plan=BLACK&billing=annual' },
+        annual: { price: 358.80, link: '/api/payment/subscribe?plan=BLACK&billing=annual' },
         monthly: { price: 49.90, link: '/api/payment/subscribe?plan=BLACK&billing=monthly' }
     }
 };
@@ -282,7 +282,7 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         const priceList = PRICING_RULES[planKey] || PRICING_RULES['STARTER_MENSAL'];
         // Garantir indice entre 0 e 3
         const safeIndex = Math.min(Math.max(0, finalIndex), 3);
-        const price = priceList[safeIndex] || 39.90;
+        const price = priceList[safeIndex] || priceList[0];
 
         console.log(`[CHARGE] ${email} | Plan: ${planKey} | Index: ${safeIndex} | Price: ${price} | Reason: Manual Credit Buy`);
 
@@ -322,13 +322,9 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
                 // Prioritize finding the LATEST lead of type BOOK for this email
                 for (let i = leadsList.length - 1; i >= 0; i--) {
                     const l = leadsList[i] as any;
-                    if (l.email?.toLowerCase().trim() === email.toLowerCase().trim()) {
-                        if (l.type === 'BOOK') {
-                            targetIdx = i;
-                            break;
-                        }
-                        // Fallback if no BOOK lead found yet, take the last one
-                        if (targetIdx === -1) targetIdx = i;
+                    if (l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.type === 'BOOK') {
+                        targetIdx = i;
+                        break;
                     }
                 }
 
@@ -342,7 +338,22 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
                         status: 'PAYMENT_LINK_SENT',
                         updatedAt: new Date()
                     });
-                    console.log(`[CHARGE] Lead ${targetIdx} updated with Price R$ ${price} and Tag: ${description}`);
+                    console.log(`[CHARGE] Book Lead ${targetIdx} updated with Price R$ ${price}`);
+                } else {
+                    // IF NO BOOK LEAD EXISTS, CREATE ONE INSTEAD OF OVERWRITING SUBSCRIPTION
+                    const newBookLead = {
+                        id: uuidv4(),
+                        email: email,
+                        name: 'Autor',
+                        type: 'BOOK',
+                        status: 'PENDING',
+                        amount: price,
+                        tag: description,
+                        details: { level: safeIndex + 1, price, description },
+                        date: new Date()
+                    };
+                    await pushVal('/leads', newBookLead);
+                    console.log(`[CHARGE] Created NEW Book Lead for ${email}`);
                 }
             } catch (e) { console.error("Err Lead Update:", e); }
 
@@ -464,13 +475,8 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
         }
 
         const priceList = PRICING_RULES[planKey];
-
-        let price = 39.90;
-        if (!priceList) {
-            const fallback = PRICING_RULES['STARTER_MENSAL'];
-            price = fallback[0];
-        } else {
-            // Guard against out of bounds
+        let price = priceList ? priceList[0] : 26.90;
+        if (priceList) {
             const safeIndex = Math.min(Math.max(0, cycleIndex), 3);
             price = priceList[safeIndex] !== undefined ? priceList[safeIndex] : priceList[0];
         }
@@ -508,9 +514,11 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
             try {
                 const rawLeads = await getVal('/leads') || [];
                 const leadsList = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+                // Prioritize finding the LATEST lead of type BOOK for this email
                 let targetIdx = -1;
                 for (let i = leadsList.length - 1; i >= 0; i--) {
-                    if ((leadsList[i] as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                    const l = leadsList[i] as any;
+                    if (l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.type === 'BOOK') {
                         targetIdx = i;
                         break;
                     }
@@ -519,6 +527,19 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
                     await setVal(`/leads[${targetIdx}]/amount`, price);
                     await setVal(`/leads[${targetIdx}]/tag`, description);
                     await setVal(`/leads[${targetIdx}]/details`, { level, cycle, price, description });
+                } else {
+                    const newBookLead = {
+                        id: uuidv4(),
+                        email: email,
+                        name: 'Autor',
+                        type: 'BOOK',
+                        status: 'PENDING',
+                        amount: price,
+                        tag: description,
+                        details: { level, cycle, price, description },
+                        date: new Date()
+                    };
+                    await pushVal('/leads', newBookLead);
                 }
             } catch (e) { console.error("Err Lead Update:", e); }
 
@@ -626,9 +647,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 21.90, 19.71, 18.62, 17.52, // Monthly
                 // BLACK
                 14.90, 13.41, 12.67, 11.92, // Annual
-                16.90, 15.21, 14.37, 13.52, // Monthly
-                // Avulso / Fallbacks
-                39.90
+                16.90, 15.21, 14.37, 13.52 // Monthly (Removed 39.90 Fallback)
             ];
 
             // Explicit Keywords
@@ -725,7 +744,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                             date: new Date(),
                             email: email,
                             name: payerName,
-                            type: 'BOOK',
+                            type: 'SUBSCRIPTION',
                             status: 'SUBSCRIBER',
                             plan: { name: detectedPlan, billing },
                             paymentInfo,

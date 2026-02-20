@@ -11,6 +11,12 @@ app.use(cors());
 app.options('*', cors()); // Enable Pre-Flight for ALL routes
 app.use(express.json());
 
+// --- STATIC FILES (Direct Downloads) ---
+// Note: __dirname is src in ts-node or dist in production
+const generatedBooksPath = path.join(process.cwd(), 'generated_books');
+app.use('/downloads', express.static(generatedBooksPath));
+console.log(`[BOOT] Serving generated books from: ${generatedBooksPath}`);
+
 import paymentRoutes from './routes/payment.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import purchaseRoutes from './routes/purchase.routes';

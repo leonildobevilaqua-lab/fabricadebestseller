@@ -694,13 +694,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl ? (
                                                     <div className="space-y-1">
                                                         <a
-                                                            href={order.downloadUrl ? `${(import.meta as any).env.VITE_API_URL || 'https://api.fabricadebestseller.com.br'}${order.downloadUrl}` : '#'}
+                                                            href={order.id ? `${(import.meta as any).env.VITE_API_URL || 'https://api.fabricadebestseller.com.br'}/downloads/kit_completo_project_${order.id}.zip` : '#'}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            download
+                                                            download={`kit_completo_${order.id}.zip`}
                                                             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-md"
                                                         >
-                                                            <IconDownload className="w-4 h-4" /> Download do Livro
+                                                            <IconDownload className="w-4 h-4" /> Download do Kit (.ZIP)
                                                         </a>
                                                         <p className="text-[10px] text-slate-400 text-center leading-tight px-1">
                                                             Arquivo disponível para download imediato.

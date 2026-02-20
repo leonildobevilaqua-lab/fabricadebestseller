@@ -94,7 +94,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
     // Rotating Text State
     const [rotatingWord, setRotatingWord] = useState('PUBLIQUE');
-    const [fetchedPrice, setFetchedPrice] = useState(39.90);
+    const [fetchedPrice, setFetchedPrice] = useState(26.90);
     const [showPlanCelebration, setShowPlanCelebration] = useState(false);
     const [celebratedPlan, setCelebratedPlan] = useState<any>(null);
     const [activeDiscount, setActiveDiscount] = useState<number>(0);
