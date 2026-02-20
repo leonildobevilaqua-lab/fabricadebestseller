@@ -215,36 +215,18 @@ export const approveLead = async (req: Request, res: Response) => {
 
 export const createBookGenerationCharge = async (req: Request, res: Response) => {
     try {
-        const { email } = req.body;
+        const { email, cycleIndex } = req.body;
         if (!email) return res.status(400).json({ error: "Email required" });
         const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
         await reloadDB();
 
-        // 1. Identificar Plano e Ciclo
-        let plan = await getVal(`/users/${safeEmail}/plan`);
+        // 1. Identificar Plano Simples
+        const plan = await getVal(`/users/${safeEmail}/plan`);
 
-        // Robustez: Se status não for explicitamente ACTIVE, verificar se é assinante em transição
-        if (!plan || plan.status !== 'ACTIVE') {
-            const rawLeads = await getVal('/leads') || [];
-            const subLead = Object.values(rawLeads).find((l: any) =>
-                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-                (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
-            );
-
-            if (subLead && (subLead as any).plan) {
-                plan = (subLead as any).plan;
-                // Auto-fix user record if missing
-                await setVal(`/users/${safeEmail}/plan`, plan);
-            }
-        }
-
-        // STRICT CHECK: SE NÃO TEM PLANO, NÃO GERA COBRANÇA DE LIVRO.
-        // O USUÁRIO DEVE ASSINAR PRIMEIRO.
         if (!plan || plan.status !== 'ACTIVE') {
             return res.status(403).json({
                 error: "PLAN_REQUIRED",
-                message: "Você precisa ter uma assinatura ativa para gerar livros.",
-                redirect: '/plans' // Frontend deve tratar isso
+                message: "Assinatura inativa. Regularize no menu Planos.",
             });
         }
 
@@ -255,78 +237,74 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
 
         const billingRaw = (plan.billing || 'monthly').toLowerCase();
         const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
-
         const planKey = `${cleanPlan}_${billingSuffix}`;
 
-        // 2. Definir Prioridade/Ciclo (Quantos livros JÁ FEZ ou PAGOU)
-        // ALINHADO COM DASHBOARD: Conta Pedidos Pagos (Credits) + Projetos Reais
+        // 2. Determinar Preço (Confiar no Frontend ou Fallback Backend)
 
-        // Carregar pedidos do usuário
-        const user = await getVal(`/users/${safeEmail}`);
-        const userOrders = user?.orders || [];
-        const paidOrdersCount = userOrders.length;
-
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
-        // Contar leads aprovados/completos deste email (Legacy)
-        const leadsUsage = leads.filter((l: any) =>
-            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
-        ).length;
-
-        // Contar projetos completados (redundancia)
-        let projectsUsage = 0;
-        try {
-            const projects = await getVal('/projects') || {};
-            const projectList = Array.isArray(projects) ? projects : Object.values(projects);
-            projectsUsage = projectList.filter((p: any) => {
-                const pEmail = (p.metadata?.contact?.email || p.userEmail || "").toLowerCase().trim();
-                const targetEmail = email.toLowerCase().trim();
-                const status = p.metadata?.status;
-                return pEmail === targetEmail &&
-                    (status === 'COMPLETED' || status === 'LIVRO ENTREGUE');
-            }).length;
-        } catch (e) { console.error("Error calculating project usage", e); }
-
-        // MÁXIMO entre Pedidos Pagos, Leads e Projetos
-        const usageCount = Math.max(paidOrdersCount, leadsUsage, projectsUsage);
-
-        // 3. Calcular Preço Baseado no Ciclo (0, 1, 2, 3...)
-        const cycleIndex = usageCount % 4; // Reinicia ciclo a cada 4 livros
-        const priceList = PRICING_RULES[planKey];
-
-        if (!priceList) {
-            console.error(`Pricing rule not found for ${planKey}, defaulting to STARTER_MENSAL`);
-            // Safety fallback just in case, but really shouldn't happen with strict check
-            const fallback = PRICING_RULES['STARTER_MENSAL'];
-            var price = fallback[0];
+        // Se Frontend mandou o indice, usaremos ele. Se não, fallback para 0 (preço cheio)
+        let finalIndex = 0;
+        if (cycleIndex !== undefined && cycleIndex !== null) {
+            finalIndex = parseInt(cycleIndex);
         } else {
-            var price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : priceList[0];
+            // Fallback: Tentativa Simples de calcular caso frontend falhe
+            try {
+                const projects = await getVal('/projects') || {};
+                const list = Array.isArray(projects) ? projects : Object.values(projects);
+                const count = list.filter((p: any) =>
+                    (p.userEmail?.toLowerCase() === email.toLowerCase()) &&
+                    p.metadata?.status !== 'DELETED' &&
+                    (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
+                ).length;
+                finalIndex = count % 4;
+            } catch (e) { }
         }
 
-        console.log(`[Pricing] Email: ${email} | Plan: ${planKey} | Count: ${usageCount} | Index: ${cycleIndex} | FINAL PRICE: ${price}`);
+        const priceList = PRICING_RULES[planKey] || PRICING_RULES['STARTER_MENSAL'];
+        // Garantir indice entre 0 e 3
+        const safeIndex = Math.min(Math.max(0, finalIndex), 3);
+        const price = priceList[safeIndex] || 39.90;
 
-        // 4. Criar Cobrança no Asaas
+        console.log(`[CHARGE] ${email} | Plan: ${planKey} | Index: ${safeIndex} | Price: ${price} | Reason: Manual Credit Buy`);
+
+        // 3. Descrição
+        const description = `Crédito Adicional (Nível ${safeIndex + 1}) - Plano ${cleanPlan}`;
+
+        // 4. Criar Cobrança
         const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
-        const customerId = await AsaasProvider.createCustomer({
-            name: userProfile.name || email.split('@')[0],
-            email: email,
-            cpfCnpj: userProfile.cpf || undefined,
-            phone: userProfile.phone || undefined
-        });
+
+        // Wrapper seguro para criar customer
+        let customerId = '';
+        try {
+            customerId = await AsaasProvider.createCustomer({
+                name: userProfile.name || email.split('@')[0],
+                email: email,
+                cpfCnpj: userProfile.cpf || undefined,
+                phone: userProfile.phone || undefined
+            });
+        } catch (custErr: any) {
+            console.error("Failed to create customer:", custErr);
+            return res.status(400).json({ error: "Erro ao cadastrar cliente no Asaas. Verifique CPF/Telefone no perfil." });
+        }
 
         const charge = await AsaasProvider.createPayment(
             customerId,
             price,
-            `Geração Extra - Plano ${cleanPlan} (Vol. ${usageCount + 1})`
+            description
         );
 
-        return res.json({ success: true, invoiceUrl: charge.invoiceUrl });
+        if (charge && (charge.invoiceUrl || charge.bankSlipUrl)) {
+            return res.json({ url: charge.invoiceUrl || charge.bankSlipUrl });
+        } else {
+            console.error("Asaas Empty Response", charge);
+            return res.status(500).json({ error: "O Asaas não retornou o link da fatura." });
+        }
 
     } catch (error: any) {
-        console.error('Falha ao criar cobrança:', error);
-        return res.status(500).json({ error: error.message || 'Falha ao criar cobrança' });
+        console.error('CRITICAL CHARGE ERROR:', error);
+        return res.status(500).json({
+            error: error.message || "Erro Interno ao Gerar Fatura",
+            stack: error.stack
+        });
     }
 };
 
