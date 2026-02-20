@@ -856,14 +856,21 @@ export const checkAccess = async (req: Request, res: Response) => {
 
         let theoretical = Math.max(0, paidCount - usedOrdersCount);
 
-        // [STRICT MODE ADJUSTMENT]
-        // User Requirement: If the LATEST invoice (current attempt) is PENDING, BLOCK access.
-        // This overrides "leftover credits" from DB resets to prevent confusion.
+        // [STRICT MODE ADJUSTMENT - UPDATED]
+        // User Requirement: "Sum value ... Include Invoice Number."
+        // BUG FIX: Do NOT freeze credits if a newer invoice is PENDING. The user might have paid Invoice A, then clicked Buy again (Invoice B).
+        // Invoice B being Pending should not block Invoice A's credit.
+        /*
         if (latestInvoiceStatus === 'PENDING' || latestInvoiceStatus === 'OVERDUE') {
             if (theoretical > 0) {
                 console.warn(`[STRICT_MODE] Pending Invoice ${latestInvoiceNumber} detected. Freezing ${theoretical} historical credits to enforce current payment.`);
                 theoretical = 0;
             }
+        }
+        */
+        // Instead, just log it. Access is granted based on CONFIRMED payments matching Used Orders.
+        if (latestInvoiceStatus === 'PENDING' && theoretical > 0) {
+            console.log(`[LEDGER] Pending Invoice ${latestInvoiceNumber} exists, but user has ${theoretical} valid credits from previous payments. Access Allowed.`);
         }
 
         console.log(`[LEDGER] ${email} -> Payments: ${paidCount} (In) | Used Orders: ${usedOrdersCount} (Out) | Balance: ${theoretical}`);
