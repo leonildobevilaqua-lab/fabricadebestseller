@@ -472,15 +472,20 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
             description
         );
 
-        if (charge.invoiceUrl || charge.bankSlipUrl) {
+        if (charge && (charge.invoiceUrl || charge.bankSlipUrl)) {
             return res.json({ url: charge.invoiceUrl || charge.bankSlipUrl });
         } else {
-            return res.status(500).json({ error: "Erro ao gerar link de pagamento no Asaas." });
+            console.error("Asaas Charge Failed (Empty URL):", charge);
+            return res.status(500).json({ error: "O Asaas não retornou um link de pagamento válido." });
         }
 
     } catch (error: any) {
         console.error('Falha ao criar link cobrança:', error);
-        return res.status(500).send(`Erro: ${error.message}`);
+        // Ensure strictly JSON response for frontend
+        return res.status(500).json({
+            error: error.message || 'Erro interno ao comunicar com Asaas.',
+            details: error.response?.data
+        });
     }
 };
 export const handleKiwifyWebhook = async (req: Request, res: Response) => {

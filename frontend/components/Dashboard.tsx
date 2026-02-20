@@ -62,11 +62,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 const win = window.open(data.url, '_blank');
                 if (!win) alert("Por favor, permita popups para abrir o pagamento.");
             } else {
-                alert("Erro ao gerar fatura: " + (data.error || "Desconhecido"));
+                console.error("Payment Error Data:", data);
+                const msg = data.error || data.message || "Erro Desconhecido (Ver Console)";
+                alert(`Erro ao gerar fatura: ${msg}`);
                 setIsPurchasing(false);
             }
-        } catch (error) {
-            alert('Erro de conexão com o Checkout.');
+        } catch (error: any) {
+            console.error("Fetch Error:", error);
+            // Verify if it was JSON parse error
+            alert(`Erro de conexão com o Checkout.\nDetalhes: ${error.message}`);
             setIsPurchasing(false);
         } finally {
             setLoading(false);
