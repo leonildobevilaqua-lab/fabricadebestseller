@@ -473,9 +473,9 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
         );
 
         if (charge.invoiceUrl || charge.bankSlipUrl) {
-            return res.redirect(charge.invoiceUrl || charge.bankSlipUrl);
+            return res.json({ url: charge.invoiceUrl || charge.bankSlipUrl });
         } else {
-            return res.send("Erro ao gerar link de pagamento.");
+            return res.status(500).json({ error: "Erro ao gerar link de pagamento no Asaas." });
         }
 
     } catch (error: any) {

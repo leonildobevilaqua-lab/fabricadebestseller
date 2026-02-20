@@ -46,8 +46,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             if (pName.toUpperCase().includes('BLACK')) pKey = 'BLACK';
             const bKey = isAnnual ? 'ANNUAL' : 'MONTHLY';
 
-            // Using NEW endpoint that accepts cycleIndex
-            const res = await fetch(`${getApiBase()}/api/payment/charge`, {
+            // Using endpoint that accepts cycleIndex
+            const res = await fetch(`${getApiBase()}/api/payment/purchase/book-generation`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
