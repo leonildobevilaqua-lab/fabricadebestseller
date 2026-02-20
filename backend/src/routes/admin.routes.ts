@@ -15,6 +15,7 @@ router.post('/change-password', AdminController.changePassword); // Requires Bea
 // Let's check `admin.routes.ts` again.
 router.get('/settings', AdminController.getSettings);
 router.post('/settings', AdminController.updateSettings);
+router.get('/books/download/:email', AdminController.downloadBook);
 router.get('/books/:email', AdminController.downloadBook);
 
 // Backups

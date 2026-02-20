@@ -295,33 +295,64 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <div className="bg-indigo-600 text-white p-1.5 rounded-lg">
-                            <IconBook />
+                            <IconBook className="w-5 h-5" />
                         </div>
                         <span className="font-serif font-bold text-xl text-slate-800 hidden md:block">Fábrica de Best Sellers</span>
                     </div>
 
                     <div className="flex items-center gap-4">
-                        <div className="text-right mr-2 hidden sm:block">
-                            <p className="text-xs text-slate-400 font-bold uppercase">Bem-vindo,</p>
-                            <p className="text-sm font-bold text-slate-800">{user.name}</p>
+                        <div className="hidden sm:flex flex-col items-end">
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">BEM-VINDO,</span>
+                            <span className="text-sm font-bold text-slate-700">{user.name}</span>
                         </div>
-                        <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase border 
-                            ${planName === 'BLACK' ? 'bg-slate-900 text-yellow-500 border-yellow-500' :
-                                planName === 'PRO' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
-                                    'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                        <div className="bg-yellow-500 text-slate-900 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest border border-yellow-600">
                             {planName}
                         </div>
                         <button
                             onClick={onLogout}
-                            className="text-xs font-bold text-red-400 hover:text-red-500 uppercase tracking-widest border border-red-200 hover:border-red-400 px-3 py-1 rounded-full transition"
+                            className="text-slate-500 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50"
+                            title="Sair"
                         >
-                            Sair
+                            SAIR
                         </button>
-                    </div >
-                </div >
-            </header >
+                    </div>
+                </div>
+            </header>
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+                {/* WELCOME TITLE AND WHATSAPP BUTTON */}
+                <div className="space-y-6">
+                    <div className="text-center md:text-left space-y-1">
+                        <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">
+                            Seja Bem Vindo (a) à <span className="text-indigo-600">ÁREA VIP DE MEMBROS ASSINANTES</span> da Fábrica de Best Seller.
+                        </h1>
+                        <p className="text-slate-500 font-medium">Sua central exclusiva para geração e controle dos seus Best Sellers.</p>
+                    </div>
+
+                    <a
+                        href="https://chat.whatsapp.com/GZrrpmLXD91J5lAjhgv9Jr"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex flex-col md:flex-row items-center justify-between gap-4 p-5 md:p-6 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl shadow-lg border border-white/20 hover:scale-[1.01] transition-transform group"
+                    >
+                        <div className="flex items-center gap-4 text-center md:text-left">
+                            <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center text-3xl shadow-inner group-hover:rotate-12 transition-transform">
+                                💬
+                            </div>
+                            <div>
+                                <p className="text-white font-black text-lg md:text-xl leading-tight">
+                                    ACESSE AGORA O GRUPO VIP DA FÁBRICA DE BEST SELLER NO WHATSAPP
+                                </p>
+                                <p className="text-green-50/80 text-sm font-medium">
+                                    Fique atualizado sobre todas as novidades, promoções e suporte.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="bg-white text-emerald-600 font-black px-6 py-2.5 rounded-full text-sm uppercase tracking-wider group-hover:bg-green-50 transition-colors shadow-md">
+                            Entrar no Grupo
+                        </div>
+                    </a>
+                </div>
 
                 {/* Progressive Credit Unlock System */}
                 <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 rounded-3xl p-8 border border-slate-700 shadow-2xl relative overflow-hidden">
@@ -663,9 +694,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl ? (
                                                     <div className="space-y-1">
                                                         <a
-                                                            href={order.downloadUrl}
+                                                            href={order.downloadUrl ? `${(import.meta as any).env.VITE_API_URL || 'https://api.fabricadebestseller.com.br'}${order.downloadUrl}` : '#'}
                                                             target="_blank"
                                                             rel="noreferrer"
+                                                            download
                                                             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-md"
                                                         >
                                                             <IconDownload className="w-4 h-4" /> Download do Livro
