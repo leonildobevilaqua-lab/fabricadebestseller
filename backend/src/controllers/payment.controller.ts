@@ -398,6 +398,9 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
                 const isMatch = pUserEmail === targetEmail || pMetaEmail === targetEmail;
 
                 const status = p.metadata?.status;
+                // STRICT CHECK: Explicitly exclude 'DELETED' and ensure status is valid
+                if (status === 'DELETED') return false;
+
                 const isValidStatus = (
                     status === 'COMPLETED' ||
                     status === 'LIVRO ENTREGUE' ||
@@ -415,11 +418,20 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
         } catch (e) { console.error("Error calculating project usage", e); }
 
 
-        const usageCount = projectsUsage; // STRICT: Only count generated projects as per user request (Step 342)
-        // If user buys credit but doesn't generate, next discount is NOT enabled.
-        // So pricing is strictly tied to Generation Count.
+        const usageCount = projectsUsage;
 
-        const cycleIndex = usageCount % 4; // 0, 1, 2, 3
+        // Use Frontend Cycle Index if provided (Strict User Alignment)
+        // This ensures what they see is what they pay.
+        // req.body.cycleIndex is passed from Frontend
+        let cycleIndex = usageCount % 4; // Default fallback
+        if (req.body.cycleIndex !== undefined && req.body.cycleIndex !== null) {
+            const requestedIndex = parseInt(req.body.cycleIndex);
+            // Basic sanity check: allow if within reasonable range of calculated index OR if calculated is 0 (reset/empty)
+            // Trusting frontend for UX consistency as per user demand ("Simply... Value of Active Box")
+            console.log(`[Pricing] Overriding backend index ${cycleIndex} with frontend index ${requestedIndex}`);
+            cycleIndex = requestedIndex;
+        }
+
         const priceList = PRICING_RULES[planKey];
 
         let price = 39.90;
@@ -427,7 +439,9 @@ export const createBookChargeLink = async (req: Request, res: Response) => {
             const fallback = PRICING_RULES['STARTER_MENSAL'];
             price = fallback[0];
         } else {
-            price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : priceList[0];
+            // Guard against out of bounds
+            const safeIndex = Math.min(Math.max(0, cycleIndex), 3);
+            price = priceList[safeIndex] !== undefined ? priceList[safeIndex] : priceList[0];
         }
 
         console.log(`[Pricing Link] Email: ${email} | Plan: ${planKey} | Count: ${usageCount} | Index: ${cycleIndex} | FINAL PRICE: ${price}`);

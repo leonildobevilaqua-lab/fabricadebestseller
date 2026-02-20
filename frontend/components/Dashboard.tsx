@@ -24,7 +24,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const handleBuyCredit = async (price: number) => {
         try {
             setLoading(true);
-            setIsPurchasing(true); // Show spinner if needed or just use logic
+            setIsPurchasing(true);
 
             const getApiBase = () => {
                 const host = window.location.hostname;
@@ -32,22 +32,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 return 'https://api.fabricadebestseller.com.br';
             };
 
-            // Chama o backend para criar a cobrança request
-            const res = await fetch(`${getApiBase()}/api/payment/purchase/book-generation`, {
+            // Calculate active cycle index based on stats (Strict User Request)
+            const completedBooks = stats?.stats?.totalBooksGenerated || 0;
+            const cycleIndex = (completedBooks) % 4;
+
+            // Determine Plan Param
+            const pName = stats?.plan?.name || "FREE";
+            const billing = stats?.plan?.billing || 'monthly';
+            const isAnnual = billing === 'annual' || billing === 'anual';
+
+            let pKey = 'STARTER';
+            if (pName.toUpperCase().includes('PRO')) pKey = 'PRO';
+            if (pName.toUpperCase().includes('BLACK')) pKey = 'BLACK';
+            const bKey = isAnnual ? 'ANNUAL' : 'MONTHLY';
+
+            // Using NEW endpoint that accepts cycleIndex
+            const res = await fetch(`${getApiBase()}/api/payment/charge`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: user.email })
+                body: JSON.stringify({
+                    email: user.email,
+                    plan: pKey + '_' + bKey, // Send explicit plan key
+                    cycleIndex: cycleIndex // Send explicit cycle index (0-3)
+                })
             });
 
             const data = await res.json();
-
-            if (data.invoiceUrl) {
-                // OBRIGATÓRIO: Abre em nova aba
-                const win = window.open(data.invoiceUrl, '_blank');
+            if (data.url) {
+                const win = window.open(data.url, '_blank');
                 if (!win) alert("Por favor, permita popups para abrir o pagamento.");
-                setIsPurchasing(true); // Keep UI in "Waiting" state
             } else {
-                alert('Erro ao gerar cobrança.');
+                alert("Erro ao gerar fatura: " + (data.error || "Desconhecido"));
                 setIsPurchasing(false);
             }
         } catch (error) {
@@ -225,15 +240,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const bKey = isAnnual ? 'ANNUAL' : 'MONTHLY';
     let currentCyclePrices = PRICING[`${pKey}_${bKey}`] || PRICING['STARTER_MONTHLY'];
 
-    // Dynamic Price based on Cycle
-    // Use cycleCount from stats (calculated in backend)
-    const activeIndex = (orders.length) % 4; // Sync with grid logic
+    // Dynamic Price based on PROJECTS GENERATED (Strict User Request)
+    const completedBooks = stats?.stats?.totalBooksGenerated || 0;
+    const activeIndex = (completedBooks) % 4; // Use generated count to determine current price box
     const nextBookDisplayPrice = currentCyclePrices[activeIndex] || currentCyclePrices[0];
 
-    // Mock Orders if empty for demo
-    const displayOrders = orders.length > 0 ? orders : [
-        // { id: '1', title: 'A Arte de Vencer', date: '20/01/2026', status: 'COMPLETED' }
-    ];
+    const displayOrders = orders; // Use real orders
+
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
@@ -264,9 +277,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         >
                             Sair
                         </button>
-                    </div>
-                </div>
-            </header>
+                    </div >
+                </div >
+            </header >
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
@@ -675,6 +688,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 </div>
 
             </main>
-        </div>
+        </div >
     );
 };
