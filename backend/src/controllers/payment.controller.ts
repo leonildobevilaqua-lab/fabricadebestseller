@@ -220,13 +220,33 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
         await reloadDB();
 
-        // 1. Identificar Plano Simples
-        const plan = await getVal(`/users/${safeEmail}/plan`);
+        // 1. Identificar Plano Simples (com Fallback Robustez)
+        let plan = await getVal(`/users/${safeEmail}/plan`);
 
+        // Force reload leads to check for subscriber status if plan is missing/inactive
         if (!plan || plan.status !== 'ACTIVE') {
+            const rawLeads = await getVal('/leads') || [];
+            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+            // Find any lead for this email that is a SUBSCRIBER or has an ACTIVE plan
+            const subLead = leads.find((l: any) =>
+                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+                (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
+            );
+
+            if (subLead && (subLead as any).plan) {
+                console.log(`[CHARGE] Found fallback plan in leads for ${email}`);
+                plan = (subLead as any).plan;
+                // Auto-fix for future
+                await setVal(`/users/${safeEmail}/plan`, plan);
+            }
+        }
+
+        if (!plan || (plan.status !== 'ACTIVE' && plan.status !== 'SUBSCRIBER')) {
+            console.warn(`[CHARGE] BLOCKING: No active plan found for ${email}. Plan state:`, plan);
             return res.status(403).json({
                 error: "PLAN_REQUIRED",
-                message: "Assinatura inativa. Regularize no menu Planos.",
+                message: "Assinatura não identificada. Por favor, contate o suporte.",
             });
         }
 
