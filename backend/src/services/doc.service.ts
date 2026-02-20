@@ -76,7 +76,7 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     // Ensure directory exists
     const fs = require('fs');
     const path = require('path');
-    const outputDir = path.join(__dirname, '../../generated_books');
+    const outputDir = path.join(process.cwd(), 'data', 'generated_books');
     if (!fs.existsSync(outputDir)) {
         try { fs.mkdirSync(outputDir, { recursive: true }); } catch (err) { }
     }

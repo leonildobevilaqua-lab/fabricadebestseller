@@ -11,7 +11,9 @@ import * as DocService from '../services/doc.service';
 
 // ... (Login logic)
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
-const DB_PATH = path.resolve(process.cwd(), 'database.json');
+const DATA_DIR = path.join(process.cwd(), 'data');
+const DB_PATH = path.join(DATA_DIR, 'database.json');
+const BACKUP_DIR = path.join(DATA_DIR, 'backups');
 
 // --- CHANGE PASSWORD (AUTHENTICATED) ---
 export const changePassword = async (req: Request, res: Response) => {
@@ -318,11 +320,7 @@ export const downloadBook = async (req: Request, res: Response) => {
 // Imports moved to top
 
 // DB_PATH removed (declared at top)
-const BACKUP_DIR = path.resolve(__dirname, '../../backups');
-
-if (!fs.existsSync(BACKUP_DIR)) {
-    try { fs.mkdirSync(BACKUP_DIR); } catch (e) { }
-}
+// BACKUP_DIR defined at top
 
 export const createBackup = async (req: Request, res: Response) => {
     try {

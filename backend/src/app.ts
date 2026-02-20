@@ -12,8 +12,7 @@ app.options('*', cors()); // Enable Pre-Flight for ALL routes
 app.use(express.json());
 
 // --- STATIC FILES (Direct Downloads) ---
-// We use path.join(__dirname, '../../generated_books') to match admin.controller logic
-const generatedBooksPath = path.join(__dirname, '../../generated_books');
+const generatedBooksPath = path.join(process.cwd(), 'data', 'generated_books');
 app.use('/downloads', express.static(generatedBooksPath));
 console.log(`[BOOT] Serving generated books from: ${generatedBooksPath}`);
 

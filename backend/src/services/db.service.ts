@@ -14,8 +14,20 @@ if (!fs.existsSync(DATA_DIR)) {
     } catch (e) {
         console.error(`[DB] CRITICAL: Failed to create data directory:`, e);
     }
-} else {
-    console.log(`[DB] Data directory already exists.`);
+}
+
+// Ensure Backups and Books dirs exist inside DATA_DIR
+const BACKUP_DIR = path.join(DATA_DIR, 'backups'); // BACKUP_DIR defined at top
+const BOOKS_DIR = path.join(DATA_DIR, 'generated_books');
+if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+if (!fs.existsSync(BOOKS_DIR)) fs.mkdirSync(BOOKS_DIR, { recursive: true });
+
+// MIGRATE LEGACY DB (Initial Transition only)
+const rootDB = path.join(process.cwd(), 'database.json');
+const DB_PATH = path.join(DATA_DIR, 'database.json');
+if (fs.existsSync(rootDB) && !fs.existsSync(DB_PATH)) {
+    console.log(`[DB] Migrating legacy database.json to data/ folder...`);
+    fs.copyFileSync(rootDB, DB_PATH);
 }
 
 // PERMISSION CHECK
