@@ -1270,9 +1270,9 @@ export const createCharge = async (req: Request, res: Response) => {
 
         if (userPlan && userPlan.status === 'ACTIVE') {
             const pName = (userPlan.name || 'STARTER').toUpperCase();
-            if (pName.includes('BLACK')) price = 16.90;
-            else if (pName.includes('PRO')) price = 21.90;
-            else price = 26.90;
+            if (pName.includes('BLACK')) price = 39.90; // Default to full until confirmed
+            else if (pName.includes('PRO')) price = 39.90;
+            else price = 39.90;
         }
 
         const customerId = await AsaasProvider.createCustomer({

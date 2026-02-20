@@ -131,7 +131,18 @@ export const UserAuthController = {
                 const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
                 userProjects = await Promise.all(projectList
-                    .filter((p: any) => p.userEmail?.toLowerCase().trim() === email.toLowerCase().trim() && p.metadata?.status !== 'DELETED')
+                    .filter((p: any) => {
+                        const targetEmail = email.toLowerCase().trim();
+                        const pUserEmail = (p.userEmail || "").toLowerCase().trim();
+                        const pContactEmail = (p.metadata?.contact?.email || "").toLowerCase().trim();
+                        const pMetaUserEmail = (p.metadata?.userEmail || "").toLowerCase().trim();
+
+                        const isMatch = pUserEmail === targetEmail ||
+                            pContactEmail === targetEmail ||
+                            pMetaUserEmail === targetEmail;
+
+                        return isMatch && p.metadata?.status !== 'DELETED';
+                    })
                     .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
                     .map(async (p: any) => {
                         // RECOVERY LOGIC: If project metadata is missing valuation/tag, look for it in the latest lead
