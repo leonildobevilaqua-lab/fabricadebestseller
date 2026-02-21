@@ -243,7 +243,7 @@ export const downloadBook = async (req: Request, res: Response) => {
     const { email: identifier } = req.params; // Identifier can be email OR projectId
     const fs = require('fs');
     const path = require('path');
-    const outputDir = path.join(__dirname, '../../generated_books');
+    const outputDir = path.join(process.cwd(), 'data', 'generated_books');
 
     // Helper to check UUID
     const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);

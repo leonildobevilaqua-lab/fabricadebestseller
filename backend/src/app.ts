@@ -84,7 +84,7 @@ app.use('/api/purchase', purchaseRoutes); // REGISTER NEW ROUTE
 app.post('/webhook/asaas', SubscriptionController.webhook); // Direct mapping
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/user', userRoutes);
-app.use('/downloads', express.static(path.join(__dirname, '../generated_books')));
+// Redundant static route removed. Using unified folder at top.
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });

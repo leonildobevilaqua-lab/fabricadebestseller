@@ -1096,8 +1096,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             onClick={async () => {
               // Trigger Download
               if (project && project.id) {
-                // Use robust direct download link via static folder
-                window.open(`${API.getApiBase()}/downloads/kit_completo_project_${project.id}.zip`, '_blank');
+                // Use smart API fallback that searches by ID in filename
+                window.open(`${API.getApiBase()}/api/admin/books/download/${project.id}`, '_blank');
               }
 
               // REFRESH OFFER DATA (Fix Stale State) - Fetch fresh pricing for NEXT book

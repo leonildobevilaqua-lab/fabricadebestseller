@@ -694,7 +694,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl ? (
                                                     <div className="space-y-1">
                                                         <a
-                                                            href={order.id ? `${(import.meta as any).env.VITE_API_URL || 'https://api.fabricadebestseller.com.br'}/downloads/kit_completo_project_${order.id}.zip` : '#'}
+                                                            href={order.id ? `${(import.meta as any).env.VITE_API_URL || 'https://api.fabricadebestseller.com.br'}/api/admin/books/download/${order.id}` : '#'}
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             download={`kit_completo_${order.id}.zip`}

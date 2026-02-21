@@ -81,7 +81,7 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
         try { fs.mkdirSync(outputDir, { recursive: true }); } catch (err) { }
     }
 
-    const filename = `book_${safeEmail}_${project.id}.docx`;
+    const filename = `book_project_${project.id}.docx`;
     const outputPath = path.join(outputDir, filename);
 
     fs.writeFileSync(outputPath, buffer);
@@ -99,7 +99,7 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     // 4. Generate Extras & Zip (If Marketing exists)
     if (project.marketing) {
         try {
-            const zipName = `kit_completo_${safeEmail}_${project.id}.zip`;
+            const zipName = `kit_completo_project_${project.id}.zip`;
             const zipPath = path.join(outputDir, zipName);
 
             const output = fs.createWriteStream(zipPath);
