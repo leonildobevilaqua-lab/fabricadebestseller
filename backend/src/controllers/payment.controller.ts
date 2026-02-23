@@ -3,18 +3,49 @@ import { v4 as uuidv4 } from 'uuid';
 import { setVal, getVal, pushVal, reloadDB } from '../services/db.service';
 import { getProjectByEmail } from '../services/queue.service';
 import { AsaasProvider } from '../services/asaas.provider';
+import { getConfig } from '../services/config.service';
 import multer from 'multer';
 
 // --- PRICING CONFIGURATION ---
 // TABELA DE PREÇOS IMUTÁVEL (Fonte da Verdade)
 // REMOVIDO AVULSO - APENAS ASSINANTES PODEM GERAR
 const PRICING_RULES: any = {
+    'AVULSO': [89.90, 89.90, 89.90, 89.90],
     'STARTER_MENSAL': [26.90, 24.21, 22.87, 21.52],
     'STARTER_ANUAL': [24.90, 22.41, 21.17, 19.92],
     'PRO_MENSAL': [21.90, 19.71, 18.62, 17.52],
     'PRO_ANUAL': [19.90, 17.91, 16.92, 15.92],
     'BLACK_MENSAL': [16.90, 15.21, 14.37, 13.52],
     'BLACK_ANUAL': [14.90, 13.41, 12.67, 11.92]
+};
+
+export const checkPaymentStatus = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.query;
+        if (!email) return res.status(400).json({ error: "Email required" });
+        await reloadDB();
+
+        const customer = await AsaasProvider.getCustomerByEmail(email as string);
+        if (!customer) return res.json({ status: 'NOT_FOUND' });
+
+        const payments = await AsaasProvider.getPayments({ customer: customer.id, status: 'RECEIVED' });
+        const confirmed = await AsaasProvider.getPayments({ customer: customer.id, status: 'CONFIRMED' });
+
+        const allPayments = [...payments, ...confirmed];
+
+        if (allPayments.length > 0) {
+            return res.json({ status: 'PAID' });
+        }
+
+        const pending = await AsaasProvider.getPayments({ customer: customer.id, status: 'PENDING' });
+        if (pending.length > 0) {
+            return res.json({ status: 'PENDING' });
+        }
+
+        res.json({ status: 'NONE' });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
 };
 
 const SUBSCRIPTION_PRICES: any = {
@@ -215,13 +246,18 @@ export const approveLead = async (req: Request, res: Response) => {
 
 export const createBookGenerationCharge = async (req: Request, res: Response) => {
     try {
-        const { email, cycleIndex } = req.body;
+        const { email, cycleIndex, forcePlan } = req.body;
         if (!email) return res.status(400).json({ error: "Email required" });
         const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
         await reloadDB();
 
         // 1. Identificar Plano Simples (com Fallback Robustez)
         let plan = await getVal(`/users/${safeEmail}/plan`);
+
+        // Force AVULSO if requested from landing page or if user is avulso
+        if (forcePlan === 'AVULSO' || (plan && plan.name === 'AVULSO')) {
+            plan = { name: 'AVULSO', status: 'ACTIVE' };
+        }
 
         // Force reload leads to check for subscriber status if plan is missing/inactive
         if (!plan || plan.status !== 'ACTIVE') {
@@ -242,41 +278,45 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
             }
         }
 
-        if (!plan || (plan.status !== 'ACTIVE' && plan.status !== 'SUBSCRIBER')) {
-            console.warn(`[CHARGE] BLOCKING: No active plan found for ${email}. Plan state:`, plan);
+        // IF still no plan and NO forcePlan, block
+        if (!plan && !forcePlan) {
+            console.warn(`[CHARGE] BLOCKING: No active plan found for ${email}.`);
             return res.status(403).json({
                 error: "PLAN_REQUIRED",
                 message: "Assinatura não identificada. Por favor, contate o suporte.",
             });
         }
 
-        const planName = (plan.name || 'STARTER').toUpperCase();
+        const finalPlanName = (forcePlan || plan?.name || 'STARTER').toUpperCase();
         let cleanPlan = 'STARTER';
-        if (planName.includes('BLACK')) cleanPlan = 'BLACK';
-        else if (planName.includes('PRO')) cleanPlan = 'PRO';
+        if (finalPlanName.includes('BLACK')) cleanPlan = 'BLACK';
+        else if (finalPlanName.includes('PRO')) cleanPlan = 'PRO';
+        else if (finalPlanName.includes('AVULSO')) cleanPlan = 'AVULSO';
 
-        const billingRaw = (plan.billing || 'monthly').toLowerCase();
+        const billingRaw = (plan?.billing || 'monthly').toLowerCase();
         const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
-        const planKey = `${cleanPlan}_${billingSuffix}`;
+
+        let planKey = `${cleanPlan}_${billingSuffix}`;
+        if (cleanPlan === 'AVULSO') planKey = 'AVULSO';
 
         // 2. Determinar Preço (Confiar no Frontend ou Fallback Backend)
-
-        // Se Frontend mandou o indice, usaremos ele. Se não, fallback para 0 (preço cheio)
         let finalIndex = 0;
-        if (cycleIndex !== undefined && cycleIndex !== null) {
-            finalIndex = parseInt(cycleIndex);
-        } else {
-            // Fallback: Tentativa Simples de calcular caso frontend falhe
-            try {
-                const projects = await getVal('/projects') || {};
-                const list = Array.isArray(projects) ? projects : Object.values(projects);
-                const count = list.filter((p: any) =>
-                    (p.userEmail?.toLowerCase() === email.toLowerCase()) &&
-                    p.metadata?.status !== 'DELETED' &&
-                    (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
-                ).length;
-                finalIndex = count % 4;
-            } catch (e) { }
+        if (cleanPlan !== 'AVULSO') {
+            if (cycleIndex !== undefined && cycleIndex !== null) {
+                finalIndex = parseInt(cycleIndex);
+            } else {
+                // Fallback: Tentativa Simples de calcular caso frontend falhe
+                try {
+                    const projects = await getVal('/projects') || {};
+                    const list = Array.isArray(projects) ? projects : Object.values(projects);
+                    const count = list.filter((p: any) =>
+                        (p.userEmail?.toLowerCase() === email.toLowerCase()) &&
+                        p.metadata?.status !== 'DELETED' &&
+                        (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
+                    ).length;
+                    finalIndex = count % 4;
+                } catch (e) { }
+            }
         }
 
         const priceList = PRICING_RULES[planKey] || PRICING_RULES['STARTER_MENSAL'];
@@ -287,7 +327,9 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         console.log(`[CHARGE] ${email} | Plan: ${planKey} | Index: ${safeIndex} | Price: ${price} | Reason: Manual Credit Buy`);
 
         // 3. Descrição
-        const description = `Crédito Adicional (Nível ${safeIndex + 1}) - Plano ${cleanPlan}`;
+        const description = cleanPlan === 'AVULSO'
+            ? "Compra Avulsa de Crédito (Geração de Livro)"
+            : `Crédito Adicional (Nível ${safeIndex + 1}) - Plano ${cleanPlan}`;
 
         // 4. Criar Cobrança
         const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
@@ -647,7 +689,8 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 21.90, 19.71, 18.62, 17.52, // Monthly
                 // BLACK
                 14.90, 13.41, 12.67, 11.92, // Annual
-                16.90, 15.21, 14.37, 13.52 // Monthly (Removed 39.90 Fallback)
+                16.90, 15.21, 14.37, 13.52, // Monthly
+                89.90 // AVULSO
             ];
 
             // Explicit Keywords
@@ -657,8 +700,8 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             // Check explicit prices (robust against keyword failure)
             const isExactPrice = generationPrices.some(p => Math.abs(p - amount) < 0.05);
 
-            // Fallback: Price Safety Net (10 to 40 BRL covers 11.92 to 39.90)
-            if (isExactPrice || (amount > 10 && amount < 40)) {
+            // Fallback: Price Safety Net (10 to 100 BRL covers 11.92 to 89.90)
+            if (isExactPrice || (amount > 10 && amount < 100)) {
                 console.log(`[WEBHOOK] Price Pattern Match for Book Generation: ${amount}`);
                 isBookGeneration = true;
             }
@@ -698,6 +741,17 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 }
 
                 console.log(`[WEBHOOK] SUCCESS: Credits updated ${currentCredits} -> ${newCredits}`);
+
+                // AUTO-ACTIVATE AVULSO PLAN IF IDENTIFIED
+                if (amount === 89.90 || (productName && productName.toUpperCase().includes('AVULSA'))) {
+                    console.log(`[WEBHOOK] ACTION: SET AVULSO PLAN for ${email}`);
+                    await setVal(`/users/${safeEmail}/plan`, {
+                        name: 'AVULSO',
+                        status: 'ACTIVE',
+                        startDate: new Date(),
+                        lastPayment: new Date()
+                    });
+                }
 
                 // Trigger Diagramming if needed (Mock logic maintained)
                 // ... (omitted for brevity, existing logic covers this if needed via lead updates)
@@ -1101,13 +1155,15 @@ export const checkAccess = async (req: Request, res: Response) => {
                 const rawName = (effectivePlan.name || 'STARTER').toUpperCase();
                 if (rawName.includes('BLACK')) planName = 'BLACK';
                 else if (rawName.includes('PRO')) planName = 'PRO';
+                else if (rawName.includes('AVULSO')) planName = 'AVULSO';
                 else planName = 'STARTER';
 
                 // DYNAMIC PRICING (Cycle 0-3)
                 const cycleIndex = usageCount % 4;
 
                 const billingKey = (billing === 'annual' || billing === 'anual') ? 'ANUAL' : 'MENSAL';
-                const priceList = PRICING_RULES[`${planName}_${billingKey}`] || PRICING_RULES['STARTER_MENSAL'];
+                const rulesKey = (planName === 'AVULSO') ? 'AVULSO' : `${planName}_${billingKey}`;
+                const priceList = PRICING_RULES[rulesKey] || PRICING_RULES['STARTER_MENSAL'];
 
                 // Use calculated Cycle Period
                 const priceVal = priceList[cycleIndex] || priceList[0];
@@ -1275,13 +1331,13 @@ export const useCredit = async (req: Request, res: Response) => {
 
 
 
-// DUMMY IMPLEMENTATION TO FIX BUILD (config.service missing)
+// Load products from config service
 export const getPublicConfig = async (req: Request, res: Response) => {
     try {
-        // const { getConfig } = await import('../services/config.service');
-        // const config = await getConfig();
-        res.json({ products: {} });
+        const config = await getConfig();
+        res.json({ products: config.products || {} });
     } catch (e) {
+        console.error("Failed to load config", e);
         res.status(500).json({ error: "Failed to load config" });
     }
 };

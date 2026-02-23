@@ -1,26 +1,31 @@
 import axios from 'axios';
 import { PLANS } from '../config/subscriptions.config';
-import dotenv from 'dotenv';
+import { setVal, getVal, reloadDB } from './db.service';
 
-// import path from 'path'; // Removed to simplify
-// dotenv.config();
+const getApi = async () => {
+    try {
+        await reloadDB();
+        const env = await getVal('/settings/payment_environment') || 'sandbox';
 
-const ASAAS_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
+        const isProd = env === 'production';
+        const baseUrl = isProd ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/api/v3';
+        const apiKey = isProd ? process.env.ASAAS_PRODUCTION_KEY : process.env.ASAAS_SANDBOX_KEY;
 
-// Use provided key or fallback to the fixed one (Legacy)
-const ASAAS_KEY = process.env.ASAAS_API_KEY || '$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmRhYWMxM2M2LTUxNDYtNGZmZS1iOGVkLTZhN2M5YmEyOTg2NTo6JGFhY2hfZTgzMmQ4NTYtNDQ1NS00ZTM0LThiNzEtNjdiY2ZjNDMwZDVi';
-
-if (!process.env.ASAAS_API_KEY) console.warn("WARN: Using Hardcoded Sandbox Key. Configure ASAAS_API_KEY in env for custom accounts.");
-
-const getApi = () => {
-    console.log(`[ASAAS] Using URL: ${ASAAS_URL}`);
-    return axios.create({
-        baseURL: ASAAS_URL,
-        headers: {
-            'access_token': ASAAS_KEY,
-            'Content-Type': 'application/json'
+        if (!apiKey) {
+            console.error(`[ASAAS] API Key missing for environment: ${env}`);
         }
-    });
+
+        return axios.create({
+            baseURL: baseUrl,
+            headers: {
+                'access_token': apiKey || '',
+                'Content-Type': 'application/json'
+            }
+        });
+    } catch (e) {
+        console.error("[ASAAS] Error initializing API client:", e);
+        throw e;
+    }
 };
 
 // Helper to get Plan Config
@@ -44,7 +49,7 @@ export const AsaasProvider = {
     }) {
         // First try to find existing
         try {
-            const { data } = await getApi().get(`/customers?email=${user.email}`);
+            const { data } = await (await getApi()).get(`/customers?email=${user.email}`);
             if (data.data && data.data.length > 0) {
                 const existingId = data.data[0].id;
 
@@ -60,7 +65,7 @@ export const AsaasProvider = {
                     if (user.province) updatePayload.province = user.province;
 
                     if (Object.keys(updatePayload).length > 0) {
-                        await getApi().post(`/customers/${existingId}`, updatePayload);
+                        await (await getApi()).post(`/customers/${existingId}`, updatePayload);
                         console.log(`[ASAAS] Updated Existing Customer ${existingId}`);
                     }
                 } catch (updErr: any) {
@@ -92,7 +97,7 @@ export const AsaasProvider = {
 
             if (user.phone && user.phone.trim() !== '') payload.mobilePhone = user.phone;
 
-            const { data } = await getApi().post('/customers', payload);
+            const { data } = await (await getApi()).post('/customers', payload);
             return data.id;
         } catch (error: any) {
             let errorMsg = error.response?.data?.errors?.[0]?.description || error.message;
@@ -105,7 +110,7 @@ export const AsaasProvider = {
 
     async getCustomer(customerId: string) {
         try {
-            const { data } = await getApi().get(`/customers/${customerId}`);
+            const { data } = await (await getApi()).get(`/customers/${customerId}`);
             return data;
         } catch (error: any) {
             console.error("Asaas Get Customer Error:", error.response?.data || error.message);
@@ -137,7 +142,7 @@ export const AsaasProvider = {
         }
 
         try {
-            const { data } = await getApi().post('/subscriptions', payload);
+            const { data } = await (await getApi()).post('/subscriptions', payload);
             return data;
         } catch (error: any) {
             console.error("Asaas Create Subscription Error:", error.response?.data || error.message);
@@ -157,7 +162,7 @@ export const AsaasProvider = {
         };
 
         try {
-            const { data } = await getApi().post(`/subscriptions/${subscriptionId}`, payload);
+            const { data } = await (await getApi()).post(`/subscriptions/${subscriptionId}`, payload);
             return data;
         } catch (error: any) {
             console.error("Asaas Update Subscription Error:", error.response?.data || error.message);
@@ -167,7 +172,7 @@ export const AsaasProvider = {
 
     async getSubscription(subscriptionId: string) {
         try {
-            const { data } = await getApi().get(`/subscriptions/${subscriptionId}`);
+            const { data } = await (await getApi()).get(`/subscriptions/${subscriptionId}`);
             return data;
         } catch (error: any) {
             return null;
@@ -176,7 +181,7 @@ export const AsaasProvider = {
 
     async getSubscriptionPayments(subscriptionId: string) {
         try {
-            const { data } = await getApi().get(`/subscriptions/${subscriptionId}/payments`);
+            const { data } = await (await getApi()).get(`/subscriptions/${subscriptionId}/payments`);
             return data.data; // Array of payments
         } catch (error: any) {
             console.error("Error fetching sub payments", error);
@@ -194,7 +199,7 @@ export const AsaasProvider = {
                 dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 days expiry
                 description: description
             };
-            const { data } = await getApi().post('/payments', payload);
+            const { data } = await (await getApi()).post('/payments', payload);
             return data;
         } catch (error: any) {
             console.error("Create Payment Error", error.response?.data || error.message);
@@ -204,7 +209,7 @@ export const AsaasProvider = {
 
     async getCustomerByEmail(email: string) {
         try {
-            const { data } = await getApi().get(`/customers?email=${email}`);
+            const { data } = await (await getApi()).get(`/customers?email=${email}`);
             if (data.data && data.data.length > 0) return data.data[0];
             return null;
         } catch (error) { return null; }
@@ -214,7 +219,7 @@ export const AsaasProvider = {
         try {
             // params: { customer, status, dateAfter, etc }
             const qs = new URLSearchParams(params).toString();
-            const { data } = await getApi().get(`/payments?${qs}`);
+            const { data } = await (await getApi()).get(`/payments?${qs}`);
             return data.data || [];
         } catch (error: any) {
             console.error("Asaas Get Payments Error", error.message);

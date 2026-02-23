@@ -617,13 +617,19 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     const handleBookPayment = async () => {
         if (!formData.email) return;
         const baseUrl = getApiBase().replace(/\/$/, "");
+
+        // Determinar se é Avulso
+        const isAvulso = selectedPlan?.name === 'AVULSO';
+        const endpoint = isAvulso ? '/api/payment/purchase/book-generation' : '/api/payment/create-charge';
+
         try {
-            const res = await fetch(`${baseUrl}/api/payment/create-charge`, {
+            const res = await fetch(`${baseUrl}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email: formData.email,
                     type: 'BOOK_GENERATION',
+                    forcePlan: isAvulso ? 'AVULSO' : undefined,
                     payer: {
                         name: formData.name,
                         cpfCnpj: formData.document,
@@ -632,8 +638,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 })
             });
             const data = await res.json();
-            if (data.invoiceUrl) {
-                window.open(data.invoiceUrl, '_blank');
+            if (data.url || data.invoiceUrl) {
+                const url = data.url || data.invoiceUrl;
+                window.open(url, '_blank');
             } else {
                 alert("Erro ao gerar link de pagamento: " + (data.error || "Desconhecido"));
             }
@@ -1286,6 +1293,11 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                         }
                                                     }
 
+                                                    // Enforce Avulso Rules
+                                                    if (plan?.name === 'AVULSO') {
+                                                        displayPrice = 89.90;
+                                                    }
+
                                                     // Enforce Voucher Rules
                                                     if (isVoucher) {
                                                         displayPrice = 39.90;
@@ -1309,8 +1321,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     // STRICT CHECK: If user selected a plan, they MUST have it Active.
                                                     // If db is empty, realPlan is null.
                                                     const userHasActivePlan = realPlan && realPlan.status === 'ACTIVE';
+                                                    const isAvulso = chosenPlan?.name === 'AVULSO';
 
-                                                    const needToPaySubscription = (!!chosenPlan && !userHasActivePlan) && !isVoucher && !paymentConfirmed;
+                                                    const needToPaySubscription = (!!chosenPlan && !userHasActivePlan && !isAvulso) && !isVoucher && !paymentConfirmed;
 
                                                     // --- PLAN VARIABLES CALCULATION (Pre-calc for reuse) ---
                                                     let subLink = '';
@@ -1571,8 +1584,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                             onClick={handleBookPayment}
                                                             className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
                                                         >
-                                                            {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
-                                                            PAGAR R$ {finalPriceStr} E LIBERAR (TAXA ÚNICA)
+                                                            {!isVoucher && discountLevel > 1 && !isAvulso && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
+                                                            {isAvulso ? "PAGAR R$ 89,90 E LIBERAR GERAÇÃO AVULSA" : `PAGAR R$ ${finalPriceStr} E LIBERAR (TAXA ÚNICA)`}
                                                         </button>
                                                     );
                                                 })()}
@@ -1827,8 +1840,83 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             {/* --- PRICING SECTION --- */}
             <PricingSection onSelectPlan={startWizard} lang={lang} onLoginClick={onLoginClick} />
 
-            {/* --- OFFER SECTION (HIDDEN) --- */}
-            {/* --- OFFER SECTION REMOVED --- */}
+            {/* --- AVULSO SECTION (NEW) --- */}
+            <section className="py-20 bg-slate-900 border-t border-slate-800">
+                <div className="max-w-4xl mx-auto px-6">
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-8 md:p-12 border border-slate-700 shadow-2xl relative overflow-hidden group">
+                        {/* Glow effect */}
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/10 blur-[100px] -mr-32 -mt-32"></div>
+
+                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
+                            <div className="flex-1 text-center md:text-left">
+                                <h2 className="text-3xl md:text-4xl font-black mb-4 text-white">Apenas um teste rápido?</h2>
+                                <p className="text-lg text-slate-400 mb-8 leading-relaxed">
+                                    Se você não quer uma assinatura agora e prefere pagar por apenas uma única geração, esta é a sua melhor opção.
+                                </p>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                                    {[
+                                        "Escrita IA Completa do Livro",
+                                        "Diagramação Profissional",
+                                        "Exportação Word/PDF",
+                                        "Acesso Imediato ao Kit Completo"
+                                    ].map((benefit, i) => (
+                                        <div key={i} className="flex items-center gap-3 text-slate-300">
+                                            <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+                                                <Check className="w-3.5 h-3.5 text-yellow-500" />
+                                            </div>
+                                            <span className="text-sm font-medium">{benefit}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="w-full md:w-[320px] flex flex-col gap-4">
+                                <button
+                                    onClick={() => startWizard('AVULSO', 'none')}
+                                    className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black py-6 rounded-2xl shadow-xl shadow-yellow-500/20 transition-all hover:scale-[1.03] active:scale-[0.98] text-lg uppercase tracking-tight"
+                                >
+                                    GERAR LIVRO AVULSO <br />
+                                    <span className="text-3xl font-black block mt-1">R$ 89,90</span>
+                                </button>
+
+                                <button
+                                    onClick={async () => {
+                                        const email = prompt("Por favor, informe seu e-mail de compra para verificar o status:");
+                                        if (!email) return;
+
+                                        try {
+                                            const getApiBase = () => {
+                                                const env = (import.meta as any).env.VITE_API_URL;
+                                                if (env) return env;
+                                                const host = window.location.hostname;
+                                                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+                                                return 'https://api.fabricadebestseller.com.br';
+                                            };
+                                            const res = await fetch(`${getApiBase()}/api/payment/check-status?email=${email}`);
+                                            const data = await res.json();
+
+                                            if (data.status === 'PAID') {
+                                                alert("✅ PAGAMENTO CONFIRMADO!\n\nSeu acesso foi liberado. Redirecionando para a área de login...");
+                                                window.location.href = '/login';
+                                            } else if (data.status === 'PENDING') {
+                                                alert("🧾 PAGAMENTO EM ANÁLISE\n\nSua fatura ainda consta em aberto. Assim que o pagamento for confirmado (PIX é instantâneo), seu acesso será liberado.");
+                                            } else {
+                                                alert("🔍 PAGAMENTO NÃO ENCONTRADO\n\nAinda não localizamos seu pagamento. Se você pagou agora via PIX, aguarde 1 minuto e tente novamente.");
+                                            }
+                                        } catch (e) {
+                                            alert("Ocorreu um erro ao verificar o status. Tente novamente em instantes.");
+                                        }
+                                    }}
+                                    className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl border border-slate-700 transition-all text-sm uppercase tracking-widest"
+                                >
+                                    JÁ PAGUEI - ACESSAR AGORA!
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
             {/* --- UPLOAD SECTION (HIDDEN TEMPORARILY) ---
             <section className="py-20 bg-slate-900 border-t border-slate-800">

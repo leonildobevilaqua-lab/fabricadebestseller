@@ -529,3 +529,41 @@ export const manageCredits = async (req: Request, res: Response) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+// --- GET PAYMENT ENVIRONMENT ---
+export const getPaymentEnv = async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "No token provided" });
+    try {
+        const token = authHeader.split(' ')[1];
+        jwt.verify(token, SECRET_KEY);
+
+        await reloadDB();
+        const env = await getVal('/settings/payment_environment') || 'sandbox';
+        res.json({ environment: env });
+    } catch (e) {
+        return res.status(403).json({ error: "Invalid Token" });
+    }
+};
+
+// --- UPDATE PAYMENT ENVIRONMENT ---
+export const updatePaymentEnv = async (req: Request, res: Response) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "No token provided" });
+
+    try {
+        const token = authHeader.split(' ')[1];
+        jwt.verify(token, SECRET_KEY);
+
+        const { environment } = req.body;
+        if (!['sandbox', 'production'].includes(environment)) {
+            return res.status(400).json({ error: "Invalid environment" });
+        }
+
+        await setVal('/settings/payment_environment', environment);
+        console.log(`[ADMIN] Payment Environment updated to: ${environment}`);
+        res.json({ success: true, environment });
+    } catch (e) {
+        return res.status(403).json({ error: "Invalid Token" });
+    }
+};

@@ -44,6 +44,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             let pKey = 'STARTER';
             if (pName.toUpperCase().includes('PRO')) pKey = 'PRO';
             if (pName.toUpperCase().includes('BLACK')) pKey = 'BLACK';
+            if (pName.toUpperCase().includes('AVULSO')) pKey = 'AVULSO';
             const bKey = isAnnual ? 'ANNUAL' : 'MONTHLY';
 
             // Using endpoint that accepts cycleIndex
@@ -52,7 +53,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     email: user.email,
-                    plan: pKey + '_' + bKey, // Send explicit plan key
+                    plan: pName.toUpperCase().includes('AVULSO') ? 'AVULSO' : (pKey + '_' + bKey), // Send explicit plan key
+                    forcePlan: pName.toUpperCase().includes('AVULSO') ? 'AVULSO' : undefined,
                     cycleIndex: cycleIndex // Send explicit cycle index (0-3)
                 })
             });
@@ -217,7 +219,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         'PRO_MONTHLY': [21.90, 19.71, 18.62, 17.52],
         'PRO_ANNUAL': [19.90, 17.91, 16.92, 15.92],
         'BLACK_MONTHLY': [16.90, 15.21, 14.37, 13.52],
-        'BLACK_ANNUAL': [14.90, 13.41, 12.67, 11.92]
+        'BLACK_ANNUAL': [14.90, 13.41, 12.67, 11.92],
+        'AVULSO_MONTHLY': [89.90, 89.90, 89.90, 89.90],
+        'AVULSO_ANNUAL': [89.90, 89.90, 89.90, 89.90]
     };
 
     let pKey = 'STARTER';
@@ -366,134 +370,165 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 <span className="text-yellow-400">★</span> BENEFÍCIO EXCLUSIVO {planName}
                             </h2>
                             <p className="text-slate-400 max-w-2xl mx-auto">
-                                Como assinante, você desbloqueou o <strong className="text-white">Melhor Preço Garantido</strong> para todas as suas gerações de livros.
+                                {planName === 'AVULSO'
+                                    ? "Você está utilizando o plano de Geração Única. Aproveite o melhor da IA agora."
+                                    : "Como assinante, você desbloqueou o Melhor Preço Garantido para todas as suas gerações de livros."
+                                }
                             </p>
                         </div>
 
-                        {/* Grid of 4 Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                            {/* Always render 4 cards for the cycle */}
-                            {Array.from({ length: 4 }).map((_, index) => {
-                                // Determine Price for this step
-                                const price = currentCyclePrices[index] || currentCyclePrices[currentCyclePrices.length - 1];
+                        {planName === 'AVULSO' ? (
+                            <div className="flex justify-center py-10">
+                                <div className="bg-slate-800/90 border-2 border-yellow-500 rounded-3xl p-10 flex flex-col items-center gap-6 shadow-[0_0_50px_rgba(234,179,8,0.15)] max-w-md w-full animate-fade-in">
+                                    <div className="w-20 h-20 rounded-full bg-yellow-500/20 flex items-center justify-center border-2 border-yellow-500/50">
+                                        <IconBook className="w-10 h-10 text-yellow-500" />
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-sm font-bold text-yellow-500 uppercase tracking-widest mb-1">Próxima Geração</p>
+                                        <p className="text-5xl font-black text-white">R$ 89,90</p>
+                                    </div>
+                                    <div className="w-full space-y-3">
+                                        <button
+                                            onClick={() => handleBuyCredit(89.90)}
+                                            className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black py-5 rounded-xl text-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-yellow-500/20"
+                                        >
+                                            GERAR NOVO LIVRO
+                                        </button>
+                                        <button
+                                            onClick={handleVerifyAndEnter}
+                                            className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg text-sm transition"
+                                        >
+                                            JÁ PAGUEI - LIBERAR AGORA
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        ) : (
+                            /* Grid of 4 Cards */
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                                {/* Always render 4 cards for the cycle */}
+                                {Array.from({ length: 4 }).map((_, index) => {
+                                    // Determine Price for this step
+                                    const price = currentCyclePrices[index] || currentCyclePrices[currentCyclePrices.length - 1];
 
-                                // Calculate Status based on projects generated (Strict User Request)
-                                // Only unlock next box if previous project is generated.
-                                const completedProjects = stats?.stats?.totalBooksGenerated || 0;
-                                const activeIndex = (completedProjects) % 4;
+                                    // Calculate Status based on projects generated (Strict User Request)
+                                    // Only unlock next box if previous project is generated.
+                                    const completedProjects = stats?.stats?.totalBooksGenerated || 0;
+                                    const activeIndex = (completedProjects) % 4;
 
-                                let status: 'LOCKED' | 'ACTIVE' | 'USED' = 'LOCKED';
+                                    let status: 'LOCKED' | 'ACTIVE' | 'USED' = 'LOCKED';
 
-                                // Visual Cycle Logic:
-                                // If I have 0 projects: Index 0 is ACTIVE.
-                                // If I have 1 project: Index 0 is USED, 1 is ACTIVE.
-                                if (index < activeIndex) status = 'USED';
-                                else if (index === activeIndex) status = 'ACTIVE';
-                                else status = 'LOCKED';
+                                    // Visual Cycle Logic:
+                                    // If I have 0 projects: Index 0 is ACTIVE.
+                                    // If I have 1 project: Index 0 is USED, 1 is ACTIVE.
+                                    if (index < activeIndex) status = 'USED';
+                                    else if (index === activeIndex) status = 'ACTIVE';
+                                    else status = 'LOCKED';
 
-                                // If user has effectively 'completed' a cycle (e.g. 4 orders), 
-                                // the logic above sets index 0 to ACTIVE (4 % 4 = 0), which is correct for the start of NEXT cycle.
-                                // But visually, if they just finished the 4th, maybe we want to show all USED?
-                                // Standard pattern: Always show next available. So 4 orders -> Start of new cycle (Book 1 Active). Correct.
+                                    // If user has effectively 'completed' a cycle (e.g. 4 orders), 
+                                    // the logic above sets index 0 to ACTIVE (4 % 4 = 0), which is correct for the start of NEXT cycle.
+                                    // But visually, if they just finished the 4th, maybe we want to show all USED?
+                                    // Standard pattern: Always show next available. So 4 orders -> Start of new cycle (Book 1 Active). Correct.
 
-                                return (
-                                    <div
-                                        key={index}
-                                        className={`relative rounded-2xl p-6 border transition-all duration-300 flex flex-col items-center justify-between min-h-[320px]
+                                    return (
+                                        <div
+                                            key={index}
+                                            className={`relative rounded-2xl p-6 border transition-all duration-300 flex flex-col items-center justify-between min-h-[320px]
                                             ${status === 'ACTIVE'
-                                                ? 'bg-slate-800/90 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.25)] scale-105 z-20'
-                                                : status === 'USED'
-                                                    ? 'bg-slate-800 border-slate-700 opacity-80 grayscale blur-[0.5px]'
-                                                    : 'bg-slate-900 border-slate-800 opacity-70'
-                                            }
+                                                    ? 'bg-slate-800/90 border-yellow-500 shadow-[0_0_30px_rgba(234,179,8,0.25)] scale-105 z-20'
+                                                    : status === 'USED'
+                                                        ? 'bg-slate-800 border-slate-700 opacity-80 grayscale blur-[0.5px]'
+                                                        : 'bg-slate-900 border-slate-800 opacity-70'
+                                                }
                                         `}
-                                    >
-                                        {/* Header Badge */}
-                                        <div className="mb-4">
-                                            {status === 'ACTIVE' && (
-                                                <span className="bg-yellow-500 text-slate-900 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider animate-pulse">
-                                                    Disponível Agora
-                                                </span>
-                                            )}
-                                            {status === 'USED' && (
-                                                <span className="bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                                    Utilizado
-                                                </span>
-                                            )}
-                                            {status === 'LOCKED' && (
-                                                <span className="bg-slate-700 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                                    Bloqueado
-                                                </span>
-                                            )}
-                                            {/* Discount Badges */}
-                                            {index === 1 && (
-                                                <span className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                                                    -10%
-                                                </span>
-                                            )}
-                                            {index === 2 && (
-                                                <span className="absolute top-4 right-4 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                                                    -15%
-                                                </span>
-                                            )}
-                                            {index === 3 && (
-                                                <span className="absolute top-4 right-4 bg-red-700 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-                                                    -20%
-                                                </span>
-                                            )}
-                                        </div>
+                                        >
+                                            {/* Header Badge */}
+                                            <div className="mb-4">
+                                                {status === 'ACTIVE' && (
+                                                    <span className="bg-yellow-500 text-slate-900 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider animate-pulse">
+                                                        Disponível Agora
+                                                    </span>
+                                                )}
+                                                {status === 'USED' && (
+                                                    <span className="bg-green-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                                        Utilizado
+                                                    </span>
+                                                )}
+                                                {status === 'LOCKED' && (
+                                                    <span className="bg-slate-700 text-slate-400 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                                                        Bloqueado
+                                                    </span>
+                                                )}
+                                                {/* Discount Badges */}
+                                                {index === 1 && (
+                                                    <span className="absolute top-4 right-4 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                                        -10%
+                                                    </span>
+                                                )}
+                                                {index === 2 && (
+                                                    <span className="absolute top-4 right-4 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                                        -15%
+                                                    </span>
+                                                )}
+                                                {index === 3 && (
+                                                    <span className="absolute top-4 right-4 bg-red-700 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                                        -20%
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                        {/* Icon */}
-                                        <div className="mb-6">
-                                            {status === 'LOCKED' ? (
-                                                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-                                                    <span className="text-2xl opacity-50">🔒</span>
-                                                </div>
-                                            ) : (
-                                                <div className={`w-12 h-12 rounded-full flex items-center justify-center border
+                                            {/* Icon */}
+                                            <div className="mb-6">
+                                                {status === 'LOCKED' ? (
+                                                    <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
+                                                        <span className="text-2xl opacity-50">🔒</span>
+                                                    </div>
+                                                ) : (
+                                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border
                                                     ${status === 'ACTIVE' ? 'bg-indigo-500/20 border-indigo-500 text-indigo-400' : 'bg-green-500/20 border-green-500 text-green-400'}
                                                 `}>
-                                                    <IconBook className="w-6 h-6" />
-                                                </div>
-                                            )}
-                                        </div>
+                                                        <IconBook className="w-6 h-6" />
+                                                    </div>
+                                                )}
+                                            </div>
 
-                                        {/* Price */}
-                                        <div className="text-center mb-6">
-                                            <p className="text-xs text-slate-400 font-bold uppercase mb-1">Livro 0{index + 1}</p>
-                                            <p className={`text-3xl font-black ${status === 'ACTIVE' ? 'text-white' : 'text-slate-500'}`}>
-                                                R$ {price.toFixed(2).replace('.', ',')}
-                                            </p>
-                                        </div>
+                                            {/* Price */}
+                                            <div className="text-center mb-6">
+                                                <p className="text-xs text-slate-400 font-bold uppercase mb-1">Livro 0{index + 1}</p>
+                                                <p className={`text-3xl font-black ${status === 'ACTIVE' ? 'text-white' : 'text-slate-500'}`}>
+                                                    R$ {price.toFixed(2).replace('.', ',')}
+                                                </p>
+                                            </div>
 
-                                        {/* Actions (Only for Active) */}
-                                        <div className="w-full mt-auto">
-                                            {status === 'ACTIVE' ? (
-                                                <div className="space-y-2">
-                                                    <button
-                                                        onClick={() => handleBuyCredit(price)}
-                                                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-2 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-lg"
-                                                    >
-                                                        💳 Comprar
+                                            {/* Actions (Only for Active) */}
+                                            <div className="w-full mt-auto">
+                                                {status === 'ACTIVE' ? (
+                                                    <div className="space-y-2">
+                                                        <button
+                                                            onClick={() => handleBuyCredit(price)}
+                                                            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-2 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-lg"
+                                                        >
+                                                            💳 Comprar
+                                                        </button>
+                                                        <button
+                                                            onClick={handleVerifyAndEnter}
+                                                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-2 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-lg"
+                                                        >
+                                                            ✅ Já Paguei
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button disabled className="w-full bg-slate-800 text-slate-600 font-bold py-3 rounded-lg text-sm cursor-not-allowed border border-slate-700">
+                                                        {status === 'USED' ? 'Resgatado' : 'Aguarde'}
                                                     </button>
-                                                    <button
-                                                        onClick={handleVerifyAndEnter}
-                                                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-2 rounded-lg text-sm flex items-center justify-center gap-2 transition shadow-lg"
-                                                    >
-                                                        ✅ Já Paguei
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button disabled className="w-full bg-slate-800 text-slate-600 font-bold py-3 rounded-lg text-sm cursor-not-allowed border border-slate-700">
-                                                    {status === 'USED' ? 'Resgatado' : 'Aguarde'}
-                                                </button>
-                                            )}
-                                        </div>
+                                                )}
+                                            </div>
 
-                                    </div>
-                                );
-                            })}
-                        </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
                 </div>
 

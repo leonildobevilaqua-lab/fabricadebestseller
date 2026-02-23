@@ -401,7 +401,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [newPass, setNewPass] = useState('');
 
     // UI Navigation State
-    const [activeSection, setActiveSection] = useState<'dashboard' | 'setup' | 'integrations' | 'backups' | 'simulator' | 'profile'>('dashboard');
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'setup' | 'integrations' | 'payment_asaas' | 'backups' | 'simulator' | 'profile'>('dashboard');
+    const [paymentEnv, setPaymentEnv] = useState<'sandbox' | 'production'>('sandbox');
 
     // Profile State
     const [profileOldPass, setProfileOldPass] = useState('');
@@ -430,12 +431,60 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             });
             if (res.ok) {
                 setSettings(await res.json());
+                // Load payment env after settings context
+                loadPaymentEnv();
             } else {
                 setToken(null);
             }
         } catch (e) {
             console.error(e);
             setLoadingError(true);
+        }
+    };
+
+    const loadPaymentEnv = async () => {
+        try {
+            const res = await fetch(`${getAdminUrl()}/payment-env`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setPaymentEnv(data.environment);
+            }
+        } catch (e) {
+            console.error("Failed to load payment env", e);
+        }
+    };
+
+    const togglePaymentEnv = async () => {
+        const nextEnv = paymentEnv === 'sandbox' ? 'production' : 'sandbox';
+        if (nextEnv === 'production') {
+            if (!confirm("🚨 ATENÇÃO CRÍTICA: Ativar o MODO PRODUÇÃO habilitará cobranças REAIS. Certifique-se de que a variável ASAAS_PRODUCTION_KEY está configurada. Deseja continuar?")) {
+                return;
+            }
+        }
+
+        try {
+            const res = await fetch(`${getAdminUrl()}/payment-env`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ environment: nextEnv })
+            });
+
+            if (res.ok) {
+                setPaymentEnv(nextEnv);
+                setMsg(`Gateway alterado para: ${nextEnv.toUpperCase()}`);
+                setTimeout(() => setMsg(''), 3000);
+            } else {
+                const err = await res.json();
+                alert(`Erro: ${err.error || 'Falha ao atualizar o ambiente'}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de rede ao alternar ambiente.");
         }
     };
 
@@ -1141,6 +1190,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             <span>🔗</span> Integrações
                         </button>
                         <button
+                            onClick={() => setActiveSection('payment_asaas')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'payment_asaas' ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        >
+                            <span>💳</span> Gateway Asaas
+                        </button>
+                        <button
                             onClick={() => setActiveSection('backups')}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'backups' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                         >
@@ -1185,7 +1240,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 {/* Header Strip */}
                 <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
                     <h1 className="text-xl font-bold text-slate-800 capitalize">
-                        {activeSection === 'setup' ? 'Configurações de IA' : activeSection}
+                        {activeSection === 'setup' ? 'Configurações de IA' : activeSection === 'payment_asaas' ? 'Gateway de Pagamento' : activeSection}
                     </h1>
                     <div className="flex items-center gap-4">
                         {msg && <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full animate-pulse border border-emerald-100">{msg}</span>}
@@ -1196,6 +1251,16 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </header>
 
                 <main className="p-8 max-w-6xl mx-auto pb-20">
+                    {/* PRODUCTION ALERT BANNER */}
+                    {paymentEnv === 'production' && (
+                        <div className="mb-6 bg-red-600 text-white p-4 rounded-xl flex items-center gap-4 animate-bounce-subtle border-b-4 border-red-800 shadow-xl">
+                            <span className="text-2xl">🚨</span>
+                            <div className="flex-1">
+                                <h4 className="font-black uppercase tracking-widest text-sm">MODO DE PRODUÇÃO ATIVO</h4>
+                                <p className="text-xs font-bold text-red-100 opacity-90">Cuidado: Todas as cobranças geradas agora são REAIS e processadas no ambiente oficial do Asaas.</p>
+                            </div>
+                        </div>
+                    )}
 
                     {/* DASHBOARD SECTION */}
                     {activeSection === 'dashboard' && (
@@ -1453,8 +1518,80 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             </div>
                         </div>
                     )}
+                    {/* PAYMENT ASAAS SECTION */}
+                    {activeSection === 'payment_asaas' && (
+                        <div className="space-y-6 animate-fade-in max-w-3xl">
+                            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl overflow-hidden relative">
+                                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                                    <span className="text-9xl">💰</span>
+                                </div>
 
+                                <h3 className="text-xl font-black text-slate-900 mb-2 flex items-center gap-2">
+                                    Gateway de Pagamento (Asaas)
+                                </h3>
+                                <p className="text-sm text-slate-500 mb-8 pb-4 border-b border-slate-100">
+                                    Gerencie o ambiente do provedor de pagamentos. Alternar esta opção afeta globalmente como o sistema valida e processa cobranças.
+                                </p>
 
+                                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex items-center justify-between gap-6">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`w-3 h-3 rounded-full ${paymentEnv === 'production' ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></span>
+                                            <h4 className="font-bold text-slate-800">Ambiente de Execução</h4>
+                                        </div>
+                                        <p className="text-xs text-slate-500">
+                                            {paymentEnv === 'production'
+                                                ? 'O sistema está conectado à API de Produção. Cobranças reais serão geradas.'
+                                                : 'O sistema está em modo Sandbox para testes e simulações gratuitas.'}
+                                        </p>
+                                    </div>
+
+                                    <div className="flex items-center bg-white p-1 rounded-xl shadow-inner border border-slate-200">
+                                        <button
+                                            onClick={() => paymentEnv === 'production' && togglePaymentEnv()}
+                                            className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${paymentEnv === 'sandbox' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            SANDBOX
+                                        </button>
+                                        <button
+                                            onClick={() => paymentEnv === 'sandbox' && togglePaymentEnv()}
+                                            className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${paymentEnv === 'production' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
+                                        >
+                                            PRODUÇÃO
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                                        <h5 className="text-[10px] font-black text-blue-600 uppercase mb-2">Variáveis Sandbox</h5>
+                                        <div className="space-y-1 opacity-60">
+                                            <div className="text-[10px] font-mono bg-white/50 p-1 rounded overflow-hidden text-ellipsis">KEY: ASAAS_SANDBOX_KEY</div>
+                                            <div className="text-[10px] font-mono bg-white/50 p-1 rounded overflow-hidden text-ellipsis">WEBHOOK: ASAAS_SANDBOX_WEBHOOK</div>
+                                        </div>
+                                    </div>
+                                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
+                                        <h5 className="text-[10px] font-black text-orange-600 uppercase mb-2">Variáveis Produção</h5>
+                                        <div className="space-y-1 opacity-60">
+                                            <div className="text-[10px] font-mono bg-white/50 p-1 rounded overflow-hidden text-ellipsis">KEY: ASAAS_PRODUCTION_KEY</div>
+                                            <div className="text-[10px] font-mono bg-white/50 p-1 rounded overflow-hidden text-ellipsis">WEBHOOK: ASAAS_PRODUCTION_WEBHOOK</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 p-4 bg-slate-900 rounded-xl text-white">
+                                    <h5 className="text-xs font-bold text-slate-400 mb-2 border-b border-slate-800 pb-2">Status do Webhook</h5>
+                                    <div className="flex items-center justify-between text-[11px]">
+                                        <span className="text-slate-400">URL de Destino:</span>
+                                        <code className="bg-slate-800 px-2 py-0.5 rounded text-indigo-400">{window.location.origin}/api/payment/webhook</code>
+                                    </div>
+                                    <p className="mt-3 text-[10px] text-slate-500 italic">
+                                        * Certifique-se de cadastrar esta URL no painel do Asaas e configurar o Token correspondente no servidor.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     {/* BACKUPS SECTION */}
                     {activeSection === 'backups' && (
                         <div className="space-y-6 animate-fade-in max-w-3xl">

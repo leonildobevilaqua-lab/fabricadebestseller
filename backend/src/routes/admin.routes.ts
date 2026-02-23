@@ -28,4 +28,8 @@ router.post('/recover-books', AdminController.recoverBooks);
 router.post('/reset-user', AdminController.resetUser);
 router.post('/manage-credits', AdminController.manageCredits);
 
+// Payment Environment Toggle
+router.get('/payment-env', AdminController.getPaymentEnv);
+router.post('/payment-env', AdminController.updatePaymentEnv);
+
 export default router;

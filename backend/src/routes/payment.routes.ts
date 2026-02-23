@@ -8,6 +8,7 @@ router.post('/webhook', handleKiwifyWebhook);
 router.post('/simulate-webhook', simulateWebhook); // NEW: Local Simulation
 router.get('/access', checkAccess);
 router.get('/check-access', checkAccess);
+router.get('/check-status', require('../controllers/payment.controller').checkPaymentStatus);
 router.post('/use', useCredit);
 router.post('/create-charge', createCharge);
 
