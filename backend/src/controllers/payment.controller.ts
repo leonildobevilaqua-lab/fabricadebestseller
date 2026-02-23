@@ -827,7 +827,7 @@ export const checkAccess = async (req: Request, res: Response) => {
     }
 
     res.json({
-        hasAccess: credits > 0 || hasActiveProject,
+        hasAccess: (credits > 0 || (userPlan && userPlan.status === 'ACTIVE') || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE'),
         credits,
         hasActiveProject,
         leadStatus,
@@ -876,24 +876,42 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         // 1. Identificar Plano e Ciclo
         let plan = await getVal(`/users/${safeEmail}/plan`);
 
-        // Fallback search
+        // Fallback search via leads (only if plan is truly ACTIVE)
         if (!plan || plan.status !== 'ACTIVE') {
-            const rawLeads = await getVal('/leads') || [];
-            const actionLead = Object.values(rawLeads).find((l: any) =>
+            const rawLeadsCheck = await getVal('/leads') || [];
+            const actionLead = Object.values(rawLeadsCheck).find((l: any) =>
                 l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.status === 'SUBSCRIBER'
             );
-            if (actionLead && (actionLead as any).plan) plan = (actionLead as any).plan;
+            // CRITICAL: Only accept the lead's plan if it's ACTIVE, otherwise treat as AVULSO
+            if (actionLead && (actionLead as any).plan && (actionLead as any).plan.status === 'ACTIVE') {
+                plan = (actionLead as any).plan;
+            } else {
+                plan = null; // Force AVULSO pricing
+            }
         }
 
-        const planName = plan ? (plan.name || 'STARTER').toUpperCase() : 'STARTER';
-        let cleanPlan = 'STARTER';
-        if (planName.includes('BLACK')) cleanPlan = 'BLACK';
-        else if (planName.includes('PRO')) cleanPlan = 'PRO';
+        // If plan is not null but not ACTIVE, force null so pricing is AVULSO
+        if (plan && plan.status !== 'ACTIVE') {
+            console.log(`[CHARGE] Plan found for ${email} but status is ${plan.status} (not ACTIVE). Treating as AVULSO.`);
+            plan = null;
+        }
+
+        const planName = plan ? (plan.name || 'STARTER').toUpperCase() : 'AVULSO';
+        let cleanPlan = 'AVULSO'; // Default is now AVULSO (safe fallback)
+        if (plan) {
+            // Only apply plan-specific pricing if we have a valid ACTIVE plan
+            if (planName.includes('BLACK')) cleanPlan = 'BLACK';
+            else if (planName.includes('PRO')) cleanPlan = 'PRO';
+            else if (planName.includes('STARTER')) cleanPlan = 'STARTER';
+            // else stays AVULSO
+        }
 
         const billingRaw = plan ? (plan.billing || 'monthly').toLowerCase() : 'monthly';
         const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
 
-        const planKey = `${cleanPlan}_${billingSuffix}`;
+        const planKey = cleanPlan === 'AVULSO' ? 'AVULSO' : `${cleanPlan}_${billingSuffix}`;
+
+        console.log(`[CHARGE] Email: ${email} | planKey: ${planKey} | plan: ${plan?.name || 'NONE'} | status: ${plan?.status || 'N/A'}`);
 
         // 2. Definir Prioridade/Ciclo
         const rawLeads = await getVal('/leads') || [];
@@ -906,8 +924,11 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
 
         const cycleIndex = usageCount % 4; // 0, 1, 2, 3
 
-        const priceList = PRICING_RULES[planKey] || PRICING_RULES['STARTER_MENSAL'];
-        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : 29.90;
+        // CRITICAL FIX: fallback is AVULSO, not STARTER_MENSAL
+        const priceList = PRICING_RULES[planKey] || PRICING_RULES['AVULSO'];
+        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : 89.90;
+
+        console.log(`[CHARGE] usageCount: ${usageCount} | cycleIndex: ${cycleIndex} | priceList: ${JSON.stringify(priceList)} | price: R$ ${price}`);
 
         // 3. Criar Cobrança no Asaas
         const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
@@ -917,6 +938,27 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
             cpfCnpj: userProfile.cpf || undefined,
             phone: userProfile.phone || undefined
         });
+
+        // [ANTI-SPAM] Check if there is already a PENDING invoice for generation to avoid duplication
+        try {
+            const existingPayments = await AsaasProvider.getPayments({ customer: customerId, status: 'PENDING', limit: 20 });
+            const duplicate = existingPayments.find((pm: any) => {
+                const desc = (pm.description || "").toLowerCase();
+                return desc.includes('geração') || desc.includes('livro');
+            });
+
+            if (duplicate) {
+                console.log(`[CHARGE] Found existing PENDING invoice ${duplicate.id} for ${email}. Reusing.`);
+                return res.json({
+                    success: true,
+                    invoiceUrl: duplicate.invoiceUrl || duplicate.bankSlipUrl,
+                    isReused: true,
+                    price: duplicate.value
+                });
+            }
+        } catch (e) {
+            console.error("[CHARGE] Error checking for duplicate payments", e);
+        }
 
         const charge = await AsaasProvider.createPayment(
             customerId,
