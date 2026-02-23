@@ -4,35 +4,51 @@ import { setVal, getVal, reloadDB } from './db.service';
 
 /**
  * Helper interno para centralizar a configuração do Asaas baseado no ambiente.
- * Blindado contra espaços em branco e falta de chaves.
+ * Versão com DEBUG VISUAL e FALLBACK de emergência.
  */
 const _getAsaasConfig = async () => {
     try {
         await reloadDB();
-        const environment = await getVal('/settings/payment_environment') || 'sandbox';
+        let env = await getVal('/settings/payment_environment') || 'sandbox';
 
-        let baseUrl = 'https://sandbox.asaas.com/api/v3';
+        let url = 'https://sandbox.asaas.com/api/v3';
         let apiKey = (process.env.ASAAS_SANDBOX_KEY || '').trim();
 
-        if (environment === 'production') {
-            baseUrl = 'https://api.asaas.com/v3';
-            apiKey = (process.env.ASAAS_PRODUCTION_KEY || '').trim();
+        if (env === 'production') {
+            const prodKey = (process.env.ASAAS_PRODUCTION_KEY || '').trim();
+            if (prodKey) {
+                url = 'https://api.asaas.com/v3';
+                apiKey = prodKey;
+            } else {
+                console.warn('[ASAAS] ATENÇÃO: Ambiente é PRODUCTION mas ASAAS_PRODUCTION_KEY está vazia!');
+                console.warn('[ASAAS] Acionando FALLBACK para Ambiente SANDBOX.');
+                env = 'sandbox (fallback)';
+                url = 'https://sandbox.asaas.com/api/v3';
+                apiKey = (process.env.ASAAS_SANDBOX_KEY || '').trim();
+            }
         }
+
+        // --- DEBUG VISUAL OBRIGATÓRIO (Para diagnóstico no Coolify/Terminal) ---
+        console.log('=============================================');
+        console.log('🔍 ASAAS CONFIG CHECK:');
+        console.log('Ambiente:', env);
+        console.log('URL Base:', url);
+        console.log('Chave Sandbox Existe?', !!process.env.ASAAS_SANDBOX_KEY);
+        console.log('Chave Produção Existe?', !!process.env.ASAAS_PRODUCTION_KEY);
+        console.log('Chave Selecionada (Início):', apiKey ? apiKey.substring(0, 10) + '...' : 'NULA/UNDEFINED');
+        console.log('=============================================');
 
         if (!apiKey) {
-            console.error(`[ASAAS] CRITICAL: Asaas Key not found for environment: ${environment}`);
+            console.error('❌ CRÍTICO: Chave API Asaas não encontrada! Verifique as variáveis de ambiente.');
         }
 
-        // Log de depuração seguro (mostra apenas os 4 últimos dígitos)
-        console.log('[Asaas] Conectando a:', baseUrl, '| Ambiente:', environment, '| Chave (Finais):', apiKey ? apiKey.slice(-4) : 'VAZIA');
-
-        return { baseUrl, apiKey, environment };
+        return { baseUrl: url, apiKey, environment: env };
     } catch (e) {
-        console.error("[ASAAS] Erro ao carregar configurações do banco:", e);
+        console.error("[ASAAS] Erro ao carregar configurações:", e);
         return {
             baseUrl: 'https://sandbox.asaas.com/api/v3',
             apiKey: (process.env.ASAAS_SANDBOX_KEY || '').trim(),
-            environment: 'sandbox'
+            environment: 'sandbox (error-fallback)'
         };
     }
 };
