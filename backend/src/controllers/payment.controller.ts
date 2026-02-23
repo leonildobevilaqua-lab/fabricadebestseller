@@ -341,7 +341,12 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
                 name: payer?.name || userProfile.name || email.split('@')[0],
                 email: email,
                 cpfCnpj: payer?.cpfCnpj || userProfile.cpf || undefined,
-                phone: payer?.phone || userProfile.phone || undefined
+                phone: payer?.phone || userProfile.phone || undefined,
+                postalCode: payer?.address?.cep || userProfile.cep || undefined,
+                address: payer?.address?.street || userProfile.address || undefined,
+                addressNumber: payer?.address?.number || userProfile.addressNumber || undefined,
+                complement: payer?.address?.complement || userProfile.complement || undefined,
+                province: payer?.address?.neighborhood || userProfile.neighborhood || undefined
             });
         } catch (custErr: any) {
             console.error("Failed to create customer:", custErr);

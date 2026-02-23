@@ -633,7 +633,16 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     payer: {
                         name: formData.name,
                         cpfCnpj: formData.document,
-                        phone: formData.phone
+                        phone: formData.phone,
+                        address: {
+                            cep: formData.cep,
+                            street: formData.address,
+                            number: formData.addressNumber,
+                            complement: formData.addressComplement,
+                            neighborhood: formData.neighborhood,
+                            city: formData.city,
+                            state: formData.state
+                        }
                     }
                 })
             });
@@ -1323,7 +1332,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     const userHasActivePlan = realPlan && realPlan.status === 'ACTIVE';
                                                     const isAvulso = chosenPlan?.name === 'AVULSO';
 
-                                                    const needToPaySubscription = (!!chosenPlan && !userHasActivePlan && !isAvulso) && !isVoucher && !paymentConfirmed;
+                                                    const needToPaySubscription = (!!chosenPlan && !userHasActivePlan) && !isVoucher && !paymentConfirmed;
 
                                                     // --- PLAN VARIABLES CALCULATION (Pre-calc for reuse) ---
                                                     let subLink = '';
@@ -1368,7 +1377,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         </div>
                                                                         <div className="ml-3">
                                                                             <p className="text-sm text-yellow-700">
-                                                                                Você selecionou o plano <strong>{pName}</strong>. Para DESBLOQUEAR as condições EXCLUSIVAS que o plano oferece, por favor, ative sua assinatura.
+                                                                                {isAvulso
+                                                                                    ? "Você selecionou a Geração Avulsa. Para prosseguir, por favor, preencha seus dados de faturamento para emissão da fatura."
+                                                                                    : `Você selecionou o plano ${pName}. Para DESBLOQUEAR as condições EXCLUSIVAS que o plano oferece, por favor, ative sua assinatura.`
+                                                                                }
                                                                             </p>
                                                                         </div>
                                                                     </div>
@@ -1449,10 +1461,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                     </div>
                                                                 </div>
                                                                 <button
-                                                                    onClick={handleSubscribe}
-                                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl text-lg shadow-lg transition-all transform hover:-translate-y-1 block text-center"
+                                                                    onClick={isAvulso ? handleBookPayment : handleSubscribe}
+                                                                    className={`w-full ${isAvulso ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-bold py-4 rounded-xl text-lg shadow-lg transition-all transform hover:-translate-y-1 block text-center`}
                                                                 >
-                                                                    1. ATIVAR ASSINATURA (R$ {subPrice})
+                                                                    {isAvulso ? "PAGAR R$ 89,90 E LIBERAR GERAÇÃO AVULSA" : `1. ATIVAR ASSINATURA (R$ ${subPrice})`}
                                                                 </button>
                                                                 <p className="text-center text-[10px] text-slate-500 mt-2">
                                                                     Ao clicar, você será redirecionado para o ambiente seguro do Asaas.
