@@ -1627,7 +1627,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         const res = await fetch(`${API_URL}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`);
                                                                         const data = await res.json();
 
-                                                                        if (data.plan && data.plan.status === 'ACTIVE') {
+                                                                        if ((data.plan && data.plan.status === 'ACTIVE') || data.credits > 0 || data.hasAccess) {
                                                                             window.location.href = '/login';
                                                                         } else {
                                                                             const inv = data.pendingInvoice || {};
@@ -1638,7 +1638,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                                 if (confirm(msg)) {
                                                                                     if (inv.url) window.open(inv.url, '_blank');
                                                                                 }
-                                                                            } else if (data.latestInvoiceNumber) {
+                                                                            } else if (data.latestInvoiceNumber && (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE')) {
                                                                                 alert(`A fatura ${data.latestInvoiceNumber} ainda consta como pendente no banco. Aguarde a compensação.`);
                                                                             } else {
                                                                                 alert('Pagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente. Se pagou via Boleto, aguarde aprovação bancária (até 1 dia útil).');
@@ -2025,159 +2025,128 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 </div>
             </section>
 
-            {/* --- UPSELL SERVICES --- */}
-            <section className="py-20 border-t border-slate-800 bg-slate-900/50">
+            {/* --- PREMUM SERVICES (As requested: Mirror of Generator.tsx final screen) --- */}
+            <section className="py-24 border-t border-slate-800 bg-slate-900/80" id="servicos-premium">
                 <div className="max-w-6xl mx-auto px-6">
                     <div className="text-center mb-16">
-                        <span className="text-yellow-400 font-bold tracking-widest uppercase text-sm">{t[lang].upsell.tag}</span>
-                        <h2 className="text-3xl md:text-5xl font-bold mt-2 mb-4">{t[lang].upsell.title}</h2>
-                        <p className="text-xl text-slate-400 max-w-3xl mx-auto">{t[lang].upsell.subtitle}</p>
+                        <span className="text-yellow-400 font-bold tracking-widest uppercase text-sm">{t[lang].upsell?.tag || "Serviços Premium"}</span>
+                        <h2 className="text-4xl md:text-5xl font-black mt-2 mb-4 text-white font-serif">{t[lang].upsell?.title || "Acelere sua Carreira de Autor"}</h2>
+                        <p className="text-xl text-slate-400 max-w-3xl mx-auto">{t[lang].upsell?.subtitle || "Serviços profissionais para quem não brinca em serviço."}</p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                        {/* Translations */}
-                        {products.english_book && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-indigo-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-indigo-400">{t[lang].upsell.items.english.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.english.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 24,99</span>
-                                    <a href={products.english_book} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-indigo-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.english.button}</a>
+                    <div className="grid md:grid-cols-2 gap-8 text-left">
+                        {/* Translations Banner */}
+                        {(products.english_book || products.spanish_book) && (
+                            <div className="col-span-1 md:col-span-2 bg-gradient-to-r from-indigo-900/40 to-purple-900/40 p-8 rounded-2xl border border-indigo-500/30 flex flex-col md:flex-row gap-8 items-center shadow-2xl">
+                                <div className="flex-1">
+                                    <h4 className="font-bold text-2xl text-white mb-2">Internacionalização (Tradução)</h4>
+                                    <p className="text-lg text-indigo-200 opacity-80">Alcance leitores em todo o mundo traduzindo sua obra para os mercados globais mais lucrativos.</p>
                                 </div>
-                            </div>
-                        )}
-                        {products.spanish_book && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-indigo-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-indigo-400">{t[lang].upsell.items.spanish.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.spanish.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 24,99</span>
-                                    <a href={products.spanish_book} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-indigo-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.spanish.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Covers */}
-                        {products.cover_printed && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-yellow-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-yellow-400">{t[lang].upsell.items.coverPrinted.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.coverPrinted.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 250,00</span>
-                                    <a href={products.cover_printed} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-yellow-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.coverPrinted.button}</a>
-                                </div>
-                            </div>
-                        )}
-                        {products.cover_ebook && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-yellow-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-yellow-400">{t[lang].upsell.items.coverEbook.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.coverEbook.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 149,90</span>
-                                    <a href={products.cover_ebook} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-yellow-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.coverEbook.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Publications */}
-                        {products.pub_amazon_printed && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-green-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-green-400">{t[lang].upsell.items.amazonPrinted.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.amazonPrinted.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 69,90</span>
-                                    <a href={products.pub_amazon_printed} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.amazonPrinted.button}</a>
-                                </div>
-                            </div>
-                        )}
-                        {products.pub_amazon_digital && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-green-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-green-400">{t[lang].upsell.items.amazonDigital.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.amazonDigital.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 59,90</span>
-                                    <a href={products.pub_amazon_digital} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.amazonDigital.button}</a>
-                                </div>
-                            </div>
-                        )}
-                        {products.pub_uiclap && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-green-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-green-400">{t[lang].upsell.items.uiclap.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.uiclap.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 59,90</span>
-                                    <a href={products.pub_uiclap} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.uiclap.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Legal */}
-                        {products.catalog_card && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-blue-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-blue-400">{t[lang].upsell.items.catalog.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.catalog.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 59,90</span>
-                                    <a href={products.catalog_card} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-blue-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.catalog.button}</a>
-                                </div>
-                            </div>
-                        )}
-                        {products.isbn_printed && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-blue-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-blue-400">{t[lang].upsell.items.isbn.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.isbn.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 49,90</span>
-                                    <a href={products.isbn_printed} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-blue-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.isbn.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Others */}
-                        {products.sales_page && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-pink-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-pink-400">{t[lang].upsell.items.salesPage.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.salesPage.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 349,90</span>
-                                    <a href={products.sales_page} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-pink-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.salesPage.button}</a>
-                                </div>
-                            </div>
-                        )}
-                        {products.hosting && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-pink-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-pink-400">{t[lang].upsell.items.hosting.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.hosting.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 499,90</span>
-                                    <a href={products.hosting} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-pink-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.hosting.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Complete Package */}
-                        {products.complete_package && (
-                            <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-slate-900 p-8 rounded-2xl relative overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-all">
-                                <div className="absolute top-0 right-0 bg-slate-900 text-yellow-400 text-xs font-bold px-4 py-2 rounded-bl-xl uppercase tracking-widest">{t[lang].upsell.items.package.badge}</div>
-                                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                                    <div className="text-left">
-                                        <h3 className="text-3xl font-black mb-2">{t[lang].upsell.items.package.title}</h3>
-                                        <p className="font-medium text-slate-800 mb-4 max-w-xl">{t[lang].upsell.items.package.desc}</p>
-                                        <div className="flex gap-2">
-                                            {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-5 h-5 fill-current text-slate-900" />)}
-                                        </div>
-                                    </div>
-                                    <div className="text-center md:text-right min-w-[200px]">
-                                        <div className="text-sm opacity-80 line-through font-bold">{t[lang].upsell.items.package.from} R$ 899,90</div>
-                                        <div className="text-5xl font-black leading-none mb-4">R$ 599,90</div>
-                                        <a href={products.complete_package} target="_blank" className="inline-block bg-slate-900 text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-slate-800 hover:scale-105 transition-all w-full md:w-auto">
-                                            {t[lang].upsell.items.package.button}
+                                <div className="flex flex-wrap gap-4">
+                                    {products.english_book && (
+                                        <a
+                                            href={products.english_book}
+                                            target="_blank"
+                                            className="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition shadow-lg flex items-center gap-2"
+                                        >
+                                            🇺🇸 Inglês (Kiwify)
                                         </a>
-                                    </div>
+                                    )}
+                                    {products.spanish_book && (
+                                        <a
+                                            href={products.spanish_book}
+                                            target="_blank"
+                                            className="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold hover:bg-indigo-50 transition shadow-lg flex items-center gap-2"
+                                        >
+                                            🇪🇸 Espanhol (Kiwify)
+                                        </a>
+                                    )}
                                 </div>
                             </div>
                         )}
+
+                        {/* Design & Covers */}
+                        <div className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 space-y-6">
+                            <h4 className="font-bold text-slate-400 text-xs uppercase tracking-widest border-b border-slate-700 pb-3 mb-2">Design & Capas Profissionais</h4>
+                            {products.cover_printed && (
+                                <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-700 hover:border-yellow-500/30 transition flex justify-between items-center group">
+                                    <div>
+                                        <div className="font-bold text-white text-lg group-hover:text-yellow-400 transition-colors">Capa Livro Impresso</div>
+                                        <div className="text-sm text-slate-400">Capa, contracapa e orelhas (7cm)</div>
+                                    </div>
+                                    <a href={products.cover_printed} target="_blank" className="bg-yellow-500 text-yellow-950 px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-400 shadow-lg shadow-yellow-500/10">Contratar</a>
+                                </div>
+                            )}
+                            {products.cover_ebook && (
+                                <div className="bg-slate-900/50 p-5 rounded-xl border border-slate-700 hover:border-yellow-500/30 transition flex justify-between items-center group">
+                                    <div>
+                                        <div className="font-bold text-white text-lg group-hover:text-yellow-400 transition-colors">Capa Ebook (Kindle)</div>
+                                        <div className="text-sm text-slate-400">Design otimizado para lojas digitais</div>
+                                    </div>
+                                    <a href={products.cover_ebook} target="_blank" className="bg-yellow-500 text-yellow-950 px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-400 shadow-lg shadow-yellow-500/10">Contratar</a>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Publication & Legal */}
+                        <div className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 space-y-4">
+                            <h4 className="font-bold text-slate-400 text-xs uppercase tracking-widest border-b border-slate-700 pb-3 mb-2">Publicação & Legalidade</h4>
+
+                            {[
+                                { link: products.pub_amazon_printed, label: "Publicação Amazon (Impresso)" },
+                                { link: products.pub_amazon_digital, label: "Publicação Amazon (Digital)" },
+                                { link: products.pub_uiclap, label: "Publicação UICLAP (Impresso)" },
+                                { link: products.catalog_card, label: "Ficha Catalográfica" },
+                                { link: products.isbn_printed, label: "Registro ISBN (Impresso)" }
+                            ].map((prod, idx) => prod.link && (
+                                <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-800 last:border-0">
+                                    <span className="text-slate-200 font-medium">{prod.label}</span>
+                                    <a href={prod.link} target="_blank" className="text-yellow-500 font-bold hover:text-yellow-400 transition-colors">Contratar ➜</a>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* High Ticket / Packages */}
+                        <div className="col-span-1 md:col-span-2 grid md:grid-cols-3 gap-6 mt-4">
+                            {products.complete_package && (
+                                <div className="bg-slate-900 border-2 border-yellow-500/30 p-8 rounded-2xl relative overflow-hidden group hover:scale-[1.02] transition shadow-2xl">
+                                    <div className="absolute top-0 right-0 bg-yellow-500 text-slate-900 text-[10px] font-black px-4 py-1 rounded-bl-xl tracking-widest">MAIS VENDIDO</div>
+                                    <h4 className="font-black text-2xl mb-4 text-yellow-500">Pacote Completo Editora</h4>
+                                    <ul className="text-sm text-slate-300 space-y-2 mb-8 list-none">
+                                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-yellow-500" /> Capa Profissional</li>
+                                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-yellow-500" /> Publicação Amazon/UICLAP</li>
+                                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-yellow-500" /> Ficha Catalográfica + Registro ISBN</li>
+                                        <li className="flex items-center gap-2"><Check className="w-4 h-4 text-yellow-500" /> Suporte Editorial VIP</li>
+                                    </ul>
+                                    <div className="flex flex-col gap-4">
+                                        <div className="text-3xl font-black text-white">R$ 599,90</div>
+                                        <a href={products.complete_package} target="_blank" className="bg-yellow-500 text-slate-900 py-3 rounded-xl font-black text-center hover:bg-yellow-400 transition shadow-lg shadow-yellow-500/20">QUERO TUDO AGORA</a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {products.sales_page && (
+                                <div className="bg-slate-800/30 border border-slate-700 p-8 rounded-2xl hover:border-slate-500 transition">
+                                    <h4 className="font-bold text-xl text-white mb-2">Página de Vendas</h4>
+                                    <p className="text-sm text-slate-400 mb-6">Landing Page Profissional otimizada para vender seu livro no tráfego pago.</p>
+                                    <div className="mt-auto">
+                                        <div className="text-2xl font-black text-white mb-4">R$ 349,00</div>
+                                        <a href={products.sales_page} target="_blank" className="block w-full text-center py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-600 transition">Ver Mais</a>
+                                    </div>
+                                </div>
+                            )}
+
+                            {products.hosting && (
+                                <div className="bg-slate-800/30 border border-slate-700 p-8 rounded-2xl hover:border-slate-500 transition">
+                                    <h4 className="font-bold text-xl text-white mb-2">Hospedagem Pro</h4>
+                                    <p className="text-sm text-slate-400 mb-6">Hospedagem de alta performance para o seu site de autor. (Anual)</p>
+                                    <div className="mt-auto">
+                                        <div className="text-2xl font-black text-white mb-4">R$ 499,00/ano</div>
+                                        <a href={products.hosting} target="_blank" className="block w-full text-center py-3 bg-slate-700 text-white rounded-xl font-bold hover:bg-slate-600 transition">Assinar</a>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
 
                     </div>
                 </div>
