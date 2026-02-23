@@ -246,7 +246,7 @@ export const approveLead = async (req: Request, res: Response) => {
 
 export const createBookGenerationCharge = async (req: Request, res: Response) => {
     try {
-        const { email, cycleIndex, forcePlan } = req.body;
+        const { email, cycleIndex, forcePlan, payer } = req.body;
         if (!email) return res.status(400).json({ error: "Email required" });
         const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
         await reloadDB();
@@ -338,10 +338,10 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         let customerId = '';
         try {
             customerId = await AsaasProvider.createCustomer({
-                name: userProfile.name || email.split('@')[0],
+                name: payer?.name || userProfile.name || email.split('@')[0],
                 email: email,
-                cpfCnpj: userProfile.cpf || undefined,
-                phone: userProfile.phone || undefined
+                cpfCnpj: payer?.cpfCnpj || userProfile.cpf || undefined,
+                phone: payer?.phone || userProfile.phone || undefined
             });
         } catch (custErr: any) {
             console.error("Failed to create customer:", custErr);
