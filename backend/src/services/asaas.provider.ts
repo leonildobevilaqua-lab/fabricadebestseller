@@ -2,30 +2,51 @@ import axios from 'axios';
 import { PLANS } from '../config/subscriptions.config';
 import { setVal, getVal, reloadDB } from './db.service';
 
-const getApi = async () => {
+/**
+ * Helper interno para centralizar a configuração do Asaas baseado no ambiente.
+ * Blindado contra espaços em branco e falta de chaves.
+ */
+const _getAsaasConfig = async () => {
     try {
         await reloadDB();
-        const env = await getVal('/settings/payment_environment') || 'sandbox';
+        const environment = await getVal('/settings/payment_environment') || 'sandbox';
 
-        const isProd = env === 'production';
-        const baseUrl = isProd ? 'https://api.asaas.com/v3' : 'https://sandbox.asaas.com/api/v3';
-        const apiKey = isProd ? process.env.ASAAS_PRODUCTION_KEY : process.env.ASAAS_SANDBOX_KEY;
+        let baseUrl = 'https://sandbox.asaas.com/api/v3';
+        let apiKey = (process.env.ASAAS_SANDBOX_KEY || '').trim();
 
-        if (!apiKey) {
-            console.error(`[ASAAS] API Key missing for environment: ${env}`);
+        if (environment === 'production') {
+            baseUrl = 'https://api.asaas.com/v3';
+            apiKey = (process.env.ASAAS_PRODUCTION_KEY || '').trim();
         }
 
-        return axios.create({
-            baseURL: baseUrl,
-            headers: {
-                'access_token': apiKey || '',
-                'Content-Type': 'application/json'
-            }
-        });
+        if (!apiKey) {
+            console.error(`[ASAAS] CRITICAL: Asaas Key not found for environment: ${environment}`);
+        }
+
+        // Log de depuração seguro (mostra apenas os 4 últimos dígitos)
+        console.log('[Asaas] Conectando a:', baseUrl, '| Ambiente:', environment, '| Chave (Finais):', apiKey ? apiKey.slice(-4) : 'VAZIA');
+
+        return { baseUrl, apiKey, environment };
     } catch (e) {
-        console.error("[ASAAS] Error initializing API client:", e);
-        throw e;
+        console.error("[ASAAS] Erro ao carregar configurações do banco:", e);
+        return {
+            baseUrl: 'https://sandbox.asaas.com/api/v3',
+            apiKey: (process.env.ASAAS_SANDBOX_KEY || '').trim(),
+            environment: 'sandbox'
+        };
     }
+};
+
+const getApi = async () => {
+    const { baseUrl, apiKey } = await _getAsaasConfig();
+
+    return axios.create({
+        baseURL: baseUrl,
+        headers: {
+            'access_token': apiKey,
+            'Content-Type': 'application/json'
+        }
+    });
 };
 
 // Helper to get Plan Config

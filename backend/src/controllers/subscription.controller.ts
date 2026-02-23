@@ -134,7 +134,8 @@ export const SubscriptionController = {
         const isProd = env === 'production';
 
         const token = req.headers['asaas-access-token'] || req.body.authToken;
-        const EXPECTED = isProd ? process.env.ASAAS_PRODUCTION_WEBHOOK : process.env.ASAAS_SANDBOX_WEBHOOK;
+        const rawToken = isProd ? process.env.ASAAS_PRODUCTION_WEBHOOK : process.env.ASAAS_SANDBOX_WEBHOOK;
+        const EXPECTED = (rawToken || '').trim();
 
         if (token !== EXPECTED) {
             console.warn(`[WEBHOOK] Invalid Token for ${env}: ${token} vs ${EXPECTED ? 'HIDDEN' : 'NULL'}`);
