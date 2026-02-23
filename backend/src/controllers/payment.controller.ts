@@ -7,9 +7,9 @@ import { AsaasProvider } from '../services/asaas.provider';
 const upload = multer();
 
 // --- PRICING CONFIGURATION ---
-// --- PRICING CONFIGURATION ---
 // TABELA DE PREÇOS IMUTÁVEL (Fonte da Verdade)
 const PRICING_RULES: any = {
+    'AVULSO': [89.90, 89.90, 89.90, 89.90], // Preço fixo para geração avulsa (sem plano)
     'STARTER_MENSAL': [26.90, 24.21, 22.87, 21.52],
     'STARTER_ANUAL': [24.90, 22.41, 21.17, 19.92],
     'PRO_MENSAL': [21.90, 19.71, 18.62, 17.52],

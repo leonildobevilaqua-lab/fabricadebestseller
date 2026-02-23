@@ -177,10 +177,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const priceIndex = cycleCount % 4;
     const nextBookDisplayPrice = currentCyclePrices[priceIndex] || currentCyclePrices[0];
 
-    // Mock Orders if empty for demo
-    const displayOrders = orders.length > 0 ? orders : [
-        // { id: '1', title: 'A Arte de Vencer', date: '20/01/2026', status: 'COMPLETED' }
-    ];
+    // Filter out CREDIT_AVAILABLE entries (they are purchased credits, not generated books)
+    // These are placeholders created by the payment reconciliation system and must NOT appear as "books"
+    const displayOrders = orders.filter((o: any) => o.status !== 'CREDIT_AVAILABLE');
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans">
@@ -479,11 +478,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     </div>
 
                                     <div className="flex items-center gap-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase
-                                            ${order.status === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                            {order.status === 'COMPLETED' ? 'Concluído' : 'Processando'}
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') ? 'bg-green-100 text-green-700' :
+                                                order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                                                    'bg-yellow-100 text-yellow-700'
+                                            }`}>
+                                            {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') ? 'LIVRO GERADO' :
+                                                order.status === 'IN_PROGRESS' ? 'PROCESSANDO...' :
+                                                    'Aguardando'}
                                         </span>
-                                        {order.status === 'COMPLETED' && order.downloadUrl && (
+                                        {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl && (
                                             <a
                                                 href={order.downloadUrl}
                                                 target="_blank"
