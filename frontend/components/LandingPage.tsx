@@ -12,11 +12,18 @@ const X = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" hei
 const Check = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="20 6 9 17 4 12" /></svg>;
 const Lock = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>;
 const Star = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
-const FileText = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" x2="8" y1="13" y2="13" /><line x1="16" x2="8" y1="17" y2="17" /><line x1="10" x2="8" y1="9" y2="9" /></svg>;
+const FileText = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.5 2H6a2 0 0 0-2 2v16a2 0 0 0 2 2h12a2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" x2="8" y1="13" y2="13" /><line x1="16" x2="8" y1="17" y2="17" /><line x1="10" x2="8" y1="9" y2="9" /></svg>;
 const ChevronDown = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m6 9 6 6 6-6" /></svg>;
-const CheckCircle = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>;
-const SettingsIcon = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.09a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>;
+const CheckCircle = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M22 11.08V12a10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>;
+const SettingsIcon = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 0 0 0-2 2v.18a2 0 0 1-1 1.73l-.43.25a2 0 0 1-2 0l-.15-.08a2 0 0 0-2.73.73l-.22.38a2 0 0 0 .73 2.73l.15.1a2 0 0 1 1 1.72v.51a2 0 0 1-1 1.74l-.15.09a2 0 0 0-.73 2.73l.22.38a2 0 0 0 2.73.73l.15-.08a2 0 0 1 2 0l.43.25a2 0 0 1 1 1.73V20a2 0 0 0 2 2h.44a2 0 0 0 2-2v-.18a2 0 0 1 1-1.73l.43-.25a2 0 0 1 2 0l.15.08a2 0 0 0 2.73-.73l.22-.39a2 0 0 0-.73-2.73l-.15-.09a2 0 0 1-1-1.74v-.47a2 0 0 1 1-1.74l.15-.09a2 0 0 0 .73-2.73l-.22-.38a2 0 0 0-2.73-.73l-.15.08a2 0 0 1-2 0l-.43-.25a2 0 0 1-1-1.73V4a2 0 0 0-2-2z" /><circle cx="12" cy="12" r="3" /></svg>;
 const PenTool = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m12 19 7-7 3 3-7 7-3-3z" /><path d="m18 13-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" /><path d="m2 2 7.586 7.586" /><circle cx="11" cy="11" r="2" /></svg>;
+const Globe = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>;
+const FileImage = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.5 2H6a2 0 0 0-2 2v16a2 0 0 0 2 2h12a2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><circle cx="10" cy="13" r="2" /><path d="m20 17-1.09-1.09a2 0 0 0-2.82 0L10 22" /></svg>;
+const ShoppingCart = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><circle cx="8" cy="21" r="1" /><circle cx="19" cy="21" r="1" /><path d="M2.05 2.05h2l2.66 12.42a2 0 0 0 2 1.58h9.78a2 0 0 0 1.95-1.57l1.65-7.43H5.12" /></svg>;
+const Truck = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>;
+const Barcode = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M3 5v14" /><path d="M8 5v14" /><path d="M12 5v14" /><path d="M17 5v14" /><path d="M21 5v14" /></svg>;
+const MousePointer2 = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z" /><path d="m13 13 6 6" /></svg>;
+const ShieldCheck = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><polyline points="9 11 11 13 15 9" /></svg>;
 
 interface LandingProps {
     onStart: (userData: any, initialData?: any) => void;
@@ -487,34 +494,33 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             }
 
             if (!currentForm.name || !currentBook.topic) {
-                console.error("Missing Data for start", currentForm, currentBook);
-                // Don't reset step immediately to avoid loop, just alert
                 alert("Sessão expirada. Recarregue a página.");
                 return;
             }
 
-            // SUBSCRIPTION CHECK (New Logic)
-            if (selectedPlan) {
-                console.log("Checking Subscription Status for:", currentForm.email);
-                const statusRes = await fetch(`/api/payment/access?email=${currentForm.email}&_t=${Date.now()}`);
-                const status = await statusRes.json();
+            // STRICT ACCESS VALIDATION via backend (Single Source of Truth)
+            const API_URL = 'https://api.fabricadebestseller.com.br';
+            const statusRes = await fetch(`${API_URL}/api/payment/access?email=${currentForm.email.trim()}&_t=${Date.now()}`);
+            const status = await statusRes.json();
 
-                if (status.plan && status.plan.status === 'ACTIVE') {
-                    // PLANO ATIVO!
-                    // Redirecionar para Login conforme solicitado
-                    // "deveria aparecer para ele a tela de login e senha"
-                    onLoginClick();
-                    return;
-                } else {
-                    // Not active yet
-                    // Check ZOMBIE/Recuperação de Assinatura also?
-                    // No, subscription logic is stricter. Just wait for webhook.
-                    alert("A assinatura ainda não foi confirmada pelo banco. Aguarde alguns instantes.");
-                    return;
-                }
+            // SUBSCRIBER: redirect to member login
+            if (status.plan && status.plan.status === 'ACTIVE') {
+                onLoginClick();
+                return;
             }
 
-            console.log("Starting generation...");
+            // AVULSO/Credit: only proceed if hasAccess is true
+            if (!status.hasAccess) {
+                if (status.latestInvoiceStatus === 'PENDING' || status.latestInvoiceStatus === 'OVERDUE') {
+                    alert(`⚠️ Pagamento ainda não compensado.\n\nA fatura ${status.latestInvoiceNumber || ''} está com status PENDENTE. Aguarde a confirmação bancária.`);
+                } else {
+                    alert("⚠️ Acesso não autorizado.\n\nNenhum crédito ou plano ativo encontrado para este email. Realize o pagamento primeiro.");
+                }
+                setStep(3); // Send back to paywall
+                return;
+            }
+
+            console.log("✅ Access granted. Starting generation...");
             const success = await API.useCredit(currentForm.email);
 
             if (success) {
@@ -527,9 +533,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
         } catch (e) {
             console.error("Start Error", e);
-            alert("Erro ao iniciar produção.");
+            alert("Erro ao iniciar produção. Verifique sua conexão.");
         }
     };
+
 
     const getApiBase = () => {
         const env = (import.meta as any).env.VITE_API_URL;
@@ -798,14 +805,21 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         }
                     }
 
-                    // AUTO NAVIGATE VOUCHER / DIAGRAM
+                    // AUTO NAVIGATE VOUCHER / DIAGRAM / BOOK
                     if (formData.type === 'VOUCHER' && isApproved) {
                         clearInterval(interval);
                         setStep(4);
                     }
-                    if (formData.type === 'DIAGRAMMING' && isApproved) {
+                    else if (formData.type === 'DIAGRAMMING' && isApproved) {
                         clearInterval(interval);
                         setStep(5);
+                    }
+                    else if (formData.type === 'BOOK' && hasAccess && !paymentConfirmed) {
+                        // Payment confirmed for AVULSO/credit user - go to Book Data Entry
+                        clearInterval(interval);
+                        setPaymentConfirmed(true);
+                        paymentConfirmedRef.current = true;
+                        setStep(1); // Step 1: Book Data Entry (Post-Payment)
                     }
 
                 } catch (e) { console.error("Poll Error", e); }
@@ -1571,13 +1585,20 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         const res = await fetch(`${API_URL}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`);
                                                                         const data = await res.json();
 
-                                                                        if (data.plan && data.plan.status === 'ACTIVE') {
-                                                                            window.location.href = '/login';
-                                                                        } else {
-                                                                            if (data.latestInvoiceNumber) {
-                                                                                alert(`A fatura ${data.latestInvoiceNumber} ainda consta como pendente no banco. Aguarde a compensação.`);
+                                                                        if (data.hasAccess) {
+                                                                            if (data.plan && data.plan.status === 'ACTIVE') {
+                                                                                window.location.href = '/login';
                                                                             } else {
-                                                                                alert('Pagamento ainda em processamento pelo Banco. Aguarde alguns segundos e tente novamente.');
+                                                                                // Avulso confirmed! Go to Book Data Entry
+                                                                                setPaymentConfirmed(true);
+                                                                                paymentConfirmedRef.current = true;
+                                                                                setStep(1);
+                                                                            }
+                                                                        } else {
+                                                                            if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
+                                                                                alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde alguns instantes pela compensação.`);
+                                                                            } else {
+                                                                                alert('O pagamento ainda não foi confirmado pelo Banco. Aguarde alguns instantes e tente novamente.');
                                                                             }
                                                                         }
 
@@ -1886,160 +1907,164 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 </div>
             </section>
 
-            {/* --- UPSELL SERVICES --- */}
-            <section className="py-20 border-t border-slate-800 bg-slate-900/50">
-                <div className="max-w-6xl mx-auto px-6">
+            {/* UPSELL SERVICES SECTION (NEW PREMIUM DESIGN) */}
+            <section className="py-24 bg-slate-900 relative overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
+                <div className="max-w-7xl mx-auto px-6 relative z-10">
                     <div className="text-center mb-16">
-                        <span className="text-yellow-400 font-bold tracking-widest uppercase text-sm">{t[lang].upsell.tag}</span>
-                        <h2 className="text-3xl md:text-5xl font-bold mt-2 mb-4">{t[lang].upsell.title}</h2>
-                        <p className="text-xl text-slate-400 max-w-3xl mx-auto">{t[lang].upsell.subtitle}</p>
+                        <span className="inline-block px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-4 border border-indigo-500/20">
+                            {t[lang].upsell.tag}
+                        </span>
+                        <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
+                            {t[lang].upsell.title}
+                        </h2>
+                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                            {t[lang].upsell.subtitle}
+                        </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-                        {/* Translations */}
-                        {products.english_book && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-indigo-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-indigo-400">{t[lang].upsell.items.english.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.english.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 24,99</span>
-                                    <a href={products.english_book} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-indigo-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.english.button}</a>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {/* TRADUÇÃO - INGLÊS */}
+                        {products.trans_en && (
+                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-indigo-500/50 transition-all group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 blur-[50px] rounded-full"></div>
+                                <div className="p-3 bg-indigo-500/10 rounded-xl w-fit mb-6 group-hover:bg-indigo-500/20 transition-colors">
+                                    <Globe className="w-6 h-6 text-indigo-400" />
                                 </div>
-                            </div>
-                        )}
-                        {products.spanish_book && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-indigo-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-indigo-400">{t[lang].upsell.items.spanish.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.spanish.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 24,99</span>
-                                    <a href={products.spanish_book} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-indigo-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.spanish.button}</a>
+                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.english.title}</h3>
+                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.english.desc}</p>
+                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
+                                    <span className="text-xl font-black text-white">R$ 149,90</span>
+                                    <a href={products.trans_en} target="_blank" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-indigo-500/10">{t[lang].upsell.items.english.button}</a>
                                 </div>
                             </div>
                         )}
 
-                        {/* Covers */}
-                        {products.cover_printed && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-yellow-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-yellow-400">{t[lang].upsell.items.coverPrinted.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.coverPrinted.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 250,00</span>
-                                    <a href={products.cover_printed} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-yellow-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.coverPrinted.button}</a>
+                        {/* CAPA IMPRESSA */}
+                        {products.cover_card && (
+                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-purple-500/50 transition-all group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 blur-[50px] rounded-full"></div>
+                                <div className="p-3 bg-purple-500/10 rounded-xl w-fit mb-6 group-hover:bg-purple-500/20 transition-colors">
+                                    <FileImage className="w-6 h-6 text-purple-400" />
                                 </div>
-                            </div>
-                        )}
-                        {products.cover_ebook && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-yellow-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-yellow-400">{t[lang].upsell.items.coverEbook.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.coverEbook.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 149,90</span>
-                                    <a href={products.cover_ebook} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-yellow-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.coverEbook.button}</a>
+                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.coverPrinted.title}</h3>
+                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.coverPrinted.desc}</p>
+                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
+                                    <span className="text-xl font-black text-white">R$ 99,90</span>
+                                    <a href={products.cover_card} target="_blank" className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-purple-500/10">{t[lang].upsell.items.coverPrinted.button}</a>
                                 </div>
                             </div>
                         )}
 
-                        {/* Publications */}
+                        {/* AMAZON IMPRESSO */}
                         {products.pub_amazon_printed && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-green-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-green-400">{t[lang].upsell.items.amazonPrinted.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.amazonPrinted.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 69,90</span>
-                                    <a href={products.pub_amazon_printed} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.amazonPrinted.button}</a>
+                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-orange-500/50 transition-all group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 blur-[50px] rounded-full"></div>
+                                <div className="p-3 bg-orange-500/10 rounded-xl w-fit mb-6 group-hover:bg-orange-500/20 transition-colors">
+                                    <ShoppingCart className="w-6 h-6 text-orange-400" />
+                                </div>
+                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.amazonPrinted.title}</h3>
+                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.amazonPrinted.desc}</p>
+                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
+                                    <span className="text-xl font-black text-white">R$ 199,90</span>
+                                    <a href={products.pub_amazon_printed} target="_blank" className="px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-orange-500/10">{t[lang].upsell.items.amazonPrinted.button}</a>
                                 </div>
                             </div>
                         )}
-                        {products.pub_amazon_digital && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-green-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-green-400">{t[lang].upsell.items.amazonDigital.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.amazonDigital.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 59,90</span>
-                                    <a href={products.pub_amazon_digital} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.amazonDigital.button}</a>
-                                </div>
-                            </div>
-                        )}
+
+                        {/* UICLAP */}
                         {products.pub_uiclap && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-green-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-green-400">{t[lang].upsell.items.uiclap.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.uiclap.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 59,90</span>
-                                    <a href={products.pub_uiclap} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-green-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.uiclap.button}</a>
+                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-green-500/50 transition-all group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 blur-[50px] rounded-full"></div>
+                                <div className="p-3 bg-green-500/10 rounded-xl w-fit mb-6 group-hover:bg-green-500/20 transition-colors">
+                                    <Truck className="w-6 h-6 text-green-400" />
+                                </div>
+                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.uiclap.title}</h3>
+                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.uiclap.desc}</p>
+                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
+                                    <span className="text-xl font-black text-white">R$ 89,90</span>
+                                    <a href={products.pub_uiclap} target="_blank" className="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-green-500/10">{t[lang].upsell.items.uiclap.button}</a>
                                 </div>
                             </div>
                         )}
 
-                        {/* Legal */}
-                        {products.catalog_card && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-blue-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-blue-400">{t[lang].upsell.items.catalog.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.catalog.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 59,90</span>
-                                    <a href={products.catalog_card} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-blue-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.catalog.button}</a>
-                                </div>
-                            </div>
-                        )}
+                        {/* ISBN */}
                         {products.isbn_printed && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-blue-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-blue-400">{t[lang].upsell.items.isbn.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.isbn.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 49,90</span>
-                                    <a href={products.isbn_printed} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-blue-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.isbn.button}</a>
+                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-blue-500/50 transition-all group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-[50px] rounded-full"></div>
+                                <div className="p-3 bg-blue-500/10 rounded-xl w-fit mb-6 group-hover:bg-blue-500/20 transition-colors">
+                                    <Barcode className="w-6 h-6 text-blue-400" />
+                                </div>
+                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.isbn.title}</h3>
+                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.isbn.desc}</p>
+                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
+                                    <span className="text-xl font-black text-white">R$ 49,90</span>
+                                    <a href={products.isbn_printed} target="_blank" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-blue-500/10">{t[lang].upsell.items.isbn.button}</a>
                                 </div>
                             </div>
                         )}
 
-                        {/* Others */}
+                        {/* SALES PAGE */}
                         {products.sales_page && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-pink-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-pink-400">{t[lang].upsell.items.salesPage.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.salesPage.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 349,90</span>
-                                    <a href={products.sales_page} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-pink-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.salesPage.button}</a>
+                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-all group relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/5 blur-[50px] rounded-full"></div>
+                                <div className="p-3 bg-pink-500/10 rounded-xl w-fit mb-6 group-hover:bg-pink-500/20 transition-colors">
+                                    <MousePointer2 className="w-6 h-6 text-pink-400" />
                                 </div>
-                            </div>
-                        )}
-                        {products.hosting && (
-                            <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl hover:border-pink-500/50 transition group">
-                                <h3 className="font-bold text-lg mb-2 text-white group-hover:text-pink-400">{t[lang].upsell.items.hosting.title}</h3>
-                                <p className="text-sm text-slate-400 mb-4 h-10">{t[lang].upsell.items.hosting.desc}</p>
-                                <div className="flex justify-between items-center mt-auto">
-                                    <span className="text-xl font-bold text-white">R$ 499,90</span>
-                                    <a href={products.hosting} target="_blank" className="px-4 py-2 bg-slate-700 hover:bg-pink-600 text-white rounded-lg font-bold text-sm transition-colors">{t[lang].upsell.items.hosting.button}</a>
+                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.salesPage.title}</h3>
+                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.salesPage.desc}</p>
+                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
+                                    <span className="text-xl font-black text-white">R$ 349,90</span>
+                                    <a href={products.sales_page} target="_blank" className="px-5 py-2.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-pink-500/10">{t[lang].upsell.items.salesPage.button}</a>
                                 </div>
                             </div>
                         )}
 
-                        {/* Complete Package */}
+                        {/* COMPLETE PACKAGE (FEATURED) */}
                         {products.complete_package && (
-                            <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-r from-yellow-600 to-yellow-500 text-slate-900 p-8 rounded-2xl relative overflow-hidden shadow-2xl transform hover:scale-[1.01] transition-all">
-                                <div className="absolute top-0 right-0 bg-slate-900 text-yellow-400 text-xs font-bold px-4 py-2 rounded-bl-xl uppercase tracking-widest">{t[lang].upsell.items.package.badge}</div>
-                                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-                                    <div className="text-left">
-                                        <h3 className="text-3xl font-black mb-2">{t[lang].upsell.items.package.title}</h3>
-                                        <p className="font-medium text-slate-800 mb-4 max-w-xl">{t[lang].upsell.items.package.desc}</p>
-                                        <div className="flex gap-2">
-                                            {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-5 h-5 fill-current text-slate-900" />)}
+                            <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white p-8 md:p-12 rounded-[2rem] relative overflow-hidden shadow-2xl shadow-indigo-500/20 transform hover:scale-[1.01] transition-all border border-white/10 group mt-8">
+                                <div className="absolute top-0 right-0 bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl uppercase tracking-[0.2em] border-b border-l border-white/10">{t[lang].upsell.items.package.badge}</div>
+
+                                <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 blur-[100px] rounded-full pointer-events-none"></div>
+                                <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-400/20 blur-[100px] rounded-full pointer-events-none group-hover:bg-indigo-400/30 transition-all"></div>
+
+                                <div className="flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10 text-center lg:text-left">
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-center lg:justify-start gap-4 mb-6">
+                                            <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20">
+                                                <Star className="w-8 h-8 text-yellow-300 fill-yellow-300" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-3xl md:text-4xl font-black tracking-tight">{t[lang].upsell.items.package.title}</h3>
+                                                <div className="flex gap-1 mt-1 justify-center lg:justify-start">
+                                                    {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-4 h-4 fill-yellow-300 text-yellow-300" />)}
+                                                </div>
+                                            </div>
                                         </div>
+                                        <p className="text-lg md:text-xl font-medium text-white/90 mb-0 max-w-2xl leading-relaxed">
+                                            {t[lang].upsell.items.package.desc}
+                                        </p>
                                     </div>
-                                    <div className="text-center md:text-right min-w-[200px]">
-                                        <div className="text-sm opacity-80 line-through font-bold">{t[lang].upsell.items.package.from} R$ 899,90</div>
-                                        <div className="text-5xl font-black leading-none mb-4">R$ 599,90</div>
-                                        <a href={products.complete_package} target="_blank" className="inline-block bg-slate-900 text-white px-8 py-4 rounded-full font-bold shadow-xl hover:bg-slate-800 hover:scale-105 transition-all w-full md:w-auto">
+
+                                    <div className="flex flex-col items-center lg:items-end min-w-[280px]">
+                                        <div className="mb-6">
+                                            <span className="text-white/60 text-lg line-through block font-medium">{t[lang].upsell.items.package.from} R$ 899,90</span>
+                                            <div className="text-6xl md:text-7xl font-black tracking-tighter shadow-sm">
+                                                <span className="text-3xl align-top mt-2 inline-block mr-1">R$</span>
+                                                599,90
+                                            </div>
+                                        </div>
+                                        <a href={products.complete_package} target="_blank" className="bg-white text-indigo-600 px-10 py-5 rounded-2xl font-black text-xl shadow-2xl hover:bg-slate-50 hover:scale-105 active:scale-95 transition-all w-full flex items-center justify-center gap-3">
+                                            <Zap className="w-6 h-6 fill-current" />
                                             {t[lang].upsell.items.package.button}
                                         </a>
+                                        <p className="mt-4 text-white/60 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                            <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Asaas
+                                        </p>
                                     </div>
                                 </div>
                             </div>
                         )}
-
                     </div>
                 </div>
             </section>
