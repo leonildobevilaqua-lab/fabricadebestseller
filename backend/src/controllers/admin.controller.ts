@@ -395,3 +395,61 @@ export const getOrders = async (req: Request, res: Response) => {
         res.json([]);
     }
 };
+
+// ---- ASAAS ENVIRONMENT SWITCH ----
+// Alterna entre sandbox e production. As chaves já estão no Coolify como
+// ASAAS_SANDBOX_KEY e ASAAS_PRODUCTION_KEY — não precisamos recebê-las aqui.
+export const switchAsaasEnv = async (req: Request, res: Response) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: "No token provided" });
+        const token = authHeader.split(' ')[1];
+        // @ts-ignore
+        jwt.verify(token, SECRET_KEY);
+
+        const { env } = req.body;
+        if (env !== 'sandbox' && env !== 'production') {
+            return res.status(400).json({ error: "env deve ser 'sandbox' ou 'production'" });
+        }
+
+        // Verifica se a chave para o ambiente alvo está disponível
+        const keyVar = env === 'production' ? 'ASAAS_PRODUCTION_KEY' : 'ASAAS_SANDBOX_KEY';
+        if (!process.env[keyVar]) {
+            return res.status(400).json({
+                error: `${keyVar} não está configurada no servidor. Configure esta variável no Coolify antes de alternar para ${env === 'production' ? 'Produção' : 'Sandbox'}.`
+            });
+        }
+
+        // Persiste no DB para sobreviver a restarts (se for lido pelo provider)
+        await setVal('/settings/asaas_env', env);
+
+        // Aplica imediatamente no processo atual
+        process.env.ASAAS_ENV = env;
+
+        const envLabel = env === 'production' ? 'Produção 🟢' : 'Sandbox 🟡';
+        console.log(`[ASAAS] ✅ Ambiente alterado para: ${envLabel}`);
+        res.json({ success: true, env, message: `Ambiente Asaas alterado para ${envLabel}` });
+    } catch (e: any) {
+        if (e.name === 'JsonWebTokenError' || e.name === 'TokenExpiredError') {
+            return res.status(403).json({ error: "Token inválido ou expirado" });
+        }
+        console.error("switchAsaasEnv Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
+// ---- GET ASAAS STATUS ----
+export const getAsaasStatus = async (req: Request, res: Response) => {
+    try {
+        await reloadDB();
+        const env = (await getVal('/settings/asaas_env')) || process.env.ASAAS_ENV || 'sandbox';
+        // Verifica quais chaves estão disponíveis no ambiente
+        const hasSandboxKey = !!process.env.ASAAS_SANDBOX_KEY;
+        const hasProductionKey = !!process.env.ASAAS_PRODUCTION_KEY;
+        res.json({ env, hasSandboxKey, hasProductionKey });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+

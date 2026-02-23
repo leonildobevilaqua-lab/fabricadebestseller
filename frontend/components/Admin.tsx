@@ -399,6 +399,14 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const [loadingError, setLoadingError] = useState(false);
 
+    // Asaas Configuration State
+    const [asaasEnv, setAsaasEnv] = useState<'sandbox' | 'production'>('sandbox');
+    const [asaasWalletId, setAsaasWalletId] = useState('');
+    const [asaasSaving, setAsaasSaving] = useState(false);
+    const [asaasMsg, setAsaasMsg] = useState('');
+    const [hasSandboxKey, setHasSandboxKey] = useState(false);
+    const [hasProductionKey, setHasProductionKey] = useState(false);
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const rToken = params.get('resetToken');
@@ -593,6 +601,17 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             loadSettings();
             loadLeads();
             loadOrders();
+            // Carrega status do ambiente Asaas
+            fetch(`${getAdminUrl()}/asaas-env`, { headers: { Authorization: `Bearer ${token}` } })
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data) {
+                        setAsaasEnv(data.env === 'production' ? 'production' : 'sandbox');
+                        setHasSandboxKey(!!data.hasSandboxKey);
+                        setHasProductionKey(!!data.hasProductionKey);
+                    }
+                })
+                .catch(() => { });
         }
     }, [token]);
 
@@ -1232,6 +1251,104 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     {/* INTEGRATIONS SECTION */}
                     {activeSection === 'integrations' && (
                         <div className="space-y-6 animate-fade-in max-w-4xl">
+
+                            {/* === ASAAS GATEWAY === */}
+                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                                <div className="flex items-center justify-between mb-4 border-b pb-3">
+                                    <div>
+                                        <h3 className="font-bold text-slate-800">Gateway Asaas</h3>
+                                        <p className="text-xs text-slate-500 mt-1">Alterne entre Sandbox e Produção. Chaves gerenciadas no Coolify.</p>
+                                    </div>
+                                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${asaasEnv === 'production' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-700 border border-yellow-200'}`}>
+                                        {asaasEnv === 'production' ? '🟢 Produção Ativa' : '🟡 Sandbox Ativo'}
+                                    </span>
+                                </div>
+
+                                {/* Status das Chaves no Servidor */}
+                                <div className="mb-5 grid grid-cols-2 gap-3">
+                                    <div className={`p-3 rounded-lg border text-sm ${hasSandboxKey ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'}`}>
+                                        <div className="font-bold text-xs uppercase mb-1">ASAAS_SANDBOX_KEY</div>
+                                        <div>{hasSandboxKey ? '✅ Configurada no Coolify' : '❌ Não configurada'}</div>
+                                    </div>
+                                    <div className={`p-3 rounded-lg border text-sm ${hasProductionKey ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'}`}>
+                                        <div className="font-bold text-xs uppercase mb-1">ASAAS_PRODUCTION_KEY</div>
+                                        <div>{hasProductionKey ? '✅ Configurada no Coolify' : '❌ Não configurada'}</div>
+                                    </div>
+                                </div>
+
+                                {/* Environment Toggle */}
+                                <div className="mb-5">
+                                    <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Selecionar Ambiente</label>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={() => setAsaasEnv('sandbox')}
+                                            disabled={!hasSandboxKey}
+                                            className={`flex-1 py-3 rounded-lg text-sm font-bold border transition ${asaasEnv === 'sandbox'
+                                                ? 'bg-yellow-50 border-yellow-400 text-yellow-800'
+                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                                                } disabled:opacity-40 disabled:cursor-not-allowed`}
+                                        >
+                                            🟡 Sandbox (Testes)
+                                            {!hasSandboxKey && <span className="block text-xs font-normal mt-0.5">Chave não configurada</span>}
+                                        </button>
+                                        <button
+                                            onClick={() => setAsaasEnv('production')}
+                                            disabled={!hasProductionKey}
+                                            className={`flex-1 py-3 rounded-lg text-sm font-bold border transition ${asaasEnv === 'production'
+                                                ? 'bg-green-50 border-green-500 text-green-800'
+                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
+                                                } disabled:opacity-40 disabled:cursor-not-allowed`}
+                                        >
+                                            🟢 Produção
+                                            {!hasProductionKey && <span className="block text-xs font-normal mt-0.5">Chave não configurada</span>}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {asaasMsg && (
+                                    <p className={`text-sm mb-3 font-medium ${asaasMsg.startsWith('✅') ? 'text-green-600' : 'text-red-600'}`}>
+                                        {asaasMsg}
+                                    </p>
+                                )}
+
+                                <button
+                                    disabled={asaasSaving}
+                                    onClick={async () => {
+                                        setAsaasSaving(true);
+                                        setAsaasMsg('');
+                                        try {
+                                            const res = await fetch(`${getAdminUrl()}/asaas-env`, {
+                                                method: 'POST',
+                                                headers: {
+                                                    'Content-Type': 'application/json',
+                                                    Authorization: `Bearer ${token}`
+                                                },
+                                                body: JSON.stringify({ env: asaasEnv })
+                                            });
+                                            const data = await res.json();
+                                            if (res.ok) {
+                                                setAsaasMsg(`✅ ${data.message}`);
+                                            } else {
+                                                setAsaasMsg(`❌ ${data.error}`);
+                                            }
+                                        } catch (e: any) {
+                                            setAsaasMsg(`❌ Erro de rede: ${e.message}`);
+                                        } finally {
+                                            setAsaasSaving(false);
+                                            setTimeout(() => setAsaasMsg(''), 6000);
+                                        }
+                                    }}
+                                    className="w-full py-3 bg-slate-800 text-white font-bold rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                >
+                                    {asaasSaving ? 'Alternando...' : `Confirmar: Ativar ${asaasEnv === 'production' ? 'Produção 🟢' : 'Sandbox 🟡'}`}
+                                </button>
+
+                                <p className="text-xs text-slate-400 mt-3 text-center">
+                                    As chaves ASAAS_SANDBOX_KEY, ASAAS_PRODUCTION_KEY, ASAAS_SANDBOX_WEBHOOK e ASAAS_PRODUCTION_WEBHOOK são gerenciadas exclusivamente pelo Coolify.
+                                </p>
+                            </div>
+
+
                             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Webhook de Pagamento</h3>
                                 <p className="text-sm text-slate-600 mb-4">A URL abaixo recebe notificações da Kiwify para liberar acesso automaticamente.</p>

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { AsaasProvider } from '../services/asaas.provider';
+import { AsaasProvider, getAsaasWebhookToken } from '../services/asaas.provider';
 import { PLANS } from '../config/subscriptions.config';
 import { getVal, setVal, pushVal, reloadDB } from '../services/db.service';
 
@@ -129,11 +129,12 @@ export const SubscriptionController = {
     },
 
     async webhook(req: Request, res: Response) {
-        const token = req.headers['asaas-access-token'] || req.body.authToken; // Asaas sends in header or body depending on version
-        const EXPECTED = process.env.ASAAS_WEBHOOK_TOKEN || 'FabricaAsaas2026';
+        const token = req.headers['asaas-access-token'] || req.body.authToken;
+        const EXPECTED = getAsaasWebhookToken(); // Lê ASAAS_SANDBOX_WEBHOOK ou ASAAS_PRODUCTION_WEBHOOK
 
-        if (token !== EXPECTED) {
-            console.warn(`[WEBHOOK] Invalid Token: ${token} vs ${EXPECTED}`);
+        // Só valida o token se houver um configurado
+        if (EXPECTED && token !== EXPECTED) {
+            console.warn(`[WEBHOOK] Invalid Token: received='${token}' expected='${EXPECTED}'`);
             return res.status(401).json({ error: "Unauthorized" });
         }
 

@@ -2,26 +2,62 @@ import axios from 'axios';
 import { PLANS } from '../config/subscriptions.config';
 import dotenv from 'dotenv';
 
-// import path from 'path'; // Removed to simplify
-// dotenv.config();
+dotenv.config();
 
-const ASAAS_URL = process.env.ASAAS_API_URL || 'https://sandbox.asaas.com/api/v3';
+const PRODUCTION_URL = 'https://api.asaas.com/v3';
+const SANDBOX_URL = 'https://sandbox.asaas.com/api/v3';
 
-// Use provided key or fallback to the fixed one (Legacy)
-const ASAAS_KEY = process.env.ASAAS_API_KEY || '$aact_hmlg_000MzkwODA2MWY2OGM3MWRlMDU2NWM3MzJlNzZmNGZhZGY6OmRhYWMxM2M2LTUxNDYtNGZmZS1iOGVkLTZhN2M5YmEyOTg2NTo6JGFhY2hfZTgzMmQ4NTYtNDQ1NS00ZTM0LThiNzEtNjdiY2ZjNDMwZDVi';
+// Detecta o ambiente atual (sandbox ou production)
+export const getAsaasEnv = (): 'sandbox' | 'production' => {
+    const env = (process.env.ASAAS_ENV || 'sandbox').toLowerCase();
+    return env === 'production' ? 'production' : 'sandbox';
+};
 
-if (!process.env.ASAAS_API_KEY) console.warn("WARN: Using Hardcoded Sandbox Key. Configure ASAAS_API_KEY in env for custom accounts.");
+// URL baseada no ambiente
+const getAsaasUrl = (): string => {
+    return getAsaasEnv() === 'production' ? PRODUCTION_URL : SANDBOX_URL;
+};
+
+// Chave baseada no ambiente — usa ASAAS_SANDBOX_KEY ou ASAAS_PRODUCTION_KEY
+// Mantém compatibilidade com ASAAS_API_KEY legado
+const getAsaasKey = (): string => {
+    const env = getAsaasEnv();
+    if (env === 'production') {
+        const prodKey = process.env.ASAAS_PRODUCTION_KEY || process.env.ASAAS_API_KEY;
+        if (prodKey) return prodKey;
+        console.error('[ASAAS] ❌ ASAAS_PRODUCTION_KEY não configurada! Configure no Coolify.');
+        throw new Error('ASAAS_PRODUCTION_KEY não configurada. Configure esta variável no seu servidor.');
+    } else {
+        const sandboxKey = process.env.ASAAS_SANDBOX_KEY || process.env.ASAAS_API_KEY;
+        if (sandboxKey) return sandboxKey;
+        console.error('[ASAAS] ❌ ASAAS_SANDBOX_KEY não configurada!');
+        throw new Error('ASAAS_SANDBOX_KEY não configurada.');
+    }
+};
+
+// Token de validação do Webhook
+export const getAsaasWebhookToken = (): string => {
+    const env = getAsaasEnv();
+    if (env === 'production') {
+        return process.env.ASAAS_PRODUCTION_WEBHOOK || process.env.ASAAS_WEBHOOK_TOKEN || '';
+    }
+    return process.env.ASAAS_SANDBOX_WEBHOOK || process.env.ASAAS_WEBHOOK_TOKEN || '';
+};
 
 const getApi = () => {
-    console.log(`[ASAAS] Using URL: ${ASAAS_URL}`);
+    const url = getAsaasUrl();
+    const key = getAsaasKey(); // Pode lançar erro se chave não configurada
+    const env = getAsaasEnv().toUpperCase();
+    console.log(`[ASAAS] Ambiente: ${env} | URL: ${url}`);
     return axios.create({
-        baseURL: ASAAS_URL,
+        baseURL: url,
         headers: {
-            'access_token': ASAAS_KEY,
+            'access_token': key,
             'Content-Type': 'application/json'
         }
     });
 };
+
 
 // Helper to get Plan Config
 const getPlanConfig = (planKey: string) => {

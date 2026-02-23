@@ -1063,29 +1063,64 @@ export const deleteLead = async (req: Request, res: Response) => {
 export const createCharge = async (req: Request, res: Response) => {
     try {
         const { email, type, payer } = req.body;
-        let price = 39.90; // Fallback
 
         await reloadDB();
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        const userPlan = await getVal(`/users/${safeEmail}/plan`);
 
-        if (userPlan && userPlan.status === 'ACTIVE') {
-            const pName = (userPlan.name || 'STARTER').toUpperCase();
-            if (pName.includes('BLACK')) price = 16.90;
-            else if (pName.includes('PRO')) price = 21.90;
-            else price = 26.90;
+        // -- Determina o plano ativo (mesma lógica de createBookGenerationCharge) --
+        let plan = await getVal(`/users/${safeEmail}/plan`);
+
+        if (!plan || plan.status !== 'ACTIVE') {
+            const rawLeadsCheck = await getVal('/leads') || [];
+            const actionLead = Object.values(rawLeadsCheck).find((l: any) =>
+                l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.status === 'SUBSCRIBER'
+            );
+            if (actionLead && (actionLead as any).plan && (actionLead as any).plan.status === 'ACTIVE') {
+                plan = (actionLead as any).plan;
+            } else {
+                plan = null; // Sem plano ativo = AVULSO
+            }
         }
 
+        if (plan && plan.status !== 'ACTIVE') plan = null;
+
+        const planNameRaw = plan ? (plan.name || 'STARTER').toUpperCase() : 'AVULSO';
+        let cleanPlan = 'AVULSO';
+        if (plan) {
+            if (planNameRaw.includes('BLACK')) cleanPlan = 'BLACK';
+            else if (planNameRaw.includes('PRO')) cleanPlan = 'PRO';
+            else if (planNameRaw.includes('STARTER')) cleanPlan = 'STARTER';
+        }
+
+        const billingRaw = plan ? (plan.billing || 'monthly').toLowerCase() : 'monthly';
+        const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
+        const planKey = cleanPlan === 'AVULSO' ? 'AVULSO' : `${cleanPlan}_${billingSuffix}`;
+
+        // -- Ciclo progressivo --
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        const usageCount = leads.filter((l: any) =>
+            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE')
+        ).length;
+
+        const cycleIndex = usageCount % 4;
+        const priceList = PRICING_RULES[planKey] || PRICING_RULES['AVULSO'];
+        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : 89.90;
+
+        console.log(`[CHARGE] Email: ${email} | planKey: ${planKey} | cycle: ${cycleIndex} | price: R$ ${price}`);
+
         const customerId = await AsaasProvider.createCustomer({
-            name: payer?.name || 'Cliente',
+            name: payer?.name || email.split('@')[0],
             email,
             cpfCnpj: payer?.cpfCnpj,
             phone: payer?.phone
         });
-        const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'}`);
+        const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'} (${cleanPlan})`);
 
         res.json({ success: true, invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl, price });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 };
+
