@@ -11,11 +11,6 @@ app.use(cors());
 app.options('*', cors()); // Enable Pre-Flight for ALL routes
 app.use(express.json());
 
-// --- STATIC FILES (Direct Downloads) ---
-const generatedBooksPath = path.join(process.cwd(), 'data', 'generated_books');
-app.use('/downloads', express.static(generatedBooksPath));
-console.log(`[BOOT] Serving generated books from: ${generatedBooksPath}`);
-
 import paymentRoutes from './routes/payment.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import purchaseRoutes from './routes/purchase.routes';
@@ -84,7 +79,7 @@ app.use('/api/purchase', purchaseRoutes); // REGISTER NEW ROUTE
 app.post('/webhook/asaas', SubscriptionController.webhook); // Direct mapping
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/user', userRoutes);
-// Redundant static route removed. Using unified folder at top.
+app.use('/downloads', express.static(path.join(__dirname, '../generated_books')));
 
 app.get('/health', (req, res) => {
     res.json({ status: 'ok' });

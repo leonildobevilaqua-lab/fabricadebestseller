@@ -1,48 +1,6 @@
 import { JsonDB, Config } from 'node-json-db';
-import * as fs from 'fs';
-import * as path from 'path';
 
-// ENSURE DATA DIRECTORY EXISTS (Critical for Coolify/Docker Persistence)
-console.log(`[DB] Current Working Directory: ${process.cwd()}`);
-const DATA_DIR = path.join(process.cwd(), 'data');
-console.log(`[DB] Target Data Directory: ${DATA_DIR}`);
-
-if (!fs.existsSync(DATA_DIR)) {
-    try {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
-        console.log(`[DB] Created persistent data directory at: ${DATA_DIR}`);
-    } catch (e) {
-        console.error(`[DB] CRITICAL: Failed to create data directory:`, e);
-    }
-}
-
-// Ensure Backups and Books dirs exist inside DATA_DIR
-const BACKUP_DIR = path.join(DATA_DIR, 'backups'); // BACKUP_DIR defined at top
-const BOOKS_DIR = path.join(DATA_DIR, 'generated_books');
-if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
-if (!fs.existsSync(BOOKS_DIR)) fs.mkdirSync(BOOKS_DIR, { recursive: true });
-
-// MIGRATE LEGACY DB (Initial Transition only)
-const rootDB = path.join(process.cwd(), 'database.json');
-const DB_PATH = path.join(DATA_DIR, 'database.json');
-if (fs.existsSync(rootDB) && !fs.existsSync(DB_PATH)) {
-    console.log(`[DB] Migrating legacy database.json to data/ folder...`);
-    fs.copyFileSync(rootDB, DB_PATH);
-}
-
-// PERMISSION CHECK
-try {
-    const testFile = path.join(DATA_DIR, 'perm_test.txt');
-    fs.writeFileSync(testFile, 'write_test');
-    fs.unlinkSync(testFile);
-    console.log(`[DB] ✅ Write Permission Verified for ${DATA_DIR}`);
-} catch (e) {
-    console.error(`[DB] ❌ CRITICAL: NO WRITE PERMISSION for ${DATA_DIR}. Data will NOT persist!`, e);
-}
-
-// Database file will be at /app/data/database.json
-const dbPath = path.join(DATA_DIR, 'database');
-const db = new JsonDB(new Config(dbPath, true, false, '/'));
+const db = new JsonDB(new Config("database", true, false, '/'));
 
 export const getVal = async (path: string) => {
     try {

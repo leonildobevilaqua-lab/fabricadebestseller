@@ -76,12 +76,12 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     // Ensure directory exists
     const fs = require('fs');
     const path = require('path');
-    const outputDir = path.join(process.cwd(), 'data', 'generated_books');
+    const outputDir = path.join(__dirname, '../../generated_books');
     if (!fs.existsSync(outputDir)) {
         try { fs.mkdirSync(outputDir, { recursive: true }); } catch (err) { }
     }
 
-    const filename = `book_project_${project.id}.docx`;
+    const filename = `book_${safeEmail}_${project.id}.docx`;
     const outputPath = path.join(outputDir, filename);
 
     fs.writeFileSync(outputPath, buffer);
@@ -99,7 +99,7 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     // 4. Generate Extras & Zip (If Marketing exists)
     if (project.marketing) {
         try {
-            const zipName = `kit_completo_project_${project.id}.zip`;
+            const zipName = `kit_completo_${safeEmail}_${project.id}.zip`;
             const zipPath = path.join(outputDir, zipName);
 
             const output = fs.createWriteStream(zipPath);
@@ -199,7 +199,6 @@ const createSimpleDocx = async (title: string, content: string): Promise<Buffer>
     });
 
     const doc = new Document({
-        features: { updateFields: true },
         sections: [{
             properties: {},
             children: children
@@ -417,7 +416,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
-                children: [new TextRun({ text: "[ESTA PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
+                children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
                 alignment: AlignmentType.CENTER
             })
         ],
@@ -494,7 +493,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
-                children: [new TextRun({ text: "[ESTA PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
+                children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
                 alignment: AlignmentType.CENTER
             })
         ],
@@ -526,7 +525,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
-                children: [new TextRun({ text: "[ESTA PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
+                children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
                 alignment: AlignmentType.CENTER
             })
         ],
@@ -541,19 +540,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
             new Paragraph({
                 children: [new TextRun({ text: "SUMÁRIO", bold: true, font: "Garamond", size: 48 })],
                 alignment: AlignmentType.CENTER,
-                spacing: { before: 1200, after: 400 }
-            }),
-            new Paragraph({
-                children: [new TextRun({
-                    text: "⚠️ NOTA IMPORTANTE: Para corrigir os números das páginas, clique com o botão direito no sumário abaixo e selecione 'Atualizar Campo' > 'Atualizar o índice inteiro'. (APÓS ATUALIZAR O SUMÁRIO, EXCLUA ESTE TEXTO DO SEU LIVRO)",
-                    italics: true,
-                    bold: true,
-                    size: 18,
-                    color: "FF0000",
-                    font: "Arial"
-                })],
-                alignment: AlignmentType.CENTER,
-                spacing: { after: 400 }
+                spacing: { before: 1200, after: 800 }
             }),
             new TableOfContents("Sumário", {
                 hyperlink: true,
@@ -572,8 +559,8 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     if (content.introduction) {
         sections.push({
             properties: {
-                page: { ...basePageConfig, formatType: NumberFormat.DECIMAL }, // Natural Flow (Don't restart at 1)
-                type: SectionType.ODD_PAGE, // Ensure it falls on odd page
+                page: { ...basePageConfig, pageNumbers: { start: 11, formatType: NumberFormat.DECIMAL } }, // FORCE START 11
+                type: SectionType.ODD_PAGE, // Ensure it falls on odd page (11 usually is)
                 titlePage: true,
             },
             children: [
@@ -681,7 +668,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     const isProOrBlack = planTag.includes('PRO') || planTag.includes('BLACK') ||
         explicitPlan.includes('PRO') || explicitPlan.includes('BLACK');
 
-    const aboutContent = content.aboutAuthor
+    const aboutContent = isProOrBlack && content.aboutAuthor
         ? createTextParams(content.aboutAuthor)
         : [new Paragraph({
             children: [new TextRun({ text: "[Espaço para Sobre o Autor]", color: "000000", italics: false })],

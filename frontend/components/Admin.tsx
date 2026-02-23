@@ -32,46 +32,36 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
     const safeLeads = Array.isArray(leads) ? leads : [];
     const safeOrders = Array.isArray(orders) ? orders : [];
 
-    // Pre-calculate Subscribers Set for fast lookup
-    // Unified Subscriber Set for Accurate Pricing
-    const subscriberEmails = new Set(
-        safeLeads.filter(l =>
-            l.status === 'SUBSCRIBER' ||
-            (l.plan && l.plan.status === 'ACTIVE') ||
-            (l.type === 'SUBSCRIPTION' && ['ACTIVE', 'PAID', 'COMPLETED'].includes(l.status))
-        ).map(l => (l.email || "").toLowerCase().trim())
-    );
-
     // Helper: Calculate Value based on User Rules
     const calculateLeadValue = (lead: any) => {
-        // 1. Explicit Amount
-        if (lead.amount && lead.amount > 0) return Number(lead.amount);
-
-        // 2. Metadata Context
-        if (lead.details?.price) return Number(lead.details.price);
-
-        // 3. Payment Info
+        // 1. If explicit payment info exists (from Webhook), use it.
         if (lead.paymentInfo?.amount) {
+            // Asaas usually sends float (19.90). Kiwify sends cents?
+            // If > 1000, likely cents. Wait, if it's annual 199.00?
+            // If provider is ASAAS, trust amount.
+            if (lead.paymentInfo.provider === 'ASAAS') return Number(lead.paymentInfo.amount);
+
+            // Kiwify logic (legacy check)
             const amt = Number(lead.paymentInfo.amount);
             return amt > 1000 ? amt / 100 : amt;
         }
 
-        // 4. Subscription
-        if (lead.plan || lead.status === 'SUBSCRIBER') {
-            const pName = (lead.plan?.name || 'STARTER').toUpperCase();
-            const billing = (lead.plan?.billing || 'monthly').toLowerCase();
-            if (pName.includes('BLACK')) return billing.includes('ann') ? 358.80 : 49.90;
-            if (pName.includes('PRO')) return billing.includes('ann') ? 238.80 : 34.90;
-            if (pName.includes('STARTER')) return billing.includes('ann') ? 118.80 : 19.90;
-            return 19.90;
+        // 2. Check Plans (Distinguish Book vs Sub)
+        if (lead.type === 'BOOK') {
+            return lead.plan ? 16.90 : 39.90;
         }
 
-        // 5. Book (Levels)
-        if (lead.type === 'BOOK' || (lead.credits && lead.credits > 0)) {
-            return 0;
+        if (lead.plan) {
+            const pName = lead.plan.name?.toUpperCase();
+            const billing = lead.plan.billing?.toLowerCase(); // 'monthly' or 'annual'
+
+            if (pName === 'STARTER') return billing === 'annual' ? 118.80 : 19.90;
+            if (pName === 'PRO') return billing === 'annual' ? 238.80 : 34.90;
+            if (pName === 'BLACK') return billing === 'annual' ? 358.80 : 49.90;
         }
 
-        return 0;
+        // 3. Default (Avulso / Credit) - Request: R$ 39,90
+        return 39.90;
     };
 
     // Filter Paid Leads (Include SUBSCRIBERS)
@@ -401,8 +391,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [newPass, setNewPass] = useState('');
 
     // UI Navigation State
-    const [activeSection, setActiveSection] = useState<'dashboard' | 'setup' | 'integrations' | 'payment_asaas' | 'backups' | 'simulator' | 'profile'>('dashboard');
-    const [paymentEnv, setPaymentEnv] = useState<'sandbox' | 'production'>('sandbox');
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'setup' | 'integrations' | 'backups' | 'simulator' | 'profile'>('dashboard');
 
     // Profile State
     const [profileOldPass, setProfileOldPass] = useState('');
@@ -431,60 +420,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             });
             if (res.ok) {
                 setSettings(await res.json());
-                // Load payment env after settings context
-                loadPaymentEnv();
             } else {
                 setToken(null);
             }
         } catch (e) {
             console.error(e);
             setLoadingError(true);
-        }
-    };
-
-    const loadPaymentEnv = async () => {
-        try {
-            const res = await fetch(`${getAdminUrl()}/payment-env`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setPaymentEnv(data.environment);
-            }
-        } catch (e) {
-            console.error("Failed to load payment env", e);
-        }
-    };
-
-    const togglePaymentEnv = async () => {
-        const nextEnv = paymentEnv === 'sandbox' ? 'production' : 'sandbox';
-        if (nextEnv === 'production') {
-            if (!confirm("🚨 ATENÇÃO CRÍTICA: Ativar o MODO PRODUÇÃO habilitará cobranças REAIS. Certifique-se de que a variável ASAAS_PRODUCTION_KEY está configurada. Deseja continuar?")) {
-                return;
-            }
-        }
-
-        try {
-            const res = await fetch(`${getAdminUrl()}/payment-env`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ environment: nextEnv })
-            });
-
-            if (res.ok) {
-                setPaymentEnv(nextEnv);
-                setMsg(`Gateway alterado para: ${nextEnv.toUpperCase()}`);
-                setTimeout(() => setMsg(''), 3000);
-            } else {
-                const err = await res.json();
-                alert(`Erro: ${err.error || 'Falha ao atualizar o ambiente'}`);
-            }
-        } catch (e) {
-            console.error(e);
-            alert("Erro de rede ao alternar ambiente.");
         }
     };
 
@@ -644,139 +585,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
-
-    const handleResetUser = async () => {
-        const email = prompt("RESET TOTAL DE USUÁRIO\n\nDigite o email do usuário para ZERAR créditos, projetos e histórico de compras.\n\nATENÇÃO: Ação irreversível para fins de teste.");
-        if (!email) return;
-
-        if (!confirm(`Tem certeza que deseja apagar TUDO de ${email}?`)) return;
-
-        try {
-            setMsg("Resetando usuário... aguarde...");
-            const res = await fetch(`${getAdminUrl()}/reset-user`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ email })
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                alert("SUCESSO: " + data.message);
-                window.location.reload();
-            } else {
-                alert("Erro: " + data.error);
-            }
-            setMsg(null);
-        } catch (e: any) {
-            alert("Erro de conexão: " + e.message);
-            setMsg(null);
-        }
-    };
-
-    const handleManageCredits = async () => {
-        const email = prompt("GERENCIAR CRÉDITOS MANUAIS\n\nDigite o email do usuário:");
-        if (!email) return;
-
-        const action = prompt("Digite a ação (add / remove):", "add");
-        if (action !== 'add' && action !== 'remove') return alert("Ação inválida");
-
-        const amount = prompt("Quantidade de créditos:", "1");
-        if (!amount) return;
-
-        try {
-            setMsg("Atualizando créditos... aguarde...");
-            const res = await fetch(`${getAdminUrl()}/manage-credits`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ email, action, amount })
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                alert("SUCESSO: " + data.message);
-            } else {
-                alert("Erro: " + data.error);
-            }
-            setMsg(null);
-        } catch (e: any) {
-            alert("Erro de conexão: " + e.message);
-            setMsg(null);
-        }
-    };
-
-    const handleRecoverBooks = async () => {
-        const email = prompt("RESTAURAÇÃO DE LIVROS PERDIDOS\n\nDigite o email do usuário para recuperar os arquivos (ou deixe em branco para processar TODOS os livros concluídos do sistema):");
-        if (email === null) return;
-
-        try {
-            setMsg("Iniciando recuperação... aguarde...");
-            const res = await fetch(`${getAdminUrl()}/recover-books`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ email })
-            });
-            const data = await res.json();
-
-            if (data.recovered && data.recovered.length > 0) {
-                const confirmOpen = confirm(`Encontrados ${data.count} livros!\n\nDeseja abrir os links de download agora? (Certifique-se de permitir pop-ups)`);
-                if (confirmOpen) {
-                    data.recovered.forEach((r: any) => window.open(r.url, '_blank'));
-                } else {
-                    alert("Links gerados:\n" + data.recovered.map((r: any) => r.url).join("\n"));
-                }
-            } else {
-                alert("Nenhum livro concluído encontrado para recuperação no banco de dados.");
-            }
-            setMsg(null);
-        } catch (e: any) {
-            alert("Erro ao recuperar: " + e.message);
-            setMsg(null);
-        }
-    };
-
     const [leads, setLeads] = useState<any[]>([]);
     const [orders, setOrders] = useState<any[]>([]);
-
-    // Unified Pricing Logic for Layout
-    const subscriberEmails = new Set(
-        (leads || []).filter((l: any) =>
-            l.status === 'SUBSCRIBER' ||
-            (l.plan && l.plan.status === 'ACTIVE') ||
-            (l.type === 'SUBSCRIPTION' && ['ACTIVE', 'PAID', 'COMPLETED'].includes(l.status))
-        ).map((l: any) => (l.email || "").toLowerCase().trim())
-    );
-
-    const calculateLeadValue = (lead: any) => {
-        // 1. Explicit Amount (Highest priority)
-        if (lead.amount && lead.amount > 0) return Number(lead.amount);
-
-        // 2. Payment Info from Gateway
-        if (lead.paymentInfo?.amount) {
-            const amt = Number(lead.paymentInfo.amount);
-            // Verify if it's already in decimals or needs conversion from cents (BRL is usually decimal in Asaas API unless specific fields)
-            return amt > 1000 ? amt / 100 : amt;
-        }
-
-        // 3. Metadata Detail
-        if (lead.details?.price) return Number(lead.details.price);
-
-        // 4. Plan Fallbacks (Subscription only)
-        if (lead.plan || lead.status === 'SUBSCRIBER') {
-            const pName = (lead.plan?.name || 'STARTER').toUpperCase();
-            const billing = (lead.plan?.billing || 'monthly').toLowerCase();
-            if (pName.includes('BLACK')) return billing.includes('ann') ? 358.80 : 49.90;
-            if (pName.includes('PRO')) return billing.includes('ann') ? 238.80 : 34.90;
-            if (pName.includes('STARTER')) return billing.includes('ann') ? 118.80 : 19.90;
-            return 19.90;
-        }
-
-        // 5. Book Fallback
-        if (lead.type === 'BOOK' || (lead.credits && lead.credits > 0)) {
-            return 0;
-        }
-
-        return 0;
-    };
 
     useEffect(() => {
         if (token) {
@@ -1190,12 +1000,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             <span>🔗</span> Integrações
                         </button>
                         <button
-                            onClick={() => setActiveSection('payment_asaas')}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'payment_asaas' ? 'bg-orange-600 text-white shadow-lg shadow-orange-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-                        >
-                            <span>💳</span> Gateway Asaas
-                        </button>
-                        <button
                             onClick={() => setActiveSection('backups')}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'backups' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                         >
@@ -1240,7 +1044,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 {/* Header Strip */}
                 <header className="bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
                     <h1 className="text-xl font-bold text-slate-800 capitalize">
-                        {activeSection === 'setup' ? 'Configurações de IA' : activeSection === 'payment_asaas' ? 'Gateway de Pagamento' : activeSection}
+                        {activeSection === 'setup' ? 'Configurações de IA' : activeSection}
                     </h1>
                     <div className="flex items-center gap-4">
                         {msg && <span className="text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full animate-pulse border border-emerald-100">{msg}</span>}
@@ -1251,16 +1055,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </header>
 
                 <main className="p-8 max-w-6xl mx-auto pb-20">
-                    {/* PRODUCTION ALERT BANNER */}
-                    {paymentEnv === 'production' && (
-                        <div className="mb-6 bg-red-600 text-white p-4 rounded-xl flex items-center gap-4 animate-bounce-subtle border-b-4 border-red-800 shadow-xl">
-                            <span className="text-2xl">🚨</span>
-                            <div className="flex-1">
-                                <h4 className="font-black uppercase tracking-widest text-sm">MODO DE PRODUÇÃO ATIVO</h4>
-                                <p className="text-xs font-bold text-red-100 opacity-90">Cuidado: Todas as cobranças geradas agora são REAIS e processadas no ambiente oficial do Asaas.</p>
-                            </div>
-                        </div>
-                    )}
 
                     {/* DASHBOARD SECTION */}
                     {activeSection === 'dashboard' && (
@@ -1302,12 +1096,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         }}
                                         className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 transition"
                                     >
-                                        <button
-                                            onClick={handleRecoverBooks}
-                                            className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-yellow-500 text-white hover:bg-yellow-600 flex items-center gap-2 transition"
-                                        >
-                                            <span>🔄</span> Restaurar Livros
-                                        </button>
                                         <span>📊</span> Exportar Excel
                                     </button>
                                 </div>
@@ -1335,7 +1123,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 <LeadRow
                                                     key={lead.id}
                                                     lead={lead}
-                                                    calculatedValue={calculateLeadValue(lead)}
                                                     onApprove={handleApproveLead}
                                                     onDelete={handleDelete}
                                                     onEdit={handleEdit}
@@ -1518,113 +1305,10 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             </div>
                         </div>
                     )}
-                    {/* PAYMENT ASAAS SECTION */}
-                    {activeSection === 'payment_asaas' && (
-                        <div className="space-y-6 animate-fade-in max-w-3xl">
-                            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl overflow-hidden relative">
-                                <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                                    <span className="text-9xl">💰</span>
-                                </div>
 
-                                <h3 className="text-xl font-black text-slate-900 mb-2 flex items-center gap-2">
-                                    Gateway de Pagamento (Asaas)
-                                </h3>
-                                <p className="text-sm text-slate-500 mb-8 pb-4 border-b border-slate-100">
-                                    Gerencie o ambiente do provedor de pagamentos. Alternar esta opção afeta globalmente como o sistema valida e processa cobranças.
-                                </p>
-
-                                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-200 flex items-center justify-between gap-6">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <span className={`w-3 h-3 rounded-full ${paymentEnv === 'production' ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`}></span>
-                                            <h4 className="font-bold text-slate-800">Ambiente de Execução</h4>
-                                        </div>
-                                        <p className="text-xs text-slate-500">
-                                            {paymentEnv === 'production'
-                                                ? 'O sistema está conectado à API de Produção. Cobranças reais serão geradas.'
-                                                : 'O sistema está em modo Sandbox para testes e simulações gratuitas.'}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center bg-white p-1 rounded-xl shadow-inner border border-slate-200">
-                                        <button
-                                            onClick={() => paymentEnv === 'production' && togglePaymentEnv()}
-                                            className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${paymentEnv === 'sandbox' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-                                        >
-                                            SANDBOX
-                                        </button>
-                                        <button
-                                            onClick={() => paymentEnv === 'sandbox' && togglePaymentEnv()}
-                                            className={`px-4 py-2 text-xs font-black rounded-lg transition-all ${paymentEnv === 'production' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600'}`}
-                                        >
-                                            PRODUÇÃO
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
-                                        <h5 className="text-[10px] font-black text-blue-600 uppercase mb-2">Variáveis Sandbox</h5>
-                                        <div className="space-y-1 opacity-60">
-                                            <div className="text-[10px] font-mono bg-white/50 p-1 rounded overflow-hidden text-ellipsis">KEY: ASAAS_SANDBOX_KEY</div>
-                                            <div className="text-[10px] font-mono bg-white/50 p-1 rounded overflow-hidden text-ellipsis">WEBHOOK: ASAAS_SANDBOX_WEBHOOK</div>
-                                        </div>
-                                    </div>
-                                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-xl">
-                                        <h5 className="text-[10px] font-black text-orange-600 uppercase mb-2">Variáveis Produção</h5>
-                                        <div className="space-y-1 opacity-60">
-                                            <div className="text-[10px] font-mono bg-white/50 p-1 rounded overflow-hidden text-ellipsis">KEY: ASAAS_PRODUCTION_KEY</div>
-                                            <div className="text-[10px] font-mono bg-white/50 p-1 rounded overflow-hidden text-ellipsis">WEBHOOK: ASAAS_PRODUCTION_WEBHOOK</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mt-8 p-4 bg-slate-900 rounded-xl text-white">
-                                    <h5 className="text-xs font-bold text-slate-400 mb-2 border-b border-slate-800 pb-2">Status do Webhook</h5>
-                                    <div className="flex items-center justify-between text-[11px]">
-                                        <span className="text-slate-400">URL de Destino:</span>
-                                        <code className="bg-slate-800 px-2 py-0.5 rounded text-indigo-400">{window.location.origin}/api/payment/webhook</code>
-                                    </div>
-                                    <p className="mt-3 text-[10px] text-slate-500 italic">
-                                        * Certifique-se de cadastrar esta URL no painel do Asaas e configurar o Token correspondente no servidor.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                     {/* BACKUPS SECTION */}
                     {activeSection === 'backups' && (
                         <div className="space-y-6 animate-fade-in max-w-3xl">
-                            {/* User Tools */}
-                            <div className="bg-red-50 p-6 rounded-xl border border-red-200 shadow-sm mb-6">
-                                <h3 className="font-bold text-red-800 mb-4 flex items-center gap-2">
-                                    <span className="text-xl">🛠️</span> Ferramentas de Usuário e Teste
-                                </h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <button
-                                        onClick={handleRecoverBooks}
-                                        className="w-full flex items-center justify-center gap-2 p-3 bg-white text-orange-600 font-bold text-sm border border-orange-200 rounded-lg hover:bg-orange-50 shadow-sm transition"
-                                    >
-                                        📂 Recuperar Livros (Download)
-                                    </button>
-
-
-                                    <button
-                                        onClick={handleResetUser}
-                                        className="w-full flex items-center justify-center gap-2 p-3 bg-white text-red-600 font-bold text-sm border border-red-200 rounded-lg hover:bg-red-50 shadow-sm transition"
-                                    >
-                                        💣 Resetar Usuário (Zerar Tudo)
-                                    </button>
-
-                                    <button
-                                        onClick={handleManageCredits}
-                                        className="w-full md:col-span-2 flex items-center justify-center gap-2 p-3 bg-white text-emerald-600 font-bold text-sm border border-emerald-200 rounded-lg hover:bg-emerald-50 shadow-sm transition"
-                                    >
-                                        🎟️ Gerenciar Créditos (Add/Remove)
-                                    </button>
-                                </div>
-                            </div>
-
                             <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                                 <div className="flex justify-between items-center mb-6 border-b pb-4">
                                     <div>

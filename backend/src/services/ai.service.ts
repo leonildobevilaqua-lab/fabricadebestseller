@@ -1,6 +1,8 @@
 import { BookMetadata, Chapter, MarketingAssets, TitleOption } from "../types";
 import { getLLMProvider } from "./llm.factory";
 import { logError } from "../utils/logger";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import OpenAI from "openai";
 
 const getLangName = (code: string = 'pt') => {
   const map: Record<string, string> = {
@@ -184,79 +186,109 @@ export const analyzeCompetitors = async (topic: string, priorContext: string, la
   }
 };
 
-export const generateTitleOptions = async (topic: string, researchContext: string, lang: string = 'pt'): Promise<TitleOption[]> => {
-  const llm = await getLLMProvider();
+export const generateTitleOptions = async (topic: string, researchContext: string = "", lang: string = 'pt'): Promise<TitleOption[]> => {
+  console.log(`[IA] Iniciando geração para: ${topic.substring(0, 50)}...`);
   const langName = getLangName(lang);
 
-  // Sanitize topic to avoid breaking prompt with quotes
-  const safeTopic = topic.replace(/"/g, "'").trim();
-  const seed = Math.floor(Math.random() * 10000); // Random seed to break cache
+  // ---------------------------------------------------------
+  // 1. LEITURA SEGURA DAS CHAVES (Backend Only)
+  // ---------------------------------------------------------
+  // Tenta ler de todas as variações possíveis para evitar erro de undefined
+  const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  const OPENAI_KEY = process.env.OPENAI_API_KEY;
 
-  // 1. PRIMARY ATTEMPT: FACT-BASED TITLES (ULTIMATO)
-  // 1. PRIMARY ATTEMPT: FACT-BASED TITLES (STRICT PROMPT MESTRE)
-  const prompt = `
-    BASEADO NA PESQUISA DE MERCADO (Simulada ou Real):
-    ${researchContext.substring(0, 20000)}
+  // PROMPT REQUISITADO PELO USUÁRIO (SIMPLES E EFICAZ)
+  const SYSTEM_PROMPT = `
+ATUE COMO UM EDITOR DE BEST-SELLERS.
+TAREFA: Crie 8 títulos virais e subtítulos comerciais baseados no tema do usuário.
+IDIOMA: ${langName}
+REGRAS:
+1. NÃO comece com "Guia Completo de". Seja criativo.
+2. Use gatilhos mentais fortes.
+3. Se baseie neste CONTEXTO DE PESQUISA:
+${researchContext.substring(0, 5000)}
 
-    TEMA DO USUÁRIO: "${safeTopic}"
+RETORNE APENAS JSON LIMPO: [{ "title": "...", "subtitle": "..." }]
+`;
 
-    SUA MISSÃO: Crie **8 TÍTULOS ALTAMENTE VENDÁVEIS** para um livro digital.
-    REGRAS DE OURO (Siga estritamente):
-    1. PROIBIDO: Nunca inicie com "Guia Completo de ${safeTopic}". O título deve ser original.
-    2. ESTRUTURA: Use "Título Curto e Impactante: Subtítulo com a Promessa da Transformação".
-    3. MODELAGEM: Baseie-se nos Best Sellers da Amazon listados na pesquisa.
-    4. QUANTIDADE: Exatamente 8 opções.
-    5. LANGUAGE: ${langName}.
+  const userPrompt = `TEMA: ${topic}`;
 
-    EXEMPLO DO QUE EU QUERO (Para o nicho de Magia):
-    - "Grimório da Luz: O Caminho Prático da Magia Branca para Iniciantes"
-    - "Alquimia da Alma: Rituais Cabalísticos para Prosperidade e Proteção"
-    - "O Código do Pentagrama: Guia de Segurança para Rituais Poderosos"
-
-    Gere o JSON:
-    [
-      { "title": "Título Principal", "subtitle": "Subtítulo da Promessa", "marketingHook": "Gatilho mental usado", "score": 90, "isTopChoice": boolean },
-      ... (8 ITENS)
-    ]
-    
-    Return ONLY JSON.
-  `;
-
-  try {
-    const titles = await llm.generateJSON<TitleOption[]>(prompt);
-    if (!titles || !Array.isArray(titles) || titles.length === 0) throw new Error("Empty titles");
-    return titles;
-
-  } catch (primaryError: any) {
-    console.warn("Primary Title Generation Failed. Attempting RESCUE...", primaryError);
-    logError("AI_TITLE_PRIMARY_FAIL", primaryError);
-
-    // 2. RESCUE ATTEMPT: SIMPLE PROMPT (User Requested)
+  // Helper para parsear e enriquecer
+  const parseAndEnrich = (text: string): TitleOption[] => {
     try {
-      console.log("Tentando recuperação com prompt simples...");
-      const simplePrompt = `Task: Create 8 Best-Seller Book Titles about: "${safeTopic}". Return JSON array: [{ "title": "Title", "subtitle": "Subtitle", "score": 85 }]`;
-      const rescueTitles = await llm.generateJSON<TitleOption[]>(simplePrompt);
-      if (rescueTitles && Array.isArray(rescueTitles) && rescueTitles.length > 0) {
-        return rescueTitles;
-      }
-    } catch (rescueError) {
-      console.error("Rescue AI Call Failed.", rescueError);
-    }
+      // Limpeza de JSON (Muitas vezes o Gemini manda ```json ... ```)
+      const cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
+      const raw = JSON.parse(cleanText);
 
-    // 3. NUCLEAR FALLBACK: SMART TEMPLATE GENERATION (NO MORE "Guia Completo")
-    // If AI fails completely, use string manipulation to create decent titles.
-    const cleanTopic = safeTopic.replace(/guia/gi, '').replace(/completo/gi, '').replace(/prático/gi, '').trim();
-    return [
-      { title: `O Segredo de ${cleanTopic}`, subtitle: "O método pouco conhecido para dominar o assunto", reason: "Emergency Backup", isTopChoice: true, marketingHook: "Secret", score: 85 },
-      { title: `A Bíblia do ${cleanTopic}`, subtitle: "Tudo o que você precisa saber, sem rodeios", reason: "Fallback", isTopChoice: false, marketingHook: "Authority", score: 80 },
-      { title: `${cleanTopic}: A Verdade`, subtitle: "Caindo os mitos que te impedem de avançar", reason: "Fallback", isTopChoice: false, marketingHook: "Controversy", score: 80 },
-      { title: `Mestres do ${cleanTopic}`, subtitle: "Estratégias avançadas para iniciantes", reason: "Fallback", isTopChoice: false, marketingHook: "Evolution", score: 80 },
-      { title: `${cleanTopic} Lucrativo`, subtitle: "Como transformar este conhecimento em resultados reais", reason: "Fallback", isTopChoice: false, marketingHook: "Benefit", score: 75 },
-      { title: `O Fim do ${cleanTopic}`, subtitle: "Por que tudo o que você sabe está errado", reason: "Fallback", isTopChoice: false, marketingHook: "Negativity", score: 75 },
-      { title: `${cleanTopic} Em 7 Dias`, subtitle: "Um plano de ação acelerado", reason: "Fallback", isTopChoice: false, marketingHook: "Speed", score: 75 },
-      { title: `Essencial ${cleanTopic}`, subtitle: "Guia prático e direto ao ponto", reason: "Fallback", isTopChoice: false, marketingHook: "Simplicity", score: 70 }
-    ];
+      if (!Array.isArray(raw)) throw new Error("Not an array");
+
+      // Enriquecer com metadados obrigatórios do frontend
+      return raw.map((item: any, index: number) => ({
+        title: item.title,
+        subtitle: item.subtitle || "Subtítulo de alto impacto",
+        marketingHook: item.marketingHook || "Promessa de Transformação",
+        reason: "Gerado por IA Especialista em Best-Sellers",
+        score: 90 - (index * 2), // Score decrescente
+        isTopChoice: index === 0
+      }));
+    } catch (e) {
+      console.error("JSON Parse Error:", e);
+      throw new Error("Erro ao processar resposta da IA (JSON Inválido)");
+    }
+  };
+
+  // --- TENTATIVA 1: GOOGLE GEMINI (Prioridade: Custo Baixo) ---
+  if (GEMINI_KEY) {
+    try {
+      console.log("🔵 [Tentativa 1] Usando Google Gemini 1.5 Flash...");
+      const googleAI = new GoogleGenerativeAI(GEMINI_KEY);
+      const model = googleAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        generationConfig: { temperature: 0.7 }
+      });
+
+      const result = await model.generateContent(`${SYSTEM_PROMPT}\n\nINPUT DO USUÁRIO: ${userPrompt}`);
+      const response = await result.response;
+      const text = response.text();
+
+      return parseAndEnrich(text);
+
+    } catch (googleError: any) {
+      console.warn("⚠️ [Falha Gemini] Erro:", googleError.message);
+      console.log("🔄 Ativando Protocolo de Emergência (OpenAI)...");
+      // Deixa cair para o próximo bloco
+    }
+  } else {
+    console.warn("⚠️ Chave GEMINI_API_KEY não encontrada. Indo para OpenAI.");
   }
+
+  // --- TENTATIVA 2: OPENAI (Backup: Custo Mais Alto) ---
+  if (OPENAI_KEY) {
+    try {
+      console.log("🟢 [Tentativa 2] Usando OpenAI (GPT-4o-Mini)...");
+      const openai = new OpenAI({ apiKey: OPENAI_KEY });
+
+      const completion = await openai.chat.completions.create({
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userPrompt }
+        ],
+        model: "gpt-4o-mini", // User requested model
+        response_format: { type: "json_object" } // Garante JSON se suportado
+      });
+
+      const text = completion.choices[0].message.content || "[]";
+      return parseAndEnrich(text);
+
+    } catch (openAiError: any) {
+      console.error("❌ [ERRO CRÍTICO] OpenAI também falhou:", openAiError);
+      throw new Error("Serviço de IA temporariamente indisponível. (Erro 503)");
+    }
+  }
+
+  // Se chegou aqui, não tem nenhuma chave configurada
+  console.error("❌ NENHUMA CHAVE DE API ENCONTRADA (Gemini ou OpenAI).");
+  throw new Error("Erro de Configuração no Servidor: Chaves de API ausentes.");
 };
 
 export const generateStructure = async (title: string, subtitle: string, researchContext: string, lang: string = 'pt', contentStyle?: string): Promise<Chapter[]> => {
@@ -410,9 +442,8 @@ export const writeChapter = async (
     subtopics = ["Fundamentos", "Histórico e Evolução", "Principais Desafios", "Ferramentas e Técnicas", "Estudos de Caso"];
   }
 
-  // Ensure we don't go overboard if AI hallucinates many topics
-  // FIX: Limit to 3 subtopics to control book length (aiming for ~180 pages total)
-  subtopics = subtopics.slice(0, 3);
+  // Ensure we don't go overboard if AI hallucinates 10 topics
+  subtopics = subtopics.slice(0, 5);
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -432,7 +463,7 @@ export const writeChapter = async (
         Chapter: ${chapter.title}
         Objective: ${chapter.intro}
         
-        TASK: Write the INTRODUCTION for this chapter (approx 300 words).
+        TASK: Write the INTRODUCTION for this chapter (approx 250 words).
         Hook the reader, explain what will be covered, and set the stage.
         Make cross-references ("Como vimos anteriormente...").
         Start directly with the content.
@@ -454,12 +485,7 @@ export const writeChapter = async (
             Current Section: "${subtopic}"
             
             TAREFA: Escreva o conteúdo desta seção.
-            REGRAS INTERNAS DE TAMANHO:
-            - Escreva APROXIMADAMENTE 400-500 palavras para esta seção.
-            - NÃO ultrapasse 600 palavras.
-            - Seja conciso e direto ao ponto.
-            
-            REGRAS DE TOM:
+            REGRAS:
             - Use tom conversacional e prático.
             - Foco total em resolver as dores listadas acima.
             
@@ -477,7 +503,7 @@ export const writeChapter = async (
         ${getHumanizationInstructions(lang, style, tone)}
         Chapter: ${chapter.title}
         
-        TASK: Write a powerful CONCLUSION for this chapter (approx 200 words).
+        TASK: Write a powerful CONCLUSION for this chapter (approx 150 words).
         Summarize key points and transition to the next idea.
         
         LANGUAGE: ${langName}.
@@ -498,11 +524,8 @@ export const writeChapter = async (
         CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
         
         TAREFA: Escreva o Capítulo Completo.
-        REGRAS DE TAMANHO:
-        - O capítulo deve ter entre 1500 e 2000 palavras no TOTAL.
-        - NÃO ULTRAPASSE 2000 palavras.
-        
-        REGRAS DE ESTILO:
+        REGRAS:
+        - Mínimo de 2000 palavras.
         - Use tom conversacional e prático.
         - Foco total em resolver as dores listadas na pesquisa.
         
@@ -720,64 +743,12 @@ export const generateExtras = async (
     IMPORTANT: ALL TEXT MUST BE IN ${langName}.
   `;
 
-  try {
-    const res = await llm.generateJSON<{ dedication: string; acknowledgments: string; aboutAuthor: string }>(prompt);
-    return {
-      dedication: cleanText(res.dedication),
-      acknowledgments: cleanText(res.acknowledgments),
-      aboutAuthor: cleanText(res.aboutAuthor || "")
-    };
-  } catch (e) {
-    console.error("Extras JSON Generation Failed. Fallbacking to Text Extraction...", e);
-    // FALLBACK TO TEXT PARSING
-    const textPrompt = `
-      Generate the following sections for the book "${metadata.bookTitle}" by ${metadata.authorName}.
-      Language: ${langName}
-      
-      SECTION 1: DEDICATION
-      Target: ${dedicationTo || "Family and Friends"}
-      Marker: ===DEDICATION===
-      
-      SECTION 2: ACKNOWLEDGMENTS
-      Target: ${ackTo || "Everyone who helped"}
-      Marker: ===ACKNOWLEDGMENTS===
-      
-      SECTION 3: ABOUT THE AUTHOR
-      Context: ${aboutAuthorContext || "Professional expert"}
-      Marker: ===ABOUT_AUTHOR===
-      
-      OUTPUT FORMAT:
-      ===DEDICATION===
-      (Write dedication here)
-      ===ACKNOWLEDGMENTS===
-      (Write acknowledgments here)
-      ===ABOUT_AUTHOR===
-      (Write bio here)
-    `;
-
-    try {
-      const text = await llm.generateText(textPrompt);
-      const extract = (marker: string, nextMarker: string) => {
-        const start = text.indexOf(marker);
-        if (start === -1) return "Conteúdo padrão gerado devido a erro.";
-        const end = nextMarker ? text.indexOf(nextMarker, start) : text.length;
-        return text.substring(start + marker.length, end !== -1 ? end : undefined).trim();
-      };
-
-      return {
-        dedication: extract("===DEDICATION===", "===ACKNOWLEDGMENTS==="),
-        acknowledgments: extract("===ACKNOWLEDGMENTS===", "===ABOUT_AUTHOR==="),
-        aboutAuthor: extract("===ABOUT_AUTHOR===", "")
-      };
-    } catch (fallbackError) {
-      console.error("Critical Failure in Extras Generation:", fallbackError);
-      return {
-        dedication: `Dedico este livro a todos que sonham e realizam.`,
-        acknowledgments: `Agradeço à minha família e amigos pelo apoio incondicional.`,
-        aboutAuthor: `${metadata.authorName} é um apaixonado pelo conhecimento e transformação pessoal.`
-      };
-    }
-  }
+  const res = await llm.generateJSON<{ dedication: string; acknowledgments: string; aboutAuthor: string }>(prompt);
+  return {
+    dedication: cleanText(res.dedication),
+    acknowledgments: cleanText(res.acknowledgments),
+    aboutAuthor: cleanText(res.aboutAuthor || "")
+  };
 };
 
 export const structureBookFromText = async (fullText: string): Promise<any> => {

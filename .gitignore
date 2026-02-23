@@ -8,9 +8,3 @@ frontend/.env
 database.json
 backups/
 generated_books/
-
-backend/database.json
-
-dist/
-backend/dist/
-coverage/

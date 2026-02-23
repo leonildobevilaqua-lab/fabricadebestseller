@@ -62,24 +62,21 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({ onClose, userEmail }
                     </div>
 
                     <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2 uppercase tracking-wide">
-                        {config.discountLevel && config.discountLevel > 1 ? "Nova Conquista Desbloqueada!" : "Conquista Desbloqueada!"}
+                        Conquista Desbloqueada!
                     </h2>
 
                     <p className="text-slate-300 mb-6 font-medium">
-                        {config.discountLevel && config.discountLevel > 1 ?
-                            <span>Parabéns! Você alcançou o <span className="text-white font-bold">{config.discountLevel}º Nível</span> do ciclo de descontos.</span> :
-                            <span>Parabéns pela ativação do seu plano <span className="text-white font-bold">{planName}</span>.</span>
-                        }
+                        Parabéns pela ativação do seu plano <span className="text-white font-bold">{planName}</span>.
                     </p>
 
                     <div className="bg-slate-800/50 rounded-xl p-6 border border-indigo-500/20 mb-8">
                         <p className="text-sm text-slate-400 mb-2">Você acaba de desbloquear o valor exclusivo:</p>
                         <div className="flex items-end justify-center gap-2">
-                            <span className="text-slate-500 text-lg line-through">R$ {((bookPrice * 1.5) || 39.90).toFixed(2).replace('.', ',')}</span>
+                            <span className="text-slate-500 text-lg line-through">R$ 39,90</span>
                             <span className="text-4xl font-bold text-green-400">R$ {bookPrice.toFixed(2).replace('.', ',')}</span>
                         </div>
                         <p className="text-xs text-indigo-300 mt-2 font-semibold tracking-wide uppercase">
-                            Preço garantido para o PRÓXIMO Livro da Geração
+                            Preço garantido para o 1º Livro da Geração
                         </p>
                     </div>
 

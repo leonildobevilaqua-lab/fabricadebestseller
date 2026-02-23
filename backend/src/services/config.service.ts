@@ -40,10 +40,8 @@ export interface AppConfig {
 
 const defaultConfig: AppConfig = {
     providers: {
-        // Encodado para evitar scan de seguranca do GitHub Push Protection
-        // O usuario solicitou persistencia no codigo
-        gemini: Buffer.from("QUl6YVN5QUFycmoyMWExdTNPWTRFRDJvSExxdkljazZKSXhjMVVV", 'base64').toString('utf-8'),
-        openai: Buffer.from("c2stcHJvai12cXZxazJWS0g3T2NYMmRKSm8zNzdkajBzaDljNkpLTVcyMzhxRlo1aEotUkFzblZEaGJ6dU1KU1E3c09TeExtaUctNUFGdmRkaFQzQmxia0ZKS183Vlg1MkhHMm9PbGFhX01EcTZmaEk3bGpoejFTRVpzYXh2TEdKUjRDY0JZdk04VXZ6YzA5XzJDaE5DanRmUXBncElZZjBId0E=", 'base64').toString('utf-8'),
+        gemini: "",
+        openai: "",
         anthropic: "",
         deepseek: "",
         llama: ""
@@ -85,9 +83,6 @@ export const getConfig = async (): Promise<AppConfig> => {
     // Merge Settings (Providers, etc)
     if (settingsData) {
         finalConfig = { ...finalConfig, ...settingsData };
-        // SAFEGUARD: Ensure keys are not overwritten by empty strings from DB
-        if (!finalConfig.providers.gemini) finalConfig.providers.gemini = defaultConfig.providers.gemini;
-        if (!finalConfig.providers.openai) finalConfig.providers.openai = defaultConfig.providers.openai;
     }
 
     // Merge Admin (User/Pass) - Prioritize Root /admin key

@@ -38,7 +38,7 @@ export const PricingSection: React.FC<PricingProps> = ({ onSelectPlan, lang, onL
                 { text: t.features.content, included: true },
                 { text: t.features.diagram, included: true },
                 { text: t.features.titlePage, included: true },
-                { text: t.features.summaryManual, included: true },
+                { text: t.features.summary, included: true },
                 { text: t.features.history, included: true },
                 { text: t.features.manualPages, included: false, warning: true },
                 { text: t.features.communityAccess, included: false },

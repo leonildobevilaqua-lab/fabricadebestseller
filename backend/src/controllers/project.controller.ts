@@ -139,23 +139,14 @@ export const create = async (req: Request, res: Response) => {
                 }
 
                 if (leadIndex !== -1) {
-                    const matchedLead = leads[leadIndex] as any;
                     // Update existing BOOK Lead
                     await setVal(`/leads[${leadIndex}]/status`, 'IN_PROGRESS');
                     await setVal(`/leads[${leadIndex}]/topic`, topic);
                     // If name was missing, update it
-                    if (!matchedLead.name) {
+                    if (!(leads[leadIndex] as any).name) {
                         await setVal(`/leads[${leadIndex}]/name`, authorName);
                     }
                     console.log(`Linked Project to existing Book Lead ${leadIndex}`);
-
-                    // --- ATTACH PRICE CONTEXT TO PROJECT ---
-                    if (matchedLead.amount || matchedLead.tag) {
-                        await QueueService.updateMetadata(project.id, {
-                            valuation: matchedLead.amount,
-                            pricingTag: matchedLead.tag
-                        });
-                    }
                 } else {
                     // Create NEW Lead so it shows in Admin as a separate row from Subscription
                     const newLead = {
@@ -228,21 +219,12 @@ export const update = async (req: Request, res: Response) => {
     const updates = req.body; // Expect { metadata: { ... } } or partials
 
     try {
-        // Robustness: Handle flat updates that should be in metadata (e.g. from simpler frontend calls)
-        const metaUpdates = updates.metadata || {};
-        const flatMetaKeys = ['dedication', 'aboutAuthor', 'acknowledgments', 'status', 'progress', 'bookTitle', 'subTitle'];
-
-        flatMetaKeys.forEach(k => {
-            if (updates[k] !== undefined) metaUpdates[k] = updates[k];
-        });
-
-        if (Object.keys(metaUpdates).length > 0) {
-            await QueueService.updateMetadata(id, metaUpdates);
+        if (updates.metadata) {
+            await QueueService.updateMetadata(id, updates.metadata);
         }
 
         // --- TRIGGER DOCX GENERATION ON COMPLETION ---
-        // Use consolidated metaUpdates to catch flat status updates too
-        if (metaUpdates.status === 'COMPLETED' || updates.status === 'COMPLETED') {
+        if (updates.metadata?.status === 'COMPLETED') {
             console.log(`Project ${id} marked COMPLETED. Generating final artifact...`);
             const fullProject = await QueueService.getProject(id);
             if (fullProject) {
@@ -460,7 +442,7 @@ export const startResearch = async (req: Request, res: Response) => {
             // Step 1: YouTube
             await QueueService.updateMetadata(id, {
                 progress: 5,
-                statusMessage: `📡 Calibrando sensores neurolinguísticos para varredura no YouTube: "${topic}"...`
+                statusMessage: `📡 Calibrando sensores para varredura no YouTube: "${topic}"...`
             });
             let ytResearch = "";
             try {
@@ -524,7 +506,7 @@ export const startResearch = async (req: Request, res: Response) => {
             await QueueService.updateMetadata(id, {
                 status: 'WAITING_TITLE',
                 progress: 30,
-                statusMessage: "✅ Pesquisa industrial concluída. Títulos prontos para seleção."
+                statusMessage: "✅ Pesquisa industrial concluída. Matéria-prima pronta para seleção."
             });
 
         } catch (error: any) {
@@ -903,31 +885,16 @@ export const generateExtras = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { dedicationTo, ackTo, aboutAuthorContext, language } = req.body;
 
-    // Define fallback safe object immediately
-    const safeExtras = {
-        dedication: typeof dedicationTo === 'string' && dedicationTo.length > 5 ? `Dedico este livro a ${dedicationTo}.` : "",
-        acknowledgments: typeof ackTo === 'string' && ackTo.length > 5 ? `Agradeço a ${ackTo} por todo o apoio.` : "",
-        aboutAuthor: typeof aboutAuthorContext === 'string' && aboutAuthorContext.length > 5 ? aboutAuthorContext : ""
-    };
+    const project = await QueueService.getProject(id);
+    if (!project) return res.status(404).json({ error: "Not found" });
 
     try {
-        const project = await QueueService.getProject(id);
-        if (!project) {
-            console.error(`Project ${id} not found for extras generation. Returning safe fallback.`);
-            return res.json(safeExtras);
-        }
-
         const lang = language || project.metadata.language || 'pt';
         const extras = await AIService.generateExtras(project.metadata, dedicationTo, ackTo, aboutAuthorContext, lang);
         res.json(extras);
     } catch (error: any) {
-        console.error("Error generating extras (Controller Safe Catch):", error);
-        // Return valid JSON even on error to prevent UI crash
-        res.json({
-            dedication: typeof dedicationTo === 'string' && dedicationTo.length > 5 ? `Dedico este livro a ${dedicationTo}.` : "",
-            acknowledgments: typeof ackTo === 'string' && ackTo.length > 5 ? `Agradeço a ${ackTo} por todo o apoio.` : "",
-            aboutAuthor: typeof aboutAuthorContext === 'string' && aboutAuthorContext.length > 5 ? aboutAuthorContext : ""
-        });
+        console.error("Error generating extras:", error);
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -1221,22 +1188,6 @@ export const regenerateDocx = async (req: Request, res: Response) => {
         res.json({ success: true, message: "Docx regenerado com sucesso" });
     } catch (e: any) {
         console.error("Regenerate DOCX Error:", e);
-        res.status(500).json({ error: e.message });
-    }
-};
-
-export const deleteProject = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    try {
-        const project = await QueueService.getProject(id);
-        if (!project) return res.status(404).json({ error: "Project not found" });
-
-        // Soft Delete
-        await QueueService.updateMetadata(id, { status: 'DELETED' as any });
-
-        res.json({ success: true, message: "Project deleted successfully" });
-    } catch (e: any) {
-        console.error("Error deleting project:", e);
         res.status(500).json({ error: e.message });
     }
 };

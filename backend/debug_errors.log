@@ -854,3 +854,763 @@ Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generative
     at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
     at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
 
+[2026-02-09T08:11:03.471Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:11:13.008Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:11:22.101Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:11:38.898Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:11:47.827Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:13:57.054Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:14:20.346Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:14:25.426Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:14:34.410Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:14:57.012Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:15:14.010Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:15:30.065Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:15:49.215Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:16:11.177Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:16:22.181Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:16:26.666Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:16:35.882Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:16:51.639Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:17:08.790Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:17:26.496Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:17:42.795Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:17:58.514Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:18:07.000Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:18:09.674Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:18:17.111Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:18:33.819Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:18:47.388Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:19:02.593Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:19:22.655Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:19:37.673Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:19:45.171Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:19:48.256Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:19:57.016Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:20:14.373Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:20:31.843Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:20:50.125Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:21:15.152Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:21:36.706Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:21:41.644Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:21:46.167Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:21:57.733Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:22:12.869Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:22:28.334Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:22:42.438Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:23:00.300Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:23:18.593Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:23:25.858Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:23:29.364Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:23:38.974Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:23:54.970Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:24:17.308Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:24:32.383Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:24:52.369Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:25:10.992Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:25:17.802Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:25:21.729Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:25:29.673Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:25:44.260Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:26:00.560Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:26:17.318Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:26:46.001Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:27:05.677Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:27:12.750Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:27:15.802Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:27:26.753Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:27:42.507Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:27:56.104Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:28:15.825Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:28:38.982Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:28:57.694Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:29:02.938Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:29:07.022Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:29:14.458Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:29:28.977Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:29:43.084Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:30:04.870Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:30:31.156Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:30:50.673Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:30:57.897Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:31:02.066Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:31:11.002Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:31:30.785Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:31:48.876Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:32:06.021Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:32:23.602Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:32:41.821Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:32:48.312Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:32:52.126Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:33:05.931Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:33:20.527Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:33:42.481Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:33:59.843Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:34:14.520Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:34:30.057Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:34:37.480Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:34:41.656Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:34:53.095Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:35:09.692Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:35:26.539Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:35:39.989Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:35:54.707Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:36:09.762Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:36:18.026Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:36:39.269Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:37:03.875Z] [LLM_FAIL_BOTH_JSON] OpenAI JSON Parse Failed: {
+   "youtubeDescription": "📘 Além da Superfície: Falando Aberto sobre a Saúde Mental no Ministério...
+Stack: Error: OpenAI JSON Parse Failed: {
+   "youtubeDescription": "📘 Além da Superfície: Falando Aberto sobre a Saúde Mental no Ministério...
+    at OpenAIProvider.<anonymous> (C:\Users\Pichau\Downloads\bestseller-factory-ai\backend\src\services\llm\openai.provider.ts:78:19)
+    at Generator.next (<anonymous>)
+    at fulfilled (C:\Users\Pichau\Downloads\bestseller-factory-ai\backend\src\services\llm\openai.provider.ts:5:58)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+[2026-02-09T08:37:03.875Z] [MARKETING_JSON_FAIL] OpenAI JSON Parse Failed: {
+   "youtubeDescription": "📘 Além da Superfície: Falando Aberto sobre a Saúde Mental no Ministério...
+Stack: Error: OpenAI JSON Parse Failed: {
+   "youtubeDescription": "📘 Além da Superfície: Falando Aberto sobre a Saúde Mental no Ministério...
+    at OpenAIProvider.<anonymous> (C:\Users\Pichau\Downloads\bestseller-factory-ai\backend\src\services\llm\openai.provider.ts:78:19)
+    at Generator.next (<anonymous>)
+    at fulfilled (C:\Users\Pichau\Downloads\bestseller-factory-ai\backend\src\services\llm\openai.provider.ts:5:58)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+[2026-02-09T08:37:05.772Z] [LLM_FALLBACK_TEXT_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+
+[2026-02-09T08:38:13.566Z] [LLM_FALLBACK_JSON_Gemini_TO_OpenAI] [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+Stack: Error: [GoogleGenerativeAI Error]: Error fetching from https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent: [404 Not Found] models/gemini-1.0-pro is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+    at handleResponseNotOk (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:434:11)
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at makeRequest (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:403:9)
+    at generateContent (C:\Users\Pichau\Downloads\bestseller-factory-ai\node_modules\@google\generative-ai\dist\index.js:867:22)
+

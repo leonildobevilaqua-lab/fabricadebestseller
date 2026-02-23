@@ -32,37 +32,19 @@ const EmptyCircle = () => (
   <div className="w-5 h-5 rounded-full border-2 border-slate-300"></div>
 );
 
-const ProgressTicker = ({ messages }: { messages: string[] }) => {
-  // ROBUST GHOST FILTER
-  // 1. Filter out unwanted phrases
-  const safeMessages = messages.filter(m => {
-    const lower = m.toLowerCase();
-    return !lower.includes("pesquisando os v") &&
-      !lower.includes("youtube") &&
-      !lower.includes("videos mais") &&
-      !lower.includes("vídeos mais");
-  });
-
-  // 2. If all messages were filtered (or input was empty), use safe defaults
-  // This prevents falling back to the original tainted 'messages' array
-  const validMessages = safeMessages.length > 0
-    ? safeMessages
-    : ["Processando dados da sua obra...", "Estruturando engenharia reversa...", "Otimizando conteúdo viral..."];
-
+const RotatingMessage = ({ messages }: { messages: string[] }) => {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex(prev => (prev + 1) % validMessages.length);
-    }, 4000);
+      setIndex(prev => (prev + 1) % messages.length);
+    }, 5000);
     return () => clearInterval(interval);
-  }, [validMessages]);
-
-  const currentMsg = validMessages[index] || validMessages[0];
+  }, [messages]);
 
   return (
-    <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in transition-opacity duration-500">
-      "{currentMsg}"
+    <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in">
+      "{messages[index] || messages[0]}"
     </p>
   );
 };
@@ -215,11 +197,10 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     }
   };
 
-  const checkAccessStatus = (manualCheck = false) => {
+  const checkAccessStatus = () => {
     if (!userContact?.email) return;
 
-    const query = manualCheck ? '&checkPending=true' : '';
-    fetch(`/api/payment/check-access?email=${userContact.email}${query}`)
+    fetch(`/api/payment/check-access?email=${userContact.email}`)
       .then(r => r.json())
       .then(access => {
         if (access.hasAccess) {
@@ -242,24 +223,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 }
               }
             });
-          }
-        } else {
-          // Manual Check Feedback
-          if (manualCheck) {
-            if (access.pendingInvoice) {
-              const inv = access.pendingInvoice;
-              const statusMap: any = { 'PENDING': 'PENDENTE', 'OVERDUE': 'VENCIDA', 'CONFIRMED': 'PAGA' };
-              const statusPT = statusMap[inv.status] || inv.status;
-              const invNum = inv.invoiceNumber || inv.id || 'N/A';
-
-              alert(`A Fatura nº ${invNum} ainda consta como ${statusPT}.\n\nPor gentileza finalize o pagamento para prosseguir ou aguarde a compensação pelo Banco.\n\n(Valor: R$ ${inv.value})`);
-
-              if (inv.url && confirm("Deseja abrir a 2ª via do boleto/PIX?")) {
-                window.open(inv.url, '_blank');
-              }
-            } else {
-              alert("O sistema ainda não identificou o pagamento recente. Se você pagou via Boleto, pode levar até 1 dia útil. PIX é instantâneo. Tente novamente em alguns segundos.");
-            }
+          } else {
+            setShowReward(true);
           }
         }
       })
@@ -341,58 +306,22 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   };
 
   // Define handleGenerateExtras at top level
-  const handleGenerateExtrasV2 = async () => {
-    console.log("VERSION: GENERATOR_EXTRAS_V5_FIXED");
-    if (!projectId) return alert("Projeto não identificado. Por favor, recarregue a página.");
-    // if (!dedicationTo && !ackTo) return alert(t.fillAuthInfo); // Allow empty, just generate defaults
+  const handleGenerateExtras = async () => {
+    if (!dedicationTo && !ackTo) return alert(t.fillAuthInfo);
     setGeneratingExtras(true);
     try {
-      const res = await fetch(`${API.getApiBase()}/api/projects/${projectId}/generate-extras?t=${Date.now()}`, {
+      const res = await fetch(`/api/projects/${projectId}/generate-extras`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dedicationTo, ackTo, aboutAuthorContext })
       });
-
-      if (!res.ok) {
-        throw new Error(`Server status: ${res.status}`);
-      }
-
       const data = await res.json();
-      setDedication(data.dedication || "");
-      setAck(data.acknowledgments || "");
-      setAboutAuthor(data.aboutAuthor || "");
-
-      setProject(prev => prev ? ({
-        ...prev,
-        metadata: {
-          ...prev.metadata,
-          dedication: data.dedication || prev.metadata.dedication,
-          acknowledgments: data.acknowledgments || prev.metadata.acknowledgments,
-          aboutAuthor: data.aboutAuthor || prev.metadata.aboutAuthor
-        }
-      }) : null);
-
-    } catch (e: any) {
-      console.error("Generate Extras Failed (Validation Fallback):", e);
-      // SILENT FALLBACK - Do not Alert user
-      const fbDedication = dedicationTo ? `Dedico esta obra a ${dedicationTo}.` : "";
-      const fbAck = ackTo ? `Agradeço a ${ackTo} por todo o apoio durante esta jornada.` : "";
-      const fbBio = aboutAuthorContext || `Autor(a) apaixonado(a) por ${project?.metadata.topic || 'escrever'}.`;
-
-      setDedication(fbDedication);
-      setAck(fbAck);
-      setAboutAuthor(fbBio);
-
-      // Update Project State locally so UI reflects "done"
-      setProject(prev => prev ? ({
-        ...prev,
-        metadata: {
-          ...prev.metadata,
-          dedication: fbDedication,
-          acknowledgments: fbAck,
-          aboutAuthor: fbBio
-        }
-      }) : null);
+      if (data.dedication) setDedication(data.dedication);
+      if (data.acknowledgments) setAck(data.acknowledgments);
+      if (data.aboutAuthor) setAboutAuthor(data.aboutAuthor);
+    } catch (e) {
+      console.error(e);
+      alert(t.errorGeneratingExtras);
     } finally {
       setGeneratingExtras(false);
     }
@@ -464,21 +393,21 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               }
 
               const isPlanActive = !!(access.plan && access.plan.status === 'ACTIVE');
-              const subPrice = access.subscriptionPrice !== undefined ? access.subscriptionPrice : (isPlanActive ? 0 : 49.90);
+              const subPrice = isPlanActive ? 0 : (access.subscriptionPrice || 49.90);
 
               setUpsellOffer({
                 price: access.bookPrice,
                 planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
-                link: access.bookCheckoutUrl || access.checkoutUrl, // Prefer specific book link
+                link: access.checkoutUrl,
                 level: access.discountLevel,
                 subscriptionPrice: subPrice,
-                subscriptionLink: access.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"
+                subscriptionLink: "#"
               });
 
               // Flow: If Plan Active -> Show Reward (User clicks -> Go to Book Checkout)
               // If Plan Inactive -> Show Payment Gate (Total)
               if (isPlanActive) {
-                // setShowReward(true); // Disable intrusive modal for active users
+                setShowReward(true);
                 setShowPaymentGate(false);
               } else {
                 setShowPaymentGate(true);
@@ -507,19 +436,19 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         } else {
           // Access Denied -> Show Payment Gate (User must pay or Admin must approve)
           const isPlanActive = !!(accessCheck.plan && accessCheck.plan.status === 'ACTIVE');
-          const subPrice = accessCheck.subscriptionPrice !== undefined ? accessCheck.subscriptionPrice : (isPlanActive ? 0 : 49.90);
+          const subPrice = isPlanActive ? 0 : (accessCheck.subscriptionPrice || 49.90);
 
           setUpsellOffer({
             price: accessCheck.bookPrice,
             planName: accessCheck.planLabel || (accessCheck.plan?.name ? `Plano ${accessCheck.plan.name}` : "STARTER"),
-            link: accessCheck.bookCheckoutUrl || accessCheck.checkoutUrl,
+            link: accessCheck.checkoutUrl,
             level: accessCheck.discountLevel,
             subscriptionPrice: subPrice,
-            subscriptionLink: accessCheck.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"
+            subscriptionLink: "#"
           });
 
           if (isPlanActive) {
-            // setShowReward(true); // Premature upsell disabled
+            setShowReward(true);
             setShowPaymentGate(false);
           } else {
             setShowPaymentGate(true);
@@ -548,11 +477,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             if (isPaymentError || !access.hasAccess) {
               setUpsellOffer({
                 price: access.bookPrice,
-                planName: access.planLabel || "STARTER",
-                link: access.bookCheckoutUrl || access.checkoutUrl,
-                level: access.discountLevel,
-                subscriptionPrice: access.subscriptionPrice,
-                subscriptionLink: access.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"
+                planName: access.plan?.name || "STARTER",
+                link: access.checkoutUrl,
+                level: access.discountLevel
               });
               setShowPaymentGate(true);
               setError(null); // Clear generic error
@@ -643,24 +570,17 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   // Polling
   useEffect(() => {
-    if (!projectId || error) return;
+    if (!projectId) return;
     const interval = setInterval(async () => {
       try {
         const p = await API.getProject(projectId);
         if (p && p.metadata) setProject(p);
-      } catch (e: any) {
+      } catch (e) {
         console.error("Polling error", e);
-        const msg = e.message || String(e);
-        // CRITICAL FIX: Stop polling on Server Crash (500) or HTML response
-        if (msg.includes("500") || msg.includes("503") || msg.includes("IA indisponível") || msg.toLowerCase().includes("html")) {
-          clearInterval(interval);
-          setProject(null); // Stop loading spinner if dependent on project
-          setError(`Erro Crítico de Conexão: ${msg}. O servidor de IA pode estar reiniciando ou indisponível.`);
-        }
       }
-    }, 2000); // Increased interval to 2s to reduce load
+    }, 1000);
     return () => clearInterval(interval);
-  }, [projectId, error]);
+  }, [projectId]);
 
   // Sync App Step
   useEffect(() => {
@@ -763,7 +683,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       <PaymentGate
         isOpen={true}
         planName={upsellOffer?.planName || "STARTER"}
-        bookPrice={upsellOffer?.price || 24.21}
+        bookPrice={upsellOffer?.price || 39.90}
         subscriptionPrice={upsellOffer?.subscriptionPrice || 49.90}
         checkoutUrl={upsellOffer?.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"} // FIX: Ensure this is the PLAN Link not Book Link? 
         // Logic: If user is Pending Sub, they need PLAN link. If they are Sub but no credits, they need BOOK link.
@@ -845,7 +765,6 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 <p className="text-sm text-slate-600 italic mb-4 relative z-10">{opt.subtitle}</p>
                 <div className="text-xs bg-slate-50 p-3 rounded text-slate-500 border border-slate-100 relative z-10 flex items-start gap-2">
                   <span className="text-yellow-500 text-base">★</span>
-                  <span className="font-bold text-slate-700 mr-1">I.A. Expert:</span>
                   <span>{opt.reason}</span>
                 </div>
               </button>
@@ -980,14 +899,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           </div>
 
           <button
-            onClick={handleGenerateExtrasV2}
-            disabled={generatingExtras || (!dedicationTo && !ackTo && !aboutAuthorContext)}
+            onClick={handleGenerateExtras}
+            disabled={generatingExtras || (!dedicationTo && !ackTo)}
             className="w-full mb-8 bg-indigo-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-indigo-700 transition disabled:opacity-50 flex justify-center items-center gap-2"
           >
             {generatingExtras ? <span className="animate-spin">⚙️</span> : "✨"}
             {generatingExtras ? t.writing : t.generateWithAI}
           </button>
-          <p className="text-[10px] text-slate-300 text-center mt-2 opacity-50">System v5.2 - FIX CARREGADO</p>
 
           <div className="mb-6 relative">
             <label className="block font-bold text-slate-700 mb-2">{t.dedication}</label>
@@ -1093,32 +1011,25 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             {t.resetSystem}
           </button>
           <button
-            onClick={async () => {
+            onClick={() => {
               // Trigger Download
-              if (project && project.id) {
-                // Use smart API fallback that searches by ID in filename
-                window.open(`${API.getApiBase()}/api/admin/books/download/${project.id}`, '_blank');
+              if (project) {
+                // Logic to download file (usually done via link or separate func)
+                // Wait, the button says "Baixar Pacote".
+                // The original code passed 'handleFinalize' here?
+                // If handleFinalize was missing in previous view, I assume it triggers download.
+                // I will check if I can trigger download AND show modal.
+
+                // Assuming download happens via window.open or similar in a real app,
+                // but here effectively it just downloads.
+
+                // We open the Admin URL for the book for download
+                if (project && project.id) {
+                  window.open(`${API.getApiBase()}/api/admin/books/${project.id}`, '_blank');
+                }
+
+                setShowUpsell(true); // Restored Confetti/Reward Modal Logic
               }
-
-              // REFRESH OFFER DATA (Fix Stale State) - Fetch fresh pricing for NEXT book
-              if (userContact?.email) {
-                try {
-                  const res = await fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`);
-                  const access = await res.json();
-
-                  // Update offer with fresh data
-                  setUpsellOffer({
-                    price: access.bookPrice,
-                    planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
-                    link: access.checkoutUrl,
-                    level: access.discountLevel,
-                    subscriptionPrice: access.subscriptionPrice || 49.90,
-                    subscriptionLink: "#"
-                  });
-                } catch (e) { console.error("Upsell Refresh Failed", e); }
-              }
-
-              setShowUpsell(true); // Enabled for Next Book Discount
             }}
             className="bg-[#0284c7] text-white px-10 py-4 rounded-xl font-bold shadow-xl shadow-[#0ea5e9]/20 hover:bg-[#0369a1] hover:-translate-y-1 transition-all flex items-center gap-2"
           >
@@ -1330,7 +1241,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
           </div>
         </div>
-      </div >
+      </div>
     );
   }
 
@@ -1426,59 +1337,31 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 {isResuming ? "Retomando..." : t.resumeProcess}
               </button>
             ) : (
-              <ProgressTicker messages={(() => {
-                const msg = (statusMessage || "").toLowerCase();
-
-                // 1. Research Phase (0-20%) - YouTube/Google Focus
-                // 1. Research Phase (0-20%) - Market Focus (No YouTube)
-                if (progress < 20) return [
-                  "Analisando tendências de mercado editorial...",
-                  "Identificando padrões de best-sellers na Amazon...",
-                  "Mapeando o comportamento do público-alvo...",
-                  "Estruturando os pilares do conteúdo...",
-                  "Calibrando o tom de voz da obra..."
-                ];
-
-                // 2. Deep Analysis (20-40%) - Structure/Reverse Engineering
+              <RotatingMessage messages={(() => {
                 if (progress < 40) return [
-                  "Desconstruindo a engenharia de títulos de sucesso...",
-                  "Criando a arquitetura persuasiva do livro...",
-                  "Validando a jornada do herói...",
-                  "Estruturando os ganchos mentais de cada capítulo...",
-                  "Otimizando a lógica de retenção do leitor..."
+                  "Pesquisando os vídeos mais visualizados sobre o assunto...",
+                  "Verificando os comentários nos vídeos sobre o tema...",
+                  "Mapeando as dores, dúvidas e sugestões da audiência...",
+                  "Analisando tendências de pesquisa no Google...",
+                  "Identificando gatilhos mentais mais utilizados...",
+                  "Cruzando dados de concorrentes best-sellers..."
                 ];
-
-                // 3. Writing Phase (40-90%) - Content Generation
-                if (progress < 60) return [
-                  "Escrevendo conteúdo de alto impacto...",
-                  "Desenvolvendo argumentos irrefutáveis...",
-                  "Criando conexões emocionais profundas...",
-                  "Aplicando técnicas de PNL na narrativa...",
-                  "Expandindo os tópicos em parágrafos fluidos..."
-                ];
-
-                if (progress < 80) return [
-                  "Refinando o tom de voz para máxima autoridade...",
-                  "Adicionando exemplos práticos e estudos de caso...",
-                  "Eliminando redundâncias e clichês...",
-                  "Polindo a prosa para leitura envolvente...",
-                  "Conectando as ideias entre os capítulos..."
-                ];
-
                 if (progress < 90) return [
-                  "Aplicando gatilhos mentais de copywriting...",
-                  "Finalizando os últimos capítulos com chave de ouro...",
-                  "Revisando a coerência textual...",
-                  "Garantindo a promessa de transformação do livro..."
+                  "Selecionando as principais informações coletadas na pesquisa profissional...",
+                  "Organizando os assuntos de acordo com os capítulos...",
+                  "Fazendo a estruturação adequada do pensamento lógico do livro...",
+                  "Escrevendo os conteúdos de forma profissional e harmônica...",
+                  "Desenvolvendo o pensamento crítico e aplicando ao conteúdo do livro.",
+                  "Otimizando parágrafos para retenção de leitura...",
+                  "Enriquecendo o texto com exemplos práticos...",
+                  "Aplicando técnicas de PNL para persuasão..."
                 ];
-
-                // 4. Finalization (90-100%) - Formatting/Marketing
                 return [
-                  "Diagramando seu livro para formato profissional...",
-                  "Criando materiais de marketing de alta conversão...",
-                  "Gerando sinopse magnética para vendas...",
-                  "Otimizando palavras-chave para SEO...",
-                  "Finalizando o pacote completo do seu Best-Seller!"
+                  "REVISANDO O CONTEÚDO FINAL...",
+                  "FINALIZANDO OS CAPÍTULOS...",
+                  "AJUSTANDO DETALHES FINAIS...",
+                  "PREPARANDO O ARQUIVO PARA VOCÊ...",
+                  "CONCLUINDO A GERAÇÃO..."
                 ];
               })()} />
             )}

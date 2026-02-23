@@ -66,7 +66,7 @@ app.get('/reset-admin-force', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} - Updated ${new Date().toISOString()}`);
-    console.log("FORCE DEPLOY - V3.0 - GEMINI 2.5 FIX + PERSISTENT KEYS");
+    console.log("FORCE DEPLOY RETRY - V2.7 - API KEY CHECK");
 
     // CRITICAL API KEY CHECK
     const geminiKey = process.env.GEMINI_API_KEY;

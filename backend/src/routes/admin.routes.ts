@@ -15,7 +15,6 @@ router.post('/change-password', AdminController.changePassword); // Requires Bea
 // Let's check `admin.routes.ts` again.
 router.get('/settings', AdminController.getSettings);
 router.post('/settings', AdminController.updateSettings);
-router.get('/books/download/:email', AdminController.downloadBook);
 router.get('/books/:email', AdminController.downloadBook);
 
 // Backups
@@ -23,13 +22,5 @@ router.post('/backups', AdminController.createBackup);
 router.get('/backups', AdminController.listBackups);
 router.post('/backups/restore', AdminController.restoreBackup);
 router.get('/orders', AdminController.getOrders);
-
-router.post('/recover-books', AdminController.recoverBooks);
-router.post('/reset-user', AdminController.resetUser);
-router.post('/manage-credits', AdminController.manageCredits);
-
-// Payment Environment Toggle
-router.get('/payment-env', AdminController.getPaymentEnv);
-router.post('/payment-env', AdminController.updatePaymentEnv);
 
 export default router;

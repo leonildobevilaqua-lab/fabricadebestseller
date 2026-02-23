@@ -2,15 +2,14 @@ import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { setVal, getVal, pushVal, reloadDB } from '../services/db.service';
 import { getProjectByEmail } from '../services/queue.service';
-import { AsaasProvider } from '../services/asaas.provider';
-import { getConfig } from '../services/config.service';
 import multer from 'multer';
+import { AsaasProvider } from '../services/asaas.provider';
+const upload = multer();
 
 // --- PRICING CONFIGURATION ---
+// --- PRICING CONFIGURATION ---
 // TABELA DE PREÇOS IMUTÁVEL (Fonte da Verdade)
-// REMOVIDO AVULSO - APENAS ASSINANTES PODEM GERAR
 const PRICING_RULES: any = {
-    'AVULSO': [89.90, 89.90, 89.90, 89.90],
     'STARTER_MENSAL': [26.90, 24.21, 22.87, 21.52],
     'STARTER_ANUAL': [24.90, 22.41, 21.17, 19.92],
     'PRO_MENSAL': [21.90, 19.71, 18.62, 17.52],
@@ -19,47 +18,18 @@ const PRICING_RULES: any = {
     'BLACK_ANUAL': [14.90, 13.41, 12.67, 11.92]
 };
 
-export const checkPaymentStatus = async (req: Request, res: Response) => {
-    try {
-        const { email } = req.query;
-        if (!email) return res.status(400).json({ error: "Email required" });
-        await reloadDB();
-
-        const customer = await AsaasProvider.getCustomerByEmail(email as string);
-        if (!customer) return res.json({ status: 'NOT_FOUND' });
-
-        const payments = await AsaasProvider.getPayments({ customer: customer.id, status: 'RECEIVED' });
-        const confirmed = await AsaasProvider.getPayments({ customer: customer.id, status: 'CONFIRMED' });
-
-        const allPayments = [...payments, ...confirmed];
-
-        if (allPayments.length > 0) {
-            return res.json({ status: 'PAID' });
-        }
-
-        const pending = await AsaasProvider.getPayments({ customer: customer.id, status: 'PENDING' });
-        if (pending.length > 0) {
-            return res.json({ status: 'PENDING' });
-        }
-
-        res.json({ status: 'NONE' });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
-    }
-};
-
 const SUBSCRIPTION_PRICES: any = {
     'STARTER': {
-        annual: { price: 118.80, link: '/api/payment/subscribe?plan=STARTER&billing=annual' },
-        monthly: { price: 19.90, link: '/api/payment/subscribe?plan=STARTER&billing=monthly' }
+        annual: { price: 118.80, link: 'https://pay.kiwify.com.br/47E9CXl' },
+        monthly: { price: 19.90, link: 'https://pay.kiwify.com.br/kfR54ZJ' }
     },
     'PRO': {
-        annual: { price: 238.80, link: '/api/payment/subscribe?plan=PRO&billing=annual' },
-        monthly: { price: 34.90, link: '/api/payment/subscribe?plan=PRO&billing=monthly' }
+        annual: { price: 238.80, link: 'https://pay.kiwify.com.br/jXQTsFm' },
+        monthly: { price: 34.90, link: 'https://pay.kiwify.com.br/Bls6OL7' }
     },
     'BLACK': {
-        annual: { price: 358.80, link: '/api/payment/subscribe?plan=BLACK&billing=annual' },
-        monthly: { price: 49.90, link: '/api/payment/subscribe?plan=BLACK&billing=monthly' }
+        annual: { price: 358.80, link: 'https://pay.kiwify.com.br/hSv5tYq' },
+        monthly: { price: 49.90, link: 'https://pay.kiwify.com.br/7UgxJ0f' }
     }
 };
 
@@ -244,367 +214,8 @@ export const approveLead = async (req: Request, res: Response) => {
     }
 };
 
-export const createBookGenerationCharge = async (req: Request, res: Response) => {
-    try {
-        const { email, cycleIndex, forcePlan, payer } = req.body;
-        if (!email) return res.status(400).json({ error: "Email required" });
-        const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
-        await reloadDB();
-
-        // 1. Identificar Plano Simples (com Fallback Robustez)
-        let plan = await getVal(`/users/${safeEmail}/plan`);
-
-        // Force AVULSO if requested from landing page or if user is avulso
-        if (forcePlan === 'AVULSO' || (plan && plan.name === 'AVULSO')) {
-            plan = { name: 'AVULSO', status: 'ACTIVE' };
-        }
-
-        // Force reload leads to check for subscriber status if plan is missing/inactive
-        if (!plan || plan.status !== 'ACTIVE') {
-            const rawLeads = await getVal('/leads') || [];
-            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
-            // Find any lead for this email that is a SUBSCRIBER or has an ACTIVE plan
-            const subLead = leads.find((l: any) =>
-                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-                (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
-            );
-
-            if (subLead && (subLead as any).plan) {
-                console.log(`[CHARGE] Found fallback plan in leads for ${email}`);
-                plan = (subLead as any).plan;
-                // Auto-fix for future
-                await setVal(`/users/${safeEmail}/plan`, plan);
-            }
-        }
-
-        // IF still no plan and NO forcePlan, block
-        if (!plan && !forcePlan) {
-            console.warn(`[CHARGE] BLOCKING: No active plan found for ${email}.`);
-            return res.status(403).json({
-                error: "PLAN_REQUIRED",
-                message: "Assinatura não identificada. Por favor, contate o suporte.",
-            });
-        }
-
-        const finalPlanName = (forcePlan || plan?.name || 'STARTER').toUpperCase();
-        let cleanPlan = 'STARTER';
-        if (finalPlanName.includes('BLACK')) cleanPlan = 'BLACK';
-        else if (finalPlanName.includes('PRO')) cleanPlan = 'PRO';
-        else if (finalPlanName.includes('AVULSO')) cleanPlan = 'AVULSO';
-
-        const billingRaw = (plan?.billing || 'monthly').toLowerCase();
-        const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
-
-        let planKey = `${cleanPlan}_${billingSuffix}`;
-        if (cleanPlan === 'AVULSO') planKey = 'AVULSO';
-
-        // 2. Determinar Preço (Confiar no Frontend ou Fallback Backend)
-        let finalIndex = 0;
-        if (cleanPlan !== 'AVULSO') {
-            if (cycleIndex !== undefined && cycleIndex !== null) {
-                finalIndex = parseInt(cycleIndex);
-            } else {
-                // Fallback: Tentativa Simples de calcular caso frontend falhe
-                try {
-                    const projects = await getVal('/projects') || {};
-                    const list = Array.isArray(projects) ? projects : Object.values(projects);
-                    const count = list.filter((p: any) =>
-                        (p.userEmail?.toLowerCase() === email.toLowerCase()) &&
-                        p.metadata?.status !== 'DELETED' &&
-                        (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
-                    ).length;
-                    finalIndex = count % 4;
-                } catch (e) { }
-            }
-        }
-
-        const priceList = PRICING_RULES[planKey] || PRICING_RULES['STARTER_MENSAL'];
-        // Garantir indice entre 0 e 3
-        const safeIndex = Math.min(Math.max(0, finalIndex), 3);
-        const price = priceList[safeIndex] || priceList[0];
-
-        console.log(`[CHARGE] ${email} | Plan: ${planKey} | Index: ${safeIndex} | Price: ${price} | Reason: Manual Credit Buy`);
-
-        // 3. Descrição
-        const description = cleanPlan === 'AVULSO'
-            ? "Compra Avulsa de Crédito (Geração de Livro)"
-            : `Crédito Adicional (Nível ${safeIndex + 1}) - Plano ${cleanPlan}`;
-
-        // 4. Criar Cobrança
-        const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
-
-        // Wrapper seguro para criar customer
-        let customerId = '';
-        try {
-            customerId = await AsaasProvider.createCustomer({
-                name: payer?.name || userProfile.name || email.split('@')[0],
-                email: email,
-                cpfCnpj: payer?.cpfCnpj || userProfile.cpf || undefined,
-                phone: payer?.phone || userProfile.phone || undefined,
-                postalCode: payer?.address?.cep || userProfile.cep || undefined,
-                address: payer?.address?.street || userProfile.address || undefined,
-                addressNumber: payer?.address?.number || userProfile.addressNumber || undefined,
-                complement: payer?.address?.complement || userProfile.complement || undefined,
-                province: payer?.address?.neighborhood || userProfile.neighborhood || undefined
-            });
-        } catch (custErr: any) {
-            console.error("Failed to create customer:", custErr);
-            return res.status(400).json({ error: "Erro ao cadastrar cliente no Asaas. Verifique CPF/Telefone no perfil." });
-        }
-
-        const charge = await AsaasProvider.createPayment(
-            customerId,
-            price,
-            description
-        );
-
-        if (charge && (charge.invoiceUrl || charge.bankSlipUrl)) {
-            // --- ATUALIZAÇÃO IMEDIATA DO LEAD PARA O PAINEL ADMIN ---
-            try {
-                const rawLeads = await getVal('/leads') || [];
-                const leadsList = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-                let targetIdx = -1;
-
-                // Prioritize finding the LATEST lead of type BOOK for this email
-                for (let i = leadsList.length - 1; i >= 0; i--) {
-                    const l = leadsList[i] as any;
-                    if (l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.type === 'BOOK') {
-                        targetIdx = i;
-                        break;
-                    }
-                }
-
-                if (targetIdx !== -1) {
-                    await setVal(`/leads[${targetIdx}]/amount`, price);
-                    await setVal(`/leads[${targetIdx}]/tag`, description);
-                    await setVal(`/leads[${targetIdx}]/details`, {
-                        level: safeIndex + 1,
-                        price,
-                        description,
-                        status: 'PAYMENT_LINK_SENT',
-                        updatedAt: new Date()
-                    });
-                    console.log(`[CHARGE] Book Lead ${targetIdx} updated with Price R$ ${price}`);
-                } else {
-                    // IF NO BOOK LEAD EXISTS, CREATE ONE INSTEAD OF OVERWRITING SUBSCRIPTION
-                    const newBookLead = {
-                        id: uuidv4(),
-                        email: email,
-                        name: 'Autor',
-                        type: 'BOOK',
-                        status: 'PENDING',
-                        amount: price,
-                        tag: description,
-                        details: { level: safeIndex + 1, price, description },
-                        date: new Date()
-                    };
-                    await pushVal('/leads', newBookLead);
-                    console.log(`[CHARGE] Created NEW Book Lead for ${email}`);
-                }
-            } catch (e) { console.error("Err Lead Update:", e); }
-
-            return res.json({ url: charge.invoiceUrl || charge.bankSlipUrl });
-        } else {
-            console.error("Asaas Empty Response", charge);
-            return res.status(500).json({ error: "O Asaas não retornou o link da fatura." });
-        }
-
-    } catch (error: any) {
-        console.error('CRITICAL CHARGE ERROR:', error);
-        return res.status(500).json({
-            error: error.message || "Erro Interno ao Gerar Fatura",
-            stack: error.stack
-        });
-    }
-};
-
-export const createBookChargeLink = async (req: Request, res: Response) => {
-    try {
-        const email = req.query.email as string;
-        if (!email) return res.status(400).send("Email is required");
-
-        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        await reloadDB();
-
-        // 1. Identificar Plano e Ciclo
-        let plan = await getVal(`/users/${safeEmail}/plan`);
-
-        // Robustez: Se status não for explicitamente ACTIVE, verificar se é assinante em transição
-        if (!plan || plan.status !== 'ACTIVE') {
-            const rawLeads = await getVal('/leads') || [];
-            const subLead = Object.values(rawLeads).find((l: any) =>
-                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-                (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
-            );
-
-            if (subLead && (subLead as any).plan) {
-                plan = (subLead as any).plan;
-                // Auto-fix user record if missing
-                await setVal(`/users/${safeEmail}/plan`, plan);
-            }
-        }
-
-        // STRICT CHECK: SE NÃO TEM PLANO, NÃO GERA COBRANÇA DE LIVRO.
-        if (!plan || plan.status !== 'ACTIVE') {
-            return res.redirect('/plans?error=PLAN_REQUIRED');
-        }
-
-        const planName = (plan.name || 'STARTER').toUpperCase();
-        let cleanPlan = 'STARTER';
-        if (planName.includes('BLACK')) cleanPlan = 'BLACK';
-        else if (planName.includes('PRO')) cleanPlan = 'PRO';
-
-        const billingRaw = (plan.billing || 'monthly').toLowerCase();
-        const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
-
-        const planKey = `${cleanPlan}_${billingSuffix}`;
-
-        // 2. Definir Prioridade/Ciclo
-        const user = await getVal(`/users/${safeEmail}`);
-        const userOrders = user?.orders || [];
-        const paidOrdersCount = userOrders.length;
-
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
-        // Contar leads aprovados/completos deste email (Legacy)
-        const leadsUsage = leads.filter((l: any) =>
-            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
-        ).length;
-
-        let projectsUsage = 0;
-        try {
-            const projects = await getVal('/projects') || {};
-            const projectList = Array.isArray(projects) ? projects : Object.values(projects);
-            projectsUsage = projectList.filter((p: any) => {
-                const pUserEmail = (p.userEmail || "").toLowerCase().trim();
-                const pMetaEmail = (p.metadata?.contact?.email || "").toLowerCase().trim();
-                const targetEmail = email.toLowerCase().trim();
-
-                // Robust Email Match
-                const isMatch = pUserEmail === targetEmail || pMetaEmail === targetEmail;
-
-                const status = p.metadata?.status;
-                // STRICT CHECK: Explicitly exclude 'DELETED' and ensure status is valid
-                if (status === 'DELETED') return false;
-
-                const isValidStatus = (
-                    status === 'COMPLETED' ||
-                    status === 'LIVRO ENTREGUE' ||
-                    status === 'WRITING_CHAPTERS' ||
-                    status === 'REVIEW_STRUCTURE' ||
-                    status === 'GENERATING_STRUCTURE' ||
-                    status === 'WAITING_DETAILS' ||
-                    status === 'GENERATING_MARKETING' ||
-                    status === 'RESEARCHING' ||
-                    status === 'WAITING_TITLE'
-                );
-
-                return isMatch && isValidStatus;
-            }).length;
-        } catch (e) { console.error("Error calculating project usage", e); }
 
 
-        const usageCount = projectsUsage;
-
-        // Use Frontend Cycle Index if provided (Strict User Alignment)
-        // This ensures what they see is what they pay.
-        // req.body.cycleIndex is passed from Frontend
-        let cycleIndex = usageCount % 4; // Default fallback
-        if (req.body.cycleIndex !== undefined && req.body.cycleIndex !== null) {
-            const requestedIndex = parseInt(req.body.cycleIndex);
-            // Basic sanity check: allow if within reasonable range of calculated index OR if calculated is 0 (reset/empty)
-            // Trusting frontend for UX consistency as per user demand ("Simply... Value of Active Box")
-            console.log(`[Pricing] Overriding backend index ${cycleIndex} with frontend index ${requestedIndex}`);
-            cycleIndex = requestedIndex;
-        }
-
-        const priceList = PRICING_RULES[planKey];
-        let price = priceList ? priceList[0] : 26.90;
-        if (priceList) {
-            const safeIndex = Math.min(Math.max(0, cycleIndex), 3);
-            price = priceList[safeIndex] !== undefined ? priceList[safeIndex] : priceList[0];
-        }
-
-        console.log(`[Pricing Link] Email: ${email} | Plan: ${planKey} | Count: ${usageCount} | Index: ${cycleIndex} | FINAL PRICE: ${price}`);
-
-        // Format Description: "Nível 1/2 I Plano Black Mensal"
-        const level = cycleIndex + 1; // 1, 2, 3, 4
-        const cycle = Math.floor(usageCount / 4) + 1; // 1, 2...
-
-        // Clean Plan Name for Display
-        const displayPlan = `${cleanPlan} ${billingSuffix === 'ANUAL' ? 'Anual' : 'Mensal'}`;
-        // Add capitalization
-        const nicePlan = displayPlan.charAt(0).toUpperCase() + displayPlan.slice(1).toLowerCase().replace('black', 'Black').replace('pro', 'Pro').replace('starter', 'Starter');
-
-        const description = `Nível ${level}/${cycle} I Plano ${nicePlan}`;
-
-        // 4. Criar Cobrança no Asaas
-        const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
-        const customerId = await AsaasProvider.createCustomer({
-            name: userProfile.name || email.split('@')[0],
-            email: email,
-            cpfCnpj: userProfile.cpf || undefined,
-            phone: userProfile.phone || undefined
-        });
-
-        const charge = await AsaasProvider.createPayment(
-            customerId,
-            price,
-            description
-        );
-
-        if (charge && (charge.invoiceUrl || charge.bankSlipUrl)) {
-            // ATUALIZAÇÃO IMEDIATA DO LEAD
-            try {
-                const rawLeads = await getVal('/leads') || [];
-                const leadsList = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-                // Prioritize finding the LATEST lead of type BOOK for this email
-                let targetIdx = -1;
-                for (let i = leadsList.length - 1; i >= 0; i--) {
-                    const l = leadsList[i] as any;
-                    if (l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.type === 'BOOK') {
-                        targetIdx = i;
-                        break;
-                    }
-                }
-                if (targetIdx !== -1) {
-                    await setVal(`/leads[${targetIdx}]/amount`, price);
-                    await setVal(`/leads[${targetIdx}]/tag`, description);
-                    await setVal(`/leads[${targetIdx}]/details`, { level, cycle, price, description });
-                } else {
-                    const newBookLead = {
-                        id: uuidv4(),
-                        email: email,
-                        name: 'Autor',
-                        type: 'BOOK',
-                        status: 'PENDING',
-                        amount: price,
-                        tag: description,
-                        details: { level, cycle, price, description },
-                        date: new Date()
-                    };
-                    await pushVal('/leads', newBookLead);
-                }
-            } catch (e) { console.error("Err Lead Update:", e); }
-
-            return res.json({ url: charge.invoiceUrl || charge.bankSlipUrl });
-        } else {
-            console.error("Asaas Charge Failed (Empty URL):", charge);
-            return res.status(500).json({ error: "O Asaas não retornou um link de pagamento válido." });
-        }
-
-    } catch (error: any) {
-        console.error('Falha ao criar link cobrança:', error);
-        // Ensure strictly JSON response for frontend
-        return res.status(500).json({
-            error: error.message || 'Erro interno ao comunicar com Asaas.',
-            details: error.response?.data
-        });
-    }
-};
 export const handleKiwifyWebhook = async (req: Request, res: Response) => {
     try {
         await reloadDB();
@@ -629,27 +240,53 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             const pm = payload.payment;
 
             if (evt === 'PAYMENT_CONFIRMED' || evt === 'PAYMENT_RECEIVED') status = 'paid';
+            email = pm.customerEmail || (payload.customer && payload.customer.email); // Asaas sometimes sends customer object or just email? Usually we need to query customer or it's in payload? 
+            // Asaas 'payment' object usually doesn't have email directly, but the top level payload might have logic or we need to rely on what we have.
+            // Actually Asaas webhook has payment.customer (ID). We might need to fetch customer logic?
+            // BUT, usually we pass custom data or we use the customer creation email.
+            // In createCharge we created a customer. 
+            // Let's assume for now we might need to lookup or it is passed.
+            // Let's check typical payload. Often `payment.details` or we have to use `payload.payment.externalReference` if we set it?
+            // We didn't set externalReference in createCharge.
+            // However, we can fetch customer details if needed.
+            // For MVP, Asaas often sends detailed payload if configured? No.
+            // We will try to extract what we can.
 
-            try {
-                console.log(`[WEBHOOK] Fetching Customer ${pm.customer} from Asaas...`);
-                const customer = await AsaasProvider.getCustomer(pm.customer);
-                if (customer) {
-                    email = customer.email;
-                    payerName = customer.name;
-                    payerCpf = customer.cpfCnpj;
-                    console.log(`[WEBHOOK] Customer identified: ${email}`);
-                }
-            } catch (err) {
-                console.error("Failed to fetch Asaas customer", err);
+            // Asaas typically doesn't send email in the payment event payload directly, only customer ID.
+            // Logic hack: We might have to fetch the customer from Asaas API or rely on local lookup?
+            // Wait, we don't have a local mapping of CustomerID -> Email in `payment.controller`.
+
+            // CRITICAL: We need the email to activate the plan.
+            // If we can't get it from payload, we must fetch from Asaas.
+            // We will use AsaasProvider (need to import getCustomer if exists, or adding it).
+            // Let's assume we can import AsaasProvider.
+
+            if (!email && pm.customer) {
+                try {
+                    // Use static import instead of dynamic to avoid module resolution issues
+                    console.log(`[WEBHOOK] Fetching Customer ${pm.customer} from Asaas...`);
+                    const customer = await AsaasProvider.getCustomer(pm.customer);
+                    if (customer) {
+                        email = customer.email;
+                        payerName = customer.name;
+                        payerCpf = customer.cpfCnpj;
+                        console.log(`[WEBHOOK] Customer identified: ${email}`);
+                    }
+                } catch (err) { console.error("Failed to fetch Asaas customer", err); }
             }
 
             amount = pm.value;
-            productName = pm.description || "Assinatura";
+            productName = pm.description || "Assinatura"; // Asaas description
         } else {
             // KIWIFY (Default)
+            // Check for Token (User provided: 9f1su6po412)
             const token = req.query.token || req.body.token || req.params.token;
-            if (token === '9f1su6po412') {
-                console.log("Kiwify Token MATCHES production key.");
+            if (token) {
+                console.log("Kiwify Token present:", token);
+                if (token === '9f1su6po412') console.log("Token MATCHES production key.");
+                else console.warn("Token mismatch! Expected 9f1su6po412");
+            } else {
+                console.log("No Kiwify token found in request (Safe to ignore if not configured in dashboard, but user provided one).");
             }
 
             status = payload.order_status;
@@ -695,7 +332,8 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 // BLACK
                 14.90, 13.41, 12.67, 11.92, // Annual
                 16.90, 15.21, 14.37, 13.52, // Monthly
-                89.90 // AVULSO
+                // Avulso / Fallbacks
+                39.90
             ];
 
             // Explicit Keywords
@@ -705,8 +343,8 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             // Check explicit prices (robust against keyword failure)
             const isExactPrice = generationPrices.some(p => Math.abs(p - amount) < 0.05);
 
-            // Fallback: Price Safety Net (10 to 100 BRL covers 11.92 to 89.90)
-            if (isExactPrice || (amount > 10 && amount < 100)) {
+            // Fallback: Price Safety Net (10 to 40 BRL covers 11.92 to 39.90)
+            if (isExactPrice || (amount > 10 && amount < 40)) {
                 console.log(`[WEBHOOK] Price Pattern Match for Book Generation: ${amount}`);
                 isBookGeneration = true;
             }
@@ -731,32 +369,14 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 await setVal(`/users/${safeEmail}/lastBookPaymentDate`, new Date());
 
                 // Also update Lead if exists
-                let leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.type === 'BOOK');
+                let leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
                 if (leadIndex !== -1) {
                     // Register the payment
                     await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
-                    await setVal(`/leads[${leadIndex}]/amount`, amount); // Specific Amount
                     await setVal(`/leads[${leadIndex}]/status`, 'APPROVED'); // Unblock access if pending
-
-                    await setVal(`/leads[${leadIndex}]/tag`, productName);
-                    // If description contains level/cycle, parse it
-                    if (productName.includes('Nível')) {
-                        await setVal(`/leads[${leadIndex}]/tag`, productName);
-                    }
                 }
 
                 console.log(`[WEBHOOK] SUCCESS: Credits updated ${currentCredits} -> ${newCredits}`);
-
-                // AUTO-ACTIVATE AVULSO PLAN IF IDENTIFIED
-                if (amount === 89.90 || (productName && productName.toUpperCase().includes('AVULSA'))) {
-                    console.log(`[WEBHOOK] ACTION: SET AVULSO PLAN for ${email}`);
-                    await setVal(`/users/${safeEmail}/plan`, {
-                        name: 'AVULSO',
-                        status: 'ACTIVE',
-                        startDate: new Date(),
-                        lastPayment: new Date()
-                    });
-                }
 
                 // Trigger Diagramming if needed (Mock logic maintained)
                 // ... (omitted for brevity, existing logic covers this if needed via lead updates)
@@ -803,7 +423,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                             date: new Date(),
                             email: email,
                             name: payerName,
-                            type: 'SUBSCRIPTION',
+                            type: 'BOOK',
                             status: 'SUBSCRIBER',
                             plan: { name: detectedPlan, billing },
                             paymentInfo,
@@ -857,9 +477,6 @@ export const checkAccess = async (req: Request, res: Response) => {
     let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
     let latestInvoiceStatus = null;
     let latestInvoiceNumber = null;
-    let lastPaymentDate = null;
-    let totalPaidCount = 0;
-    let unexpiredCount = 0;
 
     // [STRICT AUDIT & RECOVERY SYSTEM]
     // 1. Unconditionally fetch external truth (Asaas) and local history (Orders)
@@ -880,8 +497,7 @@ export const checkAccess = async (req: Request, res: Response) => {
                 const d = (p.description || "").toLowerCase();
                 return d.includes('geração') || d.includes('livro') ||
                     d.includes('assinatura') || d.includes('plano') ||
-                    d.includes('starter') || d.includes('pro') || d.includes('black') ||
-                    d.includes('nível') || d.includes('crédito'); // Added 'crédito' to catch book purchase invoices
+                    d.includes('starter') || d.includes('pro') || d.includes('black');
             });
             if (latestGen) {
                 latestInvoiceStatus = latestGen.status;
@@ -903,40 +519,38 @@ export const checkAccess = async (req: Request, res: Response) => {
     // Runs UNCONDITIONALLY to ensure the DB always reflects the true bank status
     if (asaasPayments.length > 0) {
         // 1. Calculate INFLOW (Confirmed Payments)
-        const now = new Date();
-        const allConfirmedPayments = asaasPayments.filter((p: any) => (p.status === 'RECEIVED' || p.status === 'CONFIRMED'));
-
-        const unexpiredPaidList = allConfirmedPayments.filter((p: any) => {
-            const paymentDate = new Date(p.confirmedDate || p.paymentDate || p.clientPaymentDate || p.dateCreated);
-            const diffDays = (now.getTime() - paymentDate.getTime()) / (1000 * 60 * 60 * 24);
-            return diffDays <= 30; // 30 days expiration
-        });
-
-        totalPaidCount = allConfirmedPayments.length;
-        unexpiredCount = unexpiredPaidList.length;
-
-        if (unexpiredCount > 0) {
-            lastPaymentDate = unexpiredPaidList[0].confirmedDate || unexpiredPaidList[0].paymentDate || unexpiredPaidList[0].clientPaymentDate || unexpiredPaidList[0].dateCreated;
-        }
+        const validPaidList = asaasPayments.filter((p: any) =>
+            (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
+            (validPrices.some(vp => Math.abs(vp - p.value) < 0.1) ||
+                (p.description || '').toLowerCase().includes('livro') ||
+                (p.description || '').toLowerCase().includes('geração'))
+        );
+        const paidCount = validPaidList.length;
 
         // 2. Calculate OUTFLOW (Generated Books / Orders)
         const userOrders = (orders as any[]).filter((o: any) =>
             (o.paymentInfo?.payerEmail?.toLowerCase() === (email as string).toLowerCase()) ||
-            allConfirmedPayments.some(p => p.id === o.id || p.id === o.paymentInfo?.transactionId)
+            validPaidList.some(p => p.id === o.id || p.id === o.paymentInfo?.transactionId)
         );
-        const totalUsedCount = orders.filter((o: any) =>
-            o.status === 'COMPLETED' || o.status === 'PROCESSING' || o.status === 'LIVRO ENTREGUE' || o.status === 'IN_PROGRESS'
-        ).length;
+        const usedCount = userOrders.length;
 
         // [ORDER RECONCILIATION]
+        // User Requirement: "Sum value ... Include Invoice Number ... Show immediately"
+        // Cycle through all VALID PAYMENTS. If a payment is NOT linked to an existing order, create a "Credit" order.
         let ordersUpdated = false;
-        for (const payment of unexpiredPaidList) {
+
+        for (const payment of validPaidList) {
+            // Check if this payment ID exists in user orders (as id or transactionId)
             const exists = orders.some((o: any) => o.id === payment.id || o.paymentInfo?.transactionId === payment.id);
+
             if (!exists) {
+                console.log(`[LEDGER] Found unlinked payment ${payment.id} (${payment.value}). Creating Order placeholder.`);
+
+                // Create a "Credit Purchased" order
                 const newOrder = {
-                    id: payment.id,
+                    id: payment.id, // Use Payment ID as Order ID for tracking
                     title: "Crédito de Livro (Disponível)",
-                    status: "CREDIT_AVAILABLE",
+                    status: "CREDIT_AVAILABLE", // Special status for unused credits
                     date: payment.paymentDate || new Date(),
                     price: payment.value,
                     invoiceNumber: payment.invoiceNumber || payment.id,
@@ -947,29 +561,40 @@ export const checkAccess = async (req: Request, res: Response) => {
                         value: payment.value
                     }
                 };
-                orders.push(newOrder);
+
+                orders.push(newOrder); // Add to local array
                 ordersUpdated = true;
             }
         }
 
         if (ordersUpdated) {
+            console.log(`[LEDGER] Saving reconciled orders for ${email}`);
             await setVal(`/users/${safeEmail}/orders`, orders);
+            // Force reload local variable for accurate accounting if needed downstream
         }
 
         // 3. Determine TRUE BALANCE
-        // Balance = Confirmed unexpired payments that haven't been used yet.
-        let theoretical = Math.max(0, Math.min(unexpiredCount, totalPaidCount - totalUsedCount));
+        // Balance = Confirmed Payments - (Orders that are NOT just 'Keyholders')
+        // We count ALL confirmed payments. 
+        // We subtract orders that are USED (i.e., have a real book status, not just CREDIT_AVAILABLE).
 
-        // [STRICT LOCKING - USER REQUEST]
-        // If a PENDING or OVERDUE invoice exists, we block EVERYTHING (even old credits).
+        const usedOrdersCount = orders.filter((o: any) =>
+            o.status === 'COMPLETED' || o.status === 'PROCESSING' || o.status === 'LIVRO ENTREGUE'
+        ).length;
+
+        let theoretical = Math.max(0, paidCount - usedOrdersCount);
+
+        // [STRICT MODE ADJUSTMENT]
+        // User Requirement: If the LATEST invoice (current attempt) is PENDING, BLOCK access.
+        // This overrides "leftover credits" from DB resets to prevent confusion.
         if (latestInvoiceStatus === 'PENDING' || latestInvoiceStatus === 'OVERDUE') {
             if (theoretical > 0) {
-                console.warn(`[STRICT_MODE] LATEST INVOICE IS ${latestInvoiceStatus} (${latestInvoiceNumber}) FOR ${email}. FREEZING ${theoretical} CREDITS.`);
+                console.warn(`[STRICT_MODE] Pending Invoice ${latestInvoiceNumber} detected. Freezing ${theoretical} historical credits to enforce current payment.`);
+                theoretical = 0;
             }
-            theoretical = 0; // The only way to bypass is to pay or cancel the invoice at Asaas.
         }
 
-        console.log(`[LEDGER] ${email} -> Payments: ${totalPaidCount} (In) | Used: ${totalUsedCount} (Out) | Balance: ${theoretical} | Status: ${latestInvoiceStatus}`);
+        console.log(`[LEDGER] ${email} -> Payments: ${paidCount} (In) | Used Orders: ${usedOrdersCount} (Out) | Balance: ${theoretical}`);
 
         // 4. SYNC DB
         if (theoretical !== credits) {
@@ -1088,17 +713,13 @@ export const checkAccess = async (req: Request, res: Response) => {
         try {
             const projects = await getVal('/projects') || {};
             const projectList = Array.isArray(projects) ? projects : Object.values(projects);
-            projectsUsage = projectList.filter((p: any) => {
-                const pEmail = (p.metadata?.contact?.email || p.userEmail || "").toLowerCase().trim();
-                const targetEmail = (email as string).toLowerCase().trim();
-                const status = p.metadata?.status;
-                return pEmail === targetEmail &&
-                    (status === 'COMPLETED' || status === 'LIVRO ENTREGUE');
-            }).length;
-            console.log(`[CheckAccessDebug] Leads Usage: ${leadsUsage}, Projects Usage: ${projectsUsage} for ${email}`);
-        } catch (e) { console.error("Error calculating project usage in checkAccess", e); }
+            projectsUsage = projectList.filter((p: any) =>
+                p.userEmail?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
+                (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
+            ).length;
+        } catch (e) { }
 
-        usageCount = Math.max(leadsUsage, projectsUsage, (typeof totalPaidCount !== 'undefined' ? totalPaidCount : 0));
+        usageCount = Math.max(leadsUsage, projectsUsage);
 
         // 2. DETERMINE PLAN TRUTH
         effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : null;
@@ -1120,39 +741,21 @@ export const checkAccess = async (req: Request, res: Response) => {
             let billing = (effectivePlan.billing || 'monthly').toLowerCase();
 
             // If we are relying on effectivePlan from lead, treat it as active for date check
-            // However, we must ensure it has a valid date
-            if (userPlan && userPlan.status === 'ACTIVE') {
-                let startDate = new Date(userPlan.startDate || userPlan.date || 0);
+            const startDate = effectivePlan.startDate ? new Date(effectivePlan.startDate) : new Date();
+            let expiryDate = new Date(startDate);
+            if (billing === 'annual') expiryDate.setFullYear(startDate.getFullYear() + 1);
+            else expiryDate.setDate(startDate.getDate() + 31);
 
-                // DATA REPAIR: If Active but no valid date (e.g. manual entry without date), assume NEW activation today
-                // Threshold: anything before 2020 (1577836800000) is considered invalid/unset
-                if (startDate.getTime() < 1577836800000) {
-                    console.warn(`[ACCESS CHECK] Repairing Missing SDate for ${safeEmail}`);
-                    startDate = new Date();
-                    userPlan.startDate = startDate.toISOString();
-                    // Async update to fix DB
-                    setVal(`/users/${safeEmail}/plan`, userPlan);
+            // 3 Days Grace Period
+            expiryDate.setDate(expiryDate.getDate() + 3);
+
+            if (new Date() > expiryDate) {
+                console.log(`[SUBSCRIPTION] Plan Expired for ${safeEmail}`);
+                if (userPlan) {
+                    userPlan.status = 'EXPIRED';
+                    setVal(`/users/${safeEmail}/plan`, { ...userPlan, status: 'EXPIRED' });
                 }
-
-                const expiry = new Date(startDate);
-                if (userPlan.billing === 'annual' || userPlan.billing === 'anual') expiry.setFullYear(expiry.getFullYear() + 1);
-                else expiry.setMonth(expiry.getMonth() + 1);
-
-                // 3 Days Grace Period
-                expiry.setDate(expiry.getDate() + 3);
-
-                console.log(`[ACCESS CHECK] Email: ${safeEmail} | Plan: ${effectivePlan.name} | Start: ${startDate.toISOString()} | Expiry: ${expiry.toISOString()} | Now: ${new Date().toISOString()}`);
-
-                if (new Date() > expiry) {
-                    console.log(`[ACCESS CHECK] PLAN EXPIRED for ${safeEmail}`);
-                    if (userPlan.status === 'ACTIVE') {
-                        setVal(`/users/${safeEmail}/plan`, { ...userPlan, status: 'EXPIRED' });
-                    }
-                    isValid = false;
-                }
-            } else if (userPlan && userPlan.status !== 'ACTIVE') {
                 isValid = false;
-                console.log(`[ACCESS CHECK] PLAN STATUS '${userPlan.status}' IS NOT ACTIVE`);
             }
 
             if (isValid) {
@@ -1160,43 +763,33 @@ export const checkAccess = async (req: Request, res: Response) => {
                 const rawName = (effectivePlan.name || 'STARTER').toUpperCase();
                 if (rawName.includes('BLACK')) planName = 'BLACK';
                 else if (rawName.includes('PRO')) planName = 'PRO';
-                else if (rawName.includes('AVULSO')) planName = 'AVULSO';
                 else planName = 'STARTER';
 
-                // DYNAMIC PRICING (Cycle 0-3)
-                const cycleIndex = usageCount % 4;
+                // Cycle Logic
+                const cycleIndex = usageCount % 4; // 0, 1, 2, 3
 
                 const billingKey = (billing === 'annual' || billing === 'anual') ? 'ANUAL' : 'MENSAL';
-                const rulesKey = (planName === 'AVULSO') ? 'AVULSO' : `${planName}_${billingKey}`;
-                const priceList = PRICING_RULES[rulesKey] || PRICING_RULES['STARTER_MENSAL'];
-
-                // Use calculated Cycle Period
+                const priceList = PRICING_RULES[`${planName}_${billingKey}`] || PRICING_RULES['STARTER_MENSAL'];
                 const priceVal = priceList[cycleIndex] || priceList[0];
 
                 bookPrice = priceVal;
-                checkoutUrl = '';
-                discountLevel = cycleIndex + 1; // 1-4
-
-                console.log(`[ACCESS CHECK] VALID PLAN. Cycle: ${usageCount} (Index ${cycleIndex}). Price: ${bookPrice}. Level: ${discountLevel}`);
+                checkoutUrl = ''; // Dynamic generation only
+                discountLevel = cycleIndex + 1;
 
                 // FORCE ACTIVE STATUS IN RESPONSE if Valid
                 if (!userPlan) userPlan = { ...effectivePlan, status: 'ACTIVE' };
-            } else {
-                console.log(`[ACCESS CHECK] ISVALID=FALSE. Defaulting to 39.90 book price.`);
-                bookPrice = 39.90; // Fallback for expired/invalid
             }
-        } else {
-            console.log(`[ACCESS CHECK] NO PLAN FOUND for ${safeEmail}`);
-            bookPrice = 39.90;
         }
 
         // Capture effective plan for price calculation
         effectivePlan = userPlan || pendingPlan;
         if (effectivePlan) {
             const pName = effectivePlan.name || planName;
+            const pBilling = effectivePlan.billing || 'monthly';
             // Override planName for downstream logic
             planName = pName;
         }
+
     } catch (e) {
         console.error("Error calculating access/price", e);
     }
@@ -1233,87 +826,27 @@ export const checkAccess = async (req: Request, res: Response) => {
         }
     }
 
-    // ... (logic above remains)
-
-    // DETERMINAR PREÇO DA ASSINATURA (Para o Frontend saber se bloqueia ou não)
-    let finalSubscriptionPrice = 49.90;
-    let subscriptionLink = "https://pay.kiwify.com.br/SpCDp2q"; // Default Starter Monthly
-
-    if (userPlan && userPlan.status === 'ACTIVE') {
-        finalSubscriptionPrice = 0; // JÁ É ASSINANTE!
-    } else {
-        // Se não é assinante, qual o preço para virar?
-        // Se ele tentou assinar um plano específico (pendingPlan), mostramos aquele.
-        if (pendingPlan) {
-            const pName = (pendingPlan.name || 'STARTER').toUpperCase();
-            const pBilling = (pendingPlan.billing || 'monthly').toLowerCase();
-
-            if (SUBSCRIPTION_PRICES[pName]) {
-                finalSubscriptionPrice = SUBSCRIPTION_PRICES[pName][pBilling]?.price || 49.90;
-                let baseLink = SUBSCRIPTION_PRICES[pName][pBilling]?.link;
-                if (baseLink) {
-                    if (baseLink.startsWith('/')) {
-                        subscriptionLink = `${baseLink}&email=${email}`;
-                    } else {
-                        subscriptionLink = baseLink;
-                    }
-                }
-            }
-        }
-    }
-
-
-
-    // CHECK PENDING IF REQUESTED
-    let pendingInvoice = null;
-    if (req.query.checkPending === 'true' && email) {
-        try {
-            const safeEmail = (email as string).trim();
-            const customer = await AsaasProvider.getCustomerByEmail(safeEmail);
-            if (customer) {
-                const payments = await AsaasProvider.getPayments({
-                    customer: customer.id,
-                    status: 'PENDING',
-                    limit: 1
-                });
-                if (payments.length > 0) {
-                    const p = payments[0];
-                    pendingInvoice = {
-                        id: p.id, // invoice number usually? Or Asaas ID.
-                        invoiceNumber: p.invoiceNumber, // If available
-                        status: p.status,
-                        url: p.bankSlipUrl || p.invoiceUrl,
-                        value: p.value
-                    };
-                }
-            }
-        } catch (e) { console.error("Error checking pending invoice", e); }
-    }
-
     res.json({
-        pendingInvoice,
         hasAccess: credits > 0 || hasActiveProject,
         credits,
-        activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,
+        hasActiveProject,
+        leadStatus,
         plan: userPlan,
-
-        // Prices
-        bookPrice, // Preço do livro extra (calculado antes)
-        subscriptionPrice: finalSubscriptionPrice, // 0 = Assinante, >0 = Não Assinante
-
-        // Links
-        subscriptionLink, // Link Asaas (agora com email)
-        bookCheckoutUrl: `/api/payment/pay-book?email=${email}`, // Link Asaas (Backend gera)
-
-        // Metadata
-        planLabel: effectivePlan
-            ? `Plano ${(effectivePlan.name || 'STARTER').toUpperCase()}`
-            : "Assinatura Necessária",
+        pendingPlan,
+        bookPrice,
+        checkoutUrl,
         discountLevel,
-        totalBooksGenerated: usageCount,
-        lastPaymentDate,
         latestInvoiceStatus,
-        latestInvoiceNumber
+        latestInvoiceNumber,
+        activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,
+        // Helper for frontend total sum
+        subscriptionPrice: (effectivePlan && SUBSCRIPTION_PRICES[planName]?.[(effectivePlan.billing || 'monthly').toLowerCase()]?.price) ||
+            (pendingPlan && pendingPlan.price) ||
+            49.90,
+        planLabel: effectivePlan
+            ? `Plano ${planName} ${(effectivePlan.billing === 'annual' ? 'Anual' : 'Mensal')}`
+            : (pendingPlan ? `Plano ${pendingPlan.name} ${(pendingPlan.billing === 'annual' ? 'Anual' : 'Mensal')}` : 'Avulso'),
+        totalBooksGenerated: usageCount
     });
 };
 
@@ -1333,111 +866,81 @@ export const useCredit = async (req: Request, res: Response) => {
     }
 };
 
+export const createBookGenerationCharge = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: "Email required" });
+        const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
+        await reloadDB();
+
+        // 1. Identificar Plano e Ciclo
+        let plan = await getVal(`/users/${safeEmail}/plan`);
+
+        // Fallback search
+        if (!plan || plan.status !== 'ACTIVE') {
+            const rawLeads = await getVal('/leads') || [];
+            const actionLead = Object.values(rawLeads).find((l: any) =>
+                l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.status === 'SUBSCRIBER'
+            );
+            if (actionLead && (actionLead as any).plan) plan = (actionLead as any).plan;
+        }
+
+        const planName = plan ? (plan.name || 'STARTER').toUpperCase() : 'STARTER';
+        let cleanPlan = 'STARTER';
+        if (planName.includes('BLACK')) cleanPlan = 'BLACK';
+        else if (planName.includes('PRO')) cleanPlan = 'PRO';
+
+        const billingRaw = plan ? (plan.billing || 'monthly').toLowerCase() : 'monthly';
+        const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
+
+        const planKey = `${cleanPlan}_${billingSuffix}`;
+
+        // 2. Definir Prioridade/Ciclo
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        const usageCount = leads.filter((l: any) =>
+            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
+            // Fix: Do not count IN_PROGRESS for pricing. Only COMPLETED.
+            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE')
+        ).length;
+
+        const cycleIndex = usageCount % 4; // 0, 1, 2, 3
+
+        const priceList = PRICING_RULES[planKey] || PRICING_RULES['STARTER_MENSAL'];
+        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : 29.90;
+
+        // 3. Criar Cobrança no Asaas
+        const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
+        const customerId = await AsaasProvider.createCustomer({
+            name: userProfile.name || email.split('@')[0],
+            email: email,
+            cpfCnpj: userProfile.cpf || undefined,
+            phone: userProfile.phone || undefined
+        });
+
+        const charge = await AsaasProvider.createPayment(
+            customerId,
+            price,
+            `Geração de Livro - Nível ${cycleIndex + 1} (${cleanPlan})`
+        );
+
+        return res.json({ success: true, invoiceUrl: charge.invoiceUrl });
+
+    } catch (error: any) {
+        console.error('Falha ao criar cobrança:', error);
+        return res.status(500).json({ error: error.message || 'Falha ao criar cobrança' });
+    }
+};
 
 
-
-// Load products from config service
+// DUMMY IMPLEMENTATION TO FIX BUILD (config.service missing)
 export const getPublicConfig = async (req: Request, res: Response) => {
     try {
-        const config = await getConfig();
-        res.json({ products: config.products || {} });
+        // const { getConfig } = await import('../services/config.service');
+        // const config = await getConfig();
+        res.json({ products: {} });
     } catch (e) {
-        console.error("Failed to load config", e);
         res.status(500).json({ error: "Failed to load config" });
-    }
-};
-
-export const createCharge = async (req: Request, res: Response) => {
-    try {
-        const { email, type, payer } = req.body;
-        let price = 39.90; // Fallback
-
-        await reloadDB();
-        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        const userPlan = await getVal(`/users/${safeEmail}/plan`);
-
-        if (userPlan && userPlan.status === 'ACTIVE') {
-            const pName = (userPlan.name || 'STARTER').toUpperCase();
-            if (pName.includes('BLACK')) price = 39.90; // Default to full until confirmed
-            else if (pName.includes('PRO')) price = 39.90;
-            else price = 39.90;
-        }
-
-        const customerId = await AsaasProvider.createCustomer({
-            name: payer?.name || 'Cliente',
-            email,
-            cpfCnpj: payer?.cpfCnpj,
-            phone: payer?.phone
-        });
-        const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'}`);
-
-        res.json({ success: true, invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl, price });
-    } catch (e: any) {
-        console.error("Create Charge Error", e);
-        res.status(500).json({ error: "Failed to create charge" });
-    }
-};
-
-export const createSubscriptionCharge = async (req: Request, res: Response) => {
-    try {
-        const { email, plan, billing } = req.query;
-
-        if (!email || !plan) {
-            return res.status(400).json({ error: "Email and Plan are required" });
-        }
-
-        const userEmail = (email as string).trim();
-        const planKey = (plan as string).toUpperCase();
-        const billingType = (billing as string || 'monthly').toUpperCase();
-
-        // 1. Create/Get Customer
-        const customerId = await AsaasProvider.createCustomer({
-            name: "Novo Assinante", // We should ideally get name from user data... but for now generic.
-            email: userEmail
-        });
-
-        // 2. Create Subscription
-        // AsaasProvider.createSubscription expects planKey from config (STARTER, etc)
-        // Ensure billing matches what createSubscription expects (it uses plan config for cycle)
-        // But our provider takes 'planKey'. Does it handle monthly/annual variations?
-        // Looking at provider, it does `getPlanConfig(planKey)`.
-        // If config only has STARTER, PRO, BLACK, it defaults to MONTHLY cycle in config.
-        // We need to support ANNUAL.
-        // Actually, AsaasProvider.createSubscription takes 'planKey'.
-        // If we want Annual, we might need a different planKey or modify provider to accept cycle override.
-        // For now, let's assume MONTHLY for simplicity or just pass the basic key.
-        // TODO: Support Annual properly. The Config `subscriptions.config.ts` has 'cycle: MONTHLY' hardcoded.
-        // Let's force Monthly for now as per user request (strict subscription).
-
-        const sub = await AsaasProvider.createSubscription(customerId, planKey);
-
-        // 3. Get First Invoice URL
-        // Subscription response might have it? Usually no.
-        // We fetch payments.
-        // Wait, Asaas requires fetching payments for the sub.
-
-        // Retry logic: Asaas might take a moment to generate the charge?
-        let payments = [];
-        let attempts = 0;
-        while (payments.length === 0 && attempts < 5) {
-            payments = await AsaasProvider.getSubscriptionPayments(sub.id);
-            if (payments.length === 0) await new Promise(r => setTimeout(r, 1000));
-            attempts++;
-        }
-
-        if (payments.length > 0) {
-            const invoiceUrl = payments[0].bankSlipUrl || payments[0].invoiceUrl;
-            // Redirect user to Asaas Invoice
-            return res.redirect(invoiceUrl);
-        } else {
-            // Fallback: If no payment found (rare), show error or dashboard
-            console.error("No payments generated for new subscription", sub.id);
-            return res.send("Erro ao gerar cobrança de assinatura. Tente novamente ou contate o suporte.");
-        }
-
-    } catch (e: any) {
-        console.error("Create Subscription Charge Error", e);
-        res.status(500).send(`Erro ao processar assinatura: ${e.message}`);
     }
 };
 
@@ -1515,4 +1018,32 @@ export const deleteLead = async (req: Request, res: Response) => {
     }
 };
 
+export const createCharge = async (req: Request, res: Response) => {
+    try {
+        const { email, type, payer } = req.body;
+        let price = 39.90; // Fallback
 
+        await reloadDB();
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        const userPlan = await getVal(`/users/${safeEmail}/plan`);
+
+        if (userPlan && userPlan.status === 'ACTIVE') {
+            const pName = (userPlan.name || 'STARTER').toUpperCase();
+            if (pName.includes('BLACK')) price = 16.90;
+            else if (pName.includes('PRO')) price = 21.90;
+            else price = 26.90;
+        }
+
+        const customerId = await AsaasProvider.createCustomer({
+            name: payer?.name || 'Cliente',
+            email,
+            cpfCnpj: payer?.cpfCnpj,
+            phone: payer?.phone
+        });
+        const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'}`);
+
+        res.json({ success: true, invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl, price });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+};

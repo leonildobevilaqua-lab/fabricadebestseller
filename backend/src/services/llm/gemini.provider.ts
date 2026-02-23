@@ -11,10 +11,9 @@ export class GeminiProvider implements LLMProvider {
     // UPDATED: Prioritizing STABLE models for Production
     // Removed 2.5 as it was causing instability/hallucinations
     private models = [
-        "gemini-2.5-flash",
-        "gemini-flash-latest",
         "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-1.5-pro",
+        "gemini-1.0-pro"
     ];
 
     constructor(apiKey: string) {
@@ -110,13 +109,8 @@ export class GeminiProvider implements LLMProvider {
                     ]
                 });
 
-                // Add Timeout of 60s (Faster failover)
-                const resultFn = generativeModel.generateContent(prompt);
-                const timeoutPromise = new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Gemini Request Timeout")), 60000));
-
-                const result = await Promise.race([resultFn, timeoutPromise]);
-                const response = await result.response;
-                let text = response.text();
+                const result = await generativeModel.generateContent(prompt);
+                let text = result.response.text();
 
                 // Advanced Sanitize
                 text = text.replace(/```json/g, '').replace(/```/g, '').trim();
@@ -124,16 +118,8 @@ export class GeminiProvider implements LLMProvider {
                 // If text starts with [ but has garbage before it, clean it
                 const firstBracket = text.indexOf('[');
                 const lastBracket = text.lastIndexOf(']');
-
-                // Also check for object {}
-                const firstBrace = text.indexOf('{');
-                const lastBrace = text.lastIndexOf('}');
-
-                // Determine if it looks like an Array or Object and slice accordingly
-                if (firstBracket !== -1 && lastBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+                if (firstBracket !== -1 && lastBracket !== -1) {
                     text = text.substring(firstBracket, lastBracket + 1);
-                } else if (firstBrace !== -1 && lastBrace !== -1) {
-                    text = text.substring(firstBrace, lastBrace + 1);
                 }
 
                 return JSON.parse(text);

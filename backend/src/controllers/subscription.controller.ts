@@ -129,16 +129,11 @@ export const SubscriptionController = {
     },
 
     async webhook(req: Request, res: Response) {
-        await reloadDB();
-        const env = await getVal('/settings/payment_environment') || 'sandbox';
-        const isProd = env === 'production';
-
-        const token = req.headers['asaas-access-token'] || req.body.authToken;
-        const rawToken = isProd ? process.env.ASAAS_PRODUCTION_WEBHOOK : process.env.ASAAS_SANDBOX_WEBHOOK;
-        const EXPECTED = (rawToken || '').trim();
+        const token = req.headers['asaas-access-token'] || req.body.authToken; // Asaas sends in header or body depending on version
+        const EXPECTED = process.env.ASAAS_WEBHOOK_TOKEN || 'FabricaAsaas2026';
 
         if (token !== EXPECTED) {
-            console.warn(`[WEBHOOK] Invalid Token for ${env}: ${token} vs ${EXPECTED ? 'HIDDEN' : 'NULL'}`);
+            console.warn(`[WEBHOOK] Invalid Token: ${token} vs ${EXPECTED}`);
             return res.status(401).json({ error: "Unauthorized" });
         }
 

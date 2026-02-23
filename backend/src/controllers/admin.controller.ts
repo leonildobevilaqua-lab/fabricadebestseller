@@ -7,13 +7,10 @@ import bcrypt from 'bcrypt';
 import { sendEmail } from '../services/email.service';
 import { getVal, setVal, reloadDB } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
-import * as DocService from '../services/doc.service';
 
 // ... (Login logic)
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_PATH = path.join(DATA_DIR, 'database.json');
-const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+const DB_PATH = path.resolve(process.cwd(), 'database.json');
 
 // --- CHANGE PASSWORD (AUTHENTICATED) ---
 export const changePassword = async (req: Request, res: Response) => {
@@ -243,7 +240,7 @@ export const downloadBook = async (req: Request, res: Response) => {
     const { email: identifier } = req.params; // Identifier can be email OR projectId
     const fs = require('fs');
     const path = require('path');
-    const outputDir = path.join(process.cwd(), 'data', 'generated_books');
+    const outputDir = path.join(__dirname, '../../generated_books');
 
     // Helper to check UUID
     const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
@@ -320,7 +317,11 @@ export const downloadBook = async (req: Request, res: Response) => {
 // Imports moved to top
 
 // DB_PATH removed (declared at top)
-// BACKUP_DIR defined at top
+const BACKUP_DIR = path.resolve(__dirname, '../../backups');
+
+if (!fs.existsSync(BACKUP_DIR)) {
+    try { fs.mkdirSync(BACKUP_DIR); } catch (e) { }
+}
 
 export const createBackup = async (req: Request, res: Response) => {
     try {
@@ -392,178 +393,5 @@ export const getOrders = async (req: Request, res: Response) => {
     } catch (e: any) {
         console.error("Error getting orders:", e);
         res.json([]);
-    }
-};
-
-export const recoverBooks = async (req: Request, res: Response) => {
-    try {
-        const { email } = req.body;
-        console.log(`[RecoverBooks] Starting recovery for ${email || 'ALL'}`);
-
-        const projects = await getVal('/projects') || {};
-        const list = Object.values(projects) as any[];
-
-        const targetEmail = email ? email.toLowerCase().trim() : null;
-        const recovered: any[] = [];
-
-        for (const p of list) {
-            // Filter by Email if provided
-            if (targetEmail) {
-                const pEmail = p.metadata?.contact?.email?.toLowerCase().trim();
-                // Loose check: contains or equal
-                if (!pEmail || !pEmail.includes(targetEmail)) continue;
-            }
-
-            // Check if valid for regeneration
-            // Include IN_PROGRESS if structure exists (maybe user got stuck)
-            if (p.structure && p.structure.length > 0) {
-                try {
-                    console.log(`Regenerating DOCX for Project ${p.id} (${p.metadata.bookTitle})...`);
-                    const filePath = await DocService.generateBookDocx(p);
-                    const fileName = path.basename(filePath);
-
-                    // Construct URL
-                    const baseUrl = process.env.VITE_API_URL || 'http://localhost:3000';
-                    const downloadUrl = `${baseUrl}/downloads/${fileName}`;
-
-                    recovered.push({
-                        projectId: p.id,
-                        title: p.metadata.bookTitle || "Sem Título",
-                        status: p.metadata.status,
-                        url: downloadUrl,
-                        date: p.metadata.created_at || new Date()
-                    });
-                } catch (err) {
-                    console.error(`Failed to regenerate project ${p.id}`, err);
-                }
-            }
-        }
-
-        res.json({ recovered, count: recovered.length });
-    } catch (e: any) {
-        console.error(e);
-        res.status(500).json({ error: e.message });
-    }
-};
-
-export const resetUser = async (req: Request, res: Response) => {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email required" });
-
-    const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-    console.log(`[RESET] Wiping data for ${email} / ${safeEmail}`);
-
-    try {
-        await reloadDB();
-
-        // 1. Clear Orders
-        await setVal(`/users/${safeEmail}/orders`, []);
-
-        // 2. Clear Credits
-        await setVal(`/credits/${safeEmail}`, 0);
-
-        // 3. Mark Projects as DELETED
-        const allProjects = await getVal('/projects') || {};
-        const projectList = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
-
-        let count = 0;
-        for (const p of projectList as any[]) {
-            const pUserEmail = (p.userEmail || "").toLowerCase().trim();
-            const pMetaEmail = (p.metadata?.contact?.email || "").toLowerCase().trim();
-            const targetEmail = email.toLowerCase().trim();
-
-            if (pUserEmail === targetEmail || pMetaEmail === targetEmail) {
-                // Soft Delete
-                await setVal(`/projects[${projectList.indexOf(p)}]/metadata/status`, 'DELETED');
-                count++;
-            }
-        }
-
-        // 4. Clear Leads (Book History in Admin)
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
-        for (let i = 0; i < leads.length; i++) {
-            const l = leads[i] as any;
-            if (l.email?.toLowerCase().trim() === email.toLowerCase().trim() && l.type === 'BOOK') {
-                // Mark as DELETED or just remove? Let's mark as DELETED status
-                await setVal(`/leads[${i}]/status`, 'DELETED');
-            }
-        }
-
-        console.log(`[RESET] Complete for ${email}. Deleted ${count} projects.`);
-        res.json({ success: true, message: `User progress reset. ${count} projects deleted.` });
-
-    } catch (e: any) {
-        console.error("Reset Error", e);
-        res.status(500).json({ error: e.message });
-    }
-};
-
-export const manageCredits = async (req: Request, res: Response) => {
-    const { email, action, amount } = req.body;
-    // action: 'add' | 'remove'
-    if (!email || !action) return res.status(400).json({ error: "Email and action required" });
-
-    const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-
-    try {
-        await reloadDB();
-        let currentCredits = await getVal(`/credits/${safeEmail}`) || 0;
-
-        const val = amount ? parseInt(amount) : 1;
-
-        if (action === 'add') {
-            currentCredits += val;
-        } else if (action === 'remove') {
-            currentCredits = Math.max(0, currentCredits - val);
-        }
-
-        await setVal(`/credits/${safeEmail}`, currentCredits);
-
-        // Log action (optional)
-        console.log(`[ADMIN] Manual Credit ${action} for ${email}. New Balance: ${currentCredits}`);
-
-        res.json({ success: true, credits: currentCredits, message: `Créditos atualizados. Novo saldo: ${currentCredits}` });
-    } catch (e: any) {
-        res.status(500).json({ error: e.message });
-    }
-};
-
-// --- GET PAYMENT ENVIRONMENT ---
-export const getPaymentEnv = async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: "No token provided" });
-    try {
-        const token = authHeader.split(' ')[1];
-        jwt.verify(token, SECRET_KEY);
-
-        await reloadDB();
-        const env = await getVal('/settings/payment_environment') || 'sandbox';
-        res.json({ environment: env });
-    } catch (e) {
-        return res.status(403).json({ error: "Invalid Token" });
-    }
-};
-
-// --- UPDATE PAYMENT ENVIRONMENT ---
-export const updatePaymentEnv = async (req: Request, res: Response) => {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: "No token provided" });
-
-    try {
-        const token = authHeader.split(' ')[1];
-        jwt.verify(token, SECRET_KEY);
-
-        const { environment } = req.body;
-        if (!['sandbox', 'production'].includes(environment)) {
-            return res.status(400).json({ error: "Invalid environment" });
-        }
-
-        await setVal('/settings/payment_environment', environment);
-        console.log(`[ADMIN] Payment Environment updated to: ${environment}`);
-        res.json({ success: true, environment });
-    } catch (e) {
-        return res.status(403).json({ error: "Invalid Token" });
     }
 };

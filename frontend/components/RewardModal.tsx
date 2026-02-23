@@ -58,22 +58,43 @@ export const RewardModal: React.FC<RewardModalProps> = ({ isOpen, onClose, onCla
                             <span className="text-4xl">🎉</span>
                         </div>
                         <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 tracking-wider uppercase">
-                            Desconto Exclusivo Desbloqueado!
+                            Conquista Desbloqueada!
                         </h2>
                     </div>
 
                     {/* Body */}
                     <div className="p-8">
                         <p className="text-slate-300 text-center mb-8 text-lg font-medium">
-                            PARABÉNS! VOCÊ ACABA DE DESBLOQUEAR UM VALOR EXCLUSIVO PARA O SEU PRÓXIMO LIVRO.
+                            Parabéns pela ativação do seu plano <strong className="text-white">{offer?.planName || "PREMIUM"}</strong>.
                         </p>
 
+                        {/* Progress Bar Visual - Keep as visual flair or hide? User screenshot didn't imply it, but user image 2 shows something? 
+                            User Image 2 shows just the modal content. No progress bar visible in the text provided description but let's keep it subtle or hide if not needed.
+                            Actually, the user screenshot does NOT show the progress bar. It shows just the text.
+                            I will hide the progress bar if it's a "Unlock" event (presence of planName).
+                        */}
 
+                        {!offer?.planName && (
+                            <div className="mb-8">
+                                {/* ... existing progress bar code ... */}
+                                {/* Trying to preserve existing logic for other use cases, so I'll just conditionally render it */}
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs font-bold text-green-400">NÍVEL 1</span>
+                                    <span className="text-xs font-bold text-slate-500">NÍVEL 4</span>
+                                </div>
+                                <div className="h-3 bg-slate-800 rounded-full overflow-hidden relative">
+                                    <div
+                                        className="absolute top-0 left-0 h-full bg-gradient-to-r from-green-400 to-cyan-500 shadow-[0_0_10px_rgba(34,211,238,0.5)] transition-all duration-1000"
+                                        style={{ width: `${(level / 4) * 100}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Offer Box */}
                         <div className="bg-slate-800/50 rounded-xl p-6 border border-cyan-500/30 text-center relative overflow-hidden">
                             <p className="text-slate-400 text-sm mb-2">
-                                Preço Garantido para o Próximo Livro:
+                                Você acaba de desbloquear o valor exclusivo:
                             </p>
                             {price && (
                                 <div className="text-4xl font-black text-green-400 mb-2 drop-shadow-lg">
@@ -81,7 +102,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ isOpen, onClose, onCla
                                 </div>
                             )}
                             <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">
-                                LEMBRE-SE: ESTA CONDIÇÃO É POR TEMPO LIMITADO
+                                PREÇO GARANTIDO PARA O 1º LIVRO DA GERAÇÃO
                             </p>
                         </div>
 

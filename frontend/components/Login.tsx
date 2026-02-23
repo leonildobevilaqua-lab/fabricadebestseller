@@ -62,10 +62,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                 </button>
 
                 <div className="text-center mb-8">
-                    <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 uppercase tracking-widest mb-6">
-                        FÁBRICA DE BEST SELLER
-                    </h1>
-                    <h2 className="text-sm font-bold text-white mb-2 uppercase tracking-wide">BEM VINDO (A)! ÁREA VIP DE MEMBROS ASSINANTES</h2>
+                    <h2 className="text-xl font-bold text-white mb-2 uppercase tracking-wide">BEM VINDO (A)! A ÁREA VIP DE MEMBROS ASSINANTES</h2>
                     <p className="text-slate-400 text-sm">Faça login e acesse agora!</p>
                 </div>
 
