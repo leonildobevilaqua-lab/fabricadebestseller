@@ -87,102 +87,110 @@ export const UserAuthController = {
     },
 
     // 2. Get Me (Dados do Dashboard)
-    // 2. Get Me (Dados do Dashboard)
     async me(req: Request, res: Response) {
         // @ts-ignore
-        const email = req.user?.email || req.query.email; // Support both for now
+        const email = req.user?.email || req.query.email;
         if (!email) return res.status(401).json({ error: "No email" });
 
-        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        const cleanUser = String(email).trim().toLowerCase();
+        const safeEmail = cleanUser.replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
             await reloadDB();
             let user = await getVal(`/users/${safeEmail}`);
 
-            // Tenta sincronizar com Leads se nao achar user full
+            // 1. Tenta sincronizar com Leads se nao achar user full
             if (!user) {
                 const leads = await getVal('/leads') || [];
                 // @ts-ignore
-                const leadFn = Array.isArray(leads) ? leads.find(l => l.email === email) : Object.values(leads).find((l: any) => l.email === email);
+                const leadFn = Array.isArray(leads) ? leads.find(l => l.email?.toLowerCase().trim() === cleanUser) : Object.values(leads).find((l: any) => l.email?.toLowerCase().trim() === cleanUser);
                 if (leadFn) {
                     user = {
-                        profile: { name: leadFn.name, email: leadFn.email },
+                        profile: { name: leadFn.name || "Autor", email: cleanUser },
                         plan: leadFn.plan || null,
                         orders: [],
                         stats: { purchaseCycleCount: 0 }
                     };
-                    // Save migration
                     await setVal(`/users/${safeEmail}`, user);
                 }
             }
 
             if (!user) return res.status(404).json({ error: "User not found" });
 
-            // --- REAL CALCULATION (MATCHING PAYMENT CONTROLLER) ---
-            const rawLeads = await getVal('/leads') || [];
-            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+            // --- 2. RESILIENCE SYNC (ASAAS TRUTH) ---
+            // Se o plano não estiver ativo, ou se for o e-mail master, vamos forçar uma checagem no Asaas
+            const isMaster = cleanUser === 'contato@leonildobevilaqua.com.br';
 
-            const leadsUsage = leads.filter((l: any) =>
-                l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-                // Count confirmed book generations (APPROVED/COMPLETED) 
-                // EXCLUDING 'IN_PROGRESS' to prevents failed jobs from counting as a completed cycle
-                (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE')
-            ).length;
+            if (isMaster || !user.plan || user.plan.status !== 'ACTIVE') {
+                try {
+                    const { AsaasProvider } = require('../services/asaas.provider');
+                    const customer = await AsaasProvider.getCustomerByEmail(cleanUser);
+                    if (customer) {
+                        const payments = await AsaasProvider.getPayments({ customer: customer.id, limit: 10 });
+                        const confirmedPayment = payments.find((p: any) =>
+                            (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
+                            (p.description || "").toLowerCase().match(/assinatura|plano|starter|pro|black/)
+                        );
 
-            let projectsUsage = 0;
-            let userProjects: any[] = [];
-            try {
-                const projects = await getVal('/projects') || {};
-                const projectList = Array.isArray(projects) ? projects : Object.values(projects);
-                userProjects = projectList.filter((p: any) =>
-                    p.userEmail?.toLowerCase().trim() === email.toLowerCase().trim()
-                );
-                projectsUsage = userProjects.filter((p: any) =>
-                    // Only count real projects that consumed a credit or were paid for
-                    (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE' || p.metadata?.status === 'WRITING_CHAPTERS' || p.metadata?.status === 'REVIEW_STRUCTURE' || p.metadata?.status === 'GENERATING_STRUCTURE')
-                ).length;
-            } catch (e) { }
+                        if (confirmedPayment || isMaster) {
+                            console.log(`[AUTH_ME] Resilient activation for ${cleanUser}`);
+                            const desc = (confirmedPayment?.description || '').toUpperCase();
+                            let pName = 'STARTER';
+                            if (desc.includes('BLACK') || isMaster) pName = 'BLACK';
+                            else if (desc.includes('PRO')) pName = 'PRO';
 
-            // use the MAX of leads vs projects to capture legacy vs new
-            // BUT ensure we don't zero it out if the user just paid and hasn't started generating
-            // Actually, we want 'Paid Generations'.
-            // For now, let's trust 'leadsUsage' if it tracks orders. 
-            // Better: User orders array length from /users/email/orders is the source of truth for Purchases.
-
-            const orders = user.orders || [];
-            const paidOrdersCount = orders.length;
-
-            // If we have more actual projects than orders (legacy), use projects.
-            const usageCount = Math.max(paidOrdersCount, projectsUsage);
-            const cycleIndex = usageCount % 4;
-
-            // PRICING RULES (REFORMULADO — PREÇO FIXO POR PLANO)
-            const pName = (user.plan?.name || "STARTER").toUpperCase();
-            const isAnnual = user.plan?.billing === 'annual' || user.plan?.billing === 'anual';
-
-            let nextBookPrice = 89.90; // Fallback Avulso
-
-            if (pName.includes('STARTER')) {
-                nextBookPrice = isAnnual ? 24.90 : 28.90;
-            } else if (pName.includes('PRO')) {
-                nextBookPrice = isAnnual ? 14.90 : 18.90;
-            } else if (pName.includes('BLACK')) {
-                nextBookPrice = isAnnual ? 8.90 : 9.90;
+                            const newPlan = {
+                                status: 'ACTIVE',
+                                name: pName,
+                                billing: (desc.includes('ANUAL') || isMaster) ? 'annual' : 'monthly',
+                                lastPayment: new Date(),
+                                subscriptionId: confirmedPayment?.subscription || null
+                            };
+                            user.plan = newPlan;
+                            await setVal(`/users/${safeEmail}/plan`, newPlan);
+                        }
+                    }
+                    else if (isMaster) {
+                        // Se for master e nem tiver no asaas ainda (teste local), ativa mesmo assim
+                        user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'annual' };
+                    }
+                } catch (asaasErr) {
+                    console.error("[ME_SYNC_ERROR]", asaasErr);
+                }
             }
 
-            // Merge with existing orders if any (legacy), but prefer projects as source of truth for display
-            const finalOrders = userProjects.length > 0 ? userProjects : (user.orders || []);
+            // --- 3. CALCULATIONS ---
+            const rawLeads = await getVal('/leads') || [];
+            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+            const userProjectsRaw = await getVal('/projects') || [];
+            const projectList = Array.isArray(userProjectsRaw) ? userProjectsRaw : Object.values(userProjectsRaw);
+
+            const userProjects = projectList.filter((p: any) => p.userEmail?.toLowerCase().trim() === cleanUser);
+            const usageCount = userProjects.filter((p: any) =>
+                (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE' || p.metadata?.status === 'WRITING_CHAPTERS')
+            ).length;
+
+            const cycleIndex = usageCount % 4;
+
+            // PREÇOS (FONTE DA VERDADE 2025)
+            const pName = (user.plan?.name || "FREE").toUpperCase();
+            const isAnnual = user.plan?.billing === 'annual' || user.plan?.billing === 'anual';
+
+            let nextBookPrice = 89.90; // Default Free
+            if (pName.includes('BLACK')) nextBookPrice = isAnnual ? 8.90 : 9.90;
+            else if (pName.includes('PRO')) nextBookPrice = isAnnual ? 14.90 : 18.90;
+            else if (pName.includes('STARTER')) nextBookPrice = isAnnual ? 24.90 : 28.90;
 
             res.json({
                 profile: user.profile,
-                plan: user.plan,
+                plan: user.plan || { name: 'FREE', status: 'INACTIVE' },
                 stats: {
-                    purchaseCycleCount: cycleIndex, // 0-3
-                    totalBooksGenerated: usageCount, // TOTAL GLOBAL
+                    purchaseCycleCount: cycleIndex,
+                    totalBooksGenerated: usageCount,
                     totalBooks: user.orders?.length || usageCount,
                     nextBookPrice: nextBookPrice
                 },
-                orders: finalOrders
+                orders: userProjects.length > 0 ? userProjects : (user.orders || [])
             });
 
         } catch (e) {
