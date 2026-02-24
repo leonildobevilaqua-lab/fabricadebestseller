@@ -197,14 +197,92 @@ export const UserAuthController = {
 
             await setVal(`/users/${safeEmail}`, newUser);
 
-            // Tambem cria lead standard p/ compatibilidade
-            // (Opcional, mas bom manter)
-
             const token = jwt.sign({ email }, SECRET, { expiresIn: '7d' });
             res.json({ success: true, token });
 
         } catch (e) {
             res.status(500).json({ error: "Erro ao registrar" });
+        }
+    },
+
+    // 4. Esqueci Senha (Usuário)
+    async forgotPassword(req: Request, res: Response) {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: "E-mail obrigatório." });
+
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+
+        try {
+            await reloadDB();
+            const user = await getVal(`/users/${safeEmail}`);
+
+            if (!user) {
+                return res.status(404).json({ error: "Usuário não encontrado." });
+            }
+
+            const { v4: uuidv4 } = require('uuid');
+            const { sendEmail } = require('../services/email.service');
+
+            const resetToken = uuidv4();
+            await setVal(`/resets_user/${safeEmail}`, {
+                token: resetToken,
+                expires: Date.now() + 3600000 // 1 h
+            });
+
+            const origin = req.get('origin') || 'https://fabricadebestseller.com.br';
+            const link = `${origin}/login?resetToken=${resetToken}&email=${email}`;
+
+            await sendEmail(
+                email,
+                "Recuperação de Senha - Área VIP",
+                `Olá ${user.profile?.name || 'Autor'}, clique no link para resetar sua senha: ${link}`,
+                undefined,
+                `<h3>Olá ${user.profile?.name || 'Autor'}</h3>
+                 <p>Você solicitou a recuperação de senha para sua Área VIP.</p>
+                 <p><a href="${link}" style="padding: 10px 20px; background: #6366f1; color: white; text-decoration: none; border-radius: 5px;">RESETAR MINHA SENHA</a></p>
+                 <p>Se você não solicitou isso, ignore este e-mail.</p>`
+            );
+
+            res.json({ success: true, message: "Link de recuperação enviado." });
+
+        } catch (e) {
+            console.error("User Forgot Pass Error", e);
+            res.status(500).json({ error: "Erro ao processar solicitação." });
+        }
+    },
+
+    // 5. Resetar Senha (Usuário)
+    async resetPassword(req: Request, res: Response) {
+        const { email, token, newPassword } = req.body;
+        if (!email || !token || !newPassword) return res.status(400).json({ error: "Dados incompletos." });
+
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+
+        try {
+            await reloadDB();
+            const stored = await getVal(`/resets_user/${safeEmail}`);
+
+            if (!stored || stored.token !== token || Date.now() > stored.expires) {
+                return res.status(403).json({ error: "Token inválido ou expirado." });
+            }
+
+            const user = await getVal(`/users/${safeEmail}`);
+            if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+
+            const passwordHash = await bcrypt.hash(newPassword, 10);
+
+            // Update Auth
+            user.auth = { ...user.auth, passwordHash };
+            await setVal(`/users/${safeEmail}`, user);
+
+            // Clear Token
+            await setVal(`/resets_user/${safeEmail}`, null);
+
+            res.json({ success: true, message: "Senha alterada com sucesso." });
+
+        } catch (e) {
+            console.error("User Reset Pass Error", e);
+            res.status(500).json({ error: "Erro ao resetar senha." });
         }
     }
 };

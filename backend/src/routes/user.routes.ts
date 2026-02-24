@@ -23,6 +23,8 @@ const authMiddleware = (req: any, res: any, next: any) => {
 
 router.post('/login', UserAuthController.login);
 router.post('/register', UserAuthController.register);
+router.post('/forgot-password', UserAuthController.forgotPassword);
+router.post('/reset-password', UserAuthController.resetPassword);
 router.get('/me', authMiddleware, UserAuthController.me);
 
 export default router;

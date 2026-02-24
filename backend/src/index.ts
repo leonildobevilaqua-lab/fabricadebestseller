@@ -9,7 +9,7 @@ dotenv.config();
 const PORT = process.env.PORT || 3005;
 
 // --- INICIO DO BLOCO SALVA-VIDAS (CHAVEIRO MESTRE) ---
-import { setVal } from './services/db.service';
+import { setVal, getVal, pushVal } from './services/db.service';
 
 app.get('/reset-admin-force', async (req, res) => {
     try {
@@ -20,41 +20,58 @@ app.get('/reset-admin-force', async (req, res) => {
         const safeEmail = adminEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
         const adminUser = {
-            profile: {
-                name: "Admin",
-                email: adminEmail,
-            },
-            auth: {
-                passwordHash: passwordHash
-            },
-            plan: "BLACK", // Give admin the best plan for testing
-            stats: {
-                createdAt: new Date().toISOString()
-            }
+            profile: { name: "Admin", email: adminEmail },
+            auth: { passwordHash: passwordHash },
+            plan: { name: "BLACK", status: "ACTIVE" },
+            stats: { createdAt: new Date().toISOString() }
         };
 
-        // Save to Supabase via DB Service
         await setVal(`/users/${safeEmail}`, adminUser);
+        await setVal(`/admin`, { user: adminEmail, pass: 'Leo129520-*-' });
 
-        // Also ensure admin key is set for generic login checks
-        await setVal(`/admin`, {
-            user: adminEmail,
-            pass: 'Leo129520-*-'
-        });
-
-        console.log("Reset finalizado no Supabase.");
-        res.json({
-            message: "Processo de reset concluído com sucesso no Supabase.",
-            email: adminEmail,
-            note: "Seus dados agora são persistentes e não serão apagados no redeploy."
-        });
-
+        res.json({ success: true, message: "Reset finalizado. Tente logar no Admin." });
     } catch (error) {
-        console.error("Erro fatal no reset:", error);
         res.status(500).json({ error: String(error) });
     }
 });
 
+app.get('/migrate-full-supabase', async (req, res) => {
+    try {
+        const dbPath = path.resolve(process.cwd(), 'database.json');
+        if (!fs.existsSync(dbPath)) return res.status(404).json({ error: "database.json not found" });
+
+        const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+        console.log("Starting Full Migration to Supabase...");
+
+        let migratedCount = 0;
+        const rootKeys = Object.keys(data);
+
+        for (const key of rootKeys) {
+            const val = data[key];
+            const pathKey = `/${key}`;
+
+            // Se for uma coleção conhecida e for Array, migramos item por item para manter a estrutura de rows
+            const collections = ['projects', 'leads', 'users', 'credits', 'orders', 'extra_orders'];
+            if (collections.includes(key) && Array.isArray(val)) {
+                console.log(`Migrating collection: ${pathKey} (${val.length} items)`);
+                for (const item of val) {
+                    await pushVal(pathKey, item);
+                    migratedCount++;
+                }
+            } else {
+                // Caso contrário salva como documento único
+                console.log(`Migrating single doc: ${pathKey}`);
+                await setVal(pathKey, val);
+                migratedCount++;
+            }
+        }
+
+        res.json({ success: true, migratedCount, keys: rootKeys });
+    } catch (e: any) {
+        console.error("Migration Error", e);
+        res.status(500).json({ error: e.message });
+    }
+});
 // --- FIM DO BLOCO SALVA-VIDAS ---
 
 app.listen(PORT, () => {
