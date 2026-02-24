@@ -551,7 +551,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         const usageCount = leads.filter((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS' || l.status === 'APPROVED')).length;
 
         // Pricing Logic
-        let bookPrice = 39.90;
+        let bookPrice = PRICING_RULES['AVULSO'] || 89.90;
         let planLabel = 'Avulso';
         let planName = userPlan ? userPlan.name : (pendingPlan ? pendingPlan.name : 'NONE');
 

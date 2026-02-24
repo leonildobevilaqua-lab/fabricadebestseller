@@ -1251,8 +1251,22 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     let finalLink = (window as any).checkoutUrl || 'https://pay.kiwify.com.br/QPTslcx';
                                                     const discountLevel = (window as any).discountLevel || 1;
 
-                                                    // FORCE CORRECT LEVEL 1 PRICE IF USER HAS PLAN BUT PRICE IS GENERIC
-                                                    // This fixes the issue where a Starter User sees 39.90 instead of 24.90 on Level 1
+                                                    // GET CHOSEN PLAN (State OR Storage OR Backend Global)
+                                                    let chosenPlan = selectedPlan;
+                                                    if (!chosenPlan && typeof window !== 'undefined') {
+                                                        try { chosenPlan = JSON.parse(localStorage.getItem('selectedPlan_v3') || 'null'); } catch (e) { }
+                                                    }
+
+                                                    // CRITICAL: Determine Avulso Mode
+                                                    const isAvulsoMode = !chosenPlan || !chosenPlan.name || chosenPlan.name === 'AVULSO' || chosenPlan.name === 'NONE';
+
+                                                    // FORCE AVULSO PRICE (Truth from Backend)
+                                                    if (isAvulsoMode) {
+                                                        displayPrice = 89.90;
+                                                        finalLink = 'https://pay.kiwify.com.br/oG5S7uJ'; // Standard Avulso Link
+                                                    }
+
+                                                    // FORCE CORRECT LEVEL 1 PRICE IF USER HAS PLAN
                                                     const plan = (window as any).currentUserPlan || selectedPlan;
 
                                                     // PRICE CALCULATION
@@ -1300,15 +1314,6 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                                                     // --- SUBSCRIPTION ENFORCEMENT LOGIC ---
                                                     const realPlan = (window as any).currentUserPlan; // Backend Plan
-
-                                                    // GET CHOSEN PLAN (State OR Storage OR Backend Global)
-                                                    let chosenPlan = selectedPlan;
-                                                    if (!chosenPlan && typeof window !== 'undefined') {
-                                                        try { chosenPlan = JSON.parse(localStorage.getItem('selectedPlan_v3') || 'null'); } catch (e) { }
-                                                    }
-
-                                                    // CRITICAL: If formData.type is NOT 'VOUCHER' and we have no plan name in chosenPlan, it is AVULSO.
-                                                    const isAvulsoMode = !chosenPlan || !chosenPlan.name || chosenPlan.name === 'AVULSO' || chosenPlan.name === 'NONE';
 
                                                     // STRICT CHECK: If user selected a plan, they MUST have it Active.
                                                     // If db is empty, realPlan is null.

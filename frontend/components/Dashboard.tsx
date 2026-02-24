@@ -164,19 +164,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     */
 
     const planName = stats?.plan?.name || "FREE";
+    const planStatus = stats?.plan?.status || "INACTIVE";
     const billing = stats?.plan?.billing || 'monthly';
     const cycleCount = stats?.stats?.purchaseCycleCount || 0;
     const orders = stats?.orders || [];
 
     // --- PRICING REFORMULADO (FIXED PRICE PER PLAN) ---
-    let currentFixedPrice = 89.90; // Fallback Avulso
+    let currentFixedPrice = 89.90; // Default Avulso (Single Purchase)
 
-    if (planName.includes('STARTER')) {
-        currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 24.90 : 28.90;
-    } else if (planName.includes('PRO')) {
-        currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 14.90 : 18.90;
-    } else if (planName.includes('BLACK')) {
-        currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 8.90 : 9.90;
+    // ONLY APPLY DISCOUNTS IF PLAN IS ACTIVE
+    if (planStatus === 'ACTIVE') {
+        if (planName.includes('STARTER')) {
+            currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 24.90 : 28.90;
+        } else if (planName.includes('PRO')) {
+            currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 14.90 : 18.90;
+        } else if (planName.includes('BLACK')) {
+            currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 8.90 : 9.90;
+        }
     }
 
     const nextBookDisplayPrice = stats?.stats?.nextBookPrice || currentFixedPrice;
@@ -207,6 +211,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 planName === 'PRO' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
                                     'bg-gray-100 text-gray-600 border-gray-200'}`}>
                             {planName}
+                            {planStatus !== 'ACTIVE' && planName !== 'FREE' && <span className="ml-1 opacity-60">(INATIVO)</span>}
                         </div>
                         <button
                             onClick={onLogout}
@@ -231,34 +236,60 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 GERADOR DE BEST SELLERS
                             </h2>
                             <p className="text-slate-400 text-lg max-w-xl leading-relaxed">
-                                Você está no plano <strong>{planName}</strong>.
-                                Sua taxa fixa por geração de livro é de apenas
-                                <span className="text-white font-bold mx-1">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</span>.
-                                Aproveite o poder da IA para criar sua biblioteca agora mesmo.
+                                {hasCredits ? (
+                                    <>Você possui <span className="text-emerald-400 font-black">CRÉDITO DISPONÍVEL</span> para uma nova geração. Clique no botão ao lado para começar agora!</>
+                                ) : (
+                                    <>
+                                        Você está no modo <strong>{planStatus === 'ACTIVE' ? planName : 'AVULSO'}</strong>.
+                                        Sua taxa fixa por geração de livro é de
+                                        <span className="text-white font-bold mx-1">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</span>.
+                                        Aproveite o poder da IA para criar sua biblioteca agora mesmo.
+                                    </>
+                                )}
                             </p>
                         </div>
 
                         <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 w-full md:w-auto min-w-[300px]">
-                            <div className="text-center mb-6">
-                                <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Custo da Geração</p>
-                                <div className="text-4xl font-black text-white">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</div>
-                            </div>
+                            {hasCredits ? (
+                                <div className="flex flex-col gap-4">
+                                    <div className="text-center mb-2">
+                                        <div className="inline-block p-3 bg-emerald-500/20 rounded-full mb-2 animate-bounce">
+                                            <span className="text-2xl">✨</span>
+                                        </div>
+                                        <p className="text-xs text-emerald-400 uppercase font-bold tracking-widest">Acesso Liberado!</p>
+                                    </div>
+                                    <button
+                                        onClick={onNewBook}
+                                        className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black py-6 rounded-2xl transition-all flex flex-col items-center justify-center gap-1 shadow-2xl shadow-emerald-500/40 transform hover:scale-[1.05] active:scale-95 group"
+                                    >
+                                        <span className="text-2xl group-hover:animate-pulse">🚀 GERAR LIVRO AGORA!</span>
+                                        <span className="text-[10px] opacity-70 font-bold uppercase tracking-widest">Clique para utilizar seu crédito</span>
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="text-center mb-6">
+                                        <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Custo da Geração</p>
+                                        <div className="text-4xl font-black text-white">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</div>
+                                    </div>
 
-                            <div className="flex flex-col gap-3">
-                                <button
-                                    onClick={() => handleBuyCredit(nextBookDisplayPrice)}
-                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 text-lg"
-                                >
-                                    <span>🛒</span> ADQUIRIR CRÉDITO
-                                </button>
+                                    <div className="flex flex-col gap-3">
+                                        <button
+                                            onClick={() => handleBuyCredit(nextBookDisplayPrice)}
+                                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 text-lg"
+                                        >
+                                            <span>🛒</span> ADQUIRIR CRÉDITO
+                                        </button>
 
-                                <button
-                                    onClick={handleVerifyAndEnter}
-                                    className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-600"
-                                >
-                                    <span>✅</span> JÁ PAGUEI - GERAR AGORA
-                                </button>
-                            </div>
+                                        <button
+                                            onClick={handleVerifyAndEnter}
+                                            className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-600"
+                                        >
+                                            <span>✅</span> JÁ PAGUEI - GERAR AGORA
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
