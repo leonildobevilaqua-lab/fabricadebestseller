@@ -17,7 +17,7 @@ const upload = multer();
 export const create = async (req: Request, res: Response) => {
     const { authorName, topic, language, contact, contentStyle, writingTone } = req.body;
     try {
-        const safeEmail = contact?.email ? contact.email.toLowerCase().trim().replace(/\./g, '_') : null;
+        const safeEmail = contact?.email ? contact.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : null;
         let isResuming = false;
 
         // RESUME LOGIC: Check if user already has an active project, UNLESS forcing new

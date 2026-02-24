@@ -234,6 +234,7 @@ export const SubscriptionController = {
                 // --- FINANCIAL TRACKING (Admin Order Logging) ---
                 try {
                     const customerData = await AsaasProvider.getCustomer(payment.customer);
+
                     await pushVal('/orders', {
                         id: transactionId,
                         email: customerData?.email || 'unknown',
@@ -251,6 +252,12 @@ export const SubscriptionController = {
                     });
 
                     if (customerData?.email) {
+                        const safeEmail = customerData.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                        let currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                        currentCredits += 1;
+                        await setVal(`/credits/${safeEmail}`, currentCredits);
+                        console.log(`[WEBHOOK] Added 1 credit to ${customerData.email}. Total: ${currentCredits}`);
+
                         await sendPurchaseEvent({
                             eventId: transactionId,
                             email: customerData.email,

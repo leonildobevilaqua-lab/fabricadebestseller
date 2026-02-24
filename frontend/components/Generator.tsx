@@ -131,8 +131,21 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
         const access = await res.json();
 
-        if ((access.hasAccess && access.credits > 0) || access.activeProjectId) {
-          // Authorized: Start Animation
+        if (access.activeProjectId) {
+          setProjectId(access.activeProjectId);
+          // Get the project data immediately
+          const p = await API.getProject(access.activeProjectId);
+          if (p) {
+            setProject(p);
+            // If it's IDLE, it means it was waiting for payment and now it has it
+            if (p.metadata.status === 'IDLE') {
+              await API.startResearch(p.id, language, userContact?.email);
+            }
+          }
+          setIsLoadingAccess(false);
+          setIsManufacturing(false); // Skip animation
+        } else if (access.hasAccess && access.credits > 0) {
+          // Authorized but no active project: Start Animation for new book
           setIsManufacturing(true);
           setIsLoadingAccess(false);
         } else {

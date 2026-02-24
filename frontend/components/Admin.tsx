@@ -38,8 +38,17 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         // 1. If explicit payment info exists (from Webhook), use it.
         if (lead.paymentInfo?.amount) return Number(lead.paymentInfo.amount);
 
-        // 2. Check Plans (Distinguish Book vs Sub)
-        if (lead.type === 'BOOK') {
+        // 2. If SUBSCRIBER, return the PLAN value (MRR)
+        if (lead.status === 'SUBSCRIBER' || (lead.plan && lead.plan.status === 'ACTIVE')) {
+            const pName = lead.plan?.name?.toUpperCase();
+            const billing = lead.plan?.billing?.toLowerCase(); // 'monthly' or 'annual'
+            if (pName === 'STARTER') return billing === 'annual' ? 147.90 : 19.90;
+            if (pName === 'PRO') return billing === 'annual' ? 297.90 : 39.90;
+            if (pName === 'BLACK') return billing === 'annual' ? 497.90 : 79.90;
+        }
+
+        // 3. Fallback to Book prices if just a lead or booking attempt
+        if (lead.type === 'BOOK' || lead.type === 'LIVRO') {
             const planName = (lead.plan?.name || "AVULSO").toUpperCase();
             const billing = (lead.plan?.billing || "monthly").toLowerCase();
             const isAnnual = billing === 'annual' || billing === 'anual';
@@ -50,16 +59,7 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
             return 89.90; // Avulso
         }
 
-        if (lead.plan) {
-            const pName = lead.plan.name?.toUpperCase();
-            const billing = lead.plan.billing?.toLowerCase(); // 'monthly' or 'annual'
-
-            if (pName === 'STARTER') return billing === 'annual' ? 147.90 : 19.90;
-            if (pName === 'PRO') return billing === 'annual' ? 297.90 : 39.90;
-            if (pName === 'BLACK') return billing === 'annual' ? 497.90 : 79.90;
-        }
-
-        // 3. Default
+        // 4. Default
         return 89.90;
     };
 
@@ -88,15 +88,13 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
             const d = new Date(dStr);
             if (isNaN(d.getTime())) return false;
 
-            const targetDate = new Date(d);
-            targetDate.setHours(0, 0, 0, 0);
-            const today = new Date(now);
-            today.setHours(0, 0, 0, 0);
+            const targetStr = d.toLocaleDateString('en-CA');
+            const todayStr = now.toLocaleDateString('en-CA');
 
-            if (filter === 'day') return targetDate.getTime() === today.getTime();
+            if (filter === 'day') return targetStr === todayStr;
             if (filter === 'week') {
-                const oneWeekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                return targetDate >= oneWeekAgo;
+                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                return d >= oneWeekAgo;
             }
             if (filter === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
             if (filter === 'year') return d.getFullYear() === now.getFullYear();
@@ -118,17 +116,13 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
     const revenueData = last7Days.map(date => {
         const dayStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-
-        // Normalize comparison date to YYYY-MM-DD
-        const targetStr = date.toISOString().split('T')[0];
+        const targetStr = date.toLocaleDateString('en-CA');
 
         const dayOrders = (Array.isArray(orders) ? orders : []).filter(o => {
             const dStr = o.date || o.created_at;
             if (!dStr) return false;
             const d = new Date(dStr);
-            if (isNaN(d.getTime())) return false;
-
-            return d.toISOString().split('T')[0] === targetStr;
+            return !isNaN(d.getTime()) && d.toLocaleDateString('en-CA') === targetStr;
         });
 
         const total = dayOrders.reduce((acc, curr) => {

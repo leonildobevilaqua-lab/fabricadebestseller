@@ -37,8 +37,10 @@ const App: React.FC = () => {
   // VIEW STATE: 'landing' | 'login' | 'dashboard' | 'generator'
   const [currentView, setCurrentView] = useState(() => {
     if (window.location.pathname === '/login') return 'login';
-    if (window.location.pathname === '/factory') return 'generator'; // Support direct URL
-    if (localStorage.getItem('bsf_hasAccess') === 'true') return 'dashboard'; // Default to dashboard if logged in
+    if (window.location.pathname === '/factory') return 'generator';
+    const savedView = localStorage.getItem('bsf_view');
+    if (savedView) return savedView;
+    if (localStorage.getItem('bsf_hasAccess') === 'true') return 'dashboard';
     return 'landing';
   });
 
@@ -56,10 +58,13 @@ const App: React.FC = () => {
     if (hasAccess) {
       localStorage.setItem('bsf_hasAccess', 'true');
       localStorage.setItem('bsf_step', String(step));
+      localStorage.setItem('bsf_view', currentView);
       if (userContact) localStorage.setItem('bsf_userContact', JSON.stringify(userContact));
       if (metadata) localStorage.setItem('bsf_metadata', JSON.stringify(metadata));
+    } else {
+      localStorage.setItem('bsf_view', currentView);
     }
-  }, [hasAccess, userContact, step, metadata]);
+  }, [hasAccess, userContact, step, metadata, currentView]);
 
   // SELF-HEALING: Validate Access on Load to prevent "Stuck" states
   useEffect(() => {
