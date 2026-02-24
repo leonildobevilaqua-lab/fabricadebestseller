@@ -4,6 +4,7 @@ import { PricingSection } from './PricingSection';
 import { SocialShare } from './SocialShare';
 import { RewardModal } from './RewardModal';
 import * as API from '../services/api';
+import { trackInitiateCheckout, trackLead } from '../services/meta-pixel';
 
 // --- INLINE ICONS (No external dependency to crash) ---
 const Zap = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
@@ -549,13 +550,23 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     const handleSubscribe = async () => {
         if (!selectedPlan || !formData.email) return;
 
-        // RESET SESSION TIMER and ENABLE POLLING
-        // This ensures validation starts FRESH from this click.
+        // Rastreamento Meta Pixel — InitiateCheckout
+        const PLAN_PRICES: Record<string, Record<string, number>> = {
+            STARTER: { monthly: 19.90, annual: 147.90 },
+            PRO: { monthly: 39.90, annual: 297.90 },
+            BLACK: { monthly: 79.90, annual: 497.90 },
+        };
+        const subValue = PLAN_PRICES[selectedPlan.name]?.[selectedPlan.billing] || 0;
+        trackInitiateCheckout(
+            `Plano ${selectedPlan.name} ${selectedPlan.billing === 'annual' ? 'Anual' : 'Mensal'}`,
+            subValue
+        );
+
         setPaymentSessionStart(Date.now());
         setStartPolling(true);
-        setPaymentConfirmed(false); // Force reset confirmed status
+        setPaymentConfirmed(false);
 
-        const baseUrl = getApiBase().replace(/\/$/, ""); // Remove trailing slash
+        const baseUrl = getApiBase().replace(/\/$/, "");
         try {
             const res = await fetch(`${baseUrl}/api/subscription/create`, {
                 method: 'POST',
@@ -592,6 +603,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
     const handleBookPayment = async () => {
         if (!formData.email) return;
+
+        // Rastreamento Meta Pixel — InitiateCheckout (Livro Avulso)
+        trackInitiateCheckout('Livro Avulso', 89.90);
+
         const baseUrl = getApiBase().replace(/\/$/, "");
         try {
             const res = await fetch(`${baseUrl}/api/payment/create-charge`, {
@@ -2069,6 +2084,146 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 </div>
             </section>
 
+            {/* ═══════════════════════════════════════════════════════════
+                SEÇÃO: SERVIÇOS EXTRAS
+                ═══════════════════════════════════════════════════════════ */}
+            <section id="servicos-extras" className="py-24 bg-slate-900 relative overflow-hidden">
+                {/* Fundo decorativo */}
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 opacity-80"></div>
+                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
+
+                <div className="relative max-w-6xl mx-auto px-6">
+                    <div className="text-center mb-16">
+                        <span className="inline-block bg-emerald-500/10 text-emerald-400 text-xs font-black px-4 py-2 rounded-full border border-emerald-500/20 uppercase tracking-widest mb-4">
+                            Serviços Extras
+                        </span>
+                        <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
+                            Potencialize Seu Livro com{' '}
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
+                                Serviços Premium
+                            </span>
+                        </h2>
+                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+                            Os mesmos serviços exibidos após a geração do seu livro, disponíveis aqui para que você possa contratar a qualquer momento.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-8">
+
+                        {/* ─── SERVIÇO 1: TRADUÇÃO ─────────────────────────────────── */}
+                        <div className="relative bg-gradient-to-br from-blue-900/40 to-slate-800/60 border border-blue-500/30 rounded-3xl p-8 flex flex-col shadow-2xl shadow-blue-900/20 hover:border-blue-400/50 transition-all">
+                            <div className="absolute -top-4 left-8 bg-blue-500 text-white text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
+                                Disponível Agora
+                            </div>
+
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-16 h-16 bg-blue-500/20 border border-blue-500/30 rounded-2xl flex items-center justify-center text-3xl">
+                                    🌍
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-white">Tradução Profissional</h3>
+                                    <p className="text-blue-300 text-sm font-medium">Seu livro em outro idioma com IA avançada</p>
+                                </div>
+                            </div>
+
+                            <ul className="space-y-3 mb-8 flex-1">
+                                {[
+                                    '📖 Tradução completa do livro',
+                                    '🤖 IA especializada em tradução literária',
+                                    '📋 Revisão de coerência e naturalidade',
+                                    '🌐 Inglês, Espanhol e mais idiomas',
+                                    '📄 Arquivo formatado pronto para publicação',
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm">
+                                        <span>{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <div className="bg-slate-950/50 rounded-2xl p-5 mb-6 border border-white/5">
+                                <div className="flex items-end gap-2">
+                                    <span className="text-slate-500 text-lg mb-1">R$</span>
+                                    <span className="text-5xl font-black text-white">79,90</span>
+                                    <span className="text-slate-500 mb-1">/idioma</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">Pagamento único, entrega em até 24h</p>
+                            </div>
+
+                            <button
+                                id="btn-extra-traducao"
+                                onClick={() => {
+                                    trackInitiateCheckout('Tradução de Livro', 79.90);
+                                    // Link de checkout do serviço de tradução
+                                    window.open('https://pay.asaas.com/fabricadebestseller/traducao', '_blank');
+                                }}
+                                className="w-full bg-blue-500 hover:bg-blue-400 text-white font-black py-4 rounded-xl text-lg transition-all shadow-lg shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                🌍 Contratar Tradução — R$ 79,90
+                            </button>
+                        </div>
+
+                        {/* ─── SERVIÇO 2: ISBN + FICHA CATALOGRÁFICA ───────────────── */}
+                        <div className="relative bg-gradient-to-br from-amber-900/40 to-slate-800/60 border border-amber-500/30 rounded-3xl p-8 flex flex-col shadow-2xl shadow-amber-900/20 hover:border-amber-400/50 transition-all">
+                            <div className="absolute -top-4 left-8 bg-amber-500 text-slate-900 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
+                                Publicação Legal
+                            </div>
+
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="w-16 h-16 bg-amber-500/20 border border-amber-500/30 rounded-2xl flex items-center justify-center text-3xl">
+                                    📚
+                                </div>
+                                <div>
+                                    <h3 className="text-2xl font-black text-white">Registros Legais</h3>
+                                    <p className="text-amber-300 text-sm font-medium">ISBN, Ficha Catalográfica e Depósito Legal</p>
+                                </div>
+                            </div>
+
+                            <ul className="space-y-3 mb-8 flex-1">
+                                {[
+                                    '🔢 Registro ISBN oficial (Câmara Brasileira do Livro)',
+                                    '📋 Ficha Catalográfica padronizada (AACR2/RDA)',
+                                    '🏛️ Depósito Legal na Biblioteca Nacional',
+                                    '📜 Direitos Autorais via EDA/FBN',
+                                    '✅ Documento pronto para inserir no livro',
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm">
+                                        <span>{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <div className="bg-slate-950/50 rounded-2xl p-5 mb-6 border border-white/5">
+                                <div className="flex items-end gap-2">
+                                    <span className="text-slate-500 text-lg mb-1">R$</span>
+                                    <span className="text-5xl font-black text-white">97,90</span>
+                                    <span className="text-slate-500 mb-1">/livro</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1">Inclui ISBN + Ficha + Orientações de depósito</p>
+                            </div>
+
+                            <button
+                                id="btn-extra-isbn"
+                                onClick={() => {
+                                    trackInitiateCheckout('Registros ISBN + Ficha Catalográfica', 97.90);
+                                    window.open('https://pay.asaas.com/fabricadebestseller/isbn-ficha', '_blank');
+                                }}
+                                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-black py-4 rounded-xl text-lg transition-all shadow-lg shadow-amber-500/25 hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                📚 Registrar Meu Livro — R$ 97,90
+                            </button>
+                        </div>
+
+                    </div>
+
+                    {/* CTA inferior */}
+                    <div className="mt-12 text-center">
+                        <p className="text-slate-500 text-sm">
+                            💡 Estes serviços também estão disponíveis dentro da plataforma após a geração do seu livro.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
             <footer className="py-12 text-center text-slate-600 border-t border-slate-800">
                 <SocialShare className="mb-8" />
                 <p>&copy; {new Date().getFullYear()} Fábrica de Best Sellers. {t[lang].footer.rights}</p>
@@ -2102,9 +2257,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             <p className="text-slate-300 text-lg mb-8 leading-relaxed">
                                 Acabamos de desbloquear as condições exclusivas do seu plano e a
                                 <span className="text-yellow-400 font-bold"> Taxa de Geração Promocional ({
-                                    celebratedPlan.name === 'BLACK' ? 'R$ 16,90' :
-                                        celebratedPlan.name === 'PRO' ? 'R$ 21,90' :
-                                            'R$ 26,90'
+                                    celebratedPlan.name === 'BLACK' ? 'R$ 9,90' :
+                                        celebratedPlan.name === 'PRO' ? 'R$ 18,90' :
+                                            'R$ 28,90'
                                 })</span>.
                             </p>
 

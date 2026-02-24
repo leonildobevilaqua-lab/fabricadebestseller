@@ -4,16 +4,18 @@ import { InputForm } from './components/InputForm';
 import { Generator } from './components/Generator';
 import { Admin } from './components/Admin';
 import LandingPage from './components/LandingPage';
-import { Login } from './components/Login';         // NEW
-import { Dashboard } from './components/Dashboard'; // NEW
+import { Login } from './components/Login';
+import { Dashboard } from './components/Dashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LanguageContext } from './i18n/context';
 import { pt, en, es } from './i18n/locales';
 import { BookMetadata } from './types';
+import { trackPageView } from './services/meta-pixel';
 
 import { WelcomeModal } from './components/WelcomeModal';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfUse } from './components/TermsOfUse';
+
 
 const App: React.FC = () => {
   const [lang, setLang] = useState<'pt' | 'en' | 'es'>(() => (localStorage.getItem('bsf_lang') as any) || 'pt');
@@ -62,18 +64,20 @@ const App: React.FC = () => {
   // SELF-HEALING: Validate Access on Load to prevent "Stuck" states
   useEffect(() => {
     if (hasAccess && userContact?.email) {
-      // Check for JUST ACTIVATED flag
       let isJustActivated = false;
       if (localStorage.getItem('bsf_plan_just_activated') === 'true') {
         setShowWelcome(true);
         localStorage.removeItem('bsf_plan_just_activated');
         isJustActivated = true;
       }
-
-      // If we are in 'landing' but have access, force dashboard (unless user explicitly went to login/admin)
       if (currentView === 'landing') setCurrentView('dashboard');
     }
   }, [hasAccess, userContact, currentView]);
+
+  // META PIXEL: PageView em cada mudança de view
+  useEffect(() => {
+    trackPageView();
+  }, [currentView]);
 
   // HANDLE EXTERNAL RESET (e.g. from Admin "Voltar ao App")
   useEffect(() => {

@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { AsaasProvider, getAsaasWebhookToken } from '../services/asaas.provider';
 import { PLANS } from '../config/subscriptions.config';
 import { getVal, setVal, pushVal, reloadDB } from '../services/db.service';
+import { sendPurchaseEvent } from '../services/meta-ads.service';
 
 const findLeadIndex = (leads: any[], email: string) => {
     return leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
@@ -145,7 +146,8 @@ export const SubscriptionController = {
         if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
             const payment = event.payment;
             const subId = payment.subscription;
-            // const email = payment.billingType === 'PIX' ? payment.customer : null; // Unused for now
+            const transactionId = payment.id || payment.publicId || uuidv4();
+            const paidValue: number = payment.value || payment.netValue || 0;
 
             if (subId) {
                 console.log(`[WEBHOOK] Subscription Payment ${subId} Confirmed!`);
@@ -166,11 +168,41 @@ export const SubscriptionController = {
                     await setVal(`/leads[${leadIndex}]`, updatedLead);
                     const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
                     await setVal(`/users/${safeEmail}/plan`, updatedLead.plan);
+
+                    // === META CAPI: Purchase (Assinatura) ===
+                    const planDisplayName = lead.plan?.name || 'Assinatura';
+                    const billingLabel = (lead.plan?.billing === 'annual' || lead.plan?.billing === 'anual') ? 'Anual' : 'Mensal';
+                    await sendPurchaseEvent({
+                        eventId: transactionId,
+                        email: lead.email,
+                        phone: lead.phone || lead.fullPhone,
+                        value: paidValue,
+                        contentName: `Plano ${planDisplayName} ${billingLabel}`,
+                        clientIp: req.headers['x-forwarded-for'] as string || req.ip,
+                        clientUserAgent: req.headers['user-agent'] as string,
+                    });
                 }
             } else {
-                // One-off Payment?
+                // Pagamento avulso (geração de livro)
                 console.log(`[WEBHOOK] One-off Payment ${payment.id} Confirmed!`);
-                // Use payment.customer to find user if needed
+
+                // Tenta recuperar o email do cliente via Asaas
+                try {
+                    const customerData = await AsaasProvider.getCustomer(payment.customer);
+                    if (customerData?.email) {
+                        await sendPurchaseEvent({
+                            eventId: transactionId,
+                            email: customerData.email,
+                            phone: customerData.mobilePhone || customerData.phone,
+                            value: paidValue,
+                            contentName: 'Livro Avulso',
+                            clientIp: req.headers['x-forwarded-for'] as string || req.ip,
+                            clientUserAgent: req.headers['user-agent'] as string,
+                        });
+                    }
+                } catch (e) {
+                    console.warn('[WEBHOOK] Não foi possível recuperar cliente para Meta CAPI:', e);
+                }
             }
         }
 

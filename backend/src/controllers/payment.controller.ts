@@ -6,32 +6,35 @@ import multer from 'multer';
 import { AsaasProvider } from '../services/asaas.provider';
 const upload = multer();
 
-// --- PRICING CONFIGURATION ---
-// TABELA DE PREÇOS IMUTÁVEL (Fonte da Verdade)
-const PRICING_RULES: any = {
-    'AVULSO': [89.90, 89.90, 89.90, 89.90], // Preço fixo para geração avulsa (sem plano)
-    'STARTER_MENSAL': [26.90, 24.21, 22.87, 21.52],
-    'STARTER_ANUAL': [24.90, 22.41, 21.17, 19.92],
-    'PRO_MENSAL': [21.90, 19.71, 18.62, 17.52],
-    'PRO_ANUAL': [19.90, 17.91, 16.92, 15.92],
-    'BLACK_MENSAL': [16.90, 15.21, 14.37, 13.52],
-    'BLACK_ANUAL': [14.90, 13.41, 12.67, 11.92]
+// -----------------------------------------------------------------
+// FONTE DA VERDADE — PREÇOS FIXOS TABELADOS (sem descontos progressivos)
+// -----------------------------------------------------------------
+const PRICING_RULES: Record<string, number> = {
+    'AVULSO': 89.90, // Sem plano ativo
+    'STARTER_MENSAL': 28.90,
+    'STARTER_ANUAL': 24.90,
+    'PRO_MENSAL': 18.90,
+    'PRO_ANUAL': 14.90,
+    'BLACK_MENSAL': 9.90,
+    'BLACK_ANUAL': 8.90,
 };
 
+// Preços de assinatura (recorrência Asaas)
 const SUBSCRIPTION_PRICES: any = {
     'STARTER': {
-        annual: { price: 118.80, link: 'https://pay.kiwify.com.br/47E9CXl' },
-        monthly: { price: 19.90, link: 'https://pay.kiwify.com.br/kfR54ZJ' }
+        monthly: { price: 19.90 },
+        annual: { price: 147.90 }
     },
     'PRO': {
-        annual: { price: 238.80, link: 'https://pay.kiwify.com.br/jXQTsFm' },
-        monthly: { price: 34.90, link: 'https://pay.kiwify.com.br/Bls6OL7' }
+        monthly: { price: 39.90 },
+        annual: { price: 297.90 }
     },
     'BLACK': {
-        annual: { price: 358.80, link: 'https://pay.kiwify.com.br/hSv5tYq' },
-        monthly: { price: 49.90, link: 'https://pay.kiwify.com.br/7UgxJ0f' }
+        monthly: { price: 79.90 },
+        annual: { price: 497.90 }
     }
 };
+
 
 // Store a lead when user fills the form
 export const createLead = async (req: Request, res: Response) => {
@@ -765,16 +768,13 @@ export const checkAccess = async (req: Request, res: Response) => {
                 else if (rawName.includes('PRO')) planName = 'PRO';
                 else planName = 'STARTER';
 
-                // Cycle Logic
-                const cycleIndex = usageCount % 4; // 0, 1, 2, 3
-
+                // Preço fixo por plano/ciclo (sem descontos progressivos)
                 const billingKey = (billing === 'annual' || billing === 'anual') ? 'ANUAL' : 'MENSAL';
-                const priceList = PRICING_RULES[`${planName}_${billingKey}`] || PRICING_RULES['STARTER_MENSAL'];
-                const priceVal = priceList[cycleIndex] || priceList[0];
+                const priceVal = PRICING_RULES[`${planName}_${billingKey}`] ?? PRICING_RULES['AVULSO'];
 
                 bookPrice = priceVal;
                 checkoutUrl = ''; // Dynamic generation only
-                discountLevel = cycleIndex + 1;
+                discountLevel = 1; // Sem níveis de desconto
 
                 // FORCE ACTIVE STATUS IN RESPONSE if Valid
                 if (!userPlan) userPlan = { ...effectivePlan, status: 'ACTIVE' };
@@ -913,22 +913,10 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
 
         console.log(`[CHARGE] Email: ${email} | planKey: ${planKey} | plan: ${plan?.name || 'NONE'} | status: ${plan?.status || 'N/A'}`);
 
-        // 2. Definir Prioridade/Ciclo
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-        const usageCount = leads.filter((l: any) =>
-            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-            // Fix: Do not count IN_PROGRESS for pricing. Only COMPLETED.
-            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE')
-        ).length;
+        // 2. Preço fixo por planKey (sem ciclos de desconto progressivo)
+        const price: number = PRICING_RULES[planKey] ?? PRICING_RULES['AVULSO'];
 
-        const cycleIndex = usageCount % 4; // 0, 1, 2, 3
-
-        // CRITICAL FIX: fallback is AVULSO, not STARTER_MENSAL
-        const priceList = PRICING_RULES[planKey] || PRICING_RULES['AVULSO'];
-        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : 89.90;
-
-        console.log(`[CHARGE] usageCount: ${usageCount} | cycleIndex: ${cycleIndex} | priceList: ${JSON.stringify(priceList)} | price: R$ ${price}`);
+        console.log(`[CHARGE] Email: ${email} | planKey: ${planKey} | price: R$ ${price}`);
 
         // 3. Criar Cobrança no Asaas
         const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
@@ -963,7 +951,7 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         const charge = await AsaasProvider.createPayment(
             customerId,
             price,
-            `Geração de Livro - Nível ${cycleIndex + 1} (${cleanPlan})`
+            `Geração de Livro - ${cleanPlan} (R$ ${price.toFixed(2)})`
         );
 
         return res.json({ success: true, invoiceUrl: charge.invoiceUrl });
@@ -1096,19 +1084,10 @@ export const createCharge = async (req: Request, res: Response) => {
         const billingSuffix = (billingRaw === 'annual' || billingRaw === 'anual') ? 'ANUAL' : 'MENSAL';
         const planKey = cleanPlan === 'AVULSO' ? 'AVULSO' : `${cleanPlan}_${billingSuffix}`;
 
-        // -- Ciclo progressivo --
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-        const usageCount = leads.filter((l: any) =>
-            l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
-            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE')
-        ).length;
+        // Preço fixo por planKey (sem ciclos progressivos)
+        const price: number = PRICING_RULES[planKey] ?? PRICING_RULES['AVULSO'];
 
-        const cycleIndex = usageCount % 4;
-        const priceList = PRICING_RULES[planKey] || PRICING_RULES['AVULSO'];
-        const price = priceList[cycleIndex] !== undefined ? priceList[cycleIndex] : 89.90;
-
-        console.log(`[CHARGE] Email: ${email} | planKey: ${planKey} | cycle: ${cycleIndex} | price: R$ ${price}`);
+        console.log(`[CHARGE] Email: ${email} | planKey: ${planKey} | price: R$ ${price}`);
 
         const customerId = await AsaasProvider.createCustomer({
             name: payer?.name || email.split('@')[0],

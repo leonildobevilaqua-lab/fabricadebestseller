@@ -150,25 +150,27 @@ export const AsaasProvider = {
     },
 
     // 2. Create Subscription
-    async createSubscription(customerId: string, planKey: string, creditCard?: any) {
+    async createSubscription(customerId: string, planKey: string, billing: 'monthly' | 'annual' = 'monthly', creditCard?: any) {
         const plan = getPlanConfig(planKey);
         if (!plan) throw new Error("Invalid Plan");
 
+        const isAnnual = billing === 'annual';
+        const value = isAnnual ? plan.annual.price : plan.monthly.price;
+        const cycle = isAnnual ? 'YEARLY' : 'MONTHLY';
+
         const payload: any = {
             customer: customerId,
-            billingType: creditCard ? 'CREDIT_CARD' : 'UNDEFINED', // Or PIX/BOLETO
-            value: plan.price,
-            nextDueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Tomorrow? Or today? Asaas usually requires future date for boleto? For CC it can be immediate? 
-            // For SaaS usually immediate charge.
-            cycle: plan.cycle, // 'MONTHLY'
-            description: `Assinatura Plano ${plan.name}`
+            billingType: creditCard ? 'CREDIT_CARD' : 'UNDEFINED',
+            value,
+            nextDueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            cycle,
+            description: `Assinatura Plano ${plan.name} ${isAnnual ? 'Anual' : 'Mensal'}`
         };
 
         if (creditCard) {
             payload.creditCard = creditCard;
             payload.billingType = 'CREDIT_CARD';
         } else {
-            // Default to PIX/BOLETO link if no card?
             payload.billingType = 'UNDEFINED';
         }
 
@@ -177,19 +179,20 @@ export const AsaasProvider = {
             return data;
         } catch (error: any) {
             console.error("Asaas Create Subscription Error:", error.response?.data || error.message);
-            throw error; // Let controller handle
+            throw error;
         }
     },
 
     // 3. Update Subscription (Upgrade/Downgrade)
-    async updateSubscription(subscriptionId: string, newPlanKey: string) {
+    async updateSubscription(subscriptionId: string, newPlanKey: string, billing: 'monthly' | 'annual' = 'monthly') {
         const plan = getPlanConfig(newPlanKey);
         if (!plan) throw new Error("Invalid Plan");
 
+        const value = billing === 'annual' ? plan.annual.price : plan.monthly.price;
         const payload = {
-            value: plan.price,
-            cycle: plan.cycle,
-            updatePendingPayments: true // Update future charges
+            value,
+            cycle: billing === 'annual' ? 'YEARLY' : 'MONTHLY',
+            updatePendingPayments: true
         };
 
         try {

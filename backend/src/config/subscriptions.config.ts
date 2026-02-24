@@ -1,11 +1,16 @@
+// FONTE DA VERDADE — Preços fixos tabelados 2025
+// NÃO use diretamente no checkout de livros: use PRICING_RULES em payment.controller.ts
 export const PLANS = {
     STARTER: {
         name: 'Starter - Autor Iniciante',
-        price: 19.90,
-        cycle: 'MONTHLY',
-        baseBookPrice: 26.90,
+        monthly: { price: 19.90 },
+        annual: { price: 147.90, pricePerMonth: 12.33 },
+        bookPrice: {
+            monthly: 28.90,
+            annual: 24.90
+        },
         features: {
-            aiFrontMatter: false, // Dedicatória/Agradecimentos via IA
+            aiFrontMatter: false,
             marketingKit: false,
             communityAccess: false,
             prioritySupport: false,
@@ -15,13 +20,16 @@ export const PLANS = {
     },
     PRO: {
         name: 'Pro - Autor Best Seller',
-        price: 34.90,
-        cycle: 'MONTHLY',
-        baseBookPrice: 21.90,
+        monthly: { price: 39.90 },
+        annual: { price: 297.90, pricePerMonth: 24.83 },
+        bookPrice: {
+            monthly: 18.90,
+            annual: 14.90
+        },
         features: {
             aiFrontMatter: true,
             marketingKit: true,
-            communityAccess: true, // Grupo Networking WhatsApp
+            communityAccess: true,
             prioritySupport: true,
             freeTranslations: 1,
             mentoring: false
@@ -29,16 +37,19 @@ export const PLANS = {
     },
     BLACK: {
         name: 'Black - Editora VIP',
-        price: 49.90,
-        cycle: 'MONTHLY',
-        baseBookPrice: 16.90,
+        monthly: { price: 79.90 },
+        annual: { price: 497.90, pricePerMonth: 41.49 },
+        bookPrice: {
+            monthly: 9.90,
+            annual: 8.90
+        },
         features: {
             aiFrontMatter: true,
             marketingKit: true,
-            communityAccess: true, // + Discord VIP
-            prioritySupport: true, // + Pessoal Dedicado
+            communityAccess: true,
+            prioritySupport: true,
             freeTranslations: 2,
-            mentoring: true // Capas, Uiclap, Amazon
+            mentoring: true
         }
     }
 };
