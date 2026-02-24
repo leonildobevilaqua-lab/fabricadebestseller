@@ -207,13 +207,19 @@ RETORNE APENAS JSON LIMPO: [{ "title": "...", "subtitle": "..." }]
   const userPrompt = `TEMA: ${topic}`;
 
   try {
-    const raw = await llm.generateJSON<any[]>(`${SYSTEM_PROMPT}\n\nINPUT DO USUÁRIO: ${userPrompt}`);
+    // INCREASED CONTEXT: Using the high TPM (1,000K) of the user's paid Gemini Tier
+    // This allows for MUCH deeper analysis and better titles.
+    const raw = await llm.generateJSON<any[]>(`${SYSTEM_PROMPT}\n\nCONTEXTO DE PESQUISA COMPLETO:\n${researchContext.substring(0, 30000)}\n\nINPUT DO USUÁRIO: ${userPrompt}`);
 
-    if (!Array.isArray(raw)) throw new Error("A resposta da IA não é um array de títulos.");
+    if (!Array.isArray(raw)) {
+      console.warn("[IA] Response is not an array, attempting to wrap it.");
+      if (typeof raw === 'object' && raw !== null) return [(raw as any)];
+      throw new Error("A resposta da IA não é um array de títulos.");
+    }
 
     // Enriquecer com metadados obrigatórios do frontend
-    return raw.map((item: any, index: number) => ({
-      title: item.title,
+    const enriched = raw.map((item: any, index: number) => ({
+      title: item.title || "Título Indisponível",
       subtitle: item.subtitle || "Subtítulo de alto impacto",
       marketingHook: item.marketingHook || "Promessa de Transformação",
       reason: "Gerado por IA Especialista em Best-Sellers",
@@ -221,9 +227,14 @@ RETORNE APENAS JSON LIMPO: [{ "title": "...", "subtitle": "..." }]
       isTopChoice: index === 0
     }));
 
+    console.log(`[IA] Geração de títulos concluída com sucesso (${enriched.length} opções).`);
+    // Wait for the DB to settle and avoid race conditions in polling
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    return enriched;
+
   } catch (error: any) {
-    console.error("Error generating titles:", error);
-    throw new Error(`Falha na análise de títulos: ${error.message}`);
+    console.error("[IA] Error generating titles:", error.message);
+    throw new Error(`Falha na análise de títulos (${error.message}). Verifique sua chave ou cota.`);
   }
 };
 ;
