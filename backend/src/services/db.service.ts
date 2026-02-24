@@ -2,38 +2,15 @@ import { supabase } from './supabase';
 
 /**
  * DATABASE PERSISTENCE SERVICE (Supabase KV Mode)
- * Replaces node-json-db with persistent cloud storage.
- * Maps JSON paths (e.g., /projects/123) to Supabase KV Store.
+ * Simplifiziert para compatibilidade Total com o sistema original.
+ * Armazena cada caminho (ex: /leads, /projects) como um único documento JSON no Supabase.
+ * Isso garante que toda a lógica de índices [0], push e splice funcione exatamente como antes.
  */
 
 export const getVal = async (path: string): Promise<any> => {
     try {
         const cleanPath = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
 
-        // COLLECTION LOGIC: If fetching a major branch, return all sub-keys as an object
-        const collections = ['/projects', '/leads', '/users', '/settings', '/admin', '/credits'];
-        if (collections.includes(cleanPath)) {
-            const { data, error } = await supabase
-                .from('kv_store')
-                .select('*')
-                .filter('key', 'like', `${cleanPath}/%`);
-
-            if (error) {
-                console.warn(`Supabase collections error [${cleanPath}]:`, error.message);
-                return null;
-            }
-            if (!data || data.length === 0) return null;
-
-            const collection: any = {};
-            data.forEach(item => {
-                const parts = item.key.split('/');
-                const subKey = parts[parts.length - 1]; // Get last part as key
-                if (subKey) collection[subKey] = item.value;
-            });
-            return collection;
-        }
-
-        // SINGLE VALUE LOGIC
         const { data, error } = await supabase
             .from('kv_store')
             .select('value')
@@ -55,6 +32,29 @@ export const setVal = async (path: string, value: any) => {
     try {
         const cleanPath = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
 
+        // Se o path contém um índice como /leads[0], precisamos simular a alteração no array pai
+        if (cleanPath.includes('[') && cleanPath.includes(']')) {
+            const baseMatch = cleanPath.match(/^(.+?)\[(\d+)\]/);
+            if (baseMatch) {
+                const basePath = baseMatch[1];
+                const index = parseInt(baseMatch[2]);
+                const remainingPath = cleanPath.replace(baseMatch[0], ''); // Para casos como /leads[0]/status
+
+                const parent = await getVal(basePath) || [];
+                if (Array.isArray(parent)) {
+                    if (remainingPath === '') {
+                        parent[index] = value;
+                    } else {
+                        // Trata sub-chaves (ex: /leads[0]/status)
+                        const subProp = remainingPath.replace(/^\//, '');
+                        if (parent[index]) parent[index][subProp] = value;
+                    }
+                    await setVal(basePath, parent);
+                    return;
+                }
+            }
+        }
+
         const { error } = await supabase
             .from('kv_store')
             .upsert({
@@ -72,22 +72,15 @@ export const setVal = async (path: string, value: any) => {
 export const pushVal = async (path: string, value: any) => {
     try {
         const cleanPath = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
-        const collections = ['/projects', '/leads', '/users', '/settings', '/admin', '/credits'];
-        const isCollection = collections.some(c => cleanPath.startsWith(c));
 
-        if (isCollection) {
-            console.warn(`[DB] Tentativa de pushVal em coleção (${cleanPath}). Isso não é permitido pois destruiria a estrutura. Use setVal com uma subchave.`);
-            return;
-        }
-
-        // FETCH current array
+        // FETCH atual do array
         const current = await getVal(cleanPath) || [];
 
         if (Array.isArray(current)) {
             current.push(value);
             await setVal(cleanPath, current);
         } else {
-            // For one-off keys that aren't in collections but might contain arrays
+            // Se não for array, cria um novo array com o valor
             await setVal(cleanPath, [value]);
         }
     } catch (e) {
@@ -96,7 +89,7 @@ export const pushVal = async (path: string, value: any) => {
 };
 
 export const reloadDB = async () => {
-    // Supabase is always fresh, no-op needed for compatibility
+    // No-op para compatibilidade
     return Promise.resolve();
 };
 

@@ -663,60 +663,8 @@ export const checkAccess = async (req: Request, res: Response) => {
             console.error("Error fetching leads for sync", e);
         }
 
-        // [MANUAL SUBSCRIPTION CHECK - RESILIENCE LAYER]
-        // Runs if Plan is PENDING or user is trying to get in.
-        const needsPlanCheck = !userPlan || userPlan.status === 'PENDING' || userPlan.status === 'SUBSCRIBER_PENDING';
-        if (needsPlanCheck) {
-            try {
-                console.log(`[CHECK_SUB] Manual Resilience Scan for ${email}...`);
-
-                // 1. Check via Subscription ID if exists
-                let foundPayment = false;
-                if (userPlan?.subscriptionId) {
-                    const payments = await AsaasProvider.getSubscriptionPayments(userPlan.subscriptionId);
-                    if (payments && Array.isArray(payments)) {
-                        const valid = payments.find((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
-                        if (valid) foundPayment = true;
-                    }
-                }
-
-                // 2. Check via General Payments if no sub found (for one-off plan links)
-                if (!foundPayment && asaasPayments.length > 0) {
-                    const planPayment = asaasPayments.find((p: any) => {
-                        const d = (p.description || "").toLowerCase();
-                        const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
-                        const isPlan = d.includes('assinatura') || d.includes('plano') || d.includes('starter') || d.includes('pro') || d.includes('black');
-                        return isConfirmed && isPlan;
-                    });
-                    if (planPayment) {
-                        console.log(`[CHECK_SUB] Found Direct Plan Payment: ${planPayment.id}`);
-                        foundPayment = true;
-                    }
-                }
-
-                if (foundPayment) {
-                    console.log(`[CHECK_SUB] Success! Forcing Activation for ${email}.`);
-
-                    // Reconstruct plan if missing
-                    if (!userPlan) {
-                        userPlan = { status: 'ACTIVE', name: planName || 'STARTER', billing: 'monthly', lastPayment: new Date() };
-                    } else {
-                        userPlan.status = 'ACTIVE';
-                        userPlan.lastPayment = new Date();
-                    }
-
-                    await setVal(`/users/${safeEmail}/plan`, userPlan);
-
-                    // Update Lead
-                    const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'SUBSCRIBER' || l.status === 'SUBSCRIBER_PENDING'));
-                    if (leadIndex !== -1) {
-                        await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER');
-                        await setVal(`/leads[${leadIndex}]/plan`, userPlan);
-                        console.log(`[CHECK_SUB] Lead updated to ACTIVE.`);
-                    }
-                }
-            } catch (e) { console.error("Sub Check Error", e); }
-        }
+        // REMOVED: Manual Resilience Scan (Dangerous/Cheatable)
+        // The Sync Ledger (Ledger Sync) below already handles confirmed payments => credits conversion safely.
 
         // DEBUG CREDITS
         const allCredits = await getVal('/credits');
@@ -877,7 +825,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         }
 
         res.json({
-            hasAccess: (credits > 0 || (userPlan && userPlan.status === 'ACTIVE') || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE' || (userPlan && userPlan.status === 'ACTIVE')),
+            hasAccess: (credits > 0 || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE'),
             credits,
             hasActiveProject,
             leadStatus,
