@@ -144,18 +144,19 @@ export const UserAuthController = {
             const usageCount = Math.max(paidOrdersCount, projectsUsage);
             const cycleIndex = usageCount % 4;
 
-            // Default Prices (Fallback)
-            // Ideally we import PRICING_CONFIG but for speed we duplicate or use simple defaults matching 'payment.controller'
-            // STARTER: 24.90, 22.41, 21.17, 19.92
-            // PRO: 19.90, 17.91, 16.92, 15.92
-            // BLACK: 14.90, 13.41, 12.67, 11.92
-
+            // PRICING RULES (REFORMULADO — PREÇO FIXO POR PLANO)
             const pName = (user.plan?.name || "STARTER").toUpperCase();
-            let prices = [24.90, 22.41, 21.17, 19.92]; // STARTER DEFAULT
-            if (pName.includes('PRO')) prices = [19.90, 17.91, 16.92, 15.92];
-            if (pName.includes('BLACK')) prices = [14.90, 13.41, 12.67, 11.92];
+            const isAnnual = user.plan?.billing === 'annual' || user.plan?.billing === 'anual';
 
-            const nextBookPrice = prices[cycleIndex] || prices[0];
+            let nextBookPrice = 89.90; // Fallback Avulso
+
+            if (pName.includes('STARTER')) {
+                nextBookPrice = isAnnual ? 24.90 : 28.90;
+            } else if (pName.includes('PRO')) {
+                nextBookPrice = isAnnual ? 14.90 : 18.90;
+            } else if (pName.includes('BLACK')) {
+                nextBookPrice = isAnnual ? 8.90 : 9.90;
+            }
 
             // Merge with existing orders if any (legacy), but prefer projects as source of truth for display
             const finalOrders = userProjects.length > 0 ? userProjects : (user.orders || []);

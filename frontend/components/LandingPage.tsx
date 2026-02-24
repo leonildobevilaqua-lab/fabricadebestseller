@@ -1825,8 +1825,65 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             {/* --- PRICING SECTION --- */}
             <PricingSection onSelectPlan={startWizard} lang={lang} onLoginClick={onLoginClick} />
 
-            {/* --- OFFER SECTION (HIDDEN) --- */}
-            {/* --- OFFER SECTION REMOVED --- */}
+            {/* --- COMPRA AVULSA (ONE-OFF) --- */}
+            <section className="py-24 bg-slate-900 border-t border-slate-800 relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+                <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2.5rem] p-10 md:p-16 border border-slate-700 shadow-2xl relative">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 blur-[100px] rounded-full"></div>
+
+                        <span className="inline-block bg-yellow-500/10 text-yellow-500 text-xs font-black px-4 py-2 rounded-full border border-yellow-500/20 uppercase tracking-widest mb-6">
+                            Flexibilidade Total
+                        </span>
+
+                        <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
+                            Não quer assinar um plano agora? <br />
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">Gere apenas um livro</span>
+                        </h2>
+
+                        <p className="text-slate-400 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
+                            Acesso imediato para criar seu Best Seller sem mensalidade. Ideal para testar a potência da nossa IA ou para projetos pontuais de alta qualidade.
+                        </p>
+
+                        <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-10">
+                            <div className="text-center md:text-left">
+                                <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Pagamento Único</p>
+                                <div className="flex items-end gap-1">
+                                    <span className="text-slate-400 text-2xl font-bold mb-2">R$</span>
+                                    <span className="text-7xl font-black text-white tracking-tight">89,90</span>
+                                </div>
+                            </div>
+
+                            <div className="h-20 w-px bg-slate-700 hidden md:block"></div>
+
+                            <ul className="text-left space-y-3">
+                                {[
+                                    '1 Livro Completo (+160 páginas)',
+                                    'Diagramação Profissional Inclusa',
+                                    'Exportação em PDF e DOCX',
+                                    'Sem fidelidade ou renovação'
+                                ].map((item, i) => (
+                                    <li key={i} className="flex items-center gap-3 text-slate-300">
+                                        <Check className="w-5 h-5 text-yellow-500" />
+                                        <span className="font-medium">{item}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <button
+                            onClick={() => startWizard()}
+                            className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black py-5 px-12 rounded-2xl text-xl shadow-xl shadow-yellow-500/20 transition-all transform hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto"
+                        >
+                            GERAR MEU LIVRO AGORA (R$ 89,90)
+                        </button>
+
+                        <p className="mt-6 text-slate-500 text-xs flex items-center justify-center gap-2">
+                            <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Asaas (PIX ou Cartão)
+                        </p>
+                    </div>
+                </div>
+            </section>
 
             {/* --- UPLOAD SECTION (HIDDEN TEMPORARILY) ---
             <section className="py-20 bg-slate-900 border-t border-slate-800">

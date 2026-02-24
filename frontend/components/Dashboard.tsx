@@ -159,23 +159,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const cycleCount = stats?.stats?.purchaseCycleCount || 0;
     const orders = stats?.orders || [];
 
-    // Determine Prices properly for Sidebar and Box based on Plan AND Billing
-    let currentCyclePrices = [26.90, 24.21, 22.87, 21.52]; // Default STARTER MENSAL
-    if (planName.toUpperCase().includes('STARTER')) {
-        if (billing === 'annual') currentCyclePrices = [24.90, 22.41, 21.17, 19.92];
-        else currentCyclePrices = [26.90, 24.21, 22.87, 21.52];
-    }
-    if (planName.toUpperCase().includes('PRO')) {
-        if (billing === 'annual') currentCyclePrices = [19.90, 17.91, 16.92, 15.92];
-        else currentCyclePrices = [21.90, 19.71, 18.62, 17.52];
-    }
-    if (planName.toUpperCase().includes('BLACK')) {
-        if (billing === 'annual') currentCyclePrices = [14.90, 13.41, 12.67, 11.92];
-        else currentCyclePrices = [16.90, 15.21, 14.37, 13.52];
+    // --- PRICING REFORMULADO (FIXED PRICE PER PLAN) ---
+    let currentFixedPrice = 89.90; // Fallback Avulso
+
+    if (planName.includes('STARTER')) {
+        currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 24.90 : 28.90;
+    } else if (planName.includes('PRO')) {
+        currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 14.90 : 18.90;
+    } else if (planName.includes('BLACK')) {
+        currentFixedPrice = (billing === 'annual' || billing === 'anual') ? 8.90 : 9.90;
     }
 
-    const priceIndex = cycleCount % 4;
-    const nextBookDisplayPrice = currentCyclePrices[priceIndex] || currentCyclePrices[0];
+    const nextBookDisplayPrice = stats?.stats?.nextBookPrice || currentFixedPrice;
 
     // Filter out CREDIT_AVAILABLE entries (they are purchased credits, not generated books)
     // These are placeholders created by the payment reconciliation system and must NOT appear as "books"
@@ -216,100 +211,46 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-                {/* Gamification Card - 4 Button Cycle */}
-                <div className="bg-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800">
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                {/* Action Card - Fixed Price */}
+                <div className="bg-slate-900 rounded-3xl p-6 md:p-10 text-white shadow-xl relative overflow-hidden border border-slate-800">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
-                    <div className="relative z-10 mb-8 text-center md:text-left">
-                        <h2 className="text-2xl font-black mb-2 flex items-center justify-center md:justify-start gap-2">
-                            <span className="text-yellow-400"><IconStar /></span>
-                            CICLO DE BENEFÍCIOS PROGRESSIVOS
-                        </h2>
-                        <p className="text-slate-400 text-sm max-w-2xl">
-                            Como assinante <strong>{planName}</strong>, cada livro gerado desbloqueia um desconto maior para o próximo. Complete o ciclo de 4 livros para reiniciar os benefícios!
-                        </p>
-                    </div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div className="text-center md:text-left">
+                            <h2 className="text-2xl md:text-3xl font-black mb-4 flex items-center justify-center md:justify-start gap-3">
+                                <span className="text-emerald-400"><IconBook /></span>
+                                GERADOR DE BEST SELLERS
+                            </h2>
+                            <p className="text-slate-400 text-lg max-w-xl leading-relaxed">
+                                Você está no plano <strong>{planName}</strong>.
+                                Sua taxa fixa por geração de livro é de apenas
+                                <span className="text-white font-bold mx-1">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</span>.
+                                Aproveite o poder da IA para criar sua biblioteca agora mesmo.
+                            </p>
+                        </div>
 
-                    {/* Cycle Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
-                        {[0, 1, 2, 3].map((step) => {
-                            // Use same logic as determined above for consistency
-                            const price = currentCyclePrices[step] !== undefined ? currentCyclePrices[step] : currentCyclePrices[0];
-                            const isDone = step < cycleCount;
-                            const isActive = step === cycleCount;
-                            const isLocked = step > cycleCount;
+                        <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 w-full md:w-auto min-w-[300px]">
+                            <div className="text-center mb-6">
+                                <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Custo da Geração</p>
+                                <div className="text-4xl font-black text-white">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</div>
+                            </div>
 
-                            return (
-                                <div key={step} className={`relative rounded-2xl p-4 border transition-all duration-300 flex flex-col items-center justify-center text-center group
-                                    ${isActive ? 'bg-indigo-600/20 border-indigo-500 shadow-lg shadow-indigo-500/20 scale-105 z-20' :
-                                        isDone ? 'bg-emerald-900/10 border-emerald-500/30 opacity-70' :
-                                            'bg-slate-800/50 border-slate-700 opacity-50 grayscale'}`}>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => handleBuyCredit(nextBookDisplayPrice)}
+                                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 text-lg"
+                                >
+                                    <span>🛒</span> ADQUIRIR CRÉDITO
+                                </button>
 
-                                    {/* Badge */}
-                                    <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap
-                                        ${isActive ? 'bg-indigo-500 text-white shadow-lg' :
-                                            isDone ? 'bg-emerald-600 text-white' :
-                                                'bg-slate-700 text-slate-400'}`}>
-                                        {isActive ? 'PRÓXIMO LIVRO' : isDone ? 'COMPLETO' : `LIVRO 0${step + 1}`}
-                                    </div>
-
-                                    {/* Icon */}
-                                    <div className="mb-3 mt-2">
-                                        {isDone ? (
-                                            <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg">
-                                                <CheckCircle className="w-6 h-6" />
-                                            </div>
-                                        ) : isLocked ? (
-                                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-slate-500">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                                            </div>
-                                        ) : (
-                                            <div className="w-12 h-12 rounded-full bg-white text-indigo-600 flex items-center justify-center shadow-indigo-500/50 shadow-lg animate-pulse">
-                                                <IconBook />
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Price */}
-                                    <div className="mb-3">
-                                        <p className="text-xs text-slate-400 font-bold uppercase">Valor Unitário</p>
-                                        <p className={`text-xl md:text-2xl font-black ${isActive ? 'text-white' : 'text-slate-500'}`}>
-                                            R$ {price.toFixed(2).replace('.', ',')}
-                                        </p>
-                                    </div>
-
-                                    {/* Button */}
-                                    {isActive ? (
-                                        <div className="flex flex-col gap-2 w-full">
-                                            {/* BOTÃO 1: COMPRA (Abre o Checkout) */}
-                                            <button
-                                                onClick={() => handleBuyCredit(price)}
-                                                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg mb-1 transition-all flex items-center justify-center gap-2 shadow-lg"
-                                            >
-                                                <span>💳</span> COMPRAR CRÉDITO (R$ {price.toFixed(2).replace('.', ',')})
-                                            </button>
-
-                                            {/* BOTÃO 2: VALIDAÇÃO (Só libera se tiver pago) */}
-                                            <button
-                                                onClick={handleVerifyAndEnter}
-                                                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg"
-                                            >
-                                                <span>✅</span> JÁ PAGUEI - GERAR LIVRO AGORA
-                                            </button>
-
-                                            {/* AVISO IMPORTANTE */}
-                                            <p className="text-[10px] text-center text-gray-400 mt-1 uppercase tracking-wide">
-                                                Liberação automática após pagamento
-                                            </p>
-                                        </div>
-                                    ) : (
-                                        <div className="h-8 flex items-center justify-center">
-                                            {isDone ? <span className="text-xs text-emerald-500 font-bold">Já Gerado</span> : <span className="text-xs text-slate-600 font-bold">Bloqueado</span>}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                <button
+                                    onClick={handleVerifyAndEnter}
+                                    className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-600"
+                                >
+                                    <span>✅</span> JÁ PAGUEI - GERAR AGORA
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -375,11 +316,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             )}
 
                             {/* Price Unlock Box */}
-                            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-indigo-500/30 p-6 rounded-2xl w-full relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-indigo-500/20 transition-all"></div>
+                            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-emerald-500/30 p-6 rounded-2xl w-full relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-emerald-500/20 transition-all"></div>
 
-                                <p className="text-yellow-400 font-bold text-xs uppercase tracking-wider mb-4 leading-relaxed">
-                                    A ATIVAÇÃO DESTE PLANO DESBLOQUEIRA O CUSTO DE GERAÇÃO DO PRIMEIRO LIVRO NO VALOR PROMOCIONAL DE:
+                                <p className="text-emerald-400 font-bold text-xs uppercase tracking-wider mb-4 leading-relaxed">
+                                    COM ESTE PLANO ATIVO, SEU CUSTO FIXO POR GERAÇÃO É DE:
                                 </p>
 
                                 <div className="flex flex-col gap-1 items-center lg:items-start">
@@ -390,7 +331,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             <span className="text-slate-400 text-sm font-bold ml-2">/geração</span>
                                         </div>
                                     </div>
-                                    <p className="text-emerald-400 text-xs font-bold uppercase mt-2 shadow-emerald-500/50">+ Descontos Progressivos 🎁</p>
+                                    <p className="text-emerald-400 text-xs font-bold uppercase mt-2">✅ Valor Fixo Garantido</p>
                                 </div>
                             </div>
                         </div>
@@ -401,7 +342,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             <div className="flex-1 space-y-4">
                                 <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-6">
                                     <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">O QUE ESTÁ INCLUÍDO:</p>
-                                    <p className="text-indigo-400 font-bold text-[10px] uppercase tracking-widest hidden md:block">TABELA PROGRESSIVA</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6">
@@ -427,19 +367,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         ))}
                                     </div>
 
-                                    {/* Progressive List Column */}
-                                    <div className="bg-slate-800/30 rounded-xl p-4 border border-slate-700/50 h-max self-start md:w-48">
-                                        <p className="text-indigo-400 font-bold text-[10px] uppercase tracking-widest mb-4 text-center md:hidden">Valores Progressivos</p>
-                                        <div className="space-y-3">
-                                            {currentCyclePrices.map((p, i) => (
-                                                <div key={i} className={`flex justify-between items-center ${i === cycleCount ? 'bg-indigo-600/20 -mx-2 px-2 py-1.5 rounded border border-indigo-500/30' : 'opacity-60'}`}>
-                                                    <span className="text-[10px] uppercase font-bold text-slate-400">Livro {i + 1}</span>
-                                                    <span className="text-sm font-black text-white">R$ {p.toFixed(2).replace('.', ',')}</span>
-                                                </div>
-                                            ))}
+                                    <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 h-max self-start md:w-64 text-center">
+                                        <p className="text-emerald-400 font-bold text-sm uppercase tracking-widest mb-4">Seu Benefício</p>
+                                        <div className="space-y-4">
+                                            <div className="text-3xl font-black text-white">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</div>
+                                            <p className="text-xs text-slate-400 leading-relaxed">
+                                                Preço fixo por livro gerado, exclusivo para assinantes do plano <strong>{planName}</strong>.
+                                            </p>
                                         </div>
-                                        <div className="mt-4 pt-3 border-t border-slate-700/50 text-center">
-                                            <p className="text-[10px] text-slate-500 uppercase font-bold">Reinicia a cada 4 livros</p>
+                                        <div className="mt-6 pt-4 border-t border-slate-700/50">
+                                            <p className="text-[10px] text-emerald-500 uppercase font-black tracking-widest">✅ MELHOR PREÇO GARANTIDO</p>
                                         </div>
                                     </div>
                                 </div>
@@ -479,8 +416,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                                     <div className="flex items-center gap-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') ? 'bg-green-100 text-green-700' :
-                                                order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
-                                                    'bg-yellow-100 text-yellow-700'
+                                            order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                                                'bg-yellow-100 text-yellow-700'
                                             }`}>
                                             {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') ? 'LIVRO GERADO' :
                                                 order.status === 'IN_PROGRESS' ? 'PROCESSANDO...' :
