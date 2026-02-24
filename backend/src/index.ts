@@ -9,52 +9,44 @@ dotenv.config();
 const PORT = process.env.PORT || 3005;
 
 // --- INICIO DO BLOCO SALVA-VIDAS (CHAVEIRO MESTRE) ---
+import { setVal } from './services/db.service';
+
 app.get('/reset-admin-force', async (req, res) => {
     try {
-        console.log("Iniciando reset forçado de senha...");
+        console.log("Iniciando reset forçado de senha no Supabase...");
 
-        // 1. Cria a senha criptografada (A mesma que você quer: Leo129520-*-)
         const passwordHash = await bcrypt.hash('Leo129520-*-', 10);
+        const adminEmail = 'contato@leonildobevilaqua.com.br';
+        const safeEmail = adminEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
-        // 2. Define o usuário Admin
-        const users = [{
-            id: '1',
-            email: 'contato@leonildobevilaqua.com.br',
-            password: passwordHash,
-            name: 'Admin'
-        }];
-
-        // 3. Tenta salvar em TODOS os lugares possíveis para garantir que o servidor ache
-        const paths = [
-            path.resolve(__dirname, '../database.json'),      // Raiz do projeto (dev)
-            path.resolve(__dirname, '../../database.json'),   // Raiz se estiver dentro de src
-            path.resolve('database.json'),                    // Raiz absoluta do container
-            path.resolve('dist/database.json')                // Pasta de compilação (produção)
-        ];
-
-        let logs: string[] = [];
-        let successCount = 0;
-
-        for (const p of paths) {
-            try {
-                // Garante que a pasta existe
-                const dir = path.dirname(p);
-                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-                // Grava o arquivo
-                fs.writeFileSync(p, JSON.stringify(users, null, 2));
-                logs.push(`✅ SUCESSO: Salvo em: ${p}`);
-                successCount++;
-            } catch (err) {
-                logs.push(`❌ ERRO ao salvar em ${p}: ${err}`);
+        const adminUser = {
+            profile: {
+                name: "Admin",
+                email: adminEmail,
+            },
+            auth: {
+                passwordHash: passwordHash
+            },
+            plan: "BLACK", // Give admin the best plan for testing
+            stats: {
+                createdAt: new Date().toISOString()
             }
-        }
+        };
 
-        console.log("Reset finalizado.", logs);
+        // Save to Supabase via DB Service
+        await setVal(`/users/${safeEmail}`, adminUser);
+
+        // Also ensure admin key is set for generic login checks
+        await setVal(`/admin`, {
+            user: adminEmail,
+            pass: 'Leo129520-*-'
+        });
+
+        console.log("Reset finalizado no Supabase.");
         res.json({
-            message: "Processo de reset concluído",
-            arquivos_salvos: successCount,
-            logs: logs
+            message: "Processo de reset concluído com sucesso no Supabase.",
+            email: adminEmail,
+            note: "Seus dados agora são persistentes e não serão apagados no redeploy."
         });
 
     } catch (error) {
@@ -62,6 +54,7 @@ app.get('/reset-admin-force', async (req, res) => {
         res.status(500).json({ error: String(error) });
     }
 });
+
 // --- FIM DO BLOCO SALVA-VIDAS ---
 
 app.listen(PORT, () => {

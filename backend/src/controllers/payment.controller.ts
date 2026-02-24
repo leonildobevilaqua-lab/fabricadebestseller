@@ -413,8 +413,10 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                         startDate: new Date(),
                         lastPayment: new Date()
                     });
-                    // Also update Lead
-                    let leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
+
+                    // Search for lead again to ensure fresh scope index
+                    const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
+
                     if (leadIndex !== -1) {
                         await setVal(`/leads[${leadIndex}]/plan`, { name: detectedPlan, billing });
                         await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER');
@@ -452,405 +454,420 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 
 export const checkAccess = async (req: Request, res: Response) => {
     try {
-        await reloadDB(); // CRITICAL: Force load from disk BEFORE reading anything
-    } catch (e) {
-        console.error("Values Reload Error:", e);
-    }
-
-    const { email } = req.query;
-    if (!email) return res.status(400).json({ error: "Email required" });
-
-    // CRITICAL FIX: Use same regex as Subscription/Admin controllers to match DB keys
-    const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-
-    // LOCALHOST BYPASS FOR TESTING - DISABLED BY USER REQUEST (STRICT MODE EVERYWHERE)
-    /*
-    const isLocal = req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1');
-    if (isLocal) {
-        console.log(`[DEV] Localhost Access Bypass for ${email}`);
-        return res.json({ hasAccess: true, credits: 999, hasActiveProject: false, plan: { name: 'DEV_UNLIMITED', status: 'ACTIVE' } });
-    }
-    */
-
-    const bypass = await getVal('/settings/payment_bypass');
-    if (bypass) return res.json({ hasAccess: true, credits: 999, hasActiveProject: false });
-
-    // NOW read specific paths with fresh data
-    // NOW read specific paths with fresh data
-    let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-    let latestInvoiceStatus = null;
-    let latestInvoiceNumber = null;
-
-    // [STRICT AUDIT & RECOVERY SYSTEM]
-    // 1. Unconditionally fetch external truth (Asaas) and local history (Orders)
-    const orders = await getVal('/orders') || [];
-    let asaasPayments: any[] = [];
-
-    try {
-        const customer = await AsaasProvider.getCustomerByEmail(email as string);
-        if (customer) {
-            asaasPayments = await AsaasProvider.getPayments({ customer: customer.id, limit: 100 });
-            // Sort Newest First
-            asaasPayments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
-
-            // Capture Latest Status
-            // Capture Latest Status (Generic - Catch ANY recent invoice to block correctly)
-            // UPDATED: Now includes subscription terms to fix the "Wrong Invoice" bug.
-            const latestGen = asaasPayments.find((p: any) => {
-                const d = (p.description || "").toLowerCase();
-                return d.includes('geração') || d.includes('livro') ||
-                    d.includes('assinatura') || d.includes('plano') ||
-                    d.includes('starter') || d.includes('pro') || d.includes('black');
-            });
-            if (latestGen) {
-                latestInvoiceStatus = latestGen.status;
-                latestInvoiceNumber = latestGen.invoiceNumber || latestGen.id;
-            } else if (asaasPayments.length > 0) {
-                // Fallback: If no keywords match but we have payments, take the absolute newest one
-                // This covers generic invoice descriptions we might have missed
-                const absoluteLatest = asaasPayments[0];
-                latestInvoiceStatus = absoluteLatest.status;
-                latestInvoiceNumber = absoluteLatest.invoiceNumber || absoluteLatest.id;
-            }
-        }
-    } catch (e) { console.error("Asaas Fetch Error", e); }
-
-    const validPrices = [
-        9.90, 8.90, 18.90, 14.90, 28.90, 24.90, 89.90, // Novos Preços Fixos
-        16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41 // Antigos (para compatibilidade)
-    ];
-
-    // [UNIFIED LEDGER SYNC]
-    // Calculate effective balance based on: Confirmed Payments (In) - Books Generated (Out)
-    // Runs UNCONDITIONALLY to ensure the DB always reflects the true bank status
-    if (asaasPayments.length > 0) {
-        // 1. Calculate INFLOW (Confirmed Payments)
-        const validPaidList = asaasPayments.filter((p: any) =>
-            (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
-            (validPrices.some(vp => Math.abs(vp - p.value) < 0.1) ||
-                (p.description || '').toLowerCase().includes('livro') ||
-                (p.description || '').toLowerCase().includes('geração'))
-        );
-        const paidCount = validPaidList.length;
-
-        // 2. Calculate OUTFLOW (Generated Books / Orders)
-        const userOrders = (orders as any[]).filter((o: any) =>
-            (o.paymentInfo?.payerEmail?.toLowerCase() === (email as string).toLowerCase()) ||
-            validPaidList.some(p => p.id === o.id || p.id === o.paymentInfo?.transactionId)
-        );
-        const usedCount = userOrders.length;
-
-        // [ORDER RECONCILIATION]
-        // User Requirement: "Sum value ... Include Invoice Number ... Show immediately"
-        // Cycle through all VALID PAYMENTS. If a payment is NOT linked to an existing order, create a "Credit" order.
-        let ordersUpdated = false;
-
-        for (const payment of validPaidList) {
-            // Check if this payment ID exists in user orders (as id or transactionId)
-            const exists = orders.some((o: any) => o.id === payment.id || o.paymentInfo?.transactionId === payment.id);
-
-            if (!exists) {
-                console.log(`[LEDGER] Found unlinked payment ${payment.id} (${payment.value}). Creating Order placeholder.`);
-
-                // Create a "Credit Purchased" order
-                const newOrder = {
-                    id: payment.id, // Use Payment ID as Order ID for tracking
-                    title: "Crédito de Livro (Disponível)",
-                    status: "CREDIT_AVAILABLE", // Special status for unused credits
-                    date: payment.paymentDate || new Date(),
-                    price: payment.value,
-                    invoiceNumber: payment.invoiceNumber || payment.id,
-                    paymentInfo: {
-                        transactionId: payment.id,
-                        payerEmail: email,
-                        method: payment.billingType,
-                        value: payment.value
-                    }
-                };
-
-                orders.push(newOrder); // Add to local array
-                ordersUpdated = true;
-            }
+        try {
+            await reloadDB(); // CRITICAL: Force load from disk BEFORE reading anything
+        } catch (e) {
+            console.error("Values Reload Error:", e);
         }
 
-        if (ordersUpdated) {
-            console.log(`[LEDGER] Saving reconciled orders for ${email}`);
-            await setVal(`/users/${safeEmail}/orders`, orders);
-            // Force reload local variable for accurate accounting if needed downstream
-        }
+        const { email } = req.query;
+        if (!email) return res.status(400).json({ error: "Email required" });
 
-        // 3. Determine TRUE BALANCE
-        // Balance = Confirmed Payments - (Orders that are NOT just 'Keyholders')
-        // We count ALL confirmed payments. 
-        // We subtract orders that are USED (i.e., have a real book status, not just CREDIT_AVAILABLE).
+        // CRITICAL FIX: Use same regex as Subscription/Admin controllers to match DB keys
+        const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
-        const usedOrdersCount = orders.filter((o: any) =>
-            o.status === 'COMPLETED' || o.status === 'PROCESSING' || o.status === 'LIVRO ENTREGUE'
-        ).length;
-
-        let theoretical = Math.max(0, paidCount - usedOrdersCount);
-
-        // [STRICT MODE ADJUSTMENT]
-        // User Requirement: If the LATEST invoice (current attempt) is PENDING, BLOCK access.
-        // This overrides "leftover credits" from DB resets to prevent confusion.
-        if (latestInvoiceStatus === 'PENDING' || latestInvoiceStatus === 'OVERDUE') {
-            if (theoretical > 0) {
-                console.warn(`[STRICT_MODE] Pending Invoice ${latestInvoiceNumber} detected. Freezing ${theoretical} historical credits to enforce current payment.`);
-                theoretical = 0;
-            }
-        }
-
-        console.log(`[LEDGER] ${email} -> Payments: ${paidCount} (In) | Used Orders: ${usedOrdersCount} (Out) | Balance: ${theoretical}`);
-
-        // 4. SYNC DB
-        if (theoretical !== credits) {
-            const oldCredits = credits;
-            console.log(`[LEDGER] Syncing DB (Was ${oldCredits} -> Now ${theoretical})`);
-            credits = theoretical;
-            await setVal(`/credits/${safeEmail}`, credits);
-            await setVal(`/users/${safeEmail}/bookCredits`, credits);
-
-            if (theoretical > 0 && oldCredits === 0) {
-                console.log(`[LEDGER] Access Granted by Ledger Sync!`);
-            }
-        }
-    }
-
-    let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
-
-    // FETCH LEADS & VERIFY PLAN INTEGRITY
-    let leads: any[] = [];
-    try {
-        const rawLeads = await getVal('/leads') || [];
-        leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
-        // SYNC: If user has 'ACTIVE' plan in DB but NO matching Subscriber Lead -> Revoke it.
-        // DISABLE REVOCATION as per user request ("Jamais desative o plano")
+        // LOCALHOST BYPASS FOR TESTING - DISABLED BY USER REQUEST (STRICT MODE EVERYWHERE)
         /*
-        if (userPlan && userPlan.status === 'ACTIVE') {
-            const hasActiveSub = leads.some((l: any) =>
-                l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
-                (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
-            );
-            if (!hasActiveSub) {
-                console.log(`[SYNC] Revoking orphaned plan for ${email} (No active lead found)`);
-                userPlan = null;
-                setVal(`/users/${safeEmail}/plan`, null); // Async cleanup
-            }
+        const isLocal = req.headers.host?.includes('localhost') || req.headers.host?.includes('127.0.0.1');
+        if (isLocal) {
+            console.log(`[DEV] Localhost Access Bypass for ${email}`);
+            return res.json({ hasAccess: true, credits: 999, hasActiveProject: false, plan: { name: 'DEV_UNLIMITED', status: 'ACTIVE' } });
         }
         */
-    } catch (e) {
-        console.error("Error fetching leads for sync", e);
-    }
 
-    // [MANUAL SUBSCRIPTION CHECK - RESILIENCE LAYER]
-    if (userPlan && (userPlan.status === 'PENDING' || userPlan.status === 'SUBSCRIBER_PENDING') && userPlan.subscriptionId) {
+        const bypass = await getVal('/settings/payment_bypass');
+        if (bypass) return res.json({ hasAccess: true, credits: 999, hasActiveProject: false });
+
+        // NOW read specific paths with fresh data
+        // NOW read specific paths with fresh data
+        let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+        let latestInvoiceStatus = null;
+        let latestInvoiceNumber = null;
+
+        // [STRICT AUDIT & RECOVERY SYSTEM]
+        // 1. Unconditionally fetch external truth (Asaas) and local history (Orders)
+        const orders = await getVal('/orders') || [];
+        let asaasPayments: any[] = [];
+
+        let hasPendingSub = false;
+        let hasPendingCredit = false;
+
         try {
-            console.log(`[CHECK_SUB] Verifying subscription ${userPlan.subscriptionId} for ${email}...`);
-            const payments = await AsaasProvider.getSubscriptionPayments(userPlan.subscriptionId);
-            // Sort by date desc
-            if (payments && Array.isArray(payments)) {
-                // Find ANY recent confirmed payment
-                const valid = payments.find((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+            const customer = await AsaasProvider.getCustomerByEmail(email as string);
+            if (customer) {
+                asaasPayments = await AsaasProvider.getPayments({ customer: customer.id, limit: 100 });
+                // Sort Newest First
+                asaasPayments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
 
-                if (valid) {
-                    console.log(`[CHECK_SUB] Payment Found (ID: ${valid.id})! Forced Activation.`);
-                    userPlan.status = 'ACTIVE';
-                    userPlan.lastPayment = new Date();
-                    await setVal(`/users/${safeEmail}/plan`, userPlan);
+                // Capture Latest Status
+                // UPDATED: Now includes subscription terms to fix the "Wrong Invoice" bug.
+                const latestGen = asaasPayments.find((p: any) => {
+                    const d = (p.description || "").toLowerCase();
+                    return d.includes('geração') || d.includes('livro') ||
+                        d.includes('assinatura') || d.includes('plano') ||
+                        d.includes('starter') || d.includes('pro') || d.includes('black');
+                });
 
-                    // Update Lead
-                    const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'SUBSCRIBER' || l.status === 'SUBSCRIBER_PENDING'));
-                    if (leadIndex !== -1) {
-                        await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER'); // Ensure SUBSCRIBER status
-                        await setVal(`/leads[${leadIndex}]/plan`, userPlan); // Sync full plan obj
-                        console.log(`[CHECK_SUB] Lead ${leadIndex} updated to ACTIVE.`);
+                // Find strictly subscription or credit status
+                hasPendingSub = asaasPayments.some(p => p.status === 'PENDING' && ((p.description || '').toLowerCase().includes('assinatura') || (p.description || '').toLowerCase().includes('plano')));
+                hasPendingCredit = asaasPayments.some(p => p.status === 'PENDING' && ((p.description || '').toLowerCase().includes('geração') || (p.description || '').toLowerCase().includes('livro')));
+
+                if (latestGen) {
+                    latestInvoiceStatus = (hasPendingSub || hasPendingCredit) ? 'PENDING' : latestGen.status;
+                    latestInvoiceNumber = latestGen.invoiceNumber || latestGen.id;
+                } else if (asaasPayments.length > 0) {
+                    // Fallback: If no keywords match but we have payments, take the absolute newest one
+                    // This covers generic invoice descriptions we might have missed
+                    const absoluteLatest = asaasPayments[0];
+                    latestInvoiceStatus = absoluteLatest.status;
+                    latestInvoiceNumber = absoluteLatest.invoiceNumber || absoluteLatest.id;
+                }
+            }
+        } catch (e) { console.error("Asaas Fetch Error", e); }
+
+        const validPrices = [
+            9.90, 8.90, 18.90, 14.90, 28.90, 24.90, 89.90, // Novos Preços Fixos
+            16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41 // Antigos (para compatibilidade)
+        ];
+
+        // [UNIFIED LEDGER SYNC]
+        // Calculate effective balance based on: Confirmed Payments (In) - Books Generated (Out)
+        // Runs UNCONDITIONALLY to ensure the DB always reflects the true bank status
+        if (asaasPayments.length > 0) {
+            // 1. Calculate INFLOW (Confirmed Payments)
+            const validPaidList = asaasPayments.filter((p: any) =>
+                (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
+                (validPrices.some(vp => Math.abs(vp - p.value) < 0.1) ||
+                    (p.description || '').toLowerCase().includes('livro') ||
+                    (p.description || '').toLowerCase().includes('geração'))
+            );
+            const paidCount = validPaidList.length;
+
+            // 2. Calculate OUTFLOW (Generated Books / Orders)
+            const userOrders = (orders as any[]).filter((o: any) =>
+                (o.paymentInfo?.payerEmail?.toLowerCase() === (email as string).toLowerCase()) ||
+                validPaidList.some(p => p.id === o.id || p.id === o.paymentInfo?.transactionId)
+            );
+            const usedCount = userOrders.length;
+
+            // [ORDER RECONCILIATION]
+            // User Requirement: "Sum value ... Include Invoice Number ... Show immediately"
+            // Cycle through all VALID PAYMENTS. If a payment is NOT linked to an existing order, create a "Credit" order.
+            let ordersUpdated = false;
+
+            for (const payment of validPaidList) {
+                // Check if this payment ID exists in user orders (as id or transactionId)
+                const exists = orders.some((o: any) => o.id === payment.id || o.paymentInfo?.transactionId === payment.id);
+
+                if (!exists) {
+                    console.log(`[LEDGER] Found unlinked payment ${payment.id} (${payment.value}). Creating Order placeholder.`);
+
+                    // Create a "Credit Purchased" order
+                    const newOrder = {
+                        id: payment.id, // Use Payment ID as Order ID for tracking
+                        title: "Crédito de Livro (Disponível)",
+                        status: "CREDIT_AVAILABLE", // Special status for unused credits
+                        date: payment.paymentDate || new Date(),
+                        price: payment.value,
+                        invoiceNumber: payment.invoiceNumber || payment.id,
+                        paymentInfo: {
+                            transactionId: payment.id,
+                            payerEmail: email,
+                            method: payment.billingType,
+                            value: payment.value
+                        }
+                    };
+
+                    orders.push(newOrder); // Add to local array
+                    ordersUpdated = true;
+                }
+            }
+
+            if (ordersUpdated) {
+                console.log(`[LEDGER] Saving reconciled orders for ${email}`);
+                await setVal(`/users/${safeEmail}/orders`, orders);
+                // Force reload local variable for accurate accounting if needed downstream
+            }
+
+            // 3. Determine TRUE BALANCE
+            // Balance = Confirmed Payments - (Orders that are NOT just 'Keyholders')
+            // We count ALL confirmed payments. 
+            // We subtract orders that are USED (i.e., have a real book status, not just CREDIT_AVAILABLE).
+
+            const usedOrdersCount = orders.filter((o: any) =>
+                o.status === 'COMPLETED' || o.status === 'PROCESSING' || o.status === 'LIVRO ENTREGUE'
+            ).length;
+
+            let theoretical = Math.max(0, paidCount - usedOrdersCount);
+
+            // [STRICT_MODE ADJUSTMENT]
+            // User Requirement: If the LATEST invoice (current attempt) is PENDING, BLOCK access.
+            // This overrides "leftover credits" from DB resets to prevent confusion.
+            const isActuallyPending = latestInvoiceStatus === 'PENDING' || latestInvoiceStatus === 'OVERDUE' || hasPendingSub || hasPendingCredit;
+
+            if (isActuallyPending) {
+                if (theoretical > 0) {
+                    console.warn(`[STRICT_MODE] Pending Invoice ${latestInvoiceNumber} detected. Freezing ${theoretical} historical credits for ${email} to enforce current payment.`);
+                    theoretical = 0;
+                }
+                latestInvoiceStatus = 'PENDING'; // Force status for downstream logic
+            }
+
+            console.log(`[LEDGER] ${email} -> Payments: ${paidCount} (In) | Used Orders: ${usedOrdersCount} (Out) | Balance: ${theoretical}`);
+
+            // 4. SYNC DB
+            if (theoretical !== credits) {
+                const oldCredits = credits;
+                console.log(`[LEDGER] Syncing DB (Was ${oldCredits} -> Now ${theoretical})`);
+                credits = theoretical;
+                await setVal(`/credits/${safeEmail}`, credits);
+                await setVal(`/users/${safeEmail}/bookCredits`, credits);
+
+                if (theoretical > 0 && oldCredits === 0) {
+                    console.log(`[LEDGER] Access Granted by Ledger Sync!`);
+                }
+            }
+        }
+
+        let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
+
+        // FETCH LEADS & VERIFY PLAN INTEGRITY
+        let leads: any[] = [];
+        try {
+            const rawLeads = await getVal('/leads') || [];
+            leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+            // SYNC: If user has 'ACTIVE' plan in DB but NO matching Subscriber Lead -> Revoke it.
+            // DISABLE REVOCATION as per user request ("Jamais desative o plano")
+            /*
+            if (userPlan && userPlan.status === 'ACTIVE') {
+                const hasActiveSub = leads.some((l: any) =>
+                    l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
+                    (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
+                );
+                if (!hasActiveSub) {
+                    console.log(`[SYNC] Revoking orphaned plan for ${email} (No active lead found)`);
+                    userPlan = null;
+                    setVal(`/users/${safeEmail}/plan`, null); // Async cleanup
+                }
+            }
+            */
+        } catch (e) {
+            console.error("Error fetching leads for sync", e);
+        }
+
+        // [MANUAL SUBSCRIPTION CHECK - RESILIENCE LAYER]
+        if (userPlan && (userPlan.status === 'PENDING' || userPlan.status === 'SUBSCRIBER_PENDING') && userPlan.subscriptionId) {
+            try {
+                console.log(`[CHECK_SUB] Verifying subscription ${userPlan.subscriptionId} for ${email}...`);
+                const payments = await AsaasProvider.getSubscriptionPayments(userPlan.subscriptionId);
+                // Sort by date desc
+                if (payments && Array.isArray(payments)) {
+                    // Find ANY recent confirmed payment
+                    const valid = payments.find((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+
+                    if (valid) {
+                        console.log(`[CHECK_SUB] Payment Found (ID: ${valid.id})! Forced Activation.`);
+                        userPlan.status = 'ACTIVE';
+                        userPlan.lastPayment = new Date();
+                        await setVal(`/users/${safeEmail}/plan`, userPlan);
+
+                        // Update Lead
+                        const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'SUBSCRIBER' || l.status === 'SUBSCRIBER_PENDING'));
+                        if (leadIndex !== -1) {
+                            await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER'); // Ensure SUBSCRIBER status
+                            await setVal(`/leads[${leadIndex}]/plan`, userPlan); // Sync full plan obj
+                            console.log(`[CHECK_SUB] Lead ${leadIndex} updated to ACTIVE.`);
+                        }
                     }
                 }
-            }
-        } catch (e) { console.error("Sub Check Error", e); }
-    }
-
-    // DEBUG CREDITS
-    const allCredits = await getVal('/credits');
-    console.log(`[CHECK_ACCESS] Email: ${email} -> Safe: ${safeEmail}`);
-    console.log(`[CHECK_ACCESS] Credits Found: ${credits}`);
-    // console.log(`[CHECK_ACCESS] All Credits Keys:`, Object.keys(allCredits || {}));
-
-    if (credits > 0) console.log(`[POLL] ${safeEmail} has ${credits} credits. Access Granted.`);
-
-    // --- Dynamic Pricing Logic ---
-    // --- Dynamic Pricing Logic ---
-    let bookPrice = 39.90; // Default Avulso
-    let checkoutUrl = ''; // Default Checkout (Dynamic)
-    let planName = 'NONE';
-    let discountLevel = 1;
-    let leadStatus = null;
-    let pendingPlan: any = null;
-    let effectivePlan: any = null;
-    let usageCount = 0;
-
-    // 1. FETCH LEADS TO DETERMINE USAGE AND PENDING PLANS
-    try {
-        await reloadDB(); // FORCE SYNC to see Admin updates immediately
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-
-        // Find most recent status/plan
-        for (let i = leads.length - 1; i >= 0; i--) {
-            const l = leads[i] as any;
-            if (l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim()) {
-                leadStatus = l.status;
-                if (l.plan) pendingPlan = l.plan;
-
-                // Prioritize 'APPROVED' or 'IN_PROGRESS' status to unblock generation
-                if (leadStatus === 'APPROVED' || leadStatus === 'IN_PROGRESS' || leadStatus === 'ACTIVE') break;
-            }
+            } catch (e) { console.error("Sub Check Error", e); }
         }
 
-        // Count Completed/Approved leads for this user to determine Level
-        const leadsUsage = leads.filter((l: any) =>
-            l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
-            (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
-        ).length;
+        // DEBUG CREDITS
+        const allCredits = await getVal('/credits');
+        console.log(`[CHECK_ACCESS] Email: ${email} -> Safe: ${safeEmail}`);
+        console.log(`[CHECK_ACCESS] Credits Found: ${credits}`);
+        // console.log(`[CHECK_ACCESS] All Credits Keys:`, Object.keys(allCredits || {}));
 
-        // Also count completed projects (robustness against broken lead links)
-        let projectsUsage = 0;
+        if (credits > 0) console.log(`[POLL] ${safeEmail} has ${credits} credits. Access Granted.`);
+
+        // --- Dynamic Pricing Logic ---
+        // --- Dynamic Pricing Logic ---
+        let bookPrice = 39.90; // Default Avulso
+        let checkoutUrl = ''; // Default Checkout (Dynamic)
+        let planName = 'NONE';
+        let discountLevel = 1;
+        let leadStatus = null;
+        let pendingPlan: any = null;
+        let effectivePlan: any = null;
+        let usageCount = 0;
+
+        // 1. FETCH LEADS TO DETERMINE USAGE AND PENDING PLANS
         try {
-            const projects = await getVal('/projects') || {};
-            const projectList = Array.isArray(projects) ? projects : Object.values(projects);
-            projectsUsage = projectList.filter((p: any) =>
-                p.userEmail?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
-                (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
+            await reloadDB(); // FORCE SYNC to see Admin updates immediately
+            const rawLeads = await getVal('/leads') || [];
+            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+            // Find most recent status/plan
+            for (let i = leads.length - 1; i >= 0; i--) {
+                const l = leads[i] as any;
+                if (l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim()) {
+                    leadStatus = l.status;
+                    if (l.plan) pendingPlan = l.plan;
+
+                    // Prioritize 'APPROVED' or 'IN_PROGRESS' status to unblock generation
+                    if (leadStatus === 'APPROVED' || leadStatus === 'IN_PROGRESS' || leadStatus === 'ACTIVE') break;
+                }
+            }
+
+            // Count Completed/Approved leads for this user to determine Level
+            const leadsUsage = leads.filter((l: any) =>
+                l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
+                (l.status === 'APPROVED' || l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS')
             ).length;
+
+            // Also count completed projects (robustness against broken lead links)
+            let projectsUsage = 0;
+            try {
+                const projects = await getVal('/projects') || {};
+                const projectList = Array.isArray(projects) ? projects : Object.values(projects);
+                projectsUsage = projectList.filter((p: any) =>
+                    p.userEmail?.toLowerCase().trim() === (email as string).toLowerCase().trim() &&
+                    (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE')
+                ).length;
+            } catch (e) { }
+
+            usageCount = Math.max(leadsUsage, projectsUsage);
+
+            // 2. DETERMINE PLAN TRUTH
+            effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : null;
+
+            // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
+            // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
+            if (!effectivePlan && leadStatus === 'SUBSCRIBER') {
+                console.log(`[CHECK_ACCESS] Fallback: Found Subscriber Lead for ${safeEmail} but no /users/ plan. Using Lead Plan.`);
+                effectivePlan = pendingPlan;
+                // Auto-heal: Write it back to /users/
+                if (effectivePlan) {
+                    setVal(`/users/${safeEmail}/plan`, { ...effectivePlan, status: 'ACTIVE' });
+                }
+            }
+
+            if (effectivePlan) {
+                // Validate Expiration only if it's the Active User Plan
+                let isValid = true;
+                let billing = (effectivePlan.billing || 'monthly').toLowerCase();
+
+                // If we are relying on effectivePlan from lead, treat it as active for date check
+                const startDate = effectivePlan.startDate ? new Date(effectivePlan.startDate) : new Date();
+                let expiryDate = new Date(startDate);
+                if (billing === 'annual') expiryDate.setFullYear(startDate.getFullYear() + 1);
+                else expiryDate.setDate(startDate.getDate() + 31);
+
+                // 3 Days Grace Period
+                expiryDate.setDate(expiryDate.getDate() + 3);
+
+                if (new Date() > expiryDate) {
+                    console.log(`[SUBSCRIPTION] Plan Expired for ${safeEmail}`);
+                    if (userPlan) {
+                        userPlan.status = 'EXPIRED';
+                        setVal(`/users/${safeEmail}/plan`, { ...userPlan, status: 'EXPIRED' });
+                    }
+                    isValid = false;
+                }
+
+                if (isValid) {
+                    // Normalize Plan Name
+                    const rawName = (effectivePlan.name || 'STARTER').toUpperCase();
+                    if (rawName.includes('BLACK')) planName = 'BLACK';
+                    else if (rawName.includes('PRO')) planName = 'PRO';
+                    else planName = 'STARTER';
+
+                    // Preço fixo por plano/ciclo (sem descontos progressivos)
+                    const billingKey = (billing === 'annual' || billing === 'anual') ? 'ANUAL' : 'MENSAL';
+                    const priceVal = PRICING_RULES[`${planName}_${billingKey}`] ?? PRICING_RULES['AVULSO'];
+
+                    bookPrice = priceVal;
+                    checkoutUrl = ''; // Dynamic generation only
+                    discountLevel = 1; // Sem níveis de desconto
+
+                    // FORCE ACTIVE STATUS IN RESPONSE if Valid
+                    if (!userPlan) userPlan = { ...effectivePlan, status: 'ACTIVE' };
+                }
+            }
+
+            // Capture effective plan for price calculation
+            effectivePlan = userPlan || pendingPlan;
+            if (effectivePlan) {
+                const pName = effectivePlan.name || planName;
+                const pBilling = effectivePlan.billing || 'monthly';
+                // Override planName for downstream logic
+                planName = pName;
+            }
+
+        } catch (e) {
+            console.error("Error calculating access/price", e);
+        }
+
+        // Find active project logic (Retained)
+        let hasActiveProject = false;
+
+        try {
+            const project = await getProjectByEmail((email as string).toLowerCase().trim());
+            if (project && project.metadata.status !== 'COMPLETED' && project.metadata.status !== 'FAILED') {
+                const status = project.metadata.status;
+                // STRENGTHENED SECURITY: 
+                // Only consider a project "Active" (bypassing payment) if it is actually processing.
+                // IDLE or WAITING_TITLE states might exist from abandoned attempts; they DO NOT grant access if credits are 0.
+                if (credits > 0) {
+                    hasActiveProject = true;
+                } else {
+                    // If no credits, restricted statuses only
+                    if (status !== 'IDLE' && status !== 'WAITING_TITLE') {
+                        hasActiveProject = true;
+                    }
+                }
+
+                if (project.metadata.topic === 'Livro Pré-Escrito') {
+                    hasActiveProject = false;
+                }
+            }
         } catch (e) { }
 
-        usageCount = Math.max(leadsUsage, projectsUsage);
-
-        // 2. DETERMINE PLAN TRUTH
-        effectivePlan = (userPlan && userPlan.status === 'ACTIVE') ? userPlan : null;
-
-        // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
-        // Fallback: If no userPlan found in /users/, but we found a valid SUBSCRIBER lead in /leads/
-        if (!effectivePlan && leadStatus === 'SUBSCRIBER') {
-            console.log(`[CHECK_ACCESS] Fallback: Found Subscriber Lead for ${safeEmail} but no /users/ plan. Using Lead Plan.`);
-            effectivePlan = pendingPlan;
-            // Auto-heal: Write it back to /users/
-            if (effectivePlan) {
-                setVal(`/users/${safeEmail}/plan`, { ...effectivePlan, status: 'ACTIVE' });
+        if (hasActiveProject) {
+            const isVip = String(email).toLowerCase().includes('subevilaqua');
+            if (!isVip && leadStatus !== 'APPROVED' && leadStatus !== 'LIVRO ENTREGUE' && leadStatus !== 'IN_PROGRESS' && credits <= 0) {
+                hasActiveProject = false; // Deny if not paid
             }
         }
 
-        if (effectivePlan) {
-            // Validate Expiration only if it's the Active User Plan
-            let isValid = true;
-            let billing = (effectivePlan.billing || 'monthly').toLowerCase();
-
-            // If we are relying on effectivePlan from lead, treat it as active for date check
-            const startDate = effectivePlan.startDate ? new Date(effectivePlan.startDate) : new Date();
-            let expiryDate = new Date(startDate);
-            if (billing === 'annual') expiryDate.setFullYear(startDate.getFullYear() + 1);
-            else expiryDate.setDate(startDate.getDate() + 31);
-
-            // 3 Days Grace Period
-            expiryDate.setDate(expiryDate.getDate() + 3);
-
-            if (new Date() > expiryDate) {
-                console.log(`[SUBSCRIPTION] Plan Expired for ${safeEmail}`);
-                if (userPlan) {
-                    userPlan.status = 'EXPIRED';
-                    setVal(`/users/${safeEmail}/plan`, { ...userPlan, status: 'EXPIRED' });
-                }
-                isValid = false;
-            }
-
-            if (isValid) {
-                // Normalize Plan Name
-                const rawName = (effectivePlan.name || 'STARTER').toUpperCase();
-                if (rawName.includes('BLACK')) planName = 'BLACK';
-                else if (rawName.includes('PRO')) planName = 'PRO';
-                else planName = 'STARTER';
-
-                // Preço fixo por plano/ciclo (sem descontos progressivos)
-                const billingKey = (billing === 'annual' || billing === 'anual') ? 'ANUAL' : 'MENSAL';
-                const priceVal = PRICING_RULES[`${planName}_${billingKey}`] ?? PRICING_RULES['AVULSO'];
-
-                bookPrice = priceVal;
-                checkoutUrl = ''; // Dynamic generation only
-                discountLevel = 1; // Sem níveis de desconto
-
-                // FORCE ACTIVE STATUS IN RESPONSE if Valid
-                if (!userPlan) userPlan = { ...effectivePlan, status: 'ACTIVE' };
-            }
-        }
-
-        // Capture effective plan for price calculation
-        effectivePlan = userPlan || pendingPlan;
-        if (effectivePlan) {
-            const pName = effectivePlan.name || planName;
-            const pBilling = effectivePlan.billing || 'monthly';
-            // Override planName for downstream logic
-            planName = pName;
-        }
-
-    } catch (e) {
-        console.error("Error calculating access/price", e);
+        res.json({
+            hasAccess: (credits > 0 || (userPlan && userPlan.status === 'ACTIVE') || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE'),
+            credits,
+            hasActiveProject,
+            leadStatus,
+            plan: userPlan,
+            pendingPlan,
+            bookPrice,
+            checkoutUrl,
+            discountLevel,
+            latestInvoiceStatus,
+            latestInvoiceNumber,
+            activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,
+            // Helper for frontend total sum
+            subscriptionPrice: (effectivePlan && SUBSCRIPTION_PRICES[planName]?.[(effectivePlan.billing || 'monthly').toLowerCase()]?.price) ||
+                (pendingPlan && pendingPlan.price) ||
+                79.90,
+            planLabel: effectivePlan
+                ? `Plano ${planName} ${(effectivePlan.billing === 'annual' ? 'Anual' : 'Mensal')}`
+                : (pendingPlan ? `Plano ${pendingPlan.name} ${(pendingPlan.billing === 'annual' ? 'Anual' : 'Mensal')}` : 'Avulso'),
+            totalBooksGenerated: usageCount
+        });
+    } catch (error) {
+        console.error("CheckAccess Error", error);
+        res.status(500).json({ error: "Internal Error" });
     }
-
-    // Find active project logic (Retained)
-    let hasActiveProject = false;
-
-    try {
-        const project = await getProjectByEmail((email as string).toLowerCase().trim());
-        if (project && project.metadata.status !== 'COMPLETED' && project.metadata.status !== 'FAILED') {
-            const status = project.metadata.status;
-            // STRENGTHENED SECURITY: 
-            // Only consider a project "Active" (bypassing payment) if it is actually processing.
-            // IDLE or WAITING_TITLE states might exist from abandoned attempts; they DO NOT grant access if credits are 0.
-            if (credits > 0) {
-                hasActiveProject = true;
-            } else {
-                // If no credits, restricted statuses only
-                if (status !== 'IDLE' && status !== 'WAITING_TITLE') {
-                    hasActiveProject = true;
-                }
-            }
-
-            if (project.metadata.topic === 'Livro Pré-Escrito') {
-                hasActiveProject = false;
-            }
-        }
-    } catch (e) { }
-
-    if (hasActiveProject) {
-        const isVip = String(email).toLowerCase().includes('subevilaqua');
-        if (!isVip && leadStatus !== 'APPROVED' && leadStatus !== 'LIVRO ENTREGUE' && leadStatus !== 'IN_PROGRESS' && credits <= 0) {
-            hasActiveProject = false; // Deny if not paid
-        }
-    }
-
-    res.json({
-        hasAccess: (credits > 0 || (userPlan && userPlan.status === 'ACTIVE') || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE'),
-        credits,
-        hasActiveProject,
-        leadStatus,
-        plan: userPlan,
-        pendingPlan,
-        bookPrice,
-        checkoutUrl,
-        discountLevel,
-        latestInvoiceStatus,
-        latestInvoiceNumber,
-        activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,
-        // Helper for frontend total sum
-        subscriptionPrice: (effectivePlan && SUBSCRIPTION_PRICES[planName]?.[(effectivePlan.billing || 'monthly').toLowerCase()]?.price) ||
-            (pendingPlan && pendingPlan.price) ||
-            79.90,
-        planLabel: effectivePlan
-            ? `Plano ${planName} ${(effectivePlan.billing === 'annual' ? 'Anual' : 'Mensal')}`
-            : (pendingPlan ? `Plano ${pendingPlan.name} ${(pendingPlan.billing === 'annual' ? 'Anual' : 'Mensal')}` : 'Avulso'),
-        totalBooksGenerated: usageCount
-    });
 };
 
 export const useCredit = async (req: Request, res: Response) => {
@@ -931,15 +948,18 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         });
 
         // [ANTI-SPAM] Check if there is already a PENDING invoice for generation to avoid duplication
+        // CRITICAL: ONLY reuse if the PRICE matches. Otherwise, it's a stale/wrong invoice.
         try {
             const existingPayments = await AsaasProvider.getPayments({ customer: customerId, status: 'PENDING', limit: 20 });
             const duplicate = existingPayments.find((pm: any) => {
                 const desc = (pm.description || "").toLowerCase();
-                return desc.includes('geração') || desc.includes('livro');
+                const isGen = desc.includes('geração') || desc.includes('livro');
+                const priceMatch = Math.abs(pm.value - price) < 0.1;
+                return isGen && priceMatch;
             });
 
             if (duplicate) {
-                console.log(`[CHARGE] Found existing PENDING invoice ${duplicate.id} for ${email}. Reusing.`);
+                console.log(`[CHARGE] Found existing PENDING invoice ${duplicate.id} for ${email} with correct price R$ ${price}. Reusing.`);
                 return res.json({
                     success: true,
                     invoiceUrl: duplicate.invoiceUrl || duplicate.bankSlipUrl,
@@ -947,8 +967,8 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
                     price: duplicate.value
                 });
             }
-        } catch (e) {
-            console.error("[CHARGE] Error checking for duplicate payments", e);
+        } catch (err: any) {
+            console.error("[CHARGE] Error checking for duplicate payments", err);
         }
 
         const charge = await AsaasProvider.createPayment(

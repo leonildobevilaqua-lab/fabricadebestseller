@@ -78,13 +78,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             // Ignore 'hasActiveProject' here because this button is specifically for validating a NEW payment.
             // STRICT CHECK: Only entry if credits are actually confirmed.
             if (data.hasAccess && data.credits > 0) {
-                if (data.latestInvoiceStatus === 'PENDING') {
-                    // Clarify that access is due to PREVIOUS balance, not the new invoice
-                    alert(`⚠️ A fatura atual ${data.latestInvoiceNumber || ''} ainda está PENDENTE no banco.\n\nPorém, você possui CRÉDITOS ANTERIORES válidos.\n\nLiberando acesso com saldo anterior...`);
+                // Determine if there is ANY pending invoice (Subscription or Credit)
+                const isBlockedByPending = (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE');
+
+                if (isBlockedByPending) {
+                    // Even if has credits, if there is a pending invoice, we block the NEW attempt
+                    // to ensure that multiple generation attempts without paying are restricted.
+                    alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como PENDENTE no banco.\n\nPor favor, realize o pagamento para continuar com esta geração.`);
+                    if (data.invoiceUrl) window.open(data.invoiceUrl, '_blank');
                 } else {
                     alert('Pagamento Confirmado! Iniciando Geração...');
+                    onNewBook();
                 }
-                onNewBook();
             } else {
                 if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
                     alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação ou realize o pagamento.`);

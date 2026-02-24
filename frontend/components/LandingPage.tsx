@@ -327,9 +327,14 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
         setGiftSourceEmail(null);
         setIsWizardOpen(true);
         if (plan && billing) {
-            setSelectedPlan({ name: plan, billing });
+            const p = { name: plan, billing };
+            setSelectedPlan(p);
+            localStorage.setItem('selectedPlan_v3', JSON.stringify(p));
         } else {
             setSelectedPlan(null); // Avulso
+            localStorage.removeItem('selectedPlan_v3');
+            // Force formData type to BOOK to avoid VOUCHER logic if previously used
+            setFormData(prev => ({ ...prev, type: 'BOOK' }));
         }
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
@@ -1301,15 +1306,15 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     if (!chosenPlan && typeof window !== 'undefined') {
                                                         try { chosenPlan = JSON.parse(localStorage.getItem('selectedPlan_v3') || 'null'); } catch (e) { }
                                                     }
-                                                    if (!chosenPlan && (window as any).currentUserPendingPlan) {
-                                                        chosenPlan = (window as any).currentUserPendingPlan;
-                                                    }
+
+                                                    // CRITICAL: If formData.type is NOT 'VOUCHER' and we have no plan name in chosenPlan, it is AVULSO.
+                                                    const isAvulsoMode = !chosenPlan || !chosenPlan.name || chosenPlan.name === 'AVULSO' || chosenPlan.name === 'NONE';
 
                                                     // STRICT CHECK: If user selected a plan, they MUST have it Active.
                                                     // If db is empty, realPlan is null.
                                                     const userHasActivePlan = realPlan && realPlan.status === 'ACTIVE';
 
-                                                    const needToPaySubscription = (!!chosenPlan && !userHasActivePlan) && !isVoucher && !paymentConfirmed;
+                                                    const needToPaySubscription = (!isAvulsoMode && !userHasActivePlan) && !isVoucher && !paymentConfirmed;
 
                                                     // --- PLAN VARIABLES CALCULATION (Pre-calc for reuse) ---
                                                     let subLink = '';
@@ -1555,10 +1560,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                 <div>
                                                                     <button
                                                                         onClick={handleBookPayment}
-                                                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
+                                                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
                                                                     >
                                                                         {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
-                                                                        PAGAR R$ {finalPriceStr} E LIBERAR (TAXA ÚNICA)
+                                                                        COMPRAR CRÉDITO AGORA! (R$ {finalPriceStr})
                                                                     </button>
                                                                 </div>
                                                             </div>
@@ -1568,10 +1573,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     return (
                                                         <button
                                                             onClick={handleBookPayment}
-                                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
+                                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
                                                         >
                                                             {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
-                                                            PAGAR R$ {finalPriceStr} E LIBERAR (TAXA ÚNICA)
+                                                            COMPRAR CRÉDITO AGORA! (R$ {finalPriceStr})
                                                         </button>
                                                     );
                                                 })()}

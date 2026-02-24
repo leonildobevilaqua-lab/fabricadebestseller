@@ -187,17 +187,10 @@ export const analyzeCompetitors = async (topic: string, priorContext: string, la
 };
 
 export const generateTitleOptions = async (topic: string, researchContext: string = "", lang: string = 'pt'): Promise<TitleOption[]> => {
-  console.log(`[IA] Iniciando geração para: ${topic.substring(0, 50)}...`);
+  console.log(`[IA] Iniciando geração de títulos para: ${topic.substring(0, 50)}...`);
+  const llm = await getLLMProvider();
   const langName = getLangName(lang);
 
-  // ---------------------------------------------------------
-  // 1. LEITURA SEGURA DAS CHAVES (Backend Only)
-  // ---------------------------------------------------------
-  // Tenta ler de todas as variações possíveis para evitar erro de undefined
-  const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-  const OPENAI_KEY = process.env.OPENAI_API_KEY;
-
-  // PROMPT REQUISITADO PELO USUÁRIO (SIMPLES E EFICAZ)
   const SYSTEM_PROMPT = `
 ATUE COMO UM EDITOR DE BEST-SELLERS.
 TAREFA: Crie 8 títulos virais e subtítulos comerciais baseados no tema do usuário.
@@ -213,83 +206,27 @@ RETORNE APENAS JSON LIMPO: [{ "title": "...", "subtitle": "..." }]
 
   const userPrompt = `TEMA: ${topic}`;
 
-  // Helper para parsear e enriquecer
-  const parseAndEnrich = (text: string): TitleOption[] => {
-    try {
-      // Limpeza de JSON (Muitas vezes o Gemini manda ```json ... ```)
-      const cleanText = text.replace(/```json/g, "").replace(/```/g, "").trim();
-      const raw = JSON.parse(cleanText);
+  try {
+    const raw = await llm.generateJSON<any[]>(`${SYSTEM_PROMPT}\n\nINPUT DO USUÁRIO: ${userPrompt}`);
 
-      if (!Array.isArray(raw)) throw new Error("Not an array");
+    if (!Array.isArray(raw)) throw new Error("A resposta da IA não é um array de títulos.");
 
-      // Enriquecer com metadados obrigatórios do frontend
-      return raw.map((item: any, index: number) => ({
-        title: item.title,
-        subtitle: item.subtitle || "Subtítulo de alto impacto",
-        marketingHook: item.marketingHook || "Promessa de Transformação",
-        reason: "Gerado por IA Especialista em Best-Sellers",
-        score: 90 - (index * 2), // Score decrescente
-        isTopChoice: index === 0
-      }));
-    } catch (e) {
-      console.error("JSON Parse Error:", e);
-      throw new Error("Erro ao processar resposta da IA (JSON Inválido)");
-    }
-  };
+    // Enriquecer com metadados obrigatórios do frontend
+    return raw.map((item: any, index: number) => ({
+      title: item.title,
+      subtitle: item.subtitle || "Subtítulo de alto impacto",
+      marketingHook: item.marketingHook || "Promessa de Transformação",
+      reason: "Gerado por IA Especialista em Best-Sellers",
+      score: 90 - (index * 2), // Score decrescente
+      isTopChoice: index === 0
+    }));
 
-  // --- TENTATIVA 1: GOOGLE GEMINI (Prioridade: Custo Baixo) ---
-  if (GEMINI_KEY) {
-    try {
-      console.log("🔵 [Tentativa 1] Usando Google Gemini 1.5 Flash...");
-      const googleAI = new GoogleGenerativeAI(GEMINI_KEY);
-      const model = googleAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
-        generationConfig: { temperature: 0.7 }
-      });
-
-      const result = await model.generateContent(`${SYSTEM_PROMPT}\n\nINPUT DO USUÁRIO: ${userPrompt}`);
-      const response = await result.response;
-      const text = response.text();
-
-      return parseAndEnrich(text);
-
-    } catch (googleError: any) {
-      console.warn("⚠️ [Falha Gemini] Erro:", googleError.message);
-      console.log("🔄 Ativando Protocolo de Emergência (OpenAI)...");
-      // Deixa cair para o próximo bloco
-    }
-  } else {
-    console.warn("⚠️ Chave GEMINI_API_KEY não encontrada. Indo para OpenAI.");
+  } catch (error: any) {
+    console.error("Error generating titles:", error);
+    throw new Error(`Falha na análise de títulos: ${error.message}`);
   }
-
-  // --- TENTATIVA 2: OPENAI (Backup: Custo Mais Alto) ---
-  if (OPENAI_KEY) {
-    try {
-      console.log("🟢 [Tentativa 2] Usando OpenAI (GPT-4o-Mini)...");
-      const openai = new OpenAI({ apiKey: OPENAI_KEY });
-
-      const completion = await openai.chat.completions.create({
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: userPrompt }
-        ],
-        model: "gpt-4o-mini", // User requested model
-        response_format: { type: "json_object" } // Garante JSON se suportado
-      });
-
-      const text = completion.choices[0].message.content || "[]";
-      return parseAndEnrich(text);
-
-    } catch (openAiError: any) {
-      console.error("❌ [ERRO CRÍTICO] OpenAI também falhou:", openAiError);
-      throw new Error("Serviço de IA temporariamente indisponível. (Erro 503)");
-    }
-  }
-
-  // Se chegou aqui, não tem nenhuma chave configurada
-  console.error("❌ NENHUMA CHAVE DE API ENCONTRADA (Gemini ou OpenAI).");
-  throw new Error("Erro de Configuração no Servidor: Chaves de API ausentes.");
 };
+;
 
 export const generateStructure = async (title: string, subtitle: string, researchContext: string, lang: string = 'pt', contentStyle?: string): Promise<Chapter[]> => {
   const llm = await getLLMProvider();
