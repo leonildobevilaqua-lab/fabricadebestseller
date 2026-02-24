@@ -6,5 +6,10 @@ backend/.env
 frontend/.env
 *.env
 database.json
+backend/database.json
 backups/
 generated_books/
+backend/dist/
+frontend/dist/
+dist/
+.DS_Store

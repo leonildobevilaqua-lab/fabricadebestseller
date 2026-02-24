@@ -3,6 +3,7 @@ import { pt, en, es } from '../i18n/locales';
 import { PricingSection } from './PricingSection';
 import { SocialShare } from './SocialShare';
 import { RewardModal } from './RewardModal';
+import { ExtraServiceCard, ExtraServiceBuyButton } from './ExtraServices';
 import * as API from '../services/api';
 import { trackInitiateCheckout, trackLead } from '../services/meta-pixel';
 
@@ -1320,25 +1321,25 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                         pName = chosenPlan.name?.toUpperCase() || '';
                                                         billing = chosenPlan.billing?.toLowerCase() || '';
 
-                                                        // HARDCODED SUBSCRIPTION LINKS (From PricingSection)
+                                                        // HARDCODED SUBSCRIPTION PRICES (Alinhados ao backend SUBSCRIPTION_PRICES)
                                                         if (pName === 'STARTER') {
-                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/47E9CXl'; subPrice = '118,80'; }
-                                                            else { subLink = 'https://pay.kiwify.com.br/kfR54ZJ'; subPrice = '19,90'; }
+                                                            if (billing === 'annual') { subPrice = '147,90'; }
+                                                            else { subPrice = '19,90'; }
                                                         } else if (pName === 'PRO') {
-                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/jXQTsFm'; subPrice = '238,80'; }
-                                                            else { subLink = 'https://pay.kiwify.com.br/Bls6OL7'; subPrice = '34,90'; }
+                                                            if (billing === 'annual') { subPrice = '297,90'; }
+                                                            else { subPrice = '39,90'; }
                                                         } else if (pName === 'BLACK') {
-                                                            if (billing === 'annual') { subLink = 'https://pay.kiwify.com.br/hSv5tYq'; subPrice = '358,80'; }
-                                                            else { subLink = 'https://pay.kiwify.com.br/7UgxJ0f'; subPrice = '49,90'; }
+                                                            if (billing === 'annual') { subPrice = '497,90'; }
+                                                            else { subPrice = '79,90'; }
                                                         }
                                                     }
 
                                                     if (needToPaySubscription) {
                                                         const TEST_USER_DATA = {
-                                                            name: "Leonildo Bevilaqua da Silva",
-                                                            email: "contato@leonildobevilaqua.com.br",
-                                                            cpf: "272.077.588-63",
-                                                            phone: "+5511994781486",
+                                                            name: "Usuário Teste",
+                                                            email: "teste@exemplo.com.br",
+                                                            cpf: "000.000.000-00",
+                                                            phone: "+5511999999999",
                                                             cardLast4: "4242"
                                                         };
 
@@ -2087,142 +2088,162 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             {/* ═══════════════════════════════════════════════════════════
                 SEÇÃO: SERVIÇOS EXTRAS
                 ═══════════════════════════════════════════════════════════ */}
-            <section id="servicos-extras" className="py-24 bg-slate-900 relative overflow-hidden">
-                {/* Fundo decorativo */}
-                <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 opacity-80"></div>
+            <section id="servicos-extras" className="py-24 bg-slate-950 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950"></div>
                 <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
+                <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-700/30 to-transparent"></div>
 
-                <div className="relative max-w-6xl mx-auto px-6">
+
+
+
+                <div className="relative max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <span className="inline-block bg-emerald-500/10 text-emerald-400 text-xs font-black px-4 py-2 rounded-full border border-emerald-500/20 uppercase tracking-widest mb-4">
-                            Serviços Extras
+                            Serviços Extras Profissionais
                         </span>
                         <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-                            Potencialize Seu Livro com{' '}
+                            Transforme Seu Livro em{' '}
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-                                Serviços Premium
+                                Produto de Mercado
                             </span>
                         </h2>
-                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                            Os mesmos serviços exibidos após a geração do seu livro, disponíveis aqui para que você possa contratar a qualquer momento.
+                        <p className="text-slate-400 text-lg max-w-3xl mx-auto">
+                            Os mesmos serviços disponíveis após a geração do seu livro. Contrate separadamente ou em Pacote Completo com desconto.{' '}
+                            <span className="text-emerald-400 font-semibold">Após o pagamento, você receberá todas as instruções de início dos trabalhos por e-mail.</span>
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-8">
+                    {/* GRID ORGANIZADO POR CATEGORIA */}
 
-                        {/* ─── SERVIÇO 1: TRADUÇÃO ─────────────────────────────────── */}
-                        <div className="relative bg-gradient-to-br from-blue-900/40 to-slate-800/60 border border-blue-500/30 rounded-3xl p-8 flex flex-col shadow-2xl shadow-blue-900/20 hover:border-blue-400/50 transition-all">
-                            <div className="absolute -top-4 left-8 bg-blue-500 text-white text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
-                                Disponível Agora
-                            </div>
-
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-16 h-16 bg-blue-500/20 border border-blue-500/30 rounded-2xl flex items-center justify-center text-3xl">
-                                    🌍
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-black text-white">Tradução Profissional</h3>
-                                    <p className="text-blue-300 text-sm font-medium">Seu livro em outro idioma com IA avançada</p>
-                                </div>
-                            </div>
-
-                            <ul className="space-y-3 mb-8 flex-1">
-                                {[
-                                    '📖 Tradução completa do livro',
-                                    '🤖 IA especializada em tradução literária',
-                                    '📋 Revisão de coerência e naturalidade',
-                                    '🌐 Inglês, Espanhol e mais idiomas',
-                                    '📄 Arquivo formatado pronto para publicação',
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm">
-                                        <span>{item}</span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <div className="bg-slate-950/50 rounded-2xl p-5 mb-6 border border-white/5">
-                                <div className="flex items-end gap-2">
-                                    <span className="text-slate-500 text-lg mb-1">R$</span>
-                                    <span className="text-5xl font-black text-white">79,90</span>
-                                    <span className="text-slate-500 mb-1">/idioma</span>
-                                </div>
-                                <p className="text-xs text-slate-500 mt-1">Pagamento único, entrega em até 24h</p>
-                            </div>
-
-                            <button
-                                id="btn-extra-traducao"
-                                onClick={() => {
-                                    trackInitiateCheckout('Tradução de Livro', 79.90);
-                                    // Link de checkout do serviço de tradução
-                                    window.open('https://pay.asaas.com/fabricadebestseller/traducao', '_blank');
-                                }}
-                                className="w-full bg-blue-500 hover:bg-blue-400 text-white font-black py-4 rounded-xl text-lg transition-all shadow-lg shadow-blue-500/25 hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                                🌍 Contratar Tradução — R$ 79,90
-                            </button>
+                    {/* ── TRADUÇÃO ── */}
+                    <div className="mb-12">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-10 h-10 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-xl">🌍</div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Tradução</h3>
+                            <div className="flex-1 h-px bg-blue-500/20"></div>
                         </div>
-
-                        {/* ─── SERVIÇO 2: ISBN + FICHA CATALOGRÁFICA ───────────────── */}
-                        <div className="relative bg-gradient-to-br from-amber-900/40 to-slate-800/60 border border-amber-500/30 rounded-3xl p-8 flex flex-col shadow-2xl shadow-amber-900/20 hover:border-amber-400/50 transition-all">
-                            <div className="absolute -top-4 left-8 bg-amber-500 text-slate-900 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-widest">
-                                Publicação Legal
-                            </div>
-
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-16 h-16 bg-amber-500/20 border border-amber-500/30 rounded-2xl flex items-center justify-center text-3xl">
-                                    📚
-                                </div>
-                                <div>
-                                    <h3 className="text-2xl font-black text-white">Registros Legais</h3>
-                                    <p className="text-amber-300 text-sm font-medium">ISBN, Ficha Catalográfica e Depósito Legal</p>
-                                </div>
-                            </div>
-
-                            <ul className="space-y-3 mb-8 flex-1">
-                                {[
-                                    '🔢 Registro ISBN oficial (Câmara Brasileira do Livro)',
-                                    '📋 Ficha Catalográfica padronizada (AACR2/RDA)',
-                                    '🏛️ Depósito Legal na Biblioteca Nacional',
-                                    '📜 Direitos Autorais via EDA/FBN',
-                                    '✅ Documento pronto para inserir no livro',
-                                ].map((item, i) => (
-                                    <li key={i} className="flex items-start gap-3 text-slate-300 text-sm">
-                                        <span>{item}</span>
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <div className="bg-slate-950/50 rounded-2xl p-5 mb-6 border border-white/5">
-                                <div className="flex items-end gap-2">
-                                    <span className="text-slate-500 text-lg mb-1">R$</span>
-                                    <span className="text-5xl font-black text-white">97,90</span>
-                                    <span className="text-slate-500 mb-1">/livro</span>
-                                </div>
-                                <p className="text-xs text-slate-500 mt-1">Inclui ISBN + Ficha + Orientações de depósito</p>
-                            </div>
-
-                            <button
-                                id="btn-extra-isbn"
-                                onClick={() => {
-                                    trackInitiateCheckout('Registros ISBN + Ficha Catalográfica', 97.90);
-                                    window.open('https://pay.asaas.com/fabricadebestseller/isbn-ficha', '_blank');
-                                }}
-                                className="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-black py-4 rounded-xl text-lg transition-all shadow-lg shadow-amber-500/25 hover:scale-[1.02] active:scale-[0.98]"
-                            >
-                                📚 Registrar Meu Livro — R$ 97,90
-                            </button>
+                        <div className="grid sm:grid-cols-2 gap-6">
+                            {([
+                                { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX formatado pronto', 'Entrega em até 5 dias úteis'] },
+                                { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX formatado pronto', 'Entrega em até 5 dias úteis'] },
+                            ] as const).map(svc => (
+                                <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="blue" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
+                            ))}
                         </div>
-
                     </div>
 
-                    {/* CTA inferior */}
-                    <div className="mt-12 text-center">
+                    {/* ── DESIGN DE CAPA ── */}
+                    <div className="mb-12">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-10 h-10 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-xl">🎨</div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Design de Capa</h3>
+                            <div className="flex-1 h-px bg-purple-500/20"></div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-6">
+                            {([
+                                { key: 'capa-impressa', icon: '📗', title: 'Capa — Livro Impresso', subtitle: 'Design profissional para impressão KDP / UICLAP', price: 250.00, features: ['Dimensões exatas para impressão', 'Capa + Lombada + Contra-capa', 'Arquivo PDF em alta resolução', 'Revisões incluídas'] },
+                                { key: 'capa-digital', icon: '📱', title: 'Capa — Livro Digital (Ebook)', subtitle: 'Design otimizado para Amazon Kindle e lojas digitais', price: 149.90, features: ['Formato 1600×2560px', 'JPG e PNG em alta qualidade', 'Otimizado para catálogos digitais', 'Revisões incluídas'] },
+                            ] as const).map(svc => (
+                                <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="purple" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── PUBLICAÇÃO ── */}
+                    <div className="mb-12">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-10 h-10 bg-orange-500/20 border border-orange-500/30 rounded-xl flex items-center justify-center text-xl">🚀</div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Publicação</h3>
+                            <div className="flex-1 h-px bg-orange-500/20"></div>
+                        </div>
+                        <div className="grid sm:grid-cols-3 gap-6">
+                            {([
+                                { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico na maior livraria do mundo', price: 69.90, features: ['Upload e configuração KDP', 'Revisão de formato e margens', 'Disponível para venda global', 'Orientação sobre precificação'] },
+                                { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Publicação do ebook Kindle na Amazon', price: 59.90, features: ['Upload e configuração KDP', 'Revisão do arquivo mobi/epub', 'Disponível em 12+ países', 'Orientação sobre royalties'] },
+                                { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Impresso', subtitle: 'Publicação na maior plataforma editorial brasileira', price: 59.90, features: ['Cadastro e upload UICLAP', 'Revisão de formato e capa', 'Disponível para impressão sob demanda', 'Suporte no processo editorial'] },
+                            ] as const).map(svc => (
+                                <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="orange" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── REGISTROS LEGAIS ── */}
+                    <div className="mb-16">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center justify-center text-xl">📋</div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Registros Legais</h3>
+                            <div className="flex-1 h-px bg-amber-500/20"></div>
+                        </div>
+                        <div className="grid sm:grid-cols-3 gap-6">
+                            {([
+                                { key: 'ficha-catalografica', icon: '🗂️', title: 'Ficha Catalográfica', subtitle: 'Obrigatória para publicação em gráficas e editoras', price: 59.90, features: ['Padrão AACR2 / RDA', 'Emitida por bibliotecária habilitada', 'Prazo: até 3 dias úteis', 'Arquivo PDF para inserir no livro'] },
+                                { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Livro Impresso', subtitle: 'Registro oficial na Câmara Brasileira do Livro', price: 49.90, features: ['Número ISBN único para o livro', 'Registro na CBL', 'Código de barras incluso', 'Prazo: até 15 dias úteis'] },
+                                { key: 'isbn-digital', icon: '📗', title: 'ISBN — Livro Digital', subtitle: 'Registro oficial da edição digital na CBL', price: 49.90, features: ['Número ISBN único para o ebook', 'Registro na CBL', 'Código de barras incluso', 'Prazo: até 15 dias úteis'] },
+                            ] as const).map(svc => (
+                                <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="amber" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* ── PACOTE COMPLETO ── */}
+                    <div className="relative bg-gradient-to-br from-emerald-900/30 via-slate-800/60 to-slate-900 border-2 border-emerald-500/40 rounded-3xl p-10 shadow-2xl shadow-emerald-900/20">
+                        <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-900 text-sm font-black px-8 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/30">
+                            🔥 MAIOR ECONOMIA — PACOTE COMPLETO
+                        </div>
+
+                        <div className="grid md:grid-cols-2 gap-10 items-center mt-4">
+                            <div>
+                                <h3 className="text-3xl font-black text-white mb-3">Tudo em Um Único Pacote</h3>
+                                <p className="text-slate-400 mb-6 text-lg leading-relaxed">
+                                    Tradução (EN + ES) + Capa Impressa + Publicação Amazon + ISBN + Ficha Catalográfica. Tudo que você precisa para transformar seu livro em um produto profissional de mercado.
+                                </p>
+                                <ul className="grid grid-cols-2 gap-3">
+                                    {[
+                                        '🌍 Tradução Inglês', '🇪🇸 Tradução Espanhol',
+                                        '📗 Capa Profissional', '🚀 Publicação Amazon',
+                                        '🔢 ISBN Impresso', '🗂️ Ficha Catalográfica',
+                                    ].map((item, i) => (
+                                        <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
+                                            <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
+                                            {item}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+
+                            <div className="text-center">
+                                <p className="text-slate-500 text-sm uppercase tracking-widest mb-2">Investimento total</p>
+                                <div className="flex justify-center items-end gap-2 mb-2">
+                                    <span className="text-slate-400 text-2xl mb-2">R$</span>
+                                    <span className="text-7xl font-black text-white tracking-tighter">599,90</span>
+                                </div>
+                                <p className="text-emerald-400 text-sm font-bold mb-8">Todos os serviços individuais somam R$ 583,68</p>
+                                <ExtraServiceBuyButton
+                                    serviceKey="pacote-completo"
+                                    serviceName="Pacote Completo de Serviços"
+                                    price={599.90}
+                                    label="Contratar Pacote Completo"
+                                    accentClass="bg-emerald-500 hover:bg-emerald-400 text-slate-900 shadow-emerald-500/30"
+                                    formData={formData}
+                                    getApiBase={getApiBase}
+                                    trackInitiateCheckout={trackInitiateCheckout}
+                                />
+                                <p className="mt-4 text-xs text-slate-500 flex items-center justify-center gap-2">
+                                    <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Asaas (PIX, Boleto, Cartão)
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mt-10 text-center">
                         <p className="text-slate-500 text-sm">
-                            💡 Estes serviços também estão disponíveis dentro da plataforma após a geração do seu livro.
+                            📧 <strong className="text-slate-400">Após o pagamento confirmado</strong>, nossa equipe entrará em contato pelo e-mail cadastrado com todas as instruções para início dos trabalhos.
                         </p>
                     </div>
                 </div>
             </section>
+
+
 
             <footer className="py-12 text-center text-slate-600 border-t border-slate-800">
                 <SocialShare className="mb-8" />

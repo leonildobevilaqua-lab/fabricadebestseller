@@ -154,6 +154,9 @@ export const UserAuthController = {
 
             const nextBookPrice = prices[cycleIndex] || prices[0];
 
+            // Merge with existing orders if any (legacy), but prefer projects as source of truth for display
+            const finalOrders = userProjects.length > 0 ? userProjects : (user.orders || []);
+
             res.json({
                 profile: user.profile,
                 plan: user.plan,

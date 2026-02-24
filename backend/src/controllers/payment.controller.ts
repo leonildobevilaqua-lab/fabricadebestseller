@@ -1103,3 +1103,82 @@ export const createCharge = async (req: Request, res: Response) => {
     }
 };
 
+// ─── CATÁLOGO DE SERVIÇOS EXTRAS ────────────────────────────────────────────
+export const EXTRA_SERVICES_CATALOG: Record<string, { label: string; price: number; description: string }> = {
+    'livro-ingles': { label: 'Tradução — Livro em Inglês', price: 24.99, description: 'Tradução completa do livro para Inglês' },
+    'livro-espanhol': { label: 'Tradução — Livro em Espanhol', price: 24.99, description: 'Tradução completa do livro para Espanhol' },
+    'capa-impressa': { label: 'Capa Profissional (Impresso)', price: 250.00, description: 'Design de capa profissional para livro impresso' },
+    'capa-digital': { label: 'Capa Profissional (Ebook / Digital)', price: 149.90, description: 'Design de capa profissional para ebook' },
+    'amazon-impresso': { label: 'Publicação Amazon (Impresso)', price: 69.90, description: 'Publicação do livro impresso na Amazon KDP' },
+    'amazon-digital': { label: 'Publicação Amazon (Digital)', price: 59.90, description: 'Publicação do ebook na Amazon KDP' },
+    'uiclap-impresso': { label: 'Publicação UICLAP (Impresso)', price: 59.90, description: 'Publicação do livro impresso na UICLAP' },
+    'ficha-catalografica': { label: 'Criação de Ficha Catalográfica', price: 59.90, description: 'Ficha catalográfica padronizada AACR2/RDA' },
+    'isbn-impresso': { label: 'ISBN CBL — Livro Impresso', price: 49.90, description: 'Registro de ISBN na CBL para livro impresso' },
+    'isbn-digital': { label: 'ISBN CBL — Livro Digital', price: 49.90, description: 'Registro de ISBN na CBL para ebook' },
+    'pacote-completo': { label: 'Pacote Completo de Serviços', price: 599.90, description: 'Todos os serviços: Tradução + Capa + Publicação + ISBN + Ficha' },
+};
+
+/**
+ * POST /api/payment/extra-service
+ * Gera fatura Asaas para serviço extra com preço fixo do catálogo.
+ * Após confirmação do pagamento, detalhes são enviados por e-mail.
+ */
+export const createExtraServiceCharge = async (req: Request, res: Response) => {
+    try {
+        const { email, name, phone, cpfCnpj, serviceKey } = req.body;
+
+        if (!email || !serviceKey) {
+            return res.status(400).json({ error: 'E-mail e serviço são obrigatórios.' });
+        }
+
+        const service = EXTRA_SERVICES_CATALOG[serviceKey];
+        if (!service) {
+            return res.status(400).json({ error: `Serviço desconhecido: ${serviceKey}` });
+        }
+
+        console.log(`[EXTRA] ${email} => "${service.label}" R$ ${service.price}`);
+
+        const customerId = await AsaasProvider.createCustomer({
+            name: name || email.split('@')[0],
+            email,
+            cpfCnpj,
+            phone,
+        });
+
+        const payment = await AsaasProvider.createPayment(
+            customerId,
+            service.price,
+            `${service.label} — Fábrica de Best Sellers`
+        );
+
+        // Salva pedido extra para rastreamento admin
+        try {
+            await pushVal('/extra_orders', {
+                id: `extra_${Date.now()}`,
+                email,
+                name: name || email,
+                phone: phone || '',
+                type: 'EXTRA_SERVICE',
+                serviceKey,
+                serviceName: service.label,
+                servicePrice: service.price,
+                status: 'PENDING',
+                date: new Date(),
+                asaas_payment_id: payment.id,
+            });
+        } catch (dbErr) {
+            console.warn('[EXTRA] Falha ao salvar pedido (não crítico):', dbErr);
+        }
+
+        return res.json({
+            success: true,
+            invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl,
+            price: service.price,
+            serviceName: service.label,
+            message: `Fatura gerada! Após o pagamento, você receberá os detalhes no e-mail ${email}.`,
+        });
+    } catch (e: any) {
+        console.error('[EXTRA SERVICE]', e.message);
+        return res.status(500).json({ error: e.message || 'Erro ao gerar fatura.' });
+    }
+};

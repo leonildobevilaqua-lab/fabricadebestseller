@@ -11,7 +11,7 @@ const findLeadIndex = (leads: any[], email: string) => {
 
 export const SubscriptionController = {
     async create(req: Request, res: Response) {
-        const { email, name, cpfCnpj, phone, planKey, creditCard, address } = req.body;
+        const { email, name, cpfCnpj, phone, planKey, billing = 'monthly', creditCard, address } = req.body;
 
         try {
             await reloadDB();
@@ -45,12 +45,11 @@ export const SubscriptionController = {
                 addressNumber: address?.number,
                 complement: address?.complement,
                 province: address?.neighborhood,
-                // city/state handled by CEP usually, but Asaas doesn't ask for them explicitly in simple payload?
-                // Actually Asaas works best with just CEP + Number.
             });
 
-            // 2. Create Subscription
-            const subscription = await AsaasProvider.createSubscription(customerId, planKey, creditCard);
+            // 2. Create Subscription — billing passado corretamente (monthly | annual)
+            const normalizedBilling: 'monthly' | 'annual' = billing === 'annual' ? 'annual' : 'monthly';
+            const subscription = await AsaasProvider.createSubscription(customerId, planKey, normalizedBilling, creditCard);
 
             // 3. Save to DB
             const planConfig = (PLANS as any)[planKey];
@@ -65,7 +64,7 @@ export const SubscriptionController = {
                     startDate: new Date(),
                     subscriptionId: subscription.id,
                     features: planConfig.features,
-                    billing: 'monthly'
+                    billing: normalizedBilling   // ← correto, reflete o que foi realmente cobrado
                 },
                 status: 'SUBSCRIBER_PENDING'
             };
