@@ -239,7 +239,7 @@ export const generateStructure = async (title: string, subtitle: string, researc
     ORDER LOGIC: Fundamentos -> Quebra de Mitos -> Método Prático -> Aplicação Avançada.
     
     CRITICAL: Each chapter must resolve one of the specific doubts found in the YouTube/Google research ('DORES_DO_PUBLICO').
-    The goal is to produce a comprehensive book (200+ pages).
+    The goal is to produce a comprehensive book (170-200 pages).
     
     STYLE: "${contentStyle || 'Professional'}".
     
@@ -462,7 +462,7 @@ export const writeChapter = async (
         
         TAREFA: Escreva o Capítulo Completo.
         REGRAS:
-        - Mínimo de 2000 palavras.
+        - Extensão Alvo: Aproximadamente 3500 palavras. (Meta: ~15-20 páginas por capítulo)
         - Use tom conversacional e prático.
         - Foco total em resolver as dores listadas na pesquisa.
         
@@ -680,12 +680,31 @@ export const generateExtras = async (
     IMPORTANT: ALL TEXT MUST BE IN ${langName}.
   `;
 
-  const res = await llm.generateJSON<{ dedication: string; acknowledgments: string; aboutAuthor: string }>(prompt);
-  return {
-    dedication: cleanText(res.dedication),
-    acknowledgments: cleanText(res.acknowledgments),
-    aboutAuthor: cleanText(res.aboutAuthor || "")
-  };
+  try {
+    const res = await llm.generateJSON<{ dedication: string; acknowledgments: string; aboutAuthor: string }>(prompt);
+    return {
+      dedication: cleanText(res.dedication),
+      acknowledgments: cleanText(res.acknowledgments),
+      aboutAuthor: cleanText(res.aboutAuthor || "")
+    };
+  } catch (error) {
+    console.error("Extras JSON Generation Failed. Attempting Text Fallback...", error);
+    try {
+      const text = await llm.generateText(prompt);
+      const extract = (key: string) => {
+        const parts = text.split(new RegExp(`${key}":?\\s*"?`, 'i'));
+        if (parts.length > 1) return parts[1].split('",')[0].split('"}')[0].trim();
+        return "";
+      };
+      return {
+        dedication: cleanText(extract("dedication") || "Dedicatória gerada com sucesso."),
+        acknowledgments: cleanText(extract("acknowledgments") || "Agradecimentos gerados."),
+        aboutAuthor: cleanText(extract("aboutAuthor") || "Biografia gerada.")
+      };
+    } catch (e) {
+      return { dedication: "", acknowledgments: "", aboutAuthor: "" };
+    }
+  }
 };
 
 export const structureBookFromText = async (fullText: string): Promise<any> => {

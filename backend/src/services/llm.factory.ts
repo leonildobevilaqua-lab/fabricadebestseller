@@ -11,28 +11,31 @@ export const getLLMProvider = async (): Promise<LLMProvider> => {
     const config = await getConfig();
     const active = config.activeProvider;
 
-    // Helper to get OpenAI if available
-    const getOpenAI = () => {
-        if (!config.providers.openai) return null;
-        return new OpenAIProvider(config.providers.openai);
-    };
+    // STRICT PRIORITY: Always default to Gemini if key exists, ignoring 'activeProvider' if it's not explicitly requested for something else
+    // But better to respect the switch but ensure Gemini is the master.
 
     switch (active) {
         case 'openai':
-            if (!config.providers.openai) throw new Error("OpenAI Key missing");
-            return new OpenAIProvider(config.providers.openai);
+            if (config.providers.openai) return new OpenAIProvider(config.providers.openai);
+            // Fallback to gemini if openai selected but key missing
+            if (config.providers.gemini) return new GeminiProvider(config.providers.gemini);
+            throw new Error("OpenAI selected but key missing, and Gemini fallback also missing.");
         case 'anthropic':
-            if (!config.providers.anthropic) throw new Error("Anthropic Key missing");
-            return new AnthropicProvider(config.providers.anthropic);
+            if (config.providers.anthropic) return new AnthropicProvider(config.providers.anthropic);
+            break;
         case 'deepseek':
-            if (!config.providers.deepseek) throw new Error("DeepSeek Key missing");
-            return new GenericOpenAIProvider(config.providers.deepseek, "https://api.deepseek.com/v1", "deepseek-chat");
+            if (config.providers.deepseek) return new GenericOpenAIProvider(config.providers.deepseek, "https://api.deepseek.com/v1", "deepseek-chat");
+            break;
         case 'llama':
-            if (!config.providers.llama) throw new Error("Llama/Groq Key missing");
-            return new GenericOpenAIProvider(config.providers.llama, "https://api.groq.com/openai/v1", "llama3-70b-8192");
-        case 'gemini':
-        default:
-            if (!config.providers.gemini) throw new Error("Gemini Key missing");
-            return new GeminiProvider(config.providers.gemini);
+            if (config.providers.llama) return new GenericOpenAIProvider(config.providers.llama, "https://api.groq.com/openai/v1", "llama3-70b-8192");
+            break;
     }
+
+    // DEFAULT ACTION: Use Gemini
+    if (config.providers.gemini) return new GeminiProvider(config.providers.gemini);
+
+    // LAST RESORT: If everything above fails/skipped
+    if (config.providers.openai) return new OpenAIProvider(config.providers.openai);
+
+    throw new Error("Nenhum provedor de IA configurado corretamente (Gemini key missing?)");
 };

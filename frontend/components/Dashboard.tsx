@@ -407,7 +407,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         <div className="p-12 text-center text-slate-400">
                             <div className="mb-4 opacity-50"><IconBook /></div>
                             <p>Você ainda não gerou nenhum livro.</p>
-                            <button onClick={onNewBook} className="text-indigo-600 font-bold hover:underline mt-2">Começar agora</button>
+                            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-indigo-600 font-bold hover:underline mt-2">Começar agora</button>
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-100">

@@ -1028,6 +1028,11 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                   window.open(`${API.getApiBase()}/api/admin/books/${project.id}`, '_blank');
                 }
 
+                setUpsellOffer((prev: any) => ({
+                  ...prev,
+                  isCompleted: true,
+                  bookTitle: project?.metadata?.bookTitle || "Seu Novo Best Seller"
+                }));
                 setShowUpsell(true); // Restored Confetti/Reward Modal Logic
               }
             }}

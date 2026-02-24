@@ -55,29 +55,25 @@ export const RewardModal: React.FC<RewardModalProps> = ({ isOpen, onClose, onCla
                     {/* Header */}
                     <div className="bg-slate-950/50 p-6 text-center border-b border-slate-800">
                         <div className="inline-block animate-bounce mb-2">
-                            <span className="text-4xl">🎉</span>
+                            <span className="text-4xl">{offer?.isCompleted ? "📖" : "🎉"}</span>
                         </div>
                         <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 tracking-wider uppercase">
-                            Conquista Desbloqueada!
+                            {offer?.isCompleted ? "Você é um Autor!" : "Conquista Desbloqueada!"}
                         </h2>
                     </div>
 
                     {/* Body */}
                     <div className="p-8">
                         <p className="text-slate-300 text-center mb-8 text-lg font-medium">
-                            Parabéns pela ativação do seu plano <strong className="text-white">{offer?.planName || "PREMIUM"}</strong>.
+                            {offer?.isCompleted ? (
+                                <>Parabéns pela conclusão da sua obra <strong className="text-white">"{offer.bookTitle}"</strong>!</>
+                            ) : (
+                                <>Parabéns pela ativação do seu plano <strong className="text-white">{offer?.planName || "PREMIUM"}</strong>.</>
+                            )}
                         </p>
 
-                        {/* Progress Bar Visual - Keep as visual flair or hide? User screenshot didn't imply it, but user image 2 shows something? 
-                            User Image 2 shows just the modal content. No progress bar visible in the text provided description but let's keep it subtle or hide if not needed.
-                            Actually, the user screenshot does NOT show the progress bar. It shows just the text.
-                            I will hide the progress bar if it's a "Unlock" event (presence of planName).
-                        */}
-
-                        {!offer?.planName && (
+                        {!offer?.planName && !offer?.isCompleted && (
                             <div className="mb-8">
-                                {/* ... existing progress bar code ... */}
-                                {/* Trying to preserve existing logic for other use cases, so I'll just conditionally render it */}
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-xs font-bold text-green-400">NÍVEL 1</span>
                                     <span className="text-xs font-bold text-slate-500">NÍVEL 4</span>
@@ -94,7 +90,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ isOpen, onClose, onCla
                         {/* Offer Box */}
                         <div className="bg-slate-800/50 rounded-xl p-6 border border-cyan-500/30 text-center relative overflow-hidden">
                             <p className="text-slate-400 text-sm mb-2">
-                                Você acaba de desbloquear o valor exclusivo:
+                                {offer?.isCompleted ? "Garanta seu PRÓXIMO livro pelo valor do seu plano:" : "Você acaba de desbloquear o valor exclusivo:"}
                             </p>
                             {price && (
                                 <div className="text-4xl font-black text-green-400 mb-2 drop-shadow-lg">
@@ -102,7 +98,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ isOpen, onClose, onCla
                                 </div>
                             )}
                             <p className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">
-                                PREÇO GARANTIDO PARA O 1º LIVRO DA GERAÇÃO
+                                {offer?.isCompleted ? "Oportunidade para sua próxima obra-prima" : "PREÇO GARANTIDO PARA O 1º LIVRO DA GERAÇÃO"}
                             </p>
                         </div>
 

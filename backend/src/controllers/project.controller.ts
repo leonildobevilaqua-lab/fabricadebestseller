@@ -105,8 +105,7 @@ export const create = async (req: Request, res: Response) => {
                     console.error("Error creating pending lead:", e);
                 }
 
-                // return res.json({ error: "Payment Required", code: "PAYMENT_REQUIRED" });
-                console.log("[PROJECT] Allowing creation despite low credits (Flow Continuity Mode)");
+                return res.status(402).json({ error: "Payment Required", code: "PAYMENT_REQUIRED" });
             }
 
             // Deduct Credit

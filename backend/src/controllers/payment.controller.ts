@@ -572,8 +572,12 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
         } catch (e) { }
 
+        const portalAccess = !!((userPlan && userPlan.status === 'ACTIVE') || hasActiveProject);
+        const hasAccess = (credits > 0 || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE');
+
         res.json({
-            hasAccess: (credits > 0 || (userPlan && userPlan.status === 'ACTIVE') || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE'),
+            hasAccess,
+            portalAccess,
             credits,
             hasActiveProject,
             leadStatus,
@@ -766,10 +770,16 @@ export const deleteLead = async (req: Request, res: Response) => {
         if (targetIndex !== -1) {
             const leadToDelete = leads[targetIndex] as any;
             const email = leadToDelete.email;
+            const leadId = leadToDelete.id;
 
-            // Remove from array and save full array
+            // Remove from array (Legacy sync, might not be needed but keep for safety)
             leads.splice(targetIndex, 1);
-            await setVal('/leads', leads);
+
+            // CRITICAL: Delete the individual key from Supabase
+            if (leadId) {
+                const { deleteVal } = require('../services/db.service');
+                await deleteVal(`/leads/${leadId}`);
+            }
 
             // SYNC: IF USER DELETES SUBSCRIPTION LEAD, REMOVE ACCESS
             if (email) {

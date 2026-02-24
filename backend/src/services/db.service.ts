@@ -155,8 +155,56 @@ export const pushVal = async (pathStr: string, value: any) => {
     }
 };
 
+export const deleteVal = async (pathStr: string) => {
+    try {
+        const cleanPath = pathStr.endsWith('/') && pathStr.length > 1 ? pathStr.slice(0, -1) : pathStr;
+        const collections = ['/projects', '/leads', '/users', '/settings', '/admin', '/credits', '/orders', '/extra_orders'];
+
+        // 1. DELETE FROM SUPABASE
+        if (collections.includes(cleanPath)) {
+            // Delete entire collection (REALLY DANGEROUS, but requested for cleanup)
+            const { error } = await supabase
+                .from('kv_store')
+                .delete()
+                .like('key', `${cleanPath}/%`);
+            if (error) console.error(`Supabase DB Delete Collection Error [${cleanPath}]:`, error.message);
+        } else {
+            // Delete single key
+            const { error } = await supabase
+                .from('kv_store')
+                .delete()
+                .eq('key', cleanPath);
+            if (error) console.error(`Supabase DB Delete Error [${cleanPath}]:`, error.message);
+        }
+
+        // 2. FALLBACK/SYNC LOCAL - Ensure persistent removal from fallback file
+        try {
+            if (fs.existsSync(DB_PATH)) {
+                const localDB = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
+                const parts = cleanPath.split('/').filter(p => p);
+
+                let current = localDB;
+                for (let i = 0; i < parts.length - 1; i++) {
+                    if (current[parts[i]]) current = current[parts[i]];
+                }
+
+                const lastPart = parts[parts.length - 1];
+                if (current && current[lastPart] !== undefined) {
+                    delete current[lastPart];
+                    fs.writeFileSync(DB_PATH, JSON.stringify(localDB, null, 2));
+                    console.log(`[DB] Local sync: Deleted ${cleanPath}`);
+                }
+            }
+        } catch (e) {
+            console.error("Local DB Delete Sync Error", e);
+        }
+    } catch (e) {
+        console.error("Fatal Error deleteVal", e);
+    }
+};
+
 export const reloadDB = async () => {
     return Promise.resolve();
 };
 
-export default { getVal, setVal, pushVal, reloadDB };
+export default { getVal, setVal, pushVal, deleteVal, reloadDB };
