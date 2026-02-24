@@ -346,8 +346,8 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             // Check explicit prices (robust against keyword failure)
             const isExactPrice = generationPrices.some(p => Math.abs(p - amount) < 0.05);
 
-            // Fallback: Price Safety Net (10 to 40 BRL covers 11.92 to 39.90)
-            if (isExactPrice || (amount > 10 && amount < 40)) {
+            // Fallback: Price Safety Net (8 to 45 BRL covers all plan-based book prices)
+            if (isExactPrice || (amount > 8 && amount < 45)) {
                 console.log(`[WEBHOOK] Price Pattern Match for Book Generation: ${amount}`);
                 isBookGeneration = true;
             }

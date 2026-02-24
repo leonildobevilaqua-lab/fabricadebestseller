@@ -26,42 +26,41 @@ import { LeadRow } from './LeadRow';
 // --- Dashboard Component ---
 const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: any[] }) => {
     // Feature flag: Enable charts only when safely validated
-    const showCharts = false;
+    const showCharts = true;
 
     // Safety check
     const safeLeads = Array.isArray(leads) ? leads : [];
     const safeOrders = Array.isArray(orders) ? orders : [];
 
-    // Helper: Calculate Value based on User Rules
+    // Helper: Calculate Value based on User Rules (Source of Truth 2025)
+    // Helper: Calculate Value based on User Rules (Source of Truth 2025)
     const calculateLeadValue = (lead: any) => {
         // 1. If explicit payment info exists (from Webhook), use it.
-        if (lead.paymentInfo?.amount) {
-            // Asaas usually sends float (19.90). Kiwify sends cents?
-            // If > 1000, likely cents. Wait, if it's annual 199.00?
-            // If provider is ASAAS, trust amount.
-            if (lead.paymentInfo.provider === 'ASAAS') return Number(lead.paymentInfo.amount);
-
-            // Kiwify logic (legacy check)
-            const amt = Number(lead.paymentInfo.amount);
-            return amt > 1000 ? amt / 100 : amt;
-        }
+        if (lead.paymentInfo?.amount) return Number(lead.paymentInfo.amount);
 
         // 2. Check Plans (Distinguish Book vs Sub)
         if (lead.type === 'BOOK') {
-            return lead.plan ? 16.90 : 39.90;
+            const planName = (lead.plan?.name || "AVULSO").toUpperCase();
+            const billing = (lead.plan?.billing || "monthly").toLowerCase();
+            const isAnnual = billing === 'annual' || billing === 'anual';
+
+            if (planName === 'STARTER') return isAnnual ? 24.90 : 28.90;
+            if (planName === 'PRO') return isAnnual ? 14.90 : 18.90;
+            if (planName === 'BLACK') return isAnnual ? 8.90 : 9.90;
+            return 89.90; // Avulso
         }
 
         if (lead.plan) {
             const pName = lead.plan.name?.toUpperCase();
             const billing = lead.plan.billing?.toLowerCase(); // 'monthly' or 'annual'
 
-            if (pName === 'STARTER') return billing === 'annual' ? 118.80 : 19.90;
-            if (pName === 'PRO') return billing === 'annual' ? 238.80 : 34.90;
-            if (pName === 'BLACK') return billing === 'annual' ? 358.80 : 49.90;
+            if (pName === 'STARTER') return billing === 'annual' ? 147.90 : 19.90;
+            if (pName === 'PRO') return billing === 'annual' ? 297.90 : 39.90;
+            if (pName === 'BLACK') return billing === 'annual' ? 497.90 : 79.90;
         }
 
-        // 3. Default (Avulso / Credit) - Request: R$ 39,90
-        return 39.90;
+        // 3. Default
+        return 89.90;
     };
 
     // Filter Paid Leads (Include SUBSCRIBERS)
@@ -77,20 +76,18 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         );
     };
 
-    // 1. Revenue Calculations
+    // 1. Revenue Calculations - Use ORDERS for real money tracking
     const getRevenue = (filter: 'day' | 'week' | 'month' | 'year') => {
         const now = new Date();
-        const paidLeads = getPaidLeads();
+        const safeOrders = Array.isArray(orders) ? orders : [];
 
-        const filtered = paidLeads.filter(l => {
-            // Try date, created_at, or if active subscriber assume today? No, subscribers have plan.startDate or date
-            const dStr = l.date || l.created_at || (l.plan ? l.plan.startDate : null);
+        const filtered = safeOrders.filter(o => {
+            const dStr = o.date || o.created_at;
             if (!dStr) return false;
 
             const d = new Date(dStr);
-            if (isNaN(d.getTime())) return false; // Skip invalid dates
+            if (isNaN(d.getTime())) return false;
 
-            // Normalize to midnight for day comparison
             const targetDate = new Date(d);
             targetDate.setHours(0, 0, 0, 0);
             const today = new Date(now);
@@ -106,7 +103,7 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
             return true;
         });
 
-        return filtered.reduce((acc, curr) => acc + calculateLeadValue(curr), 0);
+        return filtered.reduce((acc, curr) => acc + (curr.paymentInfo?.amount || 0), 0);
     };
 
     // 2. Prepare Data for Charts
@@ -118,21 +115,21 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
     const revenueData = last7Days.map(date => {
         const dayStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-        const dayLeads = getPaidLeads().filter(l => {
-            const dStr = l.date || l.created_at || (l.plan ? l.plan.startDate : null);
+        const dayOrders = (Array.isArray(orders) ? orders : []).filter(o => {
+            const dStr = o.date || o.created_at;
             if (!dStr) return false;
             const d = new Date(dStr);
             if (isNaN(d.getTime())) return false;
             return d.toDateString() === date.toDateString();
         });
-        const total = dayLeads.reduce((acc, curr) => acc + calculateLeadValue(curr), 0);
+        const total = dayOrders.reduce((acc, curr) => acc + (curr.paymentInfo?.amount || 0), 0);
         return { name: dayStr, value: total };
     });
 
-    // 3. Top Customers
-    const customerMap = getPaidLeads().reduce((acc: any, curr: any) => {
-        const email = curr.email || 'Desconhecido';
-        const val = calculateLeadValue(curr);
+    // 3. Top Customers - Based on successful payments
+    const customerMap = (Array.isArray(orders) ? orders : []).reduce((acc: any, curr: any) => {
+        const email = curr.paymentInfo?.payerEmail || curr.email || 'Desconhecido';
+        const val = curr.paymentInfo?.amount || 0;
         acc[email] = (acc[email] || 0) + val;
         return acc;
     }, {});

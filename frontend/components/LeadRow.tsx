@@ -95,7 +95,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
     // --- RENDER HELPERS ---
     const formatMoney = (val: number) => `R$ ${val?.toFixed(2).replace('.', ',')}`;
 
-    // Resolve Amount
+    // Resolve Amount (Source of Truth 2025)
     let displayAmount = 'R$ 0,00';
     if (lead.paymentInfo?.amount) {
         displayAmount = formatMoney(lead.paymentInfo.amount);
@@ -103,13 +103,22 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
         // Fallback Plan Prices
         const name = (lead.plan.name || '').toUpperCase();
         const billing = (lead.plan.billing || 'monthly').toLowerCase();
-        if (name.includes('BLACK')) displayAmount = billing === 'annual' ? 'R$ 358,80' : 'R$ 49,90';
-        else if (name.includes('PRO')) displayAmount = billing === 'annual' ? 'R$ 238,80' : 'R$ 34,90';
-        else if (name.includes('STARTER')) displayAmount = billing === 'annual' ? 'R$ 118,80' : 'R$ 19,90';
+        const isAn = billing === 'annual' || billing === 'anual';
+
+        if (name.includes('BLACK')) displayAmount = isAn ? 'R$ 497,90' : 'R$ 79,90';
+        else if (name.includes('PRO')) displayAmount = isAn ? 'R$ 297,90' : 'R$ 39,90';
+        else if (name.includes('STARTER')) displayAmount = isAn ? 'R$ 147,90' : 'R$ 19,90';
         else displayAmount = 'N/A';
     } else if (isBook) {
-        // Default Book Price
-        displayAmount = 'R$ 16,90'; // Default for Pending Books
+        // Default Book Prices based on Plan
+        const planName = (lead.plan?.name || "AVULSO").toUpperCase();
+        const billing = (lead.plan?.billing || "monthly").toLowerCase();
+        const isAn = billing === 'annual' || billing === 'anual';
+
+        if (planName === 'STARTER') displayAmount = isAn ? 'R$ 24,90' : 'R$ 28,90';
+        else if (planName === 'PRO') displayAmount = isAn ? 'R$ 14,90' : 'R$ 18,90';
+        else if (planName === 'BLACK') displayAmount = isAn ? 'R$ 8,90' : 'R$ 9,90';
+        else displayAmount = 'R$ 89,90';
     }
 
     // Infer context for Book

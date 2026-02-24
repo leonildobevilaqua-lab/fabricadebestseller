@@ -157,7 +157,10 @@ export const SubscriptionController = {
                 const leadIndex = leads.findIndex((l: any) => l.asaas_subscription_id === subId);
                 if (leadIndex !== -1) {
                     const lead = leads[leadIndex];
-                    console.log(`[WEBHOOK] Activating Plan for ${lead.email}`);
+                    const planDisplayName = (lead.plan?.name || 'Assinatura').toUpperCase();
+                    const billingLabel = (lead.plan?.billing === 'annual' || lead.plan?.billing === 'anual') ? 'Anual' : 'Mensal';
+
+                    console.log(`[WEBHOOK] Activating Plan ${planDisplayName} for ${lead.email}`);
 
                     const updatedLead = {
                         ...lead,
@@ -168,9 +171,29 @@ export const SubscriptionController = {
                     const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
                     await setVal(`/users/${safeEmail}/plan`, updatedLead.plan);
 
+                    // --- FINANCIAL TRACKING (Admin Order Logging) ---
+                    try {
+                        await pushVal('/orders', {
+                            id: transactionId,
+                            email: lead.email,
+                            name: lead.name,
+                            amount: paidValue,
+                            type: 'SUBSCRIPTION',
+                            description: `Plano ${planDisplayName} - ${billingLabel}`,
+                            date: new Date(),
+                            paymentInfo: {
+                                provider: 'ASAAS',
+                                id: transactionId,
+                                amount: paidValue,
+                                plan: planDisplayName,
+                                status: 'CONFIRMED'
+                            }
+                        });
+                    } catch (e) {
+                        console.warn('[WEBHOOK] Order logging failed:', e);
+                    }
+
                     // === META CAPI: Purchase (Assinatura) ===
-                    const planDisplayName = lead.plan?.name || 'Assinatura';
-                    const billingLabel = (lead.plan?.billing === 'annual' || lead.plan?.billing === 'anual') ? 'Anual' : 'Mensal';
                     await sendPurchaseEvent({
                         eventId: transactionId,
                         email: lead.email,
@@ -185,9 +208,25 @@ export const SubscriptionController = {
                 // Pagamento avulso (geração de livro)
                 console.log(`[WEBHOOK] One-off Payment ${payment.id} Confirmed!`);
 
-                // Tenta recuperar o email do cliente via Asaas
+                // --- FINANCIAL TRACKING (Admin Order Logging) ---
                 try {
                     const customerData = await AsaasProvider.getCustomer(payment.customer);
+                    await pushVal('/orders', {
+                        id: transactionId,
+                        email: customerData?.email || 'unknown',
+                        name: customerData?.name || 'unknown',
+                        amount: paidValue,
+                        type: 'BOOK',
+                        description: `Geração de Livro - Avulso (via Asaas Sub Webhook)`,
+                        date: new Date(),
+                        paymentInfo: {
+                            provider: 'ASAAS',
+                            id: transactionId,
+                            amount: paidValue,
+                            status: 'CONFIRMED'
+                        }
+                    });
+
                     if (customerData?.email) {
                         await sendPurchaseEvent({
                             eventId: transactionId,
@@ -200,7 +239,7 @@ export const SubscriptionController = {
                         });
                     }
                 } catch (e) {
-                    console.warn('[WEBHOOK] Não foi possível recuperar cliente para Meta CAPI:', e);
+                    console.warn('[WEBHOOK] Order logging/Meta CAPI failed:', e);
                 }
             }
         }
