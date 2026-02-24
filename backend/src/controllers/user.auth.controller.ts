@@ -118,11 +118,14 @@ export const UserAuthController = {
             ).length;
 
             let projectsUsage = 0;
+            let userProjects: any[] = [];
             try {
                 const projects = await getVal('/projects') || {};
                 const projectList = Array.isArray(projects) ? projects : Object.values(projects);
-                projectsUsage = projectList.filter((p: any) =>
-                    p.userEmail?.toLowerCase().trim() === email.toLowerCase().trim() &&
+                userProjects = projectList.filter((p: any) =>
+                    p.userEmail?.toLowerCase().trim() === email.toLowerCase().trim()
+                );
+                projectsUsage = userProjects.filter((p: any) =>
                     // Only count real projects that consumed a credit or were paid for
                     (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE' || p.metadata?.status === 'WRITING_CHAPTERS' || p.metadata?.status === 'REVIEW_STRUCTURE' || p.metadata?.status === 'GENERATING_STRUCTURE')
                 ).length;
@@ -166,7 +169,7 @@ export const UserAuthController = {
                     totalBooks: user.orders?.length || usageCount,
                     nextBookPrice: nextBookPrice
                 },
-                orders: user.orders || []
+                orders: finalOrders
             });
 
         } catch (e) {
