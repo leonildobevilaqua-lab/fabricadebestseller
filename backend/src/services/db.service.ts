@@ -72,14 +72,22 @@ export const setVal = async (path: string, value: any) => {
 export const pushVal = async (path: string, value: any) => {
     try {
         const cleanPath = path.endsWith('/') && path.length > 1 ? path.slice(0, -1) : path;
-        // Fetch current array
+        const collections = ['/projects', '/leads', '/users', '/settings', '/admin', '/credits'];
+        const isCollection = collections.some(c => cleanPath.startsWith(c));
+
+        if (isCollection) {
+            console.warn(`[DB] Tentativa de pushVal em coleção (${cleanPath}). Isso não é permitido pois destruiria a estrutura. Use setVal com uma subchave.`);
+            return;
+        }
+
+        // FETCH current array
         const current = await getVal(cleanPath) || [];
 
         if (Array.isArray(current)) {
             current.push(value);
             await setVal(cleanPath, current);
         } else {
-            // If it's not an array, maybe it's the first element?
+            // For one-off keys that aren't in collections but might contain arrays
             await setVal(cleanPath, [value]);
         }
     } catch (e) {

@@ -483,6 +483,8 @@ export const checkAccess = async (req: Request, res: Response) => {
         let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
         let latestInvoiceStatus = null;
         let latestInvoiceNumber = null;
+        let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
+        let planName = 'NONE';
 
         // [STRICT AUDIT & RECOVERY SYSTEM]
         // 1. Unconditionally fetch external truth (Asaas) and local history (Orders)
@@ -508,16 +510,18 @@ export const checkAccess = async (req: Request, res: Response) => {
                         d.includes('starter') || d.includes('pro') || d.includes('black');
                 });
 
-                // Find strictly subscription or credit status
-                hasPendingSub = asaasPayments.some(p => p.status === 'PENDING' && ((p.description || '').toLowerCase().includes('assinatura') || (p.description || '').toLowerCase().includes('plano')));
-                hasPendingCredit = asaasPayments.some(p => p.status === 'PENDING' && ((p.description || '').toLowerCase().includes('geração') || (p.description || '').toLowerCase().includes('livro')));
+                // REFINED PENDING CHECK: Only care about the ABSOLUTE LATEST relevant invoice for the current category
+                // This prevents old abandoned attempts from blocking new successful ones.
+                const latestSubAttempt = asaasPayments.find(p => (p.description || '').toLowerCase().includes('assinatura') || (p.description || '').toLowerCase().includes('plano'));
+                const latestCreditAttempt = asaasPayments.find(p => (p.description || '').toLowerCase().includes('geração') || (p.description || '').toLowerCase().includes('livro'));
+
+                hasPendingSub = latestSubAttempt?.status === 'PENDING' || latestSubAttempt?.status === 'OVERDUE';
+                hasPendingCredit = latestCreditAttempt?.status === 'PENDING' || latestCreditAttempt?.status === 'OVERDUE';
 
                 if (latestGen) {
-                    latestInvoiceStatus = (hasPendingSub || hasPendingCredit) ? 'PENDING' : latestGen.status;
+                    latestInvoiceStatus = latestGen.status;
                     latestInvoiceNumber = latestGen.invoiceNumber || latestGen.id;
                 } else if (asaasPayments.length > 0) {
-                    // Fallback: If no keywords match but we have payments, take the absolute newest one
-                    // This covers generic invoice descriptions we might have missed
                     const absoluteLatest = asaasPayments[0];
                     latestInvoiceStatus = absoluteLatest.status;
                     latestInvoiceNumber = absoluteLatest.invoiceNumber || absoluteLatest.id;
@@ -603,7 +607,10 @@ export const checkAccess = async (req: Request, res: Response) => {
             // [STRICT_MODE ADJUSTMENT]
             // User Requirement: If the LATEST invoice (current attempt) is PENDING, BLOCK access.
             // This overrides "leftover credits" from DB resets to prevent confusion.
-            const isActuallyPending = latestInvoiceStatus === 'PENDING' || latestInvoiceStatus === 'OVERDUE' || hasPendingSub || hasPendingCredit;
+            const userHasActivePlanNow = userPlan && userPlan.status === 'ACTIVE';
+
+            // STRICT MODE only blocks if the latest is pending AND user HAS NO active plan or it's specifically a credit acquisition fail
+            const isActuallyPending = !userHasActivePlanNow && (latestInvoiceStatus === 'PENDING' || latestInvoiceStatus === 'OVERDUE' || hasPendingSub || hasPendingCredit);
 
             if (isActuallyPending) {
                 if (theoretical > 0) {
@@ -629,7 +636,7 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
         }
 
-        let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
+        // Plan already fetched at the top for logic consistency
 
         // FETCH LEADS & VERIFY PLAN INTEGRITY
         let leads: any[] = [];
@@ -657,28 +664,55 @@ export const checkAccess = async (req: Request, res: Response) => {
         }
 
         // [MANUAL SUBSCRIPTION CHECK - RESILIENCE LAYER]
-        if (userPlan && (userPlan.status === 'PENDING' || userPlan.status === 'SUBSCRIBER_PENDING') && userPlan.subscriptionId) {
+        // Runs if Plan is PENDING or user is trying to get in.
+        const needsPlanCheck = !userPlan || userPlan.status === 'PENDING' || userPlan.status === 'SUBSCRIBER_PENDING';
+        if (needsPlanCheck) {
             try {
-                console.log(`[CHECK_SUB] Verifying subscription ${userPlan.subscriptionId} for ${email}...`);
-                const payments = await AsaasProvider.getSubscriptionPayments(userPlan.subscriptionId);
-                // Sort by date desc
-                if (payments && Array.isArray(payments)) {
-                    // Find ANY recent confirmed payment
-                    const valid = payments.find((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+                console.log(`[CHECK_SUB] Manual Resilience Scan for ${email}...`);
 
-                    if (valid) {
-                        console.log(`[CHECK_SUB] Payment Found (ID: ${valid.id})! Forced Activation.`);
+                // 1. Check via Subscription ID if exists
+                let foundPayment = false;
+                if (userPlan?.subscriptionId) {
+                    const payments = await AsaasProvider.getSubscriptionPayments(userPlan.subscriptionId);
+                    if (payments && Array.isArray(payments)) {
+                        const valid = payments.find((p: any) => p.status === 'RECEIVED' || p.status === 'CONFIRMED');
+                        if (valid) foundPayment = true;
+                    }
+                }
+
+                // 2. Check via General Payments if no sub found (for one-off plan links)
+                if (!foundPayment && asaasPayments.length > 0) {
+                    const planPayment = asaasPayments.find((p: any) => {
+                        const d = (p.description || "").toLowerCase();
+                        const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
+                        const isPlan = d.includes('assinatura') || d.includes('plano') || d.includes('starter') || d.includes('pro') || d.includes('black');
+                        return isConfirmed && isPlan;
+                    });
+                    if (planPayment) {
+                        console.log(`[CHECK_SUB] Found Direct Plan Payment: ${planPayment.id}`);
+                        foundPayment = true;
+                    }
+                }
+
+                if (foundPayment) {
+                    console.log(`[CHECK_SUB] Success! Forcing Activation for ${email}.`);
+
+                    // Reconstruct plan if missing
+                    if (!userPlan) {
+                        userPlan = { status: 'ACTIVE', name: planName || 'STARTER', billing: 'monthly', lastPayment: new Date() };
+                    } else {
                         userPlan.status = 'ACTIVE';
                         userPlan.lastPayment = new Date();
-                        await setVal(`/users/${safeEmail}/plan`, userPlan);
+                    }
 
-                        // Update Lead
-                        const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'SUBSCRIBER' || l.status === 'SUBSCRIBER_PENDING'));
-                        if (leadIndex !== -1) {
-                            await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER'); // Ensure SUBSCRIBER status
-                            await setVal(`/leads[${leadIndex}]/plan`, userPlan); // Sync full plan obj
-                            console.log(`[CHECK_SUB] Lead ${leadIndex} updated to ACTIVE.`);
-                        }
+                    await setVal(`/users/${safeEmail}/plan`, userPlan);
+
+                    // Update Lead
+                    const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'SUBSCRIBER' || l.status === 'SUBSCRIBER_PENDING'));
+                    if (leadIndex !== -1) {
+                        await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER');
+                        await setVal(`/leads[${leadIndex}]/plan`, userPlan);
+                        console.log(`[CHECK_SUB] Lead updated to ACTIVE.`);
                     }
                 }
             } catch (e) { console.error("Sub Check Error", e); }
@@ -696,7 +730,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         // --- Dynamic Pricing Logic ---
         let bookPrice = 39.90; // Default Avulso
         let checkoutUrl = ''; // Default Checkout (Dynamic)
-        let planName = 'NONE';
+        // planName already declared at the top
         let discountLevel = 1;
         let leadStatus = null;
         let pendingPlan: any = null;
@@ -843,7 +877,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         }
 
         res.json({
-            hasAccess: (credits > 0 || (userPlan && userPlan.status === 'ACTIVE') || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE'),
+            hasAccess: (credits > 0 || (userPlan && userPlan.status === 'ACTIVE') || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE' || (userPlan && userPlan.status === 'ACTIVE')),
             credits,
             hasActiveProject,
             leadStatus,
