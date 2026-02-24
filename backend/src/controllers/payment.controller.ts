@@ -78,7 +78,7 @@ export const getLeads = async (req: Request, res: Response) => {
         // Enhance leads with credit status
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
             if (!lead.email) return { ...lead, credits: 0 };
-            const safeEmail = lead.email.toLowerCase().trim().replace(/\./g, '_');
+            const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
             return { ...lead, credits };
         }));
@@ -154,7 +154,7 @@ export const approveLead = async (req: Request, res: Response) => {
         }
 
         const currentLead = leads[targetIndex] as any;
-        const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         // LOGIC BRANCH: CREDIT vs SUBSCRIPTION
         if (approvalType === 'CREDIT') {
@@ -314,7 +314,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 
             await pushVal('/orders', { ...payload, date: new Date(), paymentInfo });
 
-            const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
+            const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
             // Find and Update Lead (Fetch fresh data)
             const rawLeads = await getVal('/leads') || [];
@@ -515,7 +515,10 @@ export const checkAccess = async (req: Request, res: Response) => {
         }
     } catch (e) { console.error("Asaas Fetch Error", e); }
 
-    const validPrices = [16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41];
+    const validPrices = [
+        9.90, 8.90, 18.90, 14.90, 28.90, 24.90, 89.90, // Novos Preços Fixos
+        16.90, 15.21, 14.37, 13.52, 14.90, 39.90, 26.90, 21.90, 19.90, 11.92, 12.67, 13.41 // Antigos (para compatibilidade)
+    ];
 
     // [UNIFIED LEDGER SYNC]
     // Calculate effective balance based on: Confirmed Payments (In) - Books Generated (Out)
@@ -842,7 +845,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         // Helper for frontend total sum
         subscriptionPrice: (effectivePlan && SUBSCRIPTION_PRICES[planName]?.[(effectivePlan.billing || 'monthly').toLowerCase()]?.price) ||
             (pendingPlan && pendingPlan.price) ||
-            49.90,
+            79.90,
         planLabel: effectivePlan
             ? `Plano ${planName} ${(effectivePlan.billing === 'annual' ? 'Anual' : 'Mensal')}`
             : (pendingPlan ? `Plano ${pendingPlan.name} ${(pendingPlan.billing === 'annual' ? 'Anual' : 'Mensal')}` : 'Avulso'),
@@ -854,7 +857,7 @@ export const useCredit = async (req: Request, res: Response) => {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: "Email required" });
 
-    const safeEmail = (email as string).toLowerCase().trim().replace(/\./g, '_');
+    const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
     const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
 
     if (credits > 0) {
@@ -870,7 +873,7 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
     try {
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: "Email required" });
-        const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
         await reloadDB();
 
         // 1. Identificar Plano e Ciclo
@@ -1027,7 +1030,7 @@ export const deleteLead = async (req: Request, res: Response) => {
 
             // SYNC: IF USER DELETES SUBSCRIPTION LEAD, REMOVE ACCESS
             if (email) {
-                const safeEmail = email.toLowerCase().trim().replace(/\./g, '_');
+                const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
                 const hasActiveSub = leads.some((l: any) =>
                     l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
                     (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))

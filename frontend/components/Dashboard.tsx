@@ -77,7 +77,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             // STRICT CHECK: Only entry if credits are actually confirmed.
             // Ignore 'hasActiveProject' here because this button is specifically for validating a NEW payment.
             // STRICT CHECK: Only entry if credits are actually confirmed.
-            if (data.credits > 0) {
+            if (data.hasAccess && data.credits > 0) {
                 if (data.latestInvoiceStatus === 'PENDING') {
                     // Clarify that access is due to PREVIOUS balance, not the new invoice
                     alert(`⚠️ A fatura atual ${data.latestInvoiceNumber || ''} ainda está PENDENTE no banco.\n\nPorém, você possui CRÉDITOS ANTERIORES válidos.\n\nLiberando acesso com saldo anterior...`);
@@ -86,10 +86,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 }
                 onNewBook();
             } else {
-                if (data.latestInvoiceStatus === 'PENDING') {
-                    alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação.`);
+                if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
+                    alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação ou realize o pagamento.`);
+                    if (data.invoiceUrl) window.open(data.invoiceUrl, '_blank');
+                } else if (data.hasAccess && data.hasActiveProject) {
+                    // Caso ele tenha acesso por projeto ativo mas não tenha créditos (ex: reconectando)
+                    onNewBook();
                 } else {
-                    alert('⚠️ O banco ainda não confirmou seu pagamento. Aguarde alguns instantes e clique neste botão novamente.');
+                    alert('⚠️ Não identificamos créditos disponíveis. Se você acabou de pagar, aguarde alguns instantes e tente novamente.');
                 }
             }
         } catch (error) {
@@ -302,7 +306,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             <div className="text-center md:text-right md:border-l md:border-slate-600 md:pl-6">
                                                 <p className="text-xs text-slate-400 font-bold uppercase">Renovação</p>
                                                 <p className="text-lg font-bold text-white">
-                                                    R$ {stats?.subscriptionPrice ? stats.subscriptionPrice.toFixed(2).replace('.', ',') : (planName === 'BLACK' ? '49,90' : planName === 'PRO' ? '34,90' : '19,90')} <span className="text-xs font-normal text-slate-500">/{isAnnual ? 'ano' : 'mês'}</span>
+                                                    R$ {stats?.subscriptionPrice ? stats.subscriptionPrice.toFixed(2).replace('.', ',') : (planName === 'BLACK' ? '79,90' : planName === 'PRO' ? '39,90' : '19,90')} <span className="text-xs font-normal text-slate-500">/{isAnnual ? 'ano' : 'mês'}</span>
                                                 </p>
                                             </div>
                                         </div>
