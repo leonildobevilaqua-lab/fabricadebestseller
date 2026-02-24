@@ -686,48 +686,25 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
         // 2.5. Generate Automatic Extras if missing
         if (!project.metadata.dedication || !project.metadata.acknowledgments || !project.metadata.aboutAuthor) {
-            console.log("Generating missing Extras (Dedication/Ack/About)...");
+            console.log("[PROJECT] Generating missing Extras (Dedication/Ack/About) for all plans...");
             await QueueService.updateMetadata(id, {
-                statusMessage: "Criando Dedicatória e Agradecimentos Especiais..."
+                statusMessage: "🔨 Finalizando os últimos detalhes (Dedicatória, Agradecimentos)..."
             });
 
             try {
-                // Check User Plan
-                const ownerEmail = project.metadata.contact?.email || "";
-                const safeEmail = ownerEmail.toLowerCase().trim().replace(/\./g, '_');
-                let planName = 'STARTER';
+                // FORCE GENERATION FOR ALL PLANS AS REQUESTED - NO MORE STARTER PLACEHOLDERS
+                const extras = await AIService.generateExtras(
+                    project.metadata,
+                    "", // default to family/friends
+                    "", // default to universal
+                    "", // default context
+                    targetLang
+                );
 
-                if (safeEmail) {
-                    const userPlan: any = await getVal(`users/${safeEmail}/plan`);
-                    if (userPlan && userPlan.status === 'ACTIVE') {
-                        planName = userPlan.name || 'STARTER';
-                    }
-                }
-
-                const isProOrBlack = planName.includes('PRO') || planName.includes('BLACK') || planName.includes('VIP');
-                console.log(`User Plan: ${planName} (Auto-Gen: ${isProOrBlack})`);
-
-                if (isProOrBlack) {
-                    const extras = await AIService.generateExtras(
-                        project.metadata,
-                        "", // default to family/friends
-                        "", // default to universal
-                        "", // default context
-                        targetLang
-                    );
-
-                    // Use generated content
-                    project.metadata.dedication = extras.dedication;
-                    project.metadata.acknowledgments = extras.acknowledgments;
-                    project.metadata.aboutAuthor = extras.aboutAuthor;
-
-                } else {
-                    // STARTER: Manual Placeholders
-                    // Using brackets so user knows to edit
-                    project.metadata.dedication = "[ESCREVA AQUI SUA DEDICATÓRIA]";
-                    project.metadata.acknowledgments = "[ESCREVA AQUI SEUS AGRADECIMENTOS]";
-                    project.metadata.aboutAuthor = "[ESCREVA AQUI A BIOGRAFIA DO AUTOR]";
-                }
+                // Use generated content
+                project.metadata.dedication = extras.dedication;
+                project.metadata.acknowledgments = extras.acknowledgments;
+                project.metadata.aboutAuthor = extras.aboutAuthor;
 
                 // Save to DB
                 await QueueService.updateMetadata(id, {
@@ -736,8 +713,16 @@ export const generateBookContent = async (req: Request, res: Response) => {
                     aboutAuthor: project.metadata.aboutAuthor
                 });
 
+                console.log(`[PROJECT] Extras generated for project ${id}`);
+
             } catch (e) {
                 console.error("Failed to auto-generate extras:", e);
+                // Last resort fallback if generation fails
+                await QueueService.updateMetadata(id, {
+                    dedication: "[Dedicatória Livre]",
+                    acknowledgments: "[Agradecimentos Livres]",
+                    aboutAuthor: `Sobre o autor: ${project.metadata.authorName}`
+                });
             }
         }
 
@@ -750,12 +735,23 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
         // Pass full book content context implicitly via research context or just metadata.
         // Ideally we pass a summary of what was written, but researchContext + structure is often enough for marketing.
-        const marketing = await AIService.generateMarketing(project.metadata, project.researchContext, project.structure, targetLang);
-        await QueueService.updateProject(id, { marketing });
+        try {
+            const marketingAssets = await AIService.generateMarketing(
+                project.metadata,
+                project.researchContext,
+                project.structure,
+                targetLang
+            );
+
+            await QueueService.updateProject(id, { marketing: marketingAssets });
+            console.log(`[PROJECT] Marketing assets generated for project ${id}`);
+        } catch (e) {
+            console.error("Failed to generate marketing assets:", e);
+        }
 
         // 4. Content Finished
         await QueueService.updateMetadata(id, {
-            status: 'GENERATING_MARKETING' as any,
+            status: 'GENERATING_MARKETING' as any, // Stay in marketing status for logic flow
             progress: 96,
             statusMessage: "Conteúdo do livro finalizado, livro encaminhado aos nossos agentes revisores."
         });

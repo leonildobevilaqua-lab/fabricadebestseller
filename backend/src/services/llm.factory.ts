@@ -11,15 +11,27 @@ export const getLLMProvider = async (): Promise<LLMProvider> => {
     const config = await getConfig();
     const active = config.activeProvider;
 
-    // STRICT PRIORITY: Always default to Gemini if key exists, ignoring 'activeProvider' if it's not explicitly requested for something else
-    // But better to respect the switch but ensure Gemini is the master.
+    // 1. Prepare Providers
+    const gemini = config.providers.gemini ? new GeminiProvider(config.providers.gemini) : null;
+    const openai = config.providers.openai ? new OpenAIProvider(config.providers.openai) : null;
+
+    // 2. Logic: IF Gemini exists, it is ALWAYS the primary (Absolute Priority)
+    if (gemini) {
+        if (openai) {
+            console.log("[LLMFactory] Using Gemini as Primary with OpenAI Fallback.");
+            return new FallbackProvider(gemini, openai, "Gemini", "OpenAI");
+        }
+        console.log("[LLMFactory] Using Gemini ONLY (No OpenAI Key).");
+        return gemini;
+    }
+
+    // 3. Fallback to other providers if Gemini is missing
+    console.warn(`[LLMFactory] Gemini key missing. Using requested provider: ${active}`);
 
     switch (active) {
         case 'openai':
-            if (config.providers.openai) return new OpenAIProvider(config.providers.openai);
-            // Fallback to gemini if openai selected but key missing
-            if (config.providers.gemini) return new GeminiProvider(config.providers.gemini);
-            throw new Error("OpenAI selected but key missing, and Gemini fallback also missing.");
+            if (openai) return openai;
+            break;
         case 'anthropic':
             if (config.providers.anthropic) return new AnthropicProvider(config.providers.anthropic);
             break;
@@ -31,11 +43,11 @@ export const getLLMProvider = async (): Promise<LLMProvider> => {
             break;
     }
 
-    // DEFAULT ACTION: Use Gemini
-    if (config.providers.gemini) return new GeminiProvider(config.providers.gemini);
+    // LAST RESORT
+    if (openai) {
+        console.warn("[LLMFactory] Falling back to OpenAI as last resort.");
+        return openai;
+    }
 
-    // LAST RESORT: If everything above fails/skipped
-    if (config.providers.openai) return new OpenAIProvider(config.providers.openai);
-
-    throw new Error("Nenhum provedor de IA configurado corretamente (Gemini key missing?)");
+    throw new Error("Nenhum provedor de IA configurado corretamente (Gemini key missing and fallback failed)");
 };

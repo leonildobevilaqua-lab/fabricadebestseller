@@ -11,14 +11,13 @@ export class GeminiProvider implements LLMProvider {
     // UPDATED: Prioritizing STABLE models for Production
     // Removed 2.5 as it was causing instability/hallucinations
     private models = [
+        "gemini-2.0-flash",  // Latest stable and efficient
+        "gemini-1.5-flash",  // Highly stable fallback
+        "gemini-1.5-pro",    // High quality fallback
         "gemini-2.5-flash",  // User Requested
-        "gemini-2.0-flash",  // Stable 2.0
-        "gemini-1.5-flash",  // Fast Fallback
-        "gemini-2.5-pro",    // High Quality
-        "gemini-3.0-flash",  // Future Proofing
-        "gemini-3.0-pro",    // Future Proofing
-        "gemini-1.5-pro",    // Stable Pro
-        "gemini-1.0-pro"     // Legacy Fallback
+        "gemini-2.5-pro",    // User Requested
+        "gemini-3.0-flash",  // User Requested
+        "gemini-3.0-pro"     // User Requested
     ];
 
     constructor(apiKey: string) {

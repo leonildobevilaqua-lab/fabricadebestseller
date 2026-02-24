@@ -694,26 +694,40 @@ export const generateExtras = async (
   try {
     const res = await llm.generateJSON<{ dedication: string; acknowledgments: string; aboutAuthor: string }>(prompt);
     return {
-      dedication: cleanText(res.dedication),
-      acknowledgments: cleanText(res.acknowledgments),
-      aboutAuthor: cleanText(res.aboutAuthor || "")
+      dedication: cleanText(res?.dedication || "[Dedicatória Livre]"),
+      acknowledgments: cleanText(res?.acknowledgments || "[Agradecimentos Livres]"),
+      aboutAuthor: cleanText(res?.aboutAuthor || `Sobre o autor: ${metadata.authorName}`)
     };
   } catch (error) {
     console.error("Extras JSON Generation Failed. Attempting Text Fallback...", error);
     try {
       const text = await llm.generateText(prompt);
+
       const extract = (key: string) => {
-        const parts = text.split(new RegExp(`${key}":?\\s*"?`, 'i'));
-        if (parts.length > 1) return parts[1].split('",')[0].split('"}')[0].trim();
+        const regex = new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`, 'i');
+        const match = text.match(regex);
+        if (match) return match[1];
+
+        // Fallback simple search if regex fails
+        const parts = text.split(new RegExp(`${key}`, 'i'));
+        if (parts.length > 1) {
+          const afterKey = parts[1].replace(/^[^:]*:/, '').trim();
+          return afterKey.split('\n')[0].replace(/^["']/, '').replace(/["']$/, '').trim();
+        }
         return "";
       };
+
       return {
-        dedication: cleanText(extract("dedication") || "Dedicatória gerada com sucesso."),
-        acknowledgments: cleanText(extract("acknowledgments") || "Agradecimentos gerados."),
-        aboutAuthor: cleanText(extract("aboutAuthor") || "Biografia gerada.")
+        dedication: cleanText(extract("dedication") || "[Dedicatória Livre]"),
+        acknowledgments: cleanText(extract("acknowledgments") || "[Agradecimentos Livres]"),
+        aboutAuthor: cleanText(extract("aboutAuthor") || `Sobre o autor: ${metadata.authorName}`)
       };
     } catch (e) {
-      return { dedication: "", acknowledgments: "", aboutAuthor: "" };
+      return {
+        dedication: "[Dedicatória Livre]",
+        acknowledgments: "[Agradecimentos Livres]",
+        aboutAuthor: `Sobre o autor: ${metadata.authorName}`
+      };
     }
   }
 };

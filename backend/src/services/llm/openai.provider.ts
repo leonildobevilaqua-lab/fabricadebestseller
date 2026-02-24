@@ -49,30 +49,22 @@ export class OpenAIProvider implements LLMProvider {
             text = completion.choices[0].message.content || "{}";
         }
 
-        // SANITIZATION
-        text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
         try {
-            // Find first [ or {
-            const firstOpen = text.search(/[\{\[]/);
-            // const lastClose = text.search(/[\}\]]$/); // Simple check
+            // Robust cleaning
+            let cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
 
-            if (firstOpen !== -1) {
-                // Try to parse from first brace/bracket to the end
-                // We rely on JSON.parse to ignore trailing whitespace, but it might fail on trailing chars.
-                // Best effort:
-                const start = text.indexOf('[');
-                const end = text.lastIndexOf(']');
-                if (start !== -1 && end !== -1 && end > start) {
-                    return JSON.parse(text.substring(start, end + 1));
-                }
-                const startObj = text.indexOf('{');
-                const endObj = text.lastIndexOf('}');
-                if (startObj !== -1 && endObj !== -1 && endObj > startObj) {
-                    return JSON.parse(text.substring(startObj, endObj + 1));
-                }
+            const firstBracket = cleaned.indexOf('[');
+            const lastBracket = cleaned.lastIndexOf(']');
+            const firstBrace = cleaned.indexOf('{');
+            const lastBrace = cleaned.lastIndexOf('}');
+
+            if (firstBracket !== -1 && (firstBrace === -1 || firstBracket < firstBrace)) {
+                cleaned = cleaned.substring(firstBracket, lastBracket + 1);
+            } else if (firstBrace !== -1) {
+                cleaned = cleaned.substring(firstBrace, lastBrace + 1);
             }
-            return JSON.parse(text);
+
+            return JSON.parse(cleaned);
         } catch (e) {
             console.error("OpenAI JSON Parse Error", e);
             throw new Error(`OpenAI JSON Parse Failed: ${text.substring(0, 100)}...`);

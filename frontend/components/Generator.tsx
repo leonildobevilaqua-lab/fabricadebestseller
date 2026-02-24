@@ -329,12 +329,17 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         body: JSON.stringify({ dedicationTo, ackTo, aboutAuthorContext })
       });
       const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || t.errorGeneratingExtras);
+      }
+
       if (data.dedication) setDedication(data.dedication);
       if (data.acknowledgments) setAck(data.acknowledgments);
       if (data.aboutAuthor) setAboutAuthor(data.aboutAuthor);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert(t.errorGeneratingExtras);
+      alert(e.message || t.errorGeneratingExtras);
     } finally {
       setGeneratingExtras(false);
     }

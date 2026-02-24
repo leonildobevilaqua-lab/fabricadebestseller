@@ -452,6 +452,70 @@ export const generateDocx = async (metadata: BookMetadata, content: BookContent)
     }
   });
 
+  // 11. Marketing Assets (New Section)
+  if (content.marketing) {
+    sections.push({
+      properties: {
+        page: basePageConfig,
+        type: SectionType.NEXT_PAGE,
+      },
+      children: [
+        new Paragraph({
+          children: [new TextRun({ text: "MATERIAL DE MARKETING", bold: true, font: "Garamond", size: 48 })],
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 2000, after: 1200 },
+          pageBreakBefore: true
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: "Use os textos abaixo para a publicação e divulgação do seu livro.", font: "Garamond", size: 24, italics: true })],
+          alignment: AlignmentType.CENTER,
+          spacing: { after: 1200 }
+        }),
+
+        // Sales Synopsis
+        new Paragraph({
+          children: [new TextRun({ text: "SINOPSE DE VENDAS (AMAZON/LIVRARIAS)", bold: true, font: "Garamond", size: 32 })],
+          spacing: { before: 800, after: 400 }
+        }),
+        ...createTextParams(content.marketing.salesSynopsis || "N/A"),
+
+        // Back Cover
+        new Paragraph({
+          children: [new TextRun({ text: "TEXTO DA CONTRACAPA", bold: true, font: "Garamond", size: 32 })],
+          spacing: { before: 800, after: 400 }
+        }),
+        ...createTextParams(content.marketing.backCover || "N/A"),
+
+        // Flap Copy
+        new Paragraph({
+          children: [new TextRun({ text: "ORELHA DO LIVRO", bold: true, font: "Garamond", size: 32 })],
+          spacing: { before: 800, after: 400 }
+        }),
+        ...createTextParams(content.marketing.flapCopy || "N/A"),
+
+        // Keywords
+        new Paragraph({
+          children: [new TextRun({ text: "PALAVRAS-CHAVE RECOMENDADAS", bold: true, font: "Garamond", size: 32 })],
+          spacing: { before: 800, after: 400 }
+        }),
+        new Paragraph({
+          children: [new TextRun({ text: (content.marketing.keywords || []).join(", "), font: "Garamond", size: 27 })],
+          alignment: AlignmentType.LEFT,
+          spacing: { after: 800 }
+        }),
+
+        // YouTube/Social
+        new Paragraph({
+          children: [new TextRun({ text: "DESCRIÇÃO PARA VÍDEO NO YOUTUBE/REDES", bold: true, font: "Garamond", size: 32 })],
+          spacing: { before: 800, after: 400 }
+        }),
+        ...createTextParams(content.marketing.youtubeDescription || "N/A"),
+      ],
+      headers: { default: new Header({ children: [] }) },
+      footers: { default: new Footer({ children: [] }) },
+    });
+  }
+
   const doc = new Document({
     creator: "Book Factory AI",
     title: metadata.bookTitle,
