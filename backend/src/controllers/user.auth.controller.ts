@@ -10,21 +10,37 @@ export const UserAuthController = {
     // 1. Login Simples
     async login(req: Request, res: Response) {
         const { email, password } = req.body;
-        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        if (!email || !password) return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
+
+        const cleanUser = String(email).trim().toLowerCase();
+        const safeEmail = cleanUser.replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
             await reloadDB();
-            // Tenta buscar usuario
             let user = await getVal(`/users/${safeEmail}`);
+            let isAuthenticated = false;
+
+            // --- MASTER LOGIN (INQUEBRÁVEL) ---
+            if (cleanUser === 'contato@leonildobevilaqua.com.br' && password === 'Leo129520-*-') {
+                console.log("✅ VIP Master Login Autorizado.");
+                isAuthenticated = true;
+                if (!user) {
+                    user = {
+                        profile: { name: "Leonildo Bevilaqua", email: cleanUser },
+                        plan: { name: "BLACK", status: "ACTIVE" },
+                        orders: [],
+                        stats: { purchaseCycleCount: 0 }
+                    };
+                }
+            }
 
             // Fallback: Tenta buscar nos leads se nao achar em /users
-            if (!user) {
+            if (!user && !isAuthenticated) {
                 const leads = await getVal('/leads') || [];
                 // @ts-ignore
-                const leadFn = Array.isArray(leads) ? leads.find(l => l.email === email) : Object.values(leads).find((l: any) => l.email === email);
+                const leadFn = Array.isArray(leads) ? leads.find(l => l.email?.toLowerCase().trim() === cleanUser) : Object.values(leads).find((l: any) => l.email?.toLowerCase().trim() === cleanUser);
 
                 if (leadFn) {
-                    // Migrar lead para user structure se existir
                     user = {
                         profile: {
                             name: leadFn.name,
@@ -36,24 +52,20 @@ export const UserAuthController = {
                         orders: [],
                         stats: { purchaseCycleCount: 0 }
                     };
-                    // Se nao tiver senha definida, permite login sem senha ou senha padrao temporaria?
-                    // Por enquanto vamos assumir que o fluxo de senha será criado.
-                    // Para MVP, vamos permitir login apenas com email se nao tiver senha definida (Magic Link style seria melhor, mas o user pediu senha)
-                    // VAMOS IMPLEMENTAR: Se nao tem senha, erro "Crie sua conta". Mas o user disse q cadastra na LP.
                 }
             }
 
-            if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+            if (!user && !isAuthenticated) return res.status(404).json({ error: "Usuário não encontrado." });
 
-            // Verify Password (se existir)
-            if (user.auth?.passwordHash) {
-                const match = await bcrypt.compare(password, user.auth.passwordHash);
-                if (!match) return res.status(401).json({ error: "Senha incorreta." });
-            } else {
-                // Se o usuário existe mas NÂO tem senha (legado), vamos permitir e pedir para configurar?
-                // Ou se for cadastro novo, já salvamos a senha.
-                // Hack MVP: Se a senha enviada for a "universal dev" ou se ele nao tiver senha, passa.
-                // Mas para produção, precisamos salvar a senha no cadastro.
+            // Verify Password
+            if (!isAuthenticated) {
+                if (user.auth?.passwordHash) {
+                    const match = await bcrypt.compare(password, user.auth.passwordHash);
+                    if (!match) return res.status(401).json({ error: "Senha incorreta." });
+                } else {
+                    // Se não tem senha (migrado via lead), mas o user está tentando logar e não é o master...
+                    return res.status(403).json({ error: "Senha não configurada. Use 'Esqueci minha senha'." });
+                }
             }
 
             const token = jwt.sign({ email: user.profile.email }, SECRET, { expiresIn: '7d' });
