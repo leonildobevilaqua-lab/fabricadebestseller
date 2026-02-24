@@ -11,10 +11,8 @@ export class GeminiProvider implements LLMProvider {
     // UPDATED: Prioritizing STABLE models for Production
     // Removed 2.5 as it was causing instability/hallucinations
     private models = [
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
         "gemini-1.5-flash",
-        "gemini-1.5-flash-latest",
+        "gemini-2.0-flash",
         "gemini-1.5-pro",
         "gemini-1.0-pro"
     ];
@@ -23,14 +21,14 @@ export class GeminiProvider implements LLMProvider {
 
     constructor(apiKey: string) {
         // FAILSAFE: Try to load key from process or manual check
-        let key = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+        let key = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
 
         if (!key) {
             console.warn("GeminiProvider: Key missing in process.env, attempting manual .env load...");
             try {
                 // Emergency load for production oddities
                 require('dotenv').config({ path: require('path').resolve(process.cwd(), '.env') });
-                key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+                key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
                 if (key) console.log("GeminiProvider: Key recovered via manual load.");
             } catch (e) {
                 console.error("GeminiProvider: Manual load failed", e);

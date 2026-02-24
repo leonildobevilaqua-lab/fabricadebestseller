@@ -33,15 +33,6 @@ export const getLLMProvider = async (): Promise<LLMProvider> => {
         case 'gemini':
         default:
             if (!config.providers.gemini) throw new Error("Gemini Key missing");
-            const gemini = new GeminiProvider(config.providers.gemini);
-
-            // RESILIENCE: If we have an OpenAI key, use it as fallback!
-            const backup = getOpenAI();
-            if (backup) {
-                console.log("[LLM Factory] Initialized with Gemini + OpenAI Fallback System.");
-                return new FallbackProvider(gemini, backup, "Gemini", "OpenAI");
-            }
-
-            return gemini;
+            return new GeminiProvider(config.providers.gemini);
     }
 };

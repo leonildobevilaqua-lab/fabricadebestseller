@@ -142,7 +142,7 @@ export const UserAuthController = {
                             const newPlan = {
                                 status: 'ACTIVE',
                                 name: pName,
-                                billing: (desc.includes('ANUAL') || isMaster) ? 'annual' : 'monthly',
+                                billing: (desc.includes('ANUAL')) ? 'annual' : 'monthly',
                                 lastPayment: new Date(),
                                 subscriptionId: confirmedPayment?.subscription || null
                             };
@@ -152,7 +152,7 @@ export const UserAuthController = {
                     }
                     else if (isMaster) {
                         // Se for master e nem tiver no asaas ainda (teste local), ativa mesmo assim
-                        user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'annual' };
+                        user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'monthly' };
                     }
                 } catch (asaasErr) {
                     console.error("[ME_SYNC_ERROR]", asaasErr);
