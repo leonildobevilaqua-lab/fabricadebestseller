@@ -82,6 +82,29 @@ export const SubscriptionController = {
             const payments = await AsaasProvider.getSubscriptionPayments(subscription.id);
             const invoiceUrl = payments?.[0]?.invoiceUrl || payments?.[0]?.bankSlipUrl;
 
+            // --- ADMIN VISIBILITY: Register PENDING Order ---
+            try {
+                await pushVal('/orders', {
+                    id: subscription.id,
+                    email,
+                    name: lead.name || email,
+                    amount: planConfig.price || 0,
+                    type: 'SUBSCRIPTION',
+                    description: `Plano ${planKey} - ${normalizedBilling} (Aguardando Pagamento)`,
+                    date: new Date().toISOString(),
+                    paymentInfo: {
+                        provider: 'ASAAS',
+                        id: subscription.id,
+                        amount: planConfig.price || 0,
+                        plan: planKey,
+                        status: 'PENDING',
+                        invoiceUrl: invoiceUrl
+                    }
+                });
+            } catch (orderErr) {
+                console.warn("[SUBSCRIBE] Failed to log pending order:", orderErr);
+            }
+
             res.json({ success: true, subscription, invoiceUrl });
 
         } catch (error: any) {

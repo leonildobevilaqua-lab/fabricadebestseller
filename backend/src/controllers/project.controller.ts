@@ -138,32 +138,41 @@ export const create = async (req: Request, res: Response) => {
                     }
                 }
 
+                // --- REAL-TIME ADMIN SYNC ---
+                const safeEmail = contact.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                const userInDb = await getVal(`/users/${safeEmail}`);
+                const currentPlan = userInDb?.plan || contact.plan || null;
+
                 if (leadIndex !== -1) {
                     // Update existing BOOK Lead
-                    await setVal(`/leads[${leadIndex}]/status`, 'IN_PROGRESS');
-                    await setVal(`/leads[${leadIndex}]/topic`, topic);
-                    // If name was missing, update it
-                    if (!(leads[leadIndex] as any).name) {
-                        await setVal(`/leads[${leadIndex}]/name`, authorName);
-                    }
-                    console.log(`Linked Project to existing Book Lead ${leadIndex}`);
+                    await setVal(`/leads[${leadIndex}]`, {
+                        ...(leads[leadIndex] as any),
+                        status: 'IN_PROGRESS',
+                        topic: topic,
+                        name: authorName || (leads[leadIndex] as any).name,
+                        date: new Date(), // Bring to top
+                        projectId: project.id,
+                        plan: currentPlan // Sync latest plan
+                    });
+                    console.log(`Updated existing Lead for Project ${project.id}`);
                 } else {
-                    // Create NEW Lead so it shows in Admin as a separate row from Subscription
+                    // Create New Lead
                     const newLead = {
                         id: uuidv4(),
                         email: contact.email,
                         name: authorName || 'Autor',
                         phone: contact.phone || '',
                         status: 'IN_PROGRESS',
-                        type: 'BOOK', // Origin: Book Generator
+                        type: 'BOOK',
                         topic: topic,
                         date: new Date(),
                         created_at: new Date(),
-                        plan: null, // Keep separate from subscription plan data
-                        credits: 0 // Consumed now
+                        plan: currentPlan,
+                        projectId: project.id,
+                        credits: 0
                     };
                     await pushVal('/leads', newLead);
-                    console.log(`Created NEW BOOK Lead for Project: ${contact.email}`);
+                    console.log(`Created NEW Lead for Project ${project.id}`);
                 }
 
             } catch (err) {

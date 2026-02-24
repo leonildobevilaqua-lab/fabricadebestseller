@@ -260,6 +260,18 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
                                 </button>
                             )}
 
+                            {/* Download Button */}
+                            {(status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || lead.artifactUrl) && (
+                                <a
+                                    href={lead.artifactUrl || `/api/projects/${lead.projectId}/download`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold py-2 rounded shadow transition flex items-center justify-center gap-1 no-underline"
+                                >
+                                    📥 DOWNLOAD LIVRO
+                                </a>
+                            )}
+
                             {/* Regenerate */}
                             {(status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || prodStatus) && (
                                 <button onClick={handleRegenerate} disabled={loading} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold py-2 rounded border border-slate-200">

@@ -843,6 +843,28 @@ export const createCharge = async (req: Request, res: Response) => {
         });
         const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'} (${cleanPlan})`);
 
+        // --- ADMIN VISIBILITY: Register PENDING Order ---
+        try {
+            await pushVal('/orders', {
+                id: payment.id,
+                email,
+                name: payer?.name || email,
+                amount: price,
+                type: 'BOOK',
+                description: `Geração de Livro - ${cleanPlan} (Aguardando Pagamento)`,
+                date: new Date().toISOString(),
+                paymentInfo: {
+                    provider: 'ASAAS',
+                    id: payment.id,
+                    amount: price,
+                    status: 'PENDING',
+                    invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl
+                }
+            });
+        } catch (orderErr) {
+            console.warn("[CHARGE] Failed to log pending order:", orderErr);
+        }
+
         res.json({ success: true, invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl, price });
     } catch (e: any) {
         res.status(500).json({ error: e.message });

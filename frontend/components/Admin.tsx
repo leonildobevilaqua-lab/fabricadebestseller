@@ -103,7 +103,10 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
             return true;
         });
 
-        return filtered.reduce((acc, curr) => acc + (curr.paymentInfo?.amount || 0), 0);
+        return filtered.reduce((acc, curr) => {
+            const val = Number(curr.paymentInfo?.amount || curr.amount || 0);
+            return acc + (isNaN(val) ? 0 : val);
+        }, 0);
     };
 
     // 2. Prepare Data for Charts
@@ -115,14 +118,24 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
     const revenueData = last7Days.map(date => {
         const dayStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+
+        // Normalize comparison date to YYYY-MM-DD
+        const targetStr = date.toISOString().split('T')[0];
+
         const dayOrders = (Array.isArray(orders) ? orders : []).filter(o => {
             const dStr = o.date || o.created_at;
             if (!dStr) return false;
             const d = new Date(dStr);
             if (isNaN(d.getTime())) return false;
-            return d.toDateString() === date.toDateString();
+
+            return d.toISOString().split('T')[0] === targetStr;
         });
-        const total = dayOrders.reduce((acc, curr) => acc + (curr.paymentInfo?.amount || 0), 0);
+
+        const total = dayOrders.reduce((acc, curr) => {
+            const val = Number(curr.paymentInfo?.amount || curr.amount || 0);
+            return acc + (isNaN(val) ? 0 : val);
+        }, 0);
+
         return { name: dayStr, value: total };
     });
 
