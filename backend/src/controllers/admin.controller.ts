@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcrypt';
 import { sendEmail } from '../services/email.service';
-import { getVal, setVal, reloadDB } from '../services/db.service';
+import { getVal, setVal, reloadDB, deleteVal } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
 
 // ... (Login logic)
@@ -486,15 +486,17 @@ export const wipeUserHistory = async (req: Request, res: Response) => {
 export const wipeAllHistory = async (req: Request, res: Response) => {
     try {
         console.warn("⚠️ WIPE ALL HISTORY TRIGGERED BY ADMIN!");
-        await setVal('/leads', []);
-        await setVal('/projects', []);
-        await setVal('/orders', []);
-        // Reset users completely or just keep the admin
-        await setVal('/users', {});
-        await setVal('/credits', {});
+
+        // Use true deleteVal to actually remove all keys matching the path pattern in Supabase KV store
+        await deleteVal('/leads');
+        await deleteVal('/projects');
+        await deleteVal('/orders');
+        await deleteVal('/extra_orders');
+        await deleteVal('/users');
+        await deleteVal('/credits');
 
         await reloadDB();
-        res.json({ success: true, message: "Todos os registros (Leads, Pedidos, Usuários e Projetos) foram apagados." });
+        res.json({ success: true, message: "Todos os registros (Leads, Pedidos, Usuários e Projetos) foram apagados completamente." });
     } catch (e: any) {
         console.error("Wipe All Error:", e);
         res.status(500).json({ error: e.message });

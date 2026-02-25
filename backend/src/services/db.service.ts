@@ -162,11 +162,11 @@ export const deleteVal = async (pathStr: string) => {
 
         // 1. DELETE FROM SUPABASE
         if (collections.includes(cleanPath)) {
-            // Delete entire collection (REALLY DANGEROUS, but requested for cleanup)
+            // Delete entire collection AND the root array key if it exists
             const { error } = await supabase
                 .from('kv_store')
                 .delete()
-                .like('key', `${cleanPath}/%`);
+                .like('key', `${cleanPath}%`);
             if (error) console.error(`Supabase DB Delete Collection Error [${cleanPath}]:`, error.message);
         } else {
             // Delete single key
