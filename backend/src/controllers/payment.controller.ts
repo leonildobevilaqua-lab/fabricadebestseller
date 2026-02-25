@@ -501,9 +501,65 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
         } catch (e) { console.error("[ASAAS_FETCH]", e); }
 
-        // RESILIENCE BLOCKS REMOVED: Historic Asaas payments should not grant credits here anymore.
-        // Webhook is the single source of truth for payment confirmations (credits / plan updates).
+        // FAST TRACK ACTIVATION: Verify very recent (<24h) payments directly from Asaas.
+        // This solves the issue of users paying and Webhook delaying.
+        const oneDayAgo = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
 
+        const recentConfirmedPayment = asaasPayments.find((p: any) => {
+            const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
+            if (!isConfirmed) return false;
+            if (new Date(p.dateCreated) < oneDayAgo) return false; // Strict 24h limit prevents old DB revival ghosts.
+
+            return true;
+        });
+
+        if (recentConfirmedPayment) {
+            const desc = (recentConfirmedPayment.description || "").toLowerCase();
+            const isGen = desc.includes('livro') || desc.includes('geração') || desc.includes('geracao');
+            const validGenPrices = [89.90, 28.90, 24.90, 18.90, 14.90, 9.90, 8.90, 16.90, 15.21, 14.37, 13.52, 26.90, 21.90];
+            const isGenPrice = validGenPrices.some(vp => Math.abs(vp - recentConfirmedPayment.value) < 0.1);
+
+            let isPlan = !isGen && (desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black'));
+
+            if (!isPlan && !isGen) {
+                const tv = recentConfirmedPayment.value;
+                if (Math.abs(tv - 19.90) < 0.05 || Math.abs(tv - 39.90) < 0.05 || Math.abs(tv - 79.90) < 0.05 ||
+                    Math.abs(tv - 147.90) < 0.05 || Math.abs(tv - 297.90) < 0.05 || Math.abs(tv - 497.90) < 0.05) {
+                    isPlan = true;
+                }
+            }
+
+            if (isPlan && (!userPlan || userPlan.status !== 'ACTIVE')) {
+                console.log(`[CHECK_ACCESS] Fast-track Activating plan locally for ${email}`);
+                const upDesc = (recentConfirmedPayment.description || '').toUpperCase();
+                let pName = 'STARTER';
+                const val = recentConfirmedPayment.value;
+
+                if (upDesc.includes('BLACK') || Math.abs(val - 79.90) < 0.05 || Math.abs(val - 497.90) < 0.05) pName = 'BLACK';
+                else if (upDesc.includes('PRO') || Math.abs(val - 39.90) < 0.05 || Math.abs(val - 297.90) < 0.05) pName = 'PRO';
+
+                userPlan = {
+                    status: 'ACTIVE',
+                    name: pName,
+                    billing: (upDesc.includes('ANUAL') || val > 100) ? 'annual' : 'monthly',
+                    lastPayment: new Date(),
+                    subscriptionId: recentConfirmedPayment.subscription || null
+                };
+                await setVal(`/users/${safeEmail}/plan`, userPlan);
+            }
+
+            if ((isGen || isGenPrice) && !isPlan) {
+                // Determine if this exact generation payment isn't redeemed yet
+                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                if (!redeemedIds.includes(recentConfirmedPayment.id)) {
+                    redeemedIds.push(recentConfirmedPayment.id);
+                    credits += 1;
+                    console.log(`[CHECK_ACCESS] Fast-track Found recent generation payment ${recentConfirmedPayment.id} for ${email}. Adding +1 credit.`);
+                    await setVal(`/credits/${safeEmail}`, credits);
+                    await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
+                }
+            }
+        }
         // Lead & Usage
         let leadStatus = null;
         let pendingPlan: any = null;
