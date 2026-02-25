@@ -1611,15 +1611,16 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         const res = await fetch(`${API_URL}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`);
                                                                         const data = await res.json();
 
+                                                                        if (data.plan && data.plan.status === 'ACTIVE') {
+                                                                            window.location.href = '/login';
+                                                                            return;
+                                                                        }
+
                                                                         if (data.hasAccess) {
-                                                                            if (data.plan && data.plan.status === 'ACTIVE') {
-                                                                                window.location.href = '/login';
-                                                                            } else {
-                                                                                // Avulso confirmed! Go to Book Data Entry
-                                                                                setPaymentConfirmed(true);
-                                                                                paymentConfirmedRef.current = true;
-                                                                                setStep(1);
-                                                                            }
+                                                                            // Avulso confirmed! Go to Book Data Entry
+                                                                            setPaymentConfirmed(true);
+                                                                            paymentConfirmedRef.current = true;
+                                                                            setStep(1);
                                                                         } else {
                                                                             if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
                                                                                 alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde alguns instantes pela compensação.`);

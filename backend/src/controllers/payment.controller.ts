@@ -476,7 +476,7 @@ export const checkAccess = async (req: Request, res: Response) => {
                     const desc = (p.description || "").toLowerCase();
                     return desc.includes('geração') || desc.includes('livro') || desc.includes('assinatura') ||
                         desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black');
-                });
+                }) || asaasPayments[0];
 
                 if (latestRel) {
                     latestInvoiceStatus = latestRel.status;
