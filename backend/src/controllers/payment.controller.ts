@@ -533,23 +533,29 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
 
             if (isPlan && (!userPlan || userPlan.status !== 'ACTIVE')) {
-                console.log(`[CHECK_ACCESS] Fast-track Activating plan locally for ${email}`);
-                const upDesc = (recentConfirmedPayment.description || '').toUpperCase();
-                let pName = 'STARTER';
-                const val = recentConfirmedPayment.value;
+                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                if (!redeemedIds.includes(recentConfirmedPayment.id)) {
+                    console.log(`[CHECK_ACCESS] Fast-track Activating plan locally for ${email}`);
+                    const upDesc = (recentConfirmedPayment.description || '').toUpperCase();
+                    let pName = 'STARTER';
+                    const val = recentConfirmedPayment.value;
 
-                if (upDesc.includes('BLACK') || Math.abs(val - 79.90) < 0.05 || Math.abs(val - 497.90) < 0.05) pName = 'BLACK';
-                else if (upDesc.includes('PRO') || Math.abs(val - 39.90) < 0.05 || Math.abs(val - 297.90) < 0.05) pName = 'PRO';
+                    if (upDesc.includes('BLACK') || Math.abs(val - 79.90) < 0.05 || Math.abs(val - 497.90) < 0.05) pName = 'BLACK';
+                    else if (upDesc.includes('PRO') || Math.abs(val - 39.90) < 0.05 || Math.abs(val - 297.90) < 0.05) pName = 'PRO';
 
-                userPlan = {
-                    status: 'ACTIVE',
-                    name: pName,
-                    billing: (upDesc.includes('ANUAL') || val > 100) ? 'annual' : 'monthly',
-                    lastPayment: new Date(),
-                    startDate: new Date(),
-                    subscriptionId: recentConfirmedPayment.subscription || null
-                };
-                await setVal(`/users/${safeEmail}/plan`, userPlan);
+                    userPlan = {
+                        status: 'ACTIVE',
+                        name: pName,
+                        billing: (upDesc.includes('ANUAL') || val > 100) ? 'annual' : 'monthly',
+                        lastPayment: new Date(),
+                        startDate: new Date(),
+                        subscriptionId: recentConfirmedPayment.subscription || null
+                    };
+                    await setVal(`/users/${safeEmail}/plan`, userPlan);
+
+                    redeemedIds.push(recentConfirmedPayment.id);
+                    await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
+                }
             }
 
             if ((isGen || isGenPrice) && !isPlan) {

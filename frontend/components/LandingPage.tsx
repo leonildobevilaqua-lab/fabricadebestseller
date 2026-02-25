@@ -512,6 +512,11 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
             // SUBSCRIBER: redirect to member login
             if (status.plan && status.plan.status === 'ACTIVE') {
+                if (status.latestInvoiceStatus === 'PENDING' || status.latestInvoiceStatus === 'OVERDUE') {
+                    alert(`⚠️ Pagamento de assinatura pendente.\n\nA fatura ${status.latestInvoiceNumber || ''} de assinatura está com status PENDENTE.`);
+                    setStep(3);
+                    return;
+                }
                 onLoginClick();
                 return;
             }
@@ -783,6 +788,11 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     // STRICTLY CHECK FOR SUBSCRIBER STATUS ONLY
                     // IGNORES generic credits or approved status to force Subscription Flow
                     if (isSubscriber) {
+                        if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
+                            console.log("Plan Active but Invoice is PENDING/OVERDUE. Waiting for confirmation.");
+                            return;
+                        }
+
                         // RISING EDGE: Ignore if it was pre-existing
                         if (wasInitiallyActive) {
                             console.log("Ignoring Active Status (User was already active when session started).");
@@ -1619,6 +1629,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         const data = await res.json();
 
                                                                         if (data.plan && data.plan.status === 'ACTIVE') {
+                                                                            if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
+                                                                                alert(`A fatura ${data.latestInvoiceNumber || ''} de assinatura ainda consta como PENDENTE no banco. Aguarde a confirmação.`);
+                                                                                return;
+                                                                            }
                                                                             window.location.href = '/login';
                                                                             return;
                                                                         }
