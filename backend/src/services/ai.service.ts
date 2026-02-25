@@ -186,7 +186,7 @@ export const analyzeCompetitors = async (topic: string, priorContext: string, la
   }
 };
 
-export const generateTitleOptions = async (topic: string, researchContext: string = "", lang: string = 'pt'): Promise<TitleOption[]> => {
+export const generateTitleOptions = async (topic: string, researchContext: string = "", lang: string = 'pt', titleInstruction?: string): Promise<TitleOption[]> => {
   console.log(`[IA] Iniciando geração de títulos para: ${topic.substring(0, 50)}...`);
   const llm = await getLLMProvider();
   const langName = getLangName(lang);
@@ -198,6 +198,7 @@ IDIOMA: ${langName}
 REGRAS:
 1. NÃO comece com "Guia Completo de". Seja criativo.
 2. Use gatilhos mentais fortes.
+${titleInstruction ? `\nINSTRUÇÕES ESPECÍFICAS DO CLIENTE PARA MELHORAR OS TÍTULOS:\n"${titleInstruction}"\nSiga essas instruções RIGOROSAMENTE.\n` : ''}
 3. Se baseie neste CONTEXTO DE PESQUISA:
 ${researchContext.substring(0, 5000)}
 

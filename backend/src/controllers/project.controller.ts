@@ -281,7 +281,7 @@ export const update = async (req: Request, res: Response) => {
 export const startResearch = async (req: Request, res: Response) => {
     const { id } = req.params;
     console.log(`[startResearch] Initiating for Project ID: ${id}`);
-    const { language, email: bodyEmail } = req.body;
+    const { language, email: bodyEmail, titleInstruction } = req.body;
     const project = await QueueService.getProject(id);
 
     if (!project) {
@@ -446,6 +446,25 @@ export const startResearch = async (req: Request, res: Response) => {
             const targetLang = language || project.metadata.language || 'pt';
 
             /* [BACKGROUND TASK START] */
+
+            if (titleInstruction) {
+                // SKIP FULL RESEARCH: Just regenerate titles
+                await QueueService.updateMetadata(id, {
+                    progress: 28,
+                    statusMessage: "🏗️ Moldando novas estruturas de títulos..."
+                });
+
+                const fullContext = project.researchContext || `TEMA: ${topic}`; // Fallback if missing
+                const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang, titleInstruction);
+                await QueueService.updateProject(id, { titleOptions: titles });
+
+                await QueueService.updateMetadata(id, {
+                    status: 'WAITING_TITLE',
+                    progress: 30,
+                    statusMessage: "✅ Novos títulos gerados com sucesso."
+                });
+                return;
+            }
 
             // Step 1: YouTube
             await QueueService.updateMetadata(id, {

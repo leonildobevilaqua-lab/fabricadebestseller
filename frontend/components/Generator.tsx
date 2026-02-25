@@ -190,6 +190,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   // Refine Research State
   const [isRefining, setIsRefining] = useState(false);
   const [refineTopic, setRefineTopic] = useState("");
+  const [titleInstruction, setTitleInstruction] = useState("");
 
   const handleRefineSubmit = async () => {
     if (!projectId || !refineTopic) return;
@@ -207,6 +208,21 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     } catch (e) {
       console.error("Refine error", e);
       alert("Erro ao reiniciar pesquisa.");
+    }
+  };
+
+  const handleRefineTitles = async () => {
+    if (!projectId) return;
+    try {
+      // Restart Research passing the title instruction
+      await API.startResearch(projectId, language, userContact?.email, titleInstruction);
+      setTitleInstruction("");
+      if (project) {
+        setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', progress: 5, statusMessage: 'Gerando novos títulos...' } });
+      }
+    } catch (e) {
+      console.error("Refine titles error", e);
+      alert("Erro ao gerar novos títulos.");
     }
   };
 
@@ -804,17 +820,37 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             </div>
           )}
         </div>
-        <div className="text-center mt-8">
-          <button
-            onClick={() => {
-              setRefineTopic(project?.metadata.topic || "");
-              setIsRefining(true);
-            }}
-            className="text-slate-400 hover:text-red-500 text-sm font-medium underline transition-colors flex items-center gap-2 mx-auto"
-          >
-            ❌ Não gostei: Refazer Pesquisa
-          </button>
-        </div>
+        {project.titleOptions && project.titleOptions.length > 0 && (
+          <div className="mt-8 bg-blue-50/50 p-6 rounded-xl border border-blue-100 max-w-2xl mx-auto shadow-sm">
+            <label className="block text-sm font-bold text-slate-700 mb-2">Sugestões de Alteração (Opcional):</label>
+            <p className="text-xs text-slate-500 mb-3">Se os títulos não ficaram como esperado, dê uma instrução para a IA gerar novamente.</p>
+            <textarea
+              value={titleInstruction}
+              onChange={(e) => setTitleInstruction(e.target.value)}
+              className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0ea5e9] outline-none transition text-sm mb-4"
+              rows={2}
+              placeholder="Ex: Diminua o tamanho das sugestões dos títulos, estão muito grandes."
+            />
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+              <button
+                onClick={() => {
+                  setRefineTopic(project?.metadata.topic || "");
+                  setIsRefining(true);
+                }}
+                className="text-slate-500 hover:text-slate-800 text-sm font-medium underline transition-colors"
+              >
+                Alterar Tema Principal
+              </button>
+
+              <button
+                onClick={handleRefineTitles}
+                className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-bold py-2 px-6 rounded-lg shadow-md transition whitespace-nowrap"
+              >
+                🔄 Gerar Novos Títulos
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

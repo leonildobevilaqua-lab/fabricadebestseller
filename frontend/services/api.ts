@@ -31,11 +31,11 @@ export const getProject = async (id: string): Promise<BookProject> => {
     return res.json();
 };
 
-export const startResearch = async (id: string, language?: string, email?: string): Promise<void> => {
+export const startResearch = async (id: string, language?: string, email?: string, titleInstruction?: string): Promise<void> => {
     const res = await fetch(`${API_URL}/${id}/research`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, email })
+        body: JSON.stringify({ language, email, titleInstruction })
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
