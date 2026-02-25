@@ -212,12 +212,13 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     // Helper: Load Asset safely
     const loadAsset = (filename: string): Buffer | null => {
         try {
-            // Check assets folder? Or just skip for now as we don't have frontend public folder access easily.
-            // But we might have them in backend/assets?
-            // User didn't specify backend assets.
-            // Let's assume we skip logo/qr for now or use placeholders if we could.
-            // Logic in frontend: fetch('/logo_editora.png').
-            // We can't fetch localhost easily inside docker/process if not running static server for it.
+            const fs = require('fs');
+            const path = require('path');
+            // Assuming we are in dist/services or src/services 
+            const assetPath = path.join(__dirname, '../../assets', filename);
+            if (fs.existsSync(assetPath)) {
+                return fs.readFileSync(assetPath);
+            }
             return null;
         } catch (e) {
             return null;
@@ -443,7 +444,15 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
                 alignment: AlignmentType.CENTER,
                 spacing: { before: 200 },
             }),
-            new Paragraph({
+            logoBuffer ? new Paragraph({
+                children: [new ImageRun({
+                    data: logoBuffer,
+                    transformation: { width: 300, height: 135 },
+                    type: "png"
+                } as any)],
+                alignment: AlignmentType.CENTER,
+                spacing: { before: 400 }
+            }) : new Paragraph({
                 children: [new TextRun({ text: "Editora 360 Express", bold: true, font: "Garamond", size: 32, color: "000000" })],
                 alignment: AlignmentType.CENTER,
                 spacing: { before: 400 },
@@ -665,10 +674,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     const planTag = (safeMetadata.tag || "").toUpperCase();
     const explicitPlan = safeMetadata.plan?.name?.toUpperCase() || "";
 
-    const isProOrBlack = planTag.includes('PRO') || planTag.includes('BLACK') ||
-        explicitPlan.includes('PRO') || explicitPlan.includes('BLACK');
-
-    const aboutContent = isProOrBlack && content.aboutAuthor
+    const aboutContent = content.aboutAuthor
         ? createTextParams(content.aboutAuthor)
         : [new Paragraph({
             children: [new TextRun({ text: "[Espaço para Sobre o Autor]", color: "000000", italics: false })],

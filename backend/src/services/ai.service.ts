@@ -391,8 +391,8 @@ export const writeChapter = async (
     subtopics = ["Fundamentos", "Histórico e Evolução", "Ferramentas e Técnicas", "Estudos de Caso"];
   }
 
-  // Ensure we don't go overboard if AI hallucinates 10 topics
-  subtopics = subtopics.slice(0, 4);
+  // Ensure we don't go overboard if AI hallucinates 10 topics (3 subtopics fits the 170-200 pages goal better)
+  subtopics = subtopics.slice(0, 3);
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -437,6 +437,7 @@ export const writeChapter = async (
             REGRAS:
             - Use tom conversacional e prático.
             - Foco total em resolver as dores listadas acima.
+            - TAMANHO: Escreva aproximadamente entre 550 e 700 palavras (essencial para manter a meta de páginas do livro). É melhor ser objetivo do que redundante.
             
             Previous Context:
             ${fullChapterContent.slice(-500)}
@@ -474,7 +475,7 @@ export const writeChapter = async (
         
         TAREFA: Escreva o Capítulo Completo.
         REGRAS:
-        - Extensão Alvo: Aproximadamente 2000 palavras. (Meta: ~7-10 páginas por capítulo)
+        - Extensão Alvo: Aproximadamente 1700 palavras. (Meta: ~6-8 páginas por capítulo, para totalizar 180 páginas no livro).
         - Use tom conversacional e prático.
         - Foco total em resolver as dores listadas na pesquisa.
         
