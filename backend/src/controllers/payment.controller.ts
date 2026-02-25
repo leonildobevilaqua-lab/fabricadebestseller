@@ -43,7 +43,16 @@ export const createLead = async (req: Request, res: Response) => {
         const { name, email, phone, countryCode, type, topic, authorName, tag, plan, discount } = req.body;
         // Create a unique ID or use email
         const id = new Date().getTime().toString();
-        // Basic logic: if discount is provided, let's store it
+
+        const safeEmail = email ? email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : '';
+        let resolvedPlan = plan ? { ...plan, status: 'PENDING' } : undefined;
+
+        if (safeEmail && !resolvedPlan) {
+            const userPlan = await getVal(`/users/${safeEmail}/plan`);
+            if (userPlan && userPlan.status === 'ACTIVE') {
+                resolvedPlan = userPlan; // Inherit plan so admin sees correct price
+            }
+        }
 
         const lead = {
             id,
@@ -57,7 +66,7 @@ export const createLead = async (req: Request, res: Response) => {
             topic,
             authorName,
             tag,
-            plan: plan ? { ...plan, status: 'PENDING' } : undefined,
+            plan: resolvedPlan,
             discount
         };
         await pushVal('/leads', lead);
@@ -365,8 +374,15 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
                 await setVal(`/users/${safeEmail}/lastBookPaymentDate`, new Date());
 
-                // Also update Lead if exists
-                let leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
+                // Also update Lead if exists: find newest, preferably PENDING
+                let leadIndex = -1;
+                for (let i = leads.length - 1; i >= 0; i--) {
+                    if ((leads[i] as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                        leadIndex = i;
+                        if ((leads[i] as any).status === 'PENDING') break; // Prioritize the pending purchase
+                    }
+                }
+
                 if (leadIndex !== -1) {
                     // Register the payment
                     await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
