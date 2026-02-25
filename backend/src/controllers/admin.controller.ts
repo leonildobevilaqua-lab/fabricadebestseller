@@ -453,3 +453,32 @@ export const getAsaasStatus = async (req: Request, res: Response) => {
 };
 
 
+export const wipeUserHistory = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.params;
+        if (!email) return res.status(400).json({ error: "Email requerido" });
+
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+
+        // Wipe Profile and Credits
+        await setVal(`/users/${safeEmail}`, null);
+        await setVal(`/credits/${safeEmail}`, null);
+
+        // Wipe Leads
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        const filteredLeads = leads.filter((l: any) => l.email?.toLowerCase().trim() !== email.toLowerCase().trim());
+        await setVal('/leads', filteredLeads);
+
+        // Wipe Projects
+        const rawProjects = await getVal('/projects') || [];
+        const projects = Array.isArray(rawProjects) ? rawProjects : Object.values(rawProjects);
+        const filteredProjects = projects.filter((p: any) => p.metadata?.contact?.email?.toLowerCase().trim() !== email.toLowerCase().trim());
+        await setVal('/projects', filteredProjects);
+
+        res.json({ success: true, message: `Histórico apagado para ${email}` });
+    } catch (e: any) {
+        console.error("Wipe Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+};

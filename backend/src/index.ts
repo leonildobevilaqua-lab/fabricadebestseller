@@ -78,24 +78,8 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} - Updated ${new Date().toISOString()}`);
     console.log("FORCE DEPLOY RETRY - V2.7 - API KEY CHECK");
 
-    // CRITICAL API KEY CHECK
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (geminiKey) {
-        console.log(`✅ GEMINI_API_KEY FOUND (Length: ${geminiKey.length})`);
-        console.log(`Key starts with: ${geminiKey.substring(0, 5)}...`);
-    } else {
-        console.error("❌ CRITICAL: GEMINI_API_KEY IS MISSING IN PROCESS.ENV");
-    }
-
-    const openAiKey = process.env.OPENAI_API_KEY;
-    if (openAiKey) {
-        console.log(`✅ OPENAI_API_KEY FOUND (Length: ${openAiKey.length})`);
-        console.log(`Key starts with: ${openAiKey.substring(0, 5)}...`);
-    } else {
-        console.error("❌ CRITICAL: OPENAI_API_KEY IS MISSING IN PROCESS.ENV");
-    }
-
-    // DEBUG ROUTES
+    // API Keys are managed dynamically via Admin Panel (saved in Supabase).
+    // Local ENV checks are no longer strictly necessary at startup.    // DEBUG ROUTES
     app._router.stack.forEach((r: any) => {
         if (r.route && r.route.path) {
             console.log(r.route.path);

@@ -21,5 +21,6 @@ router.get('/orders', AdminController.getOrders);
 router.post('/asaas-env', AdminController.switchAsaasEnv);
 router.get('/asaas-env', AdminController.getAsaasStatus);
 
-export default router;
+router.delete('/wipe-user/:email', AdminController.wipeUserHistory);
 
+export default router;

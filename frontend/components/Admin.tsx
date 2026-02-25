@@ -82,6 +82,9 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         const safeOrders = Array.isArray(orders) ? orders : [];
 
         const filtered = safeOrders.filter(o => {
+            const status = (o.paymentInfo?.status || o.status || 'PAID').toUpperCase();
+            if (status === 'PENDING' || status === 'REFUNDED' || status === 'CANCELLED') return false;
+
             const dStr = o.date || o.created_at;
             if (!dStr) return false;
 
@@ -119,6 +122,9 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         const targetStr = date.toLocaleDateString('en-CA');
 
         const dayOrders = (Array.isArray(orders) ? orders : []).filter(o => {
+            const status = (o.paymentInfo?.status || o.status || 'PAID').toUpperCase();
+            if (status === 'PENDING' || status === 'REFUNDED' || status === 'CANCELLED') return false;
+
             const dStr = o.date || o.created_at;
             if (!dStr) return false;
             const d = new Date(dStr);
@@ -135,6 +141,9 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
     // 3. Top Customers - Based on successful payments
     const customerMap = (Array.isArray(orders) ? orders : []).reduce((acc: any, curr: any) => {
+        const status = (curr.paymentInfo?.status || curr.status || 'PAID').toUpperCase();
+        if (status === 'PENDING' || status === 'REFUNDED' || status === 'CANCELLED') return acc;
+
         const email = curr.paymentInfo?.payerEmail || curr.email || 'Desconhecido';
         const val = curr.paymentInfo?.amount || 0;
         acc[email] = (acc[email] || 0) + val;
@@ -669,6 +678,27 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
+    const handleWipe = async (email: string) => {
+        if (!confirm(`TEM CERTEZA ABSOLUTA que deseja ZERAR todo o histórico, créditos e registros de ${email}?\n\nEsta ação apagará projetos e compras relacionadas a este e-mail do painel.`)) return;
+
+        try {
+            const res = await fetch(`${getApiBase()}/api/admin/wipe-user/${encodeURIComponent(email)}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`Histórico de ${email} zerado com sucesso!`);
+                refreshAll();
+            } else {
+                alert(`Erro: ${data.error}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao zerar histórico.");
+        }
+    };
+
     const refreshAll = async () => {
         setIsRefreshing(true);
         await Promise.all([loadLeads(false), loadOrders()]);
@@ -1150,6 +1180,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     onDelete={handleDelete}
                                                     onEdit={handleEdit}
                                                     onDiagram={handleDiagram}
+                                                    onWipe={handleWipe}
                                                 />
                                             ))}
                                         </tbody>
