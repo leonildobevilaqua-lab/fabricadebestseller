@@ -699,6 +699,31 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
+    const handleWipeAll = async () => {
+        const secret = prompt("ATENÇÃO! Você está prestes a ZERAR TODOS OS REGISTROS DO SISTEMA (Pedidos, Leads, Usuários, etc).\n\nPara confirmar, digite: DESTRUIR");
+        if (secret !== "DESTRUIR") {
+            alert("Ação cancelada.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${getApiBase()}/api/admin/wipe-all`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(`Sistema completamente zerado!`);
+                refreshAll();
+            } else {
+                alert(`Erro: ${data.error}`);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro ao zerar sistema.");
+        }
+    };
+
     const refreshAll = async () => {
         setIsRefreshing(true);
         await Promise.all([loadLeads(false), loadOrders()]);
@@ -1150,6 +1175,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 transition"
                                     >
                                         <span>📊</span> Exportar Excel
+                                    </button>
+                                    <button
+                                        onClick={handleWipeAll}
+                                        className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-red-600 text-white hover:bg-red-700 flex items-center gap-2 transition"
+                                    >
+                                        <span>⚠️</span> Apagar Tudo
                                     </button>
                                 </div>
                             </div>

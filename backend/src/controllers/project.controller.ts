@@ -62,15 +62,8 @@ export const create = async (req: Request, res: Response) => {
             if (credits <= 0) {
                 console.log(`[PROJECT] Denied creation for ${contact.email}: No credits. Creating PENDING lead.`);
 
-                // FORCE RESET USER PLAN TO PENDING (Prevents Stale Active State from Previous Tests)
-                if (contact.plan) {
-                    await setVal(`/users/${safeEmail}/plan`, {
-                        ...contact.plan,
-                        status: 'PENDING',
-                        startDate: new Date(),
-                        updatedAt: new Date()
-                    });
-                }
+                const actualUserPlan = await getVal(`/users/${safeEmail}/plan`);
+                const resolvedPlan = actualUserPlan || contact.plan || null;
 
                 // CREATE PENDING LEAD FOR ADMIN VISIBILITY
                 try {
@@ -95,7 +88,7 @@ export const create = async (req: Request, res: Response) => {
                             topic: topic,
                             date: new Date(),
                             created_at: new Date(),
-                            plan: contact.plan || null, // Capture Plan for Pricing
+                            plan: resolvedPlan, // Capture REAL Plan for Correct Pricing in Admin
                             credits: 0
                         };
                         await pushVal('/leads', newLead);
@@ -557,16 +550,19 @@ export const selectTitle = async (req: Request, res: Response) => {
     if (!project) return res.status(404).json({ error: "Not found" });
 
     await QueueService.updateMetadata(id, {
-        bookTitle: title, subTitle: subtitle,
+        bookTitle: title,
+        title: title, // Explicitly set 'title' so it loads correctly in Dashboard orders
+        subTitle: subtitle,
         status: 'GENERATING_STRUCTURE',
         progress: 35,
         statusMessage: "TÍTULO DO LIVRO ESCOLHIDO, INFORMAÇÕES ENCAMINHADAS PARA NOSSOS ESCRITORES PROFISSIONAIS."
     });
 
-    // Update Lead in JSON DB to show proper Title in Admin
+    // Update Lead and Order in JSON DB to show proper Title in Admin
     try {
         const userEmail = project.metadata.contact?.email;
         if (userEmail) {
+            const safeEmail = userEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
@@ -574,7 +570,7 @@ export const selectTitle = async (req: Request, res: Response) => {
             let leadIndex = -1;
             for (let i = leads.length - 1; i >= 0; i--) {
                 const l: any = leads[i];
-                if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
+                if (l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim() && l.type === 'BOOK') {
                     leadIndex = i;
                     break;
                 }
@@ -582,7 +578,16 @@ export const selectTitle = async (req: Request, res: Response) => {
 
             if (leadIndex !== -1) {
                 await setVal(`/leads[${leadIndex}]/bookTitle`, title);
-                await setVal(`/leads[${leadIndex}]/topic`, title); // Replace topic as requested to clean up view
+                await setVal(`/leads[${leadIndex}]/topic`, title); // Replace topic to clean up view
+            }
+
+            // Sync with /users/:email/orders if applicable
+            const orders = (await getVal(`/users/${safeEmail}/orders`)) || [];
+            if (Array.isArray(orders)) {
+                const orderIndex = orders.findIndex(o => o.projectId === id);
+                if (orderIndex !== -1) {
+                    await setVal(`/users/${safeEmail}/orders[${orderIndex}]/title`, title);
+                }
             }
         }
     } catch (e) {

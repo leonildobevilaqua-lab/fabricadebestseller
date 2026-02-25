@@ -482,3 +482,21 @@ export const wipeUserHistory = async (req: Request, res: Response) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+export const wipeAllHistory = async (req: Request, res: Response) => {
+    try {
+        console.warn("⚠️ WIPE ALL HISTORY TRIGGERED BY ADMIN!");
+        await setVal('/leads', []);
+        await setVal('/projects', []);
+        await setVal('/orders', []);
+        // Reset users completely or just keep the admin
+        await setVal('/users', {});
+        await setVal('/credits', {});
+
+        await reloadDB();
+        res.json({ success: true, message: "Todos os registros (Leads, Pedidos, Usuários e Projetos) foram apagados." });
+    } catch (e: any) {
+        console.error("Wipe All Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+};

@@ -2,6 +2,7 @@ export interface BookMetadata {
     id?: string;
     authorName: string;
     topic: string;
+    title?: string;
     bookTitle?: string;
     subTitle?: string;
     dedication?: string;
