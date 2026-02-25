@@ -103,16 +103,16 @@ export const generateDocx = async (metadata: BookMetadata, content: BookContent)
       const parts = p.split(/(\*\*.*?\*\*)/g);
       const children = parts.map(part => {
         if (part.startsWith('**') && part.endsWith('**')) {
-          return new TextRun({ text: part.slice(2, -2).replace(/\*/g, ''), bold: true, font: "Garamond", size: 27 });
+          return new TextRun({ text: part.slice(2, -2).replace(/\*/g, ''), bold: true, font: "Garamond", size: 23 });
         }
-        return new TextRun({ text: part.replace(/\*/g, ''), font: "Garamond", size: 27 });
+        return new TextRun({ text: part.replace(/\*/g, ''), font: "Garamond", size: 23 });
       });
 
       return new Paragraph({
         children: children,
         alignment: AlignmentType.JUSTIFIED,
-        spacing: { after: 200, line: 360 }, // 1.5 Line Spacing, 10pt after
-        indent: { firstLine: 708 }, // 1.25 cm
+        spacing: { after: 140, line: 280 },
+        indent: { firstLine: 450 },
       });
     });
   };
@@ -159,7 +159,7 @@ export const generateDocx = async (metadata: BookMetadata, content: BookContent)
       right: MARGIN_OUTSIDE,
       header: MARGIN_HEADER,
       footer: MARGIN_FOOTER,
-      mirror: true
+      mirror: true,
     },
   };
 
@@ -525,8 +525,8 @@ export const generateDocx = async (metadata: BookMetadata, content: BookContent)
     styles: {
       default: {
         document: {
-          run: { font: "Garamond", size: 27 }, // 13.5pt Default
-          paragraph: { spacing: { line: 360 } } // 1.5 Lines
+          run: { font: "Garamond", size: 23 },
+          paragraph: { spacing: { line: 280 } }
         }
       }
     }

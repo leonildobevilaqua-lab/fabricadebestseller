@@ -304,7 +304,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       formData.append('email', userContact.email);
 
       try {
-        await fetch(`/api/projects/${projectId}/send-email`, {
+        await fetch(`${API.getApiBase()}/api/projects/${projectId}/send-email`, {
           method: 'POST',
           body: formData
         });
@@ -323,7 +323,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     if (!dedicationTo && !ackTo) return alert(t.fillAuthInfo);
     setGeneratingExtras(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/generate-extras`, {
+      const res = await fetch(`${API.getApiBase()}/api/projects/${projectId}/generate-extras`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dedicationTo, ackTo, aboutAuthorContext })
@@ -1123,7 +1123,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                         window.open(products.english_book || 'https://pay.kiwify.com.br/YOUR_LINK', '_blank');
                         // 2. Ask for confirmation (Simulated "Wait for Payment")
                         if (confirm("Após confirmar o pagamento na nova aba, clique em OK para iniciar a tradução automática.")) {
-                          fetch(`/api/projects/${projectId}/translate`, {
+                          fetch(`${API.getApiBase()}/api/projects/${projectId}/translate`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ targetLang: 'en' })
@@ -1143,7 +1143,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                       onClick={() => {
                         window.open(products.spanish_book || 'https://pay.kiwify.com.br/YOUR_LINK', '_blank');
                         if (confirm("Após confirmar o pagamento na nova aba, clique em OK para iniciar a tradução automática.")) {
-                          fetch(`/api/projects/${projectId}/translate`, {
+                          fetch(`${API.getApiBase()}/api/projects/${projectId}/translate`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ targetLang: 'es' })

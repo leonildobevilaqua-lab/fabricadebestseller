@@ -173,7 +173,8 @@ export const UserAuthController = {
             const cycleIndex = usageCount % 4;
 
             // PREÇOS (FONTE DA VERDADE 2025)
-            const pName = (user.plan?.name || "FREE").toUpperCase();
+            const isPlanActive = user.plan?.status === 'ACTIVE';
+            const pName = isPlanActive ? (user.plan?.name || "FREE").toUpperCase() : "FREE";
             const isAnnual = user.plan?.billing === 'annual' || user.plan?.billing === 'anual';
 
             let nextBookPrice = 89.90; // Default Free
