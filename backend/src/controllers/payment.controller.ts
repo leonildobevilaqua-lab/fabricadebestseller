@@ -491,9 +491,13 @@ export const checkAccess = async (req: Request, res: Response) => {
             if (!isConfirmed) return false;
 
             const desc = (p.description || "").toLowerCase();
-            let isPlan = desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black');
+            const isGeneration = desc.includes('livro') || desc.includes('geração') || desc.includes('geracao');
 
-            if (!isPlan && !desc.includes('livro') && !desc.includes('geração')) {
+            // It can only be a plan if it's NOT explicitly marked as generation
+            let isPlan = !isGeneration && (desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black'));
+
+            // Sub prices fallback
+            if (!isPlan && !isGeneration) {
                 if (Math.abs(p.value - 19.90) < 0.05 || Math.abs(p.value - 39.90) < 0.05 || Math.abs(p.value - 79.90) < 0.05 ||
                     Math.abs(p.value - 147.90) < 0.05 || Math.abs(p.value - 297.90) < 0.05 || Math.abs(p.value - 497.90) < 0.05) {
                     isPlan = true;
@@ -528,25 +532,46 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
         }
 
-        // Sync Credits
+        // Sync Credits (Resilience)
         const validGenPrices = [89.90, 28.90, 24.90, 18.90, 14.90, 9.90, 8.90, 16.90, 15.21, 14.37, 13.52, 26.90, 21.90]; // Does NOT include sub prices (19.90, 39.90, 79.90)
         const validPaidList = asaasPayments.filter(p => {
             if (p.status !== 'RECEIVED' && p.status !== 'CONFIRMED') return false;
 
             const desc = (p.description || '').toLowerCase();
-            const isPlan = desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black');
-            if (isPlan) return false;
+            const isGeneration = desc.includes('livro') || desc.includes('geração') || desc.includes('geracao');
+
+            // Same logic as plan fallback to ensure we EXCLUDE silent plan payments from giving credits
+            let isPlan = !isGeneration && (desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black'));
+
+            if (!isPlan && !isGeneration) {
+                if (Math.abs(p.value - 19.90) < 0.05 || Math.abs(p.value - 39.90) < 0.05 || Math.abs(p.value - 79.90) < 0.05 ||
+                    Math.abs(p.value - 147.90) < 0.05 || Math.abs(p.value - 297.90) < 0.05 || Math.abs(p.value - 497.90) < 0.05) {
+                    isPlan = true;
+                }
+            }
+
+            if (isPlan) return false; // Absolutely exclude subscriptions
 
             const isGenPrice = validGenPrices.some(vp => Math.abs(vp - p.value) < 0.1);
-            return isGenPrice || desc.includes('livro') || desc.includes('geração');
+            return isGeneration || isGenPrice; // If neither plan nor identified generation, but price matches, we accept.
         });
 
-        const usedCount = orders.filter((o: any) => o.status === 'COMPLETED' || o.status === 'PROCESSING' || o.status === 'LIVRO ENTREGUE').length;
-        let theoretical = Math.max(0, validPaidList.length - usedCount);
+        // Use a set of redeemed IDs to prevent double counting
+        const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+        let newCreditsAdded = 0;
 
-        if (theoretical !== credits) {
-            credits = theoretical;
+        validPaidList.forEach(paid => {
+            if (!redeemedIds.includes(paid.id)) {
+                redeemedIds.push(paid.id);
+                newCreditsAdded++;
+                console.log(`[CHECK_ACCESS] Found missing generation payment ${paid.id} for ${email}. Adding +1 credit.`);
+            }
+        });
+
+        if (newCreditsAdded > 0) {
+            credits += newCreditsAdded;
             await setVal(`/credits/${safeEmail}`, credits);
+            await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
         }
 
         // Lead & Usage
