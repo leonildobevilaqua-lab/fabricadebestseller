@@ -322,38 +322,32 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 
             // --- DETECT INTENT (GENERATION vs SUBSCRIPTION) ---
             const pName = (productName || "").toLowerCase();
+            let isSubscription = false;
             let isBookGeneration = false;
 
-            // Explicit Prices (Safety Net)
-            const generationPrices = [
-                // STARTER
-                24.90, 22.41, 21.17, 19.92, // Annual
-                26.90, 24.21, 22.87, 21.52, // Monthly
-                // PRO
-                19.90, 17.91, 16.92, 15.92, // Annual
-                21.90, 19.71, 18.62, 17.52, // Monthly
-                // BLACK
-                14.90, 13.41, 12.67, 11.92, // Annual
-                16.90, 15.21, 14.37, 13.52, // Monthly
-                // Avulso / Fallbacks
-                39.90
-            ];
-
             // Explicit Keywords
+            if (pName.includes('assinatura') || pName.includes('plano') || pName.includes('starter') || pName.includes('pro') || pName.includes('black') || pName.includes('vip')) {
+                isSubscription = true;
+            }
+
             if (pName.includes('geração') || pName.includes('geracao') || pName.includes('generation') || pName.includes('livro')) {
                 isBookGeneration = true;
             }
-            // Check explicit prices (robust against keyword failure)
-            const isExactPrice = generationPrices.some(p => Math.abs(p - amount) < 0.05);
 
-            // Fallback: Price Safety Net (8 to 45 BRL covers all plan-based book prices)
-            if (isExactPrice || (amount > 8 && amount < 45)) {
-                console.log(`[WEBHOOK] Price Pattern Match for Book Generation: ${amount}`);
-                isBookGeneration = true;
+            // Fallback: Price Safety Net (only if keywords didn't catch it)
+            if (!isBookGeneration && !isSubscription) {
+                const generationPrices = [24.90, 22.41, 21.17, 19.92, 26.90, 24.21, 22.87, 21.52, 19.90, 17.91, 16.92, 15.92, 21.90, 19.71, 18.62, 17.52, 14.90, 13.41, 12.67, 11.92, 16.90, 15.21, 14.37, 13.52, 39.90];
+                const isExactPrice = generationPrices.some(p => Math.abs(p - amount) < 0.05);
+
+                if (isExactPrice || (amount > 8 && amount < 45)) {
+                    // Treat known subscription amounts as subscriptions, rest as generation
+                    if (Math.abs(amount - 19.90) < 0.05 || Math.abs(amount - 39.90) < 0.05 || Math.abs(amount - 79.90) < 0.05) {
+                        isSubscription = true;
+                    } else {
+                        isBookGeneration = true;
+                    }
+                }
             }
-            // Note: 19.90 is also starter monthly, so keyword is primary. Price secondary if no keywords?
-            // Subscription prices usually have "Assinatura" or Plan name. Book gen has "Geração".
-            // We trust keywords first.
 
             if (isBookGeneration) {
                 console.log(`[WEBHOOK] ACTION: GRANT CREDIT for ${email} (Product: ${productName}, Val: ${amount})`);
@@ -524,9 +518,17 @@ export const checkAccess = async (req: Request, res: Response) => {
         }
 
         // Sync Credits
-        const validPrices = [79.90, 39.90, 19.90, 9.90, 8.90, 18.90, 14.90, 28.90, 24.90, 89.90, 16.90, 15.21, 14.37, 13.52, 26.90, 21.90];
-        const validPaidList = asaasPayments.filter(p => (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
-            (validPrices.some(vp => Math.abs(vp - p.value) < 0.1) || (p.description || '').toLowerCase().includes('livro')));
+        const validGenPrices = [89.90, 28.90, 24.90, 18.90, 14.90, 9.90, 8.90, 16.90, 15.21, 14.37, 13.52, 26.90, 21.90]; // Does NOT include sub prices (19.90, 39.90, 79.90)
+        const validPaidList = asaasPayments.filter(p => {
+            if (p.status !== 'RECEIVED' && p.status !== 'CONFIRMED') return false;
+
+            const desc = (p.description || '').toLowerCase();
+            const isPlan = desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black');
+            if (isPlan) return false;
+
+            const isGenPrice = validGenPrices.some(vp => Math.abs(vp - p.value) < 0.1);
+            return isGenPrice || desc.includes('livro') || desc.includes('geração');
+        });
 
         const usedCount = orders.filter((o: any) => o.status === 'COMPLETED' || o.status === 'PROCESSING' || o.status === 'LIVRO ENTREGUE').length;
         let theoretical = Math.max(0, validPaidList.length - usedCount);
