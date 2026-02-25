@@ -314,8 +314,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             </p>
 
                             {/* Expiration Logic */}
-                            {stats?.plan?.startDate ? (() => {
-                                const start = new Date(stats.plan.startDate);
+                            {stats?.plan?.status === 'ACTIVE' ? (() => {
+                                const start = new Date(stats.plan.startDate || stats.plan.lastPayment || Date.now());
                                 const isAnnual = stats.plan.billing === 'annual';
                                 const expiration = new Date(start);
                                 expiration.setDate(start.getDate() + (isAnnual ? 365 : 30));

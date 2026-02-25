@@ -461,33 +461,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       setProjectId(p.id);
       setProject(p);
 
-      // STRICT CHECK: Only start research if explicitly authorized via Payment/Admin
+      // Since `API.createProject` succeeded, payment is already verified and the credit was consumed.
+      // We can immediately start the research process.
       if (p.metadata.status === 'IDLE') {
-        const accessCheck = await fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`).then(r => r.json());
-
-        if (accessCheck.hasAccess) {
+        try {
           await API.startResearch(p.id, language, userContact?.email);
-        } else {
-          // Access Denied -> Show Payment Gate (User must pay or Admin must approve)
-          const isPlanActive = !!(accessCheck.plan && accessCheck.plan.status === 'ACTIVE');
-          const subPrice = isPlanActive ? 0 : (accessCheck.subscriptionPrice || 49.90);
-
-          setUpsellOffer({
-            price: accessCheck.bookPrice,
-            planName: accessCheck.planLabel || (accessCheck.plan?.name ? `Plano ${accessCheck.plan.name}` : "STARTER"),
-            link: accessCheck.checkoutUrl,
-            level: accessCheck.discountLevel,
-            subscriptionPrice: subPrice,
-            subscriptionLink: "#"
-          });
-
-          if (isPlanActive) {
-            setShowReward(true);
-            setShowPaymentGate(false);
-          } else {
-            setShowPaymentGate(true);
-            setShowReward(false);
-          }
+        } catch (startErr) {
+          console.error("Failed to start research automatically:", startErr);
         }
       }
     } catch (e: any) {

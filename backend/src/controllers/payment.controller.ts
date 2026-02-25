@@ -501,14 +501,17 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
         } catch (e) { console.error("[ASAAS_FETCH]", e); }
 
-        // FAST TRACK ACTIVATION: Verify very recent (<24h) payments directly from Asaas.
+        // FAST TRACK ACTIVATION: Verify very recent payments directly from Asaas.
         // This solves the issue of users paying and Webhook delaying.
-        const oneDayAgo = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+        const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
 
         const recentConfirmedPayment = asaasPayments.find((p: any) => {
             const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
             if (!isConfirmed) return false;
-            if (new Date(p.dateCreated) < oneDayAgo) return false; // Strict 24h limit prevents old DB revival ghosts.
+
+            // Check date based on confirmation or creation, slightly wider (7 days) because some people pay via Boleto/Pix days later.
+            const pDate = new Date(p.paymentDate || p.clientPaymentDate || p.dateCreated);
+            if (pDate < oneWeekAgo) return false;
 
             return true;
         });
@@ -543,6 +546,7 @@ export const checkAccess = async (req: Request, res: Response) => {
                     name: pName,
                     billing: (upDesc.includes('ANUAL') || val > 100) ? 'annual' : 'monthly',
                     lastPayment: new Date(),
+                    startDate: new Date(),
                     subscriptionId: recentConfirmedPayment.subscription || null
                 };
                 await setVal(`/users/${safeEmail}/plan`, userPlan);

@@ -144,6 +144,7 @@ export const UserAuthController = {
                                 name: pName,
                                 billing: (desc.includes('ANUAL')) ? 'annual' : 'monthly',
                                 lastPayment: new Date(),
+                                startDate: new Date(),
                                 subscriptionId: confirmedPayment?.subscription || null
                             };
                             user.plan = newPlan;
