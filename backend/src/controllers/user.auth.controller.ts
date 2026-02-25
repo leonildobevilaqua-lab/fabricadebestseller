@@ -166,7 +166,7 @@ export const UserAuthController = {
             const userProjectsRaw = await getVal('/projects') || [];
             const projectList = Array.isArray(userProjectsRaw) ? userProjectsRaw : Object.values(userProjectsRaw);
 
-            const userProjects = projectList.filter((p: any) => p.userEmail?.toLowerCase().trim() === cleanUser);
+            const userProjects = projectList.filter((p: any) => p.metadata?.contact?.email?.toLowerCase().trim() === cleanUser);
             const usageCount = userProjects.filter((p: any) =>
                 (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE' || p.metadata?.status === 'WRITING_CHAPTERS')
             ).length;
@@ -183,16 +183,25 @@ export const UserAuthController = {
             else if (pName.includes('PRO')) nextBookPrice = isAnnual ? 14.90 : 18.90;
             else if (pName.includes('STARTER')) nextBookPrice = isAnnual ? 24.90 : 28.90;
 
+            const mappedOrders = userProjects.map((p: any) => ({
+                id: p.id,
+                title: p.metadata?.title || p.metadata?.topic,
+                authorName: p.metadata?.authorName || p.metadata?.contact?.name || '',
+                date: p.createdAt,
+                status: p.metadata?.status,
+                downloadUrl: p.metadata?.docLink || p.metadata?.pdfUrl || p.metadata?.finalDocxUrl || null // whatever URL it generated
+            }));
+
             res.json({
                 profile: user.profile,
                 plan: user.plan || { name: 'FREE', status: 'INACTIVE' },
                 stats: {
                     purchaseCycleCount: cycleIndex,
                     totalBooksGenerated: usageCount,
-                    totalBooks: user.orders?.length || usageCount,
+                    totalBooks: userProjects.length || usageCount,
                     nextBookPrice: nextBookPrice
                 },
-                orders: userProjects.length > 0 ? userProjects : (user.orders || [])
+                orders: mappedOrders.length > 0 ? mappedOrders : (user.orders || [])
             });
 
         } catch (e) {

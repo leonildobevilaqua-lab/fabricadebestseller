@@ -7,6 +7,7 @@ import { SocialShare } from './SocialShare'; // Assuming Lucide or similar, else
 const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
 const IconStar = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
 const IconDownload = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" x2="12" y1="15" y2="3" /></svg>;
+const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>;
 
 interface DashboardProps {
     user: any;
@@ -162,6 +163,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         return () => { if (interval) clearInterval(interval); };
     }, [isPurchasing, user?.email, onNewBook]);
     */
+
+    const handleDeleteProject = async (projectId: string) => {
+        if (!window.confirm('Tem certeza que deseja excluir esse projeto? Isso não pode ser desfeito.')) return;
+
+        try {
+            const getApiBase = () => {
+                const env = (import.meta as any).env.VITE_API_URL;
+                if (env) return env;
+                const host = window.location.hostname;
+                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+                return 'https://api.fabricadebestseller.com.br';
+            };
+
+            const token = localStorage.getItem('bsf_token');
+            const headers: any = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const res = await fetch(`${getApiBase()}/api/project/${projectId}`, {
+                method: 'DELETE',
+                headers
+            });
+
+            if (res.ok) {
+                // Re-fetch stats to update list
+                const resUser = await fetch(`${getApiBase()}/api/user/me?email=${user.email}`, { headers });
+                const dataUser = await resUser.json();
+                setStats(dataUser);
+            } else {
+                alert('Erro ao excluir projeto.');
+            }
+        } catch (e) {
+            console.error('Delete error', e);
+            alert('Falha na comunicação.');
+        }
+    };
 
     const planName = stats?.plan?.name || "FREE";
     const planStatus = stats?.plan?.status || "INACTIVE";
@@ -450,7 +486,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-slate-800">{order.title || "Livro Sem Título"}</h4>
-                                            <p className="text-xs text-slate-500 uppercase">{order.date ? new Date(order.date).toLocaleDateString() : 'Data desconhecida'}</p>
+                                            {order.authorName && <p className="text-xs text-slate-600 font-medium">Autor: {order.authorName}</p>}
+                                            <p className="text-xs text-slate-500 uppercase mt-1">{order.date ? new Date(order.date).toLocaleDateString() : 'Data desconhecida'}</p>
                                         </div>
                                     </div>
 
@@ -474,6 +511,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 <IconDownload />
                                             </a>
                                         )}
+                                        <button
+                                            onClick={() => handleDeleteProject(order.id)}
+                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                                            title="Excluir Projeto"
+                                        >
+                                            <IconTrash />
+                                        </button>
                                     </div>
                                 </div>
                             ))}

@@ -11,6 +11,7 @@ const upload = multer();
 
 router.post('/', ProjectController.create);
 router.get('/:id', ProjectController.get);
+router.delete('/:id', ProjectController.remove);
 router.post('/:id/research', ProjectController.startResearch);
 router.post('/:id/select-title', ProjectController.selectTitle);
 router.post('/:id/generate', ProjectController.generateBookContent);

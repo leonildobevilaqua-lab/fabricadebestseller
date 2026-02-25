@@ -129,10 +129,10 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram }: {
             {/* DATE & TYPE */}
             <td className="p-4 align-top w-32">
                 <div className="font-bold text-slate-700">
-                    {lead.date ? new Date(lead.date).toLocaleDateString('pt-BR') : 'Data Inválida'}
+                    {(lead.date || lead.created_at || lead.createdAt) ? new Date(lead.date || lead.created_at || lead.createdAt).toLocaleDateString('pt-BR') : 'Data Inválida'}
                 </div>
                 <div className="text-xs text-slate-400">
-                    {lead.date ? new Date(lead.date).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                    {(lead.date || lead.created_at || lead.createdAt) ? new Date(lead.date || lead.created_at || lead.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                 </div>
 
                 {isSubscription ? (

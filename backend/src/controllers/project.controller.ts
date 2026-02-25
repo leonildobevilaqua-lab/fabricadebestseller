@@ -1399,3 +1399,31 @@ const performResearch = async (projectId: string, language: string) => {
         await QueueService.updateMetadata(projectId, { status: 'FAILED', statusMessage: "Falha na pesquisa." });
     }
 };
+
+// --- DELETE PROJECT ---
+export const remove = async (req: Request, res: Response) => {
+    try {
+        const id = req.params.id;
+        const project = await QueueService.getProject(id);
+
+        if (!project) return res.status(404).json({ error: "Projeto não encontrado." });
+
+        // Remover do banco
+        await setVal(`/projects/${id}`, null);
+
+        // Remover da lista geral de leads/orders associados se aplicável
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        const leadIndex = leads.findIndex((l: any) => l.projectId === id);
+        if (leadIndex !== -1) {
+            await setVal(`/leads[${leadIndex}]/status`, 'DELETED');
+        }
+
+        console.log(`[PROJECT] Projeto ${id} deletado com sucesso.`);
+        res.json({ success: true, message: "Projeto excluído com sucesso." });
+
+    } catch (error: any) {
+        console.error("[PROJECT] Erro ao deletar projeto:", error);
+        res.status(500).json({ error: "Erro interno ao excluir o projeto." });
+    }
+};

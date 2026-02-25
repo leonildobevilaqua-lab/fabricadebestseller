@@ -505,7 +505,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         // This solves the issue of users paying and Webhook delaying.
         const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
 
-        const recentConfirmedPayment = asaasPayments.find((p: any) => {
+        const recentConfirmedPayments = asaasPayments.filter((p: any) => {
             const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
             if (!isConfirmed) return false;
 
@@ -516,7 +516,7 @@ export const checkAccess = async (req: Request, res: Response) => {
             return true;
         });
 
-        if (recentConfirmedPayment) {
+        for (const recentConfirmedPayment of recentConfirmedPayments) {
             const desc = (recentConfirmedPayment.description || "").toLowerCase();
             const isGen = desc.includes('livro') || desc.includes('geração') || desc.includes('geracao');
             const validGenPrices = [89.90, 28.90, 24.90, 18.90, 14.90, 9.90, 8.90, 16.90, 15.21, 14.37, 13.52, 26.90, 21.90];
@@ -562,6 +562,51 @@ export const checkAccess = async (req: Request, res: Response) => {
                     await setVal(`/credits/${safeEmail}`, credits);
                     await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
                 }
+            }
+
+            // --- CRITICAL FIX: Inject Order for Admin Panel (Webhook Delay Fallback) ---
+            try {
+                const ordersRaw = await getVal('/orders') || [];
+                const orders = Array.isArray(ordersRaw) ? ordersRaw : Object.values(ordersRaw);
+                const orderExists = orders.some((o: any) => o.paymentInfo?.transactionId === recentConfirmedPayment.id);
+
+                if (!orderExists) {
+                    const paymentInfo = {
+                        payer: "Fast-Track Auto",
+                        payerEmail: email,
+                        amount: recentConfirmedPayment.value,
+                        product: recentConfirmedPayment.description || (isPlan ? 'Assinatura (Fast-Track)' : 'Geração de Livro (Fast-Track)'),
+                        provider: 'ASAAS',
+                        transactionId: recentConfirmedPayment.id
+                    };
+                    await pushVal('/orders', { date: new Date(), paymentInfo, status: 'paid' });
+                    console.log(`[CHECK_ACCESS] Fast-track Injected Order ${recentConfirmedPayment.id} to Admin Panel.`);
+
+                    // --- UPDATE LEAD STATUS FOR ADMIN PANEL ---
+                    const rawLds = await getVal('/leads') || [];
+                    const localLeads = Array.isArray(rawLds) ? rawLds : Object.values(rawLds);
+                    let targetIndex = -1;
+                    for (let i = localLeads.length - 1; i >= 0; i--) {
+                        if ((localLeads[i] as any).email?.toLowerCase().trim() === String(email).toLowerCase().trim()) {
+                            targetIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (targetIndex !== -1) {
+                        const tgtLead = localLeads[targetIndex] as any;
+                        if (isPlan && tgtLead.status !== 'SUBSCRIBER') {
+                            tgtLead.status = 'SUBSCRIBER';
+                            tgtLead.plan = userPlan;
+                            await setVal(`/leads[${targetIndex}]`, tgtLead);
+                        } else if (!isPlan && tgtLead.status === 'PENDING') {
+                            tgtLead.status = 'APPROVED'; // Paid for a book
+                            await setVal(`/leads[${targetIndex}]`, tgtLead);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("[CHECK_ACCESS] Failed to inject fast-track order:", err);
             }
         }
         // Lead & Usage
