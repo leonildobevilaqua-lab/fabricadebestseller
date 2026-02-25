@@ -488,22 +488,33 @@ export const checkAccess = async (req: Request, res: Response) => {
         // IMMEDIATE ACTIVATION (RESILIENCE)
         const confirmedPayment = asaasPayments.find((p: any) => {
             const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
+            if (!isConfirmed) return false;
+
             const desc = (p.description || "").toLowerCase();
-            const isPlan = desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black');
-            return isConfirmed && isPlan;
+            let isPlan = desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black');
+
+            if (!isPlan && !desc.includes('livro') && !desc.includes('geração')) {
+                if (Math.abs(p.value - 19.90) < 0.05 || Math.abs(p.value - 39.90) < 0.05 || Math.abs(p.value - 79.90) < 0.05 ||
+                    Math.abs(p.value - 147.90) < 0.05 || Math.abs(p.value - 297.90) < 0.05 || Math.abs(p.value - 497.90) < 0.05) {
+                    isPlan = true;
+                }
+            }
+            return isPlan;
         });
 
         if (confirmedPayment && (!userPlan || userPlan.status !== 'ACTIVE')) {
             console.log(`[CHECK_ACCESS] Activating plan locally for ${email}`);
             const desc = (confirmedPayment.description || '').toUpperCase();
             let pName = 'STARTER';
-            if (desc.includes('BLACK')) pName = 'BLACK';
-            else if (desc.includes('PRO')) pName = 'PRO';
+            const val = confirmedPayment.value;
+
+            if (desc.includes('BLACK') || Math.abs(val - 79.90) < 0.05 || Math.abs(val - 497.90) < 0.05) pName = 'BLACK';
+            else if (desc.includes('PRO') || Math.abs(val - 39.90) < 0.05 || Math.abs(val - 297.90) < 0.05) pName = 'PRO';
 
             userPlan = {
                 status: 'ACTIVE',
                 name: pName,
-                billing: desc.includes('ANUAL') ? 'annual' : 'monthly',
+                billing: (desc.includes('ANUAL') || val > 100) ? 'annual' : 'monthly',
                 lastPayment: new Date(),
                 subscriptionId: confirmedPayment.subscription || null
             };

@@ -1603,11 +1603,18 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                     btn.disabled = true;
 
                                                                     try {
-                                                                        const API_URL = 'https://api.fabricadebestseller.com.br';
+                                                                        const getApiBase = () => {
+                                                                            const env = (import.meta as any).env.VITE_API_URL;
+                                                                            if (env) return env;
+                                                                            const host = window.location.hostname;
+                                                                            if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3000';
+                                                                            return window.location.origin;
+                                                                        };
+                                                                        let API_URL = getApiBase();
+                                                                        if (API_URL.endsWith('/')) API_URL = API_URL.slice(0, -1);
+
                                                                         console.log("Manual Check Triggered via:", API_URL);
 
-                                                                        // Force check against Auth/Me to confirm subscription
-                                                                        // Access Validation Endpoint using email
                                                                         const res = await fetch(`${API_URL}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`);
                                                                         const data = await res.json();
 
