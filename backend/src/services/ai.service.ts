@@ -374,10 +374,10 @@ export const writeChapter = async (
     Chapter: ${chapter.title}
     Chapter Objective: ${chapter.intro}
 
-    TASK: Create a detailed outline for this chapter with exactly 5 distinct sub-sections.
+    TASK: Create a detailed outline for this chapter with exactly 4 distinct sub-sections.
     Each sub-section must cover a specific aspect of the chapter's topic in EXTREME depth.
     
-    Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4", "Subheading 5"]
+    Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4"]
     Output ONLY JSON.
     Language: ${langName}.
   `;
@@ -388,11 +388,11 @@ export const writeChapter = async (
   } catch (e) {
     console.error("Failed to generate outline, using fallback topics", e);
     // Fallback topics if JSON fails
-    subtopics = ["Fundamentos", "Histórico e Evolução", "Principais Desafios", "Ferramentas e Técnicas", "Estudos de Caso"];
+    subtopics = ["Fundamentos", "Histórico e Evolução", "Ferramentas e Técnicas", "Estudos de Caso"];
   }
 
   // Ensure we don't go overboard if AI hallucinates 10 topics
-  subtopics = subtopics.slice(0, 5);
+  subtopics = subtopics.slice(0, 4);
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -474,7 +474,7 @@ export const writeChapter = async (
         
         TAREFA: Escreva o Capítulo Completo.
         REGRAS:
-        - Extensão Alvo: Aproximadamente 3500 palavras. (Meta: ~15-20 páginas por capítulo)
+        - Extensão Alvo: Aproximadamente 2000 palavras. (Meta: ~7-10 páginas por capítulo)
         - Use tom conversacional e prático.
         - Foco total em resolver as dores listadas na pesquisa.
         
@@ -670,66 +670,58 @@ export const generateExtras = async (
     Author: ${metadata.authorName}
     Book: ${metadata.bookTitle}
 
-    TASK 1: Write a DEDICATION for this book.
+    TASK: Write 3 sections: DEDICATION, ACKNOWLEDGMENTS, and ABOUT THE AUTHOR.
+    IMPORTANT: ALL TEXT MUST BE IN ${langName}.
+    
+    1. DEDICATION
     Target: ${dedicationTo || "Family and Friends"}
     Style: Emotional, profound, and rich (approx 100 words). NOT ITALIC. Plain text.
 
-    TASK 2: Write ACKNOWLEDGMENTS for this book.
+    2. ACKNOWLEDGMENTS
     Target: ${ackTo || "Everyone who helped"}
     Style: Gratitude, standard book format, detailed and warm (approx 300 words). NOT ITALIC. Plain text.
 
-    TASK 3: Write an ABOUT THE AUTHOR section.
+    3. ABOUT THE AUTHOR
     Context: ${aboutAuthorContext || "Experienced professional in the field of " + metadata.topic}
     Style: Professional, 3rd person, establishing authority. (approx 150 words).
     
-    OUTPUT JSON:
-    {
-        "dedication": "...",
-        "acknowledgments": "...",
-        "aboutAuthor": "..."
-    }
-    
-    IMPORTANT: ALL TEXT MUST BE IN ${langName}.
+    OUTPUT FORMAT:
+    Please write the content for each section clearly separated by these dividers:
+    ===DEDICATION===
+    [Your text here]
+    ===ACKNOWLEDGMENTS===
+    [Your text here]
+    ===ABOUT_AUTHOR===
+    [Your text here]
+    ===END===
   `;
 
   try {
-    const res = await llm.generateJSON<{ dedication: string; acknowledgments: string; aboutAuthor: string }>(prompt);
+    const text = await llm.generateText(prompt);
+
+    const extract = (marker: string, nextMarker: string) => {
+      const start = text.indexOf(marker);
+      if (start === -1) return "";
+      const end = text.indexOf(nextMarker, start);
+      return text.substring(start + marker.length, end !== -1 ? end : undefined).trim();
+    };
+
+    const dedicationParsed = extract("===DEDICATION===", "===ACKNOWLEDGMENTS===");
+    const ackParsed = extract("===ACKNOWLEDGMENTS===", "===ABOUT_AUTHOR===");
+    const aboutParsed = extract("===ABOUT_AUTHOR===", "===END===");
+
     return {
-      dedication: cleanText(res?.dedication || "[Dedicatória Livre]"),
-      acknowledgments: cleanText(res?.acknowledgments || "[Agradecimentos Livres]"),
-      aboutAuthor: cleanText(res?.aboutAuthor || `Sobre o autor: ${metadata.authorName}`)
+      dedication: cleanText(dedicationParsed || "[Dedicatória Livre]"),
+      acknowledgments: cleanText(ackParsed || "[Agradecimentos Livres]"),
+      aboutAuthor: cleanText(aboutParsed || `Sobre o autor: ${metadata.authorName}`)
     };
   } catch (error) {
-    console.error("Extras JSON Generation Failed. Attempting Text Fallback...", error);
-    try {
-      const text = await llm.generateText(prompt);
-
-      const extract = (key: string) => {
-        const regex = new RegExp(`"${key}"\\s*:\\s*"([^"]+)"`, 'i');
-        const match = text.match(regex);
-        if (match) return match[1];
-
-        // Fallback simple search if regex fails
-        const parts = text.split(new RegExp(`${key}`, 'i'));
-        if (parts.length > 1) {
-          const afterKey = parts[1].replace(/^[^:]*:/, '').trim();
-          return afterKey.split('\n')[0].replace(/^["']/, '').replace(/["']$/, '').trim();
-        }
-        return "";
-      };
-
-      return {
-        dedication: cleanText(extract("dedication") || "[Dedicatória Livre]"),
-        acknowledgments: cleanText(extract("acknowledgments") || "[Agradecimentos Livres]"),
-        aboutAuthor: cleanText(extract("aboutAuthor") || `Sobre o autor: ${metadata.authorName}`)
-      };
-    } catch (e) {
-      return {
-        dedication: "[Dedicatória Livre]",
-        acknowledgments: "[Agradecimentos Livres]",
-        aboutAuthor: `Sobre o autor: ${metadata.authorName}`
-      };
-    }
+    console.error("Extras Generation Failed:", error);
+    return {
+      dedication: "[Dedicatória Livre]",
+      acknowledgments: "[Agradecimentos Livres]",
+      aboutAuthor: `Sobre o autor: ${metadata.authorName}`
+    };
   }
 };
 

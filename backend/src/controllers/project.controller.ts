@@ -324,7 +324,9 @@ export const startResearch = async (req: Request, res: Response) => {
 
             if (ledgerCredits > 0) {
                 hasAccess = true;
-                console.log(`[startResearch] Granted Access via Ledger Credits: ${ledgerCredits}`);
+                const updatedCredits = ledgerCredits - 1;
+                console.log(`[startResearch] Granted Access via Ledger Credits. Deduced 1: ${ledgerCredits} -> ${updatedCredits}`);
+                await setVal(`/credits/${safeEmail}`, updatedCredits);
             }
 
             // 2. Check Legacy Leads Status
