@@ -196,11 +196,11 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                             )}
 
                             {/* Level & Context */}
-                            <div className="flex items-center gap-3 text-sm">
+                            <div className="flex flex-wrap items-center gap-3 text-sm">
                                 <div className="px-3 py-1 rounded bg-slate-800 text-white font-bold text-xs flex items-center gap-2">
-                                    <span>Nível 1</span> {/* Logic to detect level could be added here if backend provides it */}
-                                    <span className="w-px h-3 bg-slate-600"></span>
-                                    <span className="font-normal text-slate-300">{planContext}</span>
+                                    <span className="font-normal text-slate-300">
+                                        {planContext === 'Avulso' ? 'Avulso' : planContext}
+                                    </span>
                                 </div>
                                 <div className="font-bold text-emerald-600">{displayAmount}</div>
                             </div>

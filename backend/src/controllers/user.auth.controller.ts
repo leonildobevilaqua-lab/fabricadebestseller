@@ -37,16 +37,23 @@ export const UserAuthController = {
             // Fallback: Tenta buscar nos leads se nao achar em /users
             if (!user && !isAuthenticated) {
                 const leads = await getVal('/leads') || [];
-                // @ts-ignore
-                const leadFn = Array.isArray(leads) ? leads.find(l => l.email?.toLowerCase().trim() === cleanUser) : Object.values(leads).find((l: any) => l.email?.toLowerCase().trim() === cleanUser);
+                const leadsArray = Array.isArray(leads) ? leads : Object.values(leads);
+
+                let leadFn: any;
+                for (let i = leadsArray.length - 1; i >= 0; i--) {
+                    if ((leadsArray[i] as any).email?.toLowerCase().trim() === cleanUser) {
+                        leadFn = leadsArray[i];
+                        break;
+                    }
+                }
 
                 if (leadFn) {
                     user = {
                         profile: {
-                            name: leadFn.name,
-                            email: leadFn.email,
-                            phone: leadFn.phone,
-                            cpf: leadFn.cpfCnpj || leadFn.document
+                            name: leadFn.name || "Autor",
+                            email: cleanUser,
+                            phone: leadFn.phone || "",
+                            cpf: leadFn.cpfCnpj || leadFn.document || ""
                         },
                         plan: leadFn.plan || null,
                         orders: [],
@@ -99,17 +106,27 @@ export const UserAuthController = {
             await reloadDB();
             let user = await getVal(`/users/${safeEmail}`);
 
-            // 1. Tenta sincronizar com Leads se nao achar user full
-            if (!user) {
+            // 1. Tenta sincronizar com Leads se nao achar user full ou se estiver faltando o profile (ex: criado via webhook)
+            if (!user || !user.profile || !user.plan) {
                 const leads = await getVal('/leads') || [];
-                // @ts-ignore
-                const leadFn = Array.isArray(leads) ? leads.find(l => l.email?.toLowerCase().trim() === cleanUser) : Object.values(leads).find((l: any) => l.email?.toLowerCase().trim() === cleanUser);
+                const leadsArray = Array.isArray(leads) ? leads : Object.values(leads);
+
+                // Pesquisa de trás para frente para pegar o lead mais recente
+                let leadFn: any;
+                for (let i = leadsArray.length - 1; i >= 0; i--) {
+                    if ((leadsArray[i] as any).email?.toLowerCase().trim() === cleanUser) {
+                        leadFn = leadsArray[i];
+                        break;
+                    }
+                }
+
                 if (leadFn) {
                     user = {
-                        profile: { name: leadFn.name || "Autor", email: cleanUser },
-                        plan: leadFn.plan || null,
-                        orders: [],
-                        stats: { purchaseCycleCount: 0 }
+                        ...(user || {}), // preserva keys parciais (ex: bookCredits, auth, etc)
+                        profile: user?.profile || { name: leadFn.name || "Autor", email: cleanUser, phone: leadFn.phone || "", cpf: leadFn.cpfCnpj || leadFn.document || "" },
+                        plan: user?.plan || leadFn.plan || null, // NUNCA sobrescreve um plano existente
+                        orders: user?.orders || [],
+                        stats: user?.stats || { purchaseCycleCount: 0 }
                     };
                     await setVal(`/users/${safeEmail}`, user);
                 }

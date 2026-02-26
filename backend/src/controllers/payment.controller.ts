@@ -84,12 +84,23 @@ export const getLeads = async (req: Request, res: Response) => {
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
-        // Enhance leads with credit status
+        // Enhance leads with credit status and latest plan
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
             if (!lead.email) return { ...lead, credits: 0 };
             const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-            return { ...lead, credits };
+
+            // Fix Plan display out-of-sync for books
+            const userPlan = await getVal(`/users/${safeEmail}/plan`);
+            let updatedLead = { ...lead, credits };
+
+            // If the lead was a generic Book request without plan context, but the user HAS an active plan, apply it so the UI shows the correct Plan and Discounted Price.
+            if ((!updatedLead.plan || updatedLead.plan.name === 'AVULSO') && userPlan && userPlan.status === 'ACTIVE') {
+                updatedLead.plan = userPlan;
+            }
+            // Same for paymentInfo - if undefined on Lead but exists in recent orders... (not strictly needed since UI derives price from plan if missing, but it fixes the name "Plano Pro").
+
+            return updatedLead;
         }));
 
         res.json(leadsWithCredits);
