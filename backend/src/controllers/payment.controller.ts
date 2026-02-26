@@ -67,7 +67,8 @@ export const createLead = async (req: Request, res: Response) => {
             authorName,
             tag,
             plan: resolvedPlan,
-            discount
+            discount,
+            env: process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox'
         };
         await pushVal('/leads', lead);
         res.json({ success: true, id });
@@ -329,7 +330,8 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 amount: amount,
                 product: productName,
                 provider: isAsaas ? 'ASAAS' : 'KIWIFY',
-                transactionId: payload.id || payload.payment?.id
+                transactionId: payload.id || payload.payment?.id,
+                env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
             };
 
             await pushVal('/orders', { ...payload, date: new Date(), paymentInfo });

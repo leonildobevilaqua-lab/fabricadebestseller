@@ -145,6 +145,18 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                         LIVRO
                     </div>
                 )}
+
+                {/* ENV BADGE */}
+                {(lead.env === 'sandbox' || lead.paymentInfo?.env === 'sandbox') && (
+                    <div className="mt-1 text-[9px] font-bold text-orange-700 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded w-fit text-center">
+                        SANDBOX
+                    </div>
+                )}
+                {(lead.env === 'production' || lead.paymentInfo?.env === 'production') && (
+                    <div className="mt-1 text-[9px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded w-fit text-center">
+                        PRODUÇÃO
+                    </div>
+                )}
             </td>
 
             {/* MAIN INFO */}

@@ -182,7 +182,7 @@ const App: React.FC = () => {
           onLogout={resetApp}
           onNewBook={() => {
             setStep(1); // Reset wizard
-            setCurrentView('generator');
+            window.open('/factory', '_blank');
           }}
         />
       </ErrorBoundary>
