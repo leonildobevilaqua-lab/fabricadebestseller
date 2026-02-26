@@ -474,17 +474,18 @@ export const checkAccess = async (req: Request, res: Response) => {
         let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
         let latestInvoiceStatus: any = null;
         let latestInvoiceNumber: any = null;
+        let asaasPayments: any[] = [];
 
         const rawOrders = await getVal('/orders') || [];
         const orders = Array.isArray(rawOrders) ? rawOrders : Object.values(rawOrders);
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
-        // Fetch truth from Asaas for Invoice Display Tracking Only (No Fast-Track Credits)
+        // Fetch truth from Asaas
         try {
             const customer = await AsaasProvider.getCustomerByEmail(email as string);
             if (customer) {
-                const asaasPayments = await AsaasProvider.getPayments({ customer: customer.id, limit: 10 });
+                asaasPayments = await AsaasProvider.getPayments({ customer: customer.id, limit: 50 });
                 asaasPayments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
 
                 const latestRel = asaasPayments.find((p: any) => {
@@ -498,9 +499,123 @@ export const checkAccess = async (req: Request, res: Response) => {
                     latestInvoiceNumber = latestRel.invoiceNumber || latestRel.id;
                 }
             }
-        } catch (e) { console.error("[ASAAS_FETCH_INVOICE_STATUS]", e); }
+        } catch (e) { console.error("[ASAAS_FETCH]", e); }
 
+        // FAST TRACK ACTIVATION: Verify very recent payments directly from Asaas.
+        // This solves the issue of users paying and Webhook delaying.
+        // Only checking the last 2 hours to prevent old payments from granting ghost credits after a system wipe.
+        const twoHoursAgo = new Date(new Date().getTime() - 2 * 60 * 60 * 1000);
 
+        const recentConfirmedPayments = asaasPayments.filter((p: any) => {
+            const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
+            if (!isConfirmed) return false;
+
+            // Check date based on confirmation or creation
+            const pDate = new Date(p.paymentDate || p.clientPaymentDate || p.dateCreated);
+            if (pDate < twoHoursAgo) return false;
+
+            return true;
+        });
+
+        for (const recentConfirmedPayment of recentConfirmedPayments) {
+            const desc = (recentConfirmedPayment.description || "").toLowerCase();
+            const isGen = desc.includes('livro') || desc.includes('geração') || desc.includes('geracao');
+            const validGenPrices = [89.90, 28.90, 24.90, 18.90, 14.90, 9.90, 8.90, 16.90, 15.21, 14.37, 13.52, 26.90, 21.90];
+            const isGenPrice = validGenPrices.some(vp => Math.abs(vp - recentConfirmedPayment.value) < 0.1);
+
+            let isPlan = !isGen && (desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black'));
+
+            if (!isPlan && !isGen) {
+                const tv = recentConfirmedPayment.value;
+                if (Math.abs(tv - 19.90) < 0.05 || Math.abs(tv - 39.90) < 0.05 || Math.abs(tv - 79.90) < 0.05 ||
+                    Math.abs(tv - 147.90) < 0.05 || Math.abs(tv - 297.90) < 0.05 || Math.abs(tv - 497.90) < 0.05) {
+                    isPlan = true;
+                }
+            }
+
+            if (isPlan && (!userPlan || userPlan.status !== 'ACTIVE')) {
+                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                if (!redeemedIds.includes(recentConfirmedPayment.id)) {
+                    console.log(`[CHECK_ACCESS] Fast-track Activating plan locally for ${email}`);
+                    const upDesc = (recentConfirmedPayment.description || '').toUpperCase();
+                    let pName = 'STARTER';
+                    const val = recentConfirmedPayment.value;
+
+                    if (upDesc.includes('BLACK') || Math.abs(val - 79.90) < 0.05 || Math.abs(val - 497.90) < 0.05) pName = 'BLACK';
+                    else if (upDesc.includes('PRO') || Math.abs(val - 39.90) < 0.05 || Math.abs(val - 297.90) < 0.05) pName = 'PRO';
+
+                    userPlan = {
+                        status: 'ACTIVE',
+                        name: pName,
+                        billing: (upDesc.includes('ANUAL') || val > 100) ? 'annual' : 'monthly',
+                        lastPayment: new Date(),
+                        startDate: new Date(),
+                        subscriptionId: recentConfirmedPayment.subscription || null
+                    };
+                    await setVal(`/users/${safeEmail}/plan`, userPlan);
+
+                    redeemedIds.push(recentConfirmedPayment.id);
+                    await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
+                }
+            }
+
+            if ((isGen || isGenPrice) && !isPlan) {
+                // Determine if this exact generation payment isn't redeemed yet
+                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                if (!redeemedIds.includes(recentConfirmedPayment.id)) {
+                    redeemedIds.push(recentConfirmedPayment.id);
+                    credits += 1;
+                    console.log(`[CHECK_ACCESS] Fast-track Found recent generation payment ${recentConfirmedPayment.id} for ${email}. Adding +1 credit.`);
+                    await setVal(`/credits/${safeEmail}`, credits);
+                    await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
+                }
+            }
+
+            // --- CRITICAL FIX: Inject Order for Admin Panel (Webhook Delay Fallback) ---
+            try {
+                const ordersRaw = await getVal('/orders') || [];
+                const orders = Array.isArray(ordersRaw) ? ordersRaw : Object.values(ordersRaw);
+                const orderExists = orders.some((o: any) => o.paymentInfo?.transactionId === recentConfirmedPayment.id);
+
+                if (!orderExists) {
+                    const paymentInfo = {
+                        payer: "Fast-Track Auto",
+                        payerEmail: email,
+                        amount: recentConfirmedPayment.value,
+                        product: recentConfirmedPayment.description || (isPlan ? 'Assinatura (Fast-Track)' : 'Geração de Livro (Fast-Track)'),
+                        provider: 'ASAAS',
+                        transactionId: recentConfirmedPayment.id
+                    };
+                    await pushVal('/orders', { date: new Date(), paymentInfo, status: 'paid' });
+                    console.log(`[CHECK_ACCESS] Fast-track Injected Order ${recentConfirmedPayment.id} to Admin Panel.`);
+
+                    // --- UPDATE LEAD STATUS FOR ADMIN PANEL ---
+                    const rawLds = await getVal('/leads') || [];
+                    const localLeads = Array.isArray(rawLds) ? rawLds : Object.values(rawLds);
+                    let targetIndex = -1;
+                    for (let i = localLeads.length - 1; i >= 0; i--) {
+                        if ((localLeads[i] as any).email?.toLowerCase().trim() === String(email).toLowerCase().trim()) {
+                            targetIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (targetIndex !== -1) {
+                        const tgtLead = localLeads[targetIndex] as any;
+                        if (isPlan && tgtLead.status !== 'SUBSCRIBER') {
+                            tgtLead.status = 'SUBSCRIBER';
+                            tgtLead.plan = userPlan;
+                            await setVal(`/leads[${targetIndex}]`, tgtLead);
+                        } else if (!isPlan && tgtLead.status === 'PENDING') {
+                            tgtLead.status = 'APPROVED'; // Paid for a book
+                            await setVal(`/leads[${targetIndex}]`, tgtLead);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("[CHECK_ACCESS] Failed to inject fast-track order:", err);
+            }
+        }
         // Lead & Usage
         let leadStatus = null;
         let pendingPlan: any = null;

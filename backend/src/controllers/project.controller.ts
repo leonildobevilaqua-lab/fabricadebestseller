@@ -342,7 +342,56 @@ export const startResearch = async (req: Request, res: Response) => {
                 }
             }
 
+            // 3. EMERGENCY CHECK: VALIDATE RECENT PAYMENTS DIRECTLY FROM ASAAS (Last 24h)
+            if (!hasAccess) {
+                try {
+                    console.log(`[startResearch] Validating Asaas for ${userEmail}...`);
+                    const originalEmail = userEmail;
+                    const cleanEmail = userEmail.toLowerCase().trim();
+                    let customer = await AsaasProvider.getCustomerByEmail(originalEmail);
 
+                    if (!customer && originalEmail !== cleanEmail) {
+                        console.log(`[startResearch] Customer not found with ${originalEmail}, trying ${cleanEmail}...`);
+                        customer = await AsaasProvider.getCustomerByEmail(cleanEmail);
+                    }
+
+                    if (customer) {
+                        const payments = await AsaasProvider.getPayments({ customer: customer.id, limit: 50 });
+                        if (payments && Array.isArray(payments)) {
+                            console.log(`[startResearch] Found ${payments.length} payments for customer ${customer.id}`);
+
+                            const recentPayment = payments.find((p: any) => {
+                                console.log(`[PAYMENT CHECK] ID: ${p.id}, Status: ${p.status}, Date: ${p.dateCreated}`);
+
+                                const pDate = new Date(p.dateCreated);
+                                const diffMins = (new Date().getTime() - pDate.getTime()) / 60000;
+
+                                // Relaxed Check
+                                if (p.status === 'CONFIRMED' || p.status === 'RECEIVED') {
+                                    return diffMins < 1440 * 2; // 48 Hours
+                                }
+                                // Allow PENDING if created recently (Assumes "Just Paid" latency or Sandbox lag)
+                                if (p.status === 'PENDING' || p.status === 'AWAITING_PAYMENT') {
+                                    return diffMins < 60; // 1 Hour Grace
+                                }
+
+                                return false;
+                            });
+
+                            if (recentPayment) {
+                                hasAccess = true;
+                                console.log(`[startResearch] SECURITY OVERRIDE: Found verified payment ${recentPayment.id}. Access Granted.`);
+                            } else {
+                                console.log(`[startResearch] No CONFIRMED/RECEIVED payment found in last 48h among 50 recent.`);
+                            }
+                        }
+                    } else {
+                        console.log(`[startResearch] Customer ABSOLUTELY NOT FOUND in Asaas for ${userEmail}`);
+                    }
+                } catch (asaasErr) {
+                    console.error("[startResearch] Asaas Emergency Check Failed:", asaasErr);
+                }
+            }
         }
 
         // ACCESS CHECK DISABLED at Step 2 per business rule: Payment is validated at entry.

@@ -117,7 +117,48 @@ export const UserAuthController = {
 
             if (!user) return res.status(404).json({ error: "User not found" });
 
+            // --- 2. RESILIENCE SYNC (ASAAS TRUTH) ---
+            // Se o plano não estiver ativo, ou se for o e-mail master, vamos forçar uma checagem no Asaas
+            const isMaster = cleanUser === 'contato@leonildobevilaqua.com.br';
 
+            if (isMaster || !user.plan || user.plan.status !== 'ACTIVE') {
+                try {
+                    const { AsaasProvider } = require('../services/asaas.provider');
+                    const customer = await AsaasProvider.getCustomerByEmail(cleanUser);
+                    if (customer) {
+                        const payments = await AsaasProvider.getPayments({ customer: customer.id, limit: 10 });
+                        const confirmedPayment = payments.find((p: any) =>
+                            (p.status === 'RECEIVED' || p.status === 'CONFIRMED') &&
+                            (p.description || "").toLowerCase().match(/assinatura|plano|starter|pro|black/)
+                        );
+
+                        if (confirmedPayment || isMaster) {
+                            console.log(`[AUTH_ME] Resilient activation for ${cleanUser}`);
+                            const desc = (confirmedPayment?.description || '').toUpperCase();
+                            let pName = 'STARTER';
+                            if (desc.includes('BLACK') || isMaster) pName = 'BLACK';
+                            else if (desc.includes('PRO')) pName = 'PRO';
+
+                            const newPlan = {
+                                status: 'ACTIVE',
+                                name: pName,
+                                billing: (desc.includes('ANUAL')) ? 'annual' : 'monthly',
+                                lastPayment: new Date(),
+                                startDate: new Date(),
+                                subscriptionId: confirmedPayment?.subscription || null
+                            };
+                            user.plan = newPlan;
+                            await setVal(`/users/${safeEmail}/plan`, newPlan);
+                        }
+                    }
+                    else if (isMaster) {
+                        // Se for master e nem tiver no asaas ainda (teste local), ativa mesmo assim
+                        user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'monthly' };
+                    }
+                } catch (asaasErr) {
+                    console.error("[ME_SYNC_ERROR]", asaasErr);
+                }
+            }
 
             // --- 3. CALCULATIONS ---
             const rawLeads = await getVal('/leads') || [];
