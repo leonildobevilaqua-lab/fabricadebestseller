@@ -503,15 +503,16 @@ export const checkAccess = async (req: Request, res: Response) => {
 
         // FAST TRACK ACTIVATION: Verify very recent payments directly from Asaas.
         // This solves the issue of users paying and Webhook delaying.
-        const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+        // Only checking the last 2 hours to prevent old payments from granting ghost credits after a system wipe.
+        const twoHoursAgo = new Date(new Date().getTime() - 2 * 60 * 60 * 1000);
 
         const recentConfirmedPayments = asaasPayments.filter((p: any) => {
             const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
             if (!isConfirmed) return false;
 
-            // Check date based on confirmation or creation, slightly wider (7 days) because some people pay via Boleto/Pix days later.
+            // Check date based on confirmation or creation
             const pDate = new Date(p.paymentDate || p.clientPaymentDate || p.dateCreated);
-            if (pDate < oneWeekAgo) return false;
+            if (pDate < twoHoursAgo) return false;
 
             return true;
         });

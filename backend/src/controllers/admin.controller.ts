@@ -7,6 +7,7 @@ import bcrypt from 'bcrypt';
 import { sendEmail } from '../services/email.service';
 import { getVal, setVal, reloadDB, deleteVal } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '../services/supabase';
 
 // ... (Login logic)
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
@@ -326,32 +327,36 @@ if (!fs.existsSync(BACKUP_DIR)) {
 export const createBackup = async (req: Request, res: Response) => {
     try {
         const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const backupName = `backup_${timestamp}.json`;
-        const backupPath = path.join(BACKUP_DIR, backupName);
+        const backupName = `backup_${timestamp}`;
 
-        // Ensure DB is flushed to disk before copy? node-json-db usually saves on push.
-        // But we can copy the file.
-        if (fs.existsSync(DB_PATH)) {
-            fs.copyFileSync(DB_PATH, backupPath);
-            res.json({ success: true, name: backupName });
-        } else {
-            res.status(404).json({ error: "Database file not found to backup" });
-        }
+        // Get everything except existing backups
+        const { data, error } = await supabase.from('kv_store').select('*').not('key', 'like', 'backup_%');
+        if (error) throw error;
+
+        // Save as a single large string
+        const backupString = JSON.stringify(data);
+
+        // Store the backup in KV store under the backup key
+        await supabase.from('kv_store').insert({
+            key: backupName,
+            value: backupString,
+            updated_at: new Date().toISOString()
+        });
+
+        res.json({ success: true, name: backupName + '.json' });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
 };
 
-export const listBackups = (req: Request, res: Response) => {
+export const listBackups = async (req: Request, res: Response) => {
     try {
-        if (!fs.existsSync(BACKUP_DIR)) return res.json([]);
-        const files = fs.readdirSync(BACKUP_DIR).filter(f => f.endsWith('.json'));
-        // Sort by time desc
-        const sorted = files.sort((a, b) => {
-            const statA = fs.statSync(path.join(BACKUP_DIR, a));
-            const statB = fs.statSync(path.join(BACKUP_DIR, b));
-            return statB.mtime.getTime() - statA.mtime.getTime();
-        });
+        const { data, error } = await supabase.from('kv_store').select('key, updated_at').like('key', 'backup_%');
+        if (error) throw error;
+
+        const files = (data || []).map((row: any) => ({ name: `${row.key}.json`, time: new Date(row.updated_at).getTime() }));
+        const sorted = files.sort((a: any, b: any) => b.time - a.time).map((f: any) => f.name);
+
         res.json(sorted);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -363,21 +368,34 @@ export const restoreBackup = async (req: Request, res: Response) => {
         const { filename } = req.body;
         if (!filename) return res.status(400).json({ error: "Filename required" });
 
-        const backupPath = path.join(BACKUP_DIR, filename);
-        if (fs.existsSync(backupPath)) {
-            // Create a "safety" backup of current state
-            const safetyBackup = path.join(BACKUP_DIR, `pre_restore_${new Date().getTime()}.json`);
-            if (fs.existsSync(DB_PATH)) fs.copyFileSync(DB_PATH, safetyBackup);
+        const key = filename.replace('.json', '');
 
-            fs.copyFileSync(backupPath, DB_PATH);
+        const { data, error } = await supabase.from('kv_store').select('value').eq('key', key).maybeSingle();
+        if (error || !data) return res.status(404).json({ error: "Backup file not found" });
 
-            // Reload DB in memory
-            await reloadDB();
-
-            res.json({ success: true });
-        } else {
-            res.status(404).json({ error: "Backup file not found" });
+        let backupRows = [];
+        try {
+            backupRows = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+        } catch (parseError) {
+            return res.status(500).json({ error: "Failed to parse backup content." });
         }
+
+        // 1. Delete all current data EXCEPT backups
+        await supabase.from('kv_store').delete().not('key', 'like', 'backup_%');
+
+        // 2. Insert backup rows
+        for (const row of backupRows) {
+            await supabase.from('kv_store').insert({
+                key: row.key,
+                value: row.value,
+                updated_at: new Date().toISOString()
+            });
+        }
+
+        // 3. Reload in-memory state
+        await reloadDB();
+
+        res.json({ success: true });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
