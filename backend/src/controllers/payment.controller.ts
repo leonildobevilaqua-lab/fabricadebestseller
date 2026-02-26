@@ -510,7 +510,13 @@ export const checkAccess = async (req: Request, res: Response) => {
             const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
             if (!isConfirmed) return false;
 
-            // Check date based on confirmation or creation
+            // ABSOLUTE GHOST CREDIT PREVENTION:
+            // Only fast-track the SINGLE most recent invoice. 
+            // This guarantees old payments (even if unredeemed due to DB wipe) will NEVER grant ghost credits.
+            const pId = p.invoiceNumber || p.id;
+            if (pId !== latestInvoiceNumber) return false;
+
+            // Ensure it's somewhat recent (7 days allowed for Asaas YYYY-MM-DD truncation matching)
             const pDate = new Date(p.paymentDate || p.clientPaymentDate || p.dateCreated);
             if (pDate < oneWeekAgo) return false;
 
