@@ -480,6 +480,26 @@ export const checkAccess = async (req: Request, res: Response) => {
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
+        // Fetch truth from Asaas for Invoice Display Tracking Only (No Fast-Track Credits)
+        try {
+            const customer = await AsaasProvider.getCustomerByEmail(email as string);
+            if (customer) {
+                const asaasPayments = await AsaasProvider.getPayments({ customer: customer.id, limit: 10 });
+                asaasPayments.sort((a: any, b: any) => new Date(b.dateCreated).getTime() - new Date(a.dateCreated).getTime());
+
+                const latestRel = asaasPayments.find((p: any) => {
+                    const desc = (p.description || "").toLowerCase();
+                    return desc.includes('geração') || desc.includes('livro') || desc.includes('assinatura') ||
+                        desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black');
+                }) || asaasPayments[0];
+
+                if (latestRel) {
+                    latestInvoiceStatus = latestRel.status;
+                    latestInvoiceNumber = latestRel.invoiceNumber || latestRel.id;
+                }
+            }
+        } catch (e) { console.error("[ASAAS_FETCH_INVOICE_STATUS]", e); }
+
 
         // Lead & Usage
         let leadStatus = null;

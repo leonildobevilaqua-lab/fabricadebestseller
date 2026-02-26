@@ -1629,8 +1629,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         const data = await res.json();
 
                                                                         if (data.plan && data.plan.status === 'ACTIVE') {
-                                                                            if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
-                                                                                alert(`A fatura ${data.latestInvoiceNumber || ''} de assinatura ainda consta como PENDENTE no banco. Aguarde a confirmação.`);
+                                                                            if (data.latestInvoiceNumber && data.latestInvoiceStatus !== 'CONFIRMED' && data.latestInvoiceStatus !== 'RECEIVED') {
+                                                                                alert(`A fatura ${data.latestInvoiceNumber} de assinatura ainda consta como aguardando pagamento (${data.latestInvoiceStatus || 'PENDENTE'}) no banco. Aguarde alguns instantes pela compensação.`);
                                                                                 return;
                                                                             }
                                                                             window.location.href = '/login';
@@ -1643,10 +1643,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                             paymentConfirmedRef.current = true;
                                                                             setStep(1);
                                                                         } else {
-                                                                            if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
-                                                                                alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde alguns instantes pela compensação.`);
+                                                                            if (data.latestInvoiceNumber) {
+                                                                                alert(`A fatura ${data.latestInvoiceNumber} ainda consta como aguardando pagamento (${data.latestInvoiceStatus || 'PENDENTE'}) no banco. Aguarde alguns instantes pela compensação.`);
                                                                             } else {
-                                                                                alert('O pagamento ainda não foi confirmado pelo Banco. Aguarde alguns instantes e tente novamente.');
+                                                                                alert('O pagamento ainda não foi confirmado pelo Banco. Nenhuma fatura pendente foi localizada. Aguarde alguns instantes e tente novamente.');
                                                                             }
                                                                         }
 
