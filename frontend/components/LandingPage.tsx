@@ -506,7 +506,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             }
 
             // STRICT ACCESS VALIDATION via backend (Single Source of Truth)
-            const API_URL = 'https://api.fabricadebestseller.com.br';
+            const API_URL = getApiBase();
             const statusRes = await fetch(`${API_URL}/api/payment/access?email=${currentForm.email.trim()}&_t=${Date.now()}`);
             const status = await statusRes.json();
 
@@ -682,9 +682,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                     console.log("Polling for:", formData.email);
 
-                    // FORCE O ENDEREÇO DO BACKEND AQUI (HARDCODED):
-                    // Prevenindo uso acidental de variável de ambiente inválida ou localhost em produção.
-                    const API_URL = 'https://api.fabricadebestseller.com.br';
+                    const API_URL = getApiBase();
 
                     console.log('🔗 Tentando conectar em:', API_URL); // DEBUG OBRIGATÓRIO
 
@@ -846,11 +844,16 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         setStep(5);
                     }
                     else if (formData.type === 'BOOK' && hasAccess && !paymentConfirmed) {
-                        // Payment confirmed for AVULSO/credit user - go to Book Data Entry
+                        // Payment confirmed for AVULSO/credit user - redirect to Dashboard
                         clearInterval(interval);
                         setPaymentConfirmed(true);
                         paymentConfirmedRef.current = true;
-                        setStep(1); // Step 1: Book Data Entry (Post-Payment)
+                        onStart({
+                            name: formData.name,
+                            email: formData.email,
+                            phone: formData.phone
+                        });
+                        return;
                     }
 
                 } catch (e) { console.error("Poll Error", e); }
@@ -1638,10 +1641,14 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         }
 
                                                                         if (data.hasAccess) {
-                                                                            // Avulso confirmed! Go to Book Data Entry
+                                                                            // Avulso confirmed! Redirect to App Dashboard
                                                                             setPaymentConfirmed(true);
                                                                             paymentConfirmedRef.current = true;
-                                                                            setStep(1);
+                                                                            onStart({
+                                                                                name: formData.name,
+                                                                                email: formData.email,
+                                                                                phone: formData.phone
+                                                                            });
                                                                         } else {
                                                                             if (data.latestInvoiceNumber) {
                                                                                 alert(`A fatura ${data.latestInvoiceNumber} ainda consta como aguardando pagamento (${data.latestInvoiceStatus || 'PENDENTE'}) no banco. Aguarde alguns instantes pela compensação.`);
