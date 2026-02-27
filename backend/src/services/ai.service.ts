@@ -345,7 +345,7 @@ export const writeIntroduction = async (
       Objective: Hook the reader IMMEDIATELY. Start with a controversial statement, a personal story, or a surprising fact.
       
       Requirements:
-      - Length: Approx 1500 words. (CRITICAL: Be concise but powerful)
+      - Length: Approx 2300 words. (CRITICAL: Develop the narrative deeply to reach this target word count and ensure the book's total word volume)
       - Tone: Best-seller authority, confident, yet intimate.
       - Flow: Continuous, absorbing text. NO section headers within the introduction.
       - Content: Tell a powerful personal story or case study that illustrates the problem. Dive deep into the pain points.
@@ -437,7 +437,7 @@ export const writeChapter = async (
             REGRAS:
             - Use tom conversacional e prático.
             - Foco total em resolver as dores listadas acima.
-            - TAMANHO: Escreva aproximadamente entre 550 e 700 palavras (essencial para manter a meta de páginas do livro). É melhor ser objetivo do que redundante.
+            - TAMANHO: Escreva rigorosamente entre 700 e 850 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos para atingir o volume total de páginas exigido do livro.
             
             Previous Context:
             ${fullChapterContent.slice(-500)}
@@ -475,7 +475,7 @@ export const writeChapter = async (
         
         TAREFA: Escreva o Capítulo Completo.
         REGRAS:
-        - Extensão Alvo: Aproximadamente 1700 palavras. (Meta: ~6-8 páginas por capítulo, para totalizar 180 páginas no livro).
+        - Extensão Alvo: NO MÍNIMO 2300 palavras. (Meta: ~10 páginas por capítulo, para totalizar cerca de 200 páginas no livro).
         - Use tom conversacional e prático.
         - Foco total em resolver as dores listadas na pesquisa.
         
