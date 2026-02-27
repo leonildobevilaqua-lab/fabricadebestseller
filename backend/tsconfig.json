@@ -14,6 +14,7 @@
         "checkData.ts",
         "recover_user.ts",
         "recreate_user.ts",
+        "internal_api_files",
         "dist",
         "node_modules"
     ]

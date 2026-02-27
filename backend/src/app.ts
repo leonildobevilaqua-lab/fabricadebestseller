@@ -68,10 +68,11 @@ app.get('/api/admin-login-get', goldenLoginHandler); // GET Protocol
 // EMERGENCY DIRECT ROUTE (Fixes 404 issue)
 app.post('/api/purchase-direct', createBookGenerationCharge);
 
-// Simple Health Check
+// Simple Health Check - VPS Production (Contabo/Coolify)
 app.get('/api/auth-master-test', (req: express.Request, res: express.Response) => {
-    res.json({ status: "Active", version: "v7.0", message: "Dual Protocol Active" });
+    res.json({ status: "Active", version: "v10.0-Stable", message: "VPS Backend (No-Proxy-Conflict)" });
 });
+app.get('/api/ping', (req, res) => res.status(200).json({ pong: true, time: new Date() }));
 // --- WEBHOOK ENDPOINTS (PRIORITY - DUAL PROTOCOL - ALL METHODS) ---
 // These are defined at root level to bypass any router conflicts or pre-processing issues.
 // We use app.all to capture POST but also avoid 405 Method Not Allowed errors on probers.
