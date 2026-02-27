@@ -281,7 +281,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                                     rel="noreferrer"
                                     className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold py-2 rounded shadow transition flex items-center justify-center gap-1 no-underline"
                                 >
-                                    📥 DOWNLOAD LIVRO
+                                    📥 KIT COMPLETO (ZIP)
                                 </a>
                             )}
 

@@ -1442,16 +1442,24 @@ export const downloadProjectBook = async (req: Request, res: Response) => {
     try {
         if (fs.existsSync(outputDir)) {
             const files = fs.readdirSync(outputDir);
+
+            // PRIORITY: ZIP (Kit Completo) then DOCX
+            const zipFile = files.find((f: string) => f.includes(id) && f.endsWith('.zip'));
             const docFile = files.find((f: string) => f.includes(id) && f.endsWith('.docx'));
 
+            if (zipFile) {
+                console.log(`[PROJECT] Serving ZIP (Kit) for project ${id}: ${zipFile}`);
+                return res.download(path.join(outputDir, zipFile));
+            }
+
             if (docFile) {
-                console.log(`[PROJECT] Serving DOCX: ${docFile}`);
+                console.log(`[PROJECT] Serving DOCX for project ${id}: ${docFile}`);
                 return res.download(path.join(outputDir, docFile));
             }
         }
     } catch (e) { console.error("Error serving project book", e); }
 
-    res.status(404).json({ error: "Arquivo DOCX não encontrado para este projeto." });
+    res.status(404).json({ error: "Arquivo (ZIP ou DOCX) não encontrado para este projeto." });
 };
 
 export const downloadProjectZip = async (req: Request, res: Response) => {

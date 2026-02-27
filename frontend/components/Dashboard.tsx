@@ -539,7 +539,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                                                title="Baixar Livro"
+                                                title="Baixar Kit Completo (ZIP)"
                                             >
                                                 <IconDownload />
                                             </a>
