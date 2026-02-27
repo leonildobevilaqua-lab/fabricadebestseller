@@ -345,7 +345,7 @@ export const writeIntroduction = async (
       Objective: Hook the reader IMMEDIATELY. Start with a controversial statement, a personal story, or a surprising fact.
       
       Requirements:
-      - Length: Approx 1000 words. (CRITICAL: Develop the narrative deeply to reach this target word count and ensure the book's total word volume)
+      - Length: Approx 1200 words. (CRITICAL: Develop the narrative deeply to reach this target word count and ensure the book's total word volume)
       - Tone: Best-seller authority, confident, yet intimate.
       - Flow: Continuous, absorbing text. NO section headers within the introduction.
       - Content: Tell a powerful personal story or case study that illustrates the problem. Dive deep into the pain points.
@@ -391,8 +391,8 @@ export const writeChapter = async (
     subtopics = ["Fundamentos", "Histórico e Evolução", "Ferramentas e Técnicas", "Estudos de Caso"];
   }
 
-  // Ensure we don't go overboard if AI hallucinates 10 topics (3 subtopics fits the 170-200 pages goal better)
-  subtopics = subtopics.slice(0, 3);
+  // Ensure we don't go overboard if AI hallucinates 10 topics (4 subtopics fits the 170-200 pages goal better)
+  subtopics = subtopics.slice(0, 4);
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -437,7 +437,7 @@ export const writeChapter = async (
             REGRAS:
             - Use tom conversacional e prático.
             - Foco total em resolver as dores listadas acima.
-            - TAMANHO: Escreva rigorosamente entre 350 e 400 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos para atingir o volume total de páginas exigido do livro.
+            - TAMANHO: Escreva rigorosamente entre 450 e 500 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos para atingir o volume total de páginas exigido do livro (mínimo 170 páginas).
             
             Previous Context:
             ${fullChapterContent.slice(-500)}
@@ -475,7 +475,7 @@ export const writeChapter = async (
         
         TAREFA: Escreva o Capítulo Completo.
         REGRAS:
-        - Extensão Alvo: NO MÍNIMO 1800 palavras. (Meta: ~7-8 páginas por capítulo, para totalizar cerca de 180-200 páginas no livro).
+        - Extensão Alvo: NO MÍNIMO 2200 palavras. (Meta: ~9-10 páginas por capítulo, para totalizar rigorosamente entre 170-200 páginas no livro).
         - Use tom conversacional e prático.
         - Foco total em resolver as dores listadas na pesquisa.
         
