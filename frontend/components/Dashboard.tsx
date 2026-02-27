@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { PenTool, Download, Star, CheckCircle, Clock } from 'lucide-react';
+import { PenTool, Download, Star, CheckCircle, Clock, MessageCircle, ExternalLink } from 'lucide-react';
 import { SocialShare } from './SocialShare';
 import { getApiBase } from '../services/api';
 import { ExtraServiceCard } from './ExtraServices';
@@ -329,6 +329,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 </>
                             )}
                         </div>
+                    </div>
+                </div>
+
+                {/* WHATSAPP VIP GROUP INVITATION */}
+                <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-xl overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div className="flex items-center gap-6 text-center md:text-left flex-col md:flex-row flex-1">
+                            <div className="bg-[#25D366] text-white p-5 rounded-3xl shadow-lg shadow-emerald-500/30 transform group-hover:rotate-6 transition-transform">
+                                <MessageCircle size={36} />
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Comunidade VIP Exclusiva 🚀</h3>
+                                <p className="text-slate-500 max-w-xl leading-relaxed font-semibold">
+                                    Não fique de fora! Entre agora no nosso grupo de WhatsApp e receba <span className="text-emerald-600">informações privilegiadas, promoções relâmpago, orientações estratégicas e brindes semanais</span> exclusivos para nossos membros.
+                                </p>
+                            </div>
+                        </div>
+
+                        <a
+                            href={planName.includes('BLACK') ? 'https://chat.whatsapp.com/HbXoRWvUgpr9a2gM6AVDEJ' :
+                                planName.includes('PRO') ? 'https://chat.whatsapp.com/Ids5VgSl5jX8ogjKbEmewZ' :
+                                    'https://chat.whatsapp.com/KIwHj9hc4gr8cvf7dCzP0E'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full md:w-auto bg-[#25D366] hover:bg-[#20bd5a] text-white font-black px-8 py-5 rounded-2xl transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm hover:scale-105 active:scale-95"
+                        >
+                            <span>Entrar no Grupo</span>
+                            <ExternalLink size={18} />
+                        </a>
                     </div>
                 </div>
 
