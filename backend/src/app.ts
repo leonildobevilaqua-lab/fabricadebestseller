@@ -10,6 +10,7 @@ const app = express();
 app.use(cors());
 app.options('*', cors()); // Enable Pre-Flight for ALL routes
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 import paymentRoutes from './routes/payment.routes';
 import subscriptionRoutes from './routes/subscription.routes';
@@ -72,13 +73,14 @@ app.get('/api/auth-master-test', (req: express.Request, res: express.Response) =
     res.json({ status: "Active", version: "v7.0", message: "Dual Protocol Active" });
 });
 // --- WEBHOOK ENDPOINTS (PRIORITY - DUAL PROTOCOL - ALL METHODS) ---
-// These are defined at root to bypass any potential router-level issues or trailing slash redirects.
-// We use app.all to prevent 405 Method Not Allowed errors from automated bots/scanners.
+// These are defined at root level to bypass any router conflicts or pre-processing issues.
+// We use app.all to capture POST but also avoid 405 Method Not Allowed errors on probers.
 app.all('/api/payment/webhook', handleKiwifyWebhook);
 app.all('/api/payment/webhook/', handleKiwifyWebhook);
 app.all('/api/subscription/webhook', SubscriptionController.webhook);
 app.all('/api/subscription/webhook/', SubscriptionController.webhook);
 app.all('/webhook/asaas', SubscriptionController.webhook);
+app.all('/webhook-test', (req, res) => res.json({ method: req.method, path: req.path, body: req.body }));
 
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);

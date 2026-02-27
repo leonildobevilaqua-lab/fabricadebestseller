@@ -4,7 +4,7 @@ import { simulateWebhook } from '../controllers/simulation.controller';
 
 const router = Router();
 
-router.post('/webhook', handleKiwifyWebhook);
+// router.post('/webhook', handleKiwifyWebhook); // Managed in app.ts
 router.post('/simulate-webhook', simulateWebhook); // NEW: Local Simulation
 router.get('/access', checkAccess);
 router.get('/check-access', checkAccess);
