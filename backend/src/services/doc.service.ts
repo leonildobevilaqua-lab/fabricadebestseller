@@ -381,8 +381,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
             right: MARGIN_OUTSIDE,
             header: MARGIN_HEADER,
             footer: MARGIN_FOOTER,
-            mirror: true, // APPLIED: Páginas Espelho (Mirror Margins)
-            gutter: 0 // Gutter is handled by Inside Margin (1.93cm)
+            gutter: 0
         },
     };
 
@@ -394,6 +393,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     sections.push({
         properties: {
             page: { ...basePageConfig, pageNumbers: { start: 1, formatType: NumberFormat.LOWER_ROMAN } },
+            mirrorMargins: true,
             type: SectionType.NEXT_PAGE,
             verticalAlign: VerticalAlign.CENTER,
             differentOddAndEvenPages: true
@@ -415,7 +415,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // PÁGINA 2 (Esquerda/Par) - BRANCO
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
@@ -428,7 +428,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // PÁGINA 3 (Direita/Ímpar) - PÁGINA DE TÍTULO
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER, differentOddAndEvenPages: true },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.CENTER, differentOddAndEvenPages: true },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: metadata.authorName || "Autor", font: "Garamond", bold: true, size: 32 })],
@@ -465,7 +465,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // PÁGINA 4 (Esquerda/Par) - FICHA CATALOGRÁFICA / ISBN
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.BOTTOM },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.BOTTOM },
         children: [
             new Paragraph({
                 children: [
@@ -482,7 +482,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     // PÁGINA 5 (Direita/Ímpar) - AGRADECIMENTO
     // (Force placement even if empty to maintain structure)
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: "AGRADECIMENTOS", bold: true, font: "Garamond", size: 24 })],
@@ -500,7 +500,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // PÁGINA 6 (Esquerda/Par) - BRANCO
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
@@ -513,7 +513,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // PÁGINA 7 (Direita/Ímpar) - DEDICATÓRIA
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: "DEDICATÓRIA", bold: true, font: "Garamond", size: 24 })],
@@ -532,7 +532,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // PÁGINA 8 (Esquerda/Par) - BRANCO
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: "[ESTÁ PÁGINA TEM QUE PERMANECER EM BRANCO]", color: "FFFFFF", size: 20 })],
@@ -545,7 +545,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // PÁGINA 9 (Direita) + 10 (Esquerda) - SUMÁRIO
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: "SUMÁRIO", bold: true, font: "Garamond", size: 48 })],
@@ -570,6 +570,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         sections.push({
             properties: {
                 page: { ...basePageConfig, pageNumbers: { formatType: NumberFormat.DECIMAL } }, // DYNAMIC START (REMOVED start: 11)
+                mirrorMargins: true,
                 type: SectionType.ODD_PAGE, // Ensure it falls on odd page (usually right side)
                 titlePage: true,
                 differentOddAndEvenPages: true,
@@ -603,6 +604,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         sections.push({
             properties: {
                 page: basePageConfig,
+                mirrorMargins: true,
                 type: SectionType.ODD_PAGE,
                 titlePage: true,
                 differentOddAndEvenPages: true
@@ -642,6 +644,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         sections.push({
             properties: {
                 page: basePageConfig,
+                mirrorMargins: true,
                 type: SectionType.ODD_PAGE,
                 titlePage: true,
                 differentOddAndEvenPages: true
@@ -688,6 +691,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     sections.push({
         properties: {
             page: basePageConfig,
+            mirrorMargins: true,
             verticalAlign: VerticalAlign.CENTER, // Force Center
             type: SectionType.ODD_PAGE,
             titlePage: true,
