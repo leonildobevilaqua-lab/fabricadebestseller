@@ -71,13 +71,14 @@ app.post('/api/purchase-direct', createBookGenerationCharge);
 app.get('/api/auth-master-test', (req: express.Request, res: express.Response) => {
     res.json({ status: "Active", version: "v7.0", message: "Dual Protocol Active" });
 });
-// --- WEBHOOK ENDPOINTS (PRIORITY - NO REDIRECTS - POST ONLY) ---
-// These are defined at root to bypass any potential router-level issues or trailing slash redirects
-app.post('/api/payment/webhook', handleKiwifyWebhook);
-app.post('/api/payment/webhook/', handleKiwifyWebhook); // Support both with/without slash manually to avoid 301
-app.post('/api/subscription/webhook', SubscriptionController.webhook);
-app.post('/api/subscription/webhook/', SubscriptionController.webhook);
-app.post('/webhook/asaas', SubscriptionController.webhook);
+// --- WEBHOOK ENDPOINTS (PRIORITY - DUAL PROTOCOL - ALL METHODS) ---
+// These are defined at root to bypass any potential router-level issues or trailing slash redirects.
+// We use app.all to prevent 405 Method Not Allowed errors from automated bots/scanners.
+app.all('/api/payment/webhook', handleKiwifyWebhook);
+app.all('/api/payment/webhook/', handleKiwifyWebhook);
+app.all('/api/subscription/webhook', SubscriptionController.webhook);
+app.all('/api/subscription/webhook/', SubscriptionController.webhook);
+app.all('/webhook/asaas', SubscriptionController.webhook);
 
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);

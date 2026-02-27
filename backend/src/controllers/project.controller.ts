@@ -1432,3 +1432,46 @@ export const remove = async (req: Request, res: Response) => {
         res.status(500).json({ error: "Erro interno ao excluir o projeto." });
     }
 };
+
+export const downloadProjectBook = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const fs = require('fs');
+    const path = require('path');
+    const outputDir = path.join(__dirname, '../../generated_books');
+
+    try {
+        if (fs.existsSync(outputDir)) {
+            const files = fs.readdirSync(outputDir);
+            const docFile = files.find((f: string) => f.includes(id) && f.endsWith('.docx'));
+
+            if (docFile) {
+                console.log(`[PROJECT] Serving DOCX: ${docFile}`);
+                return res.download(path.join(outputDir, docFile));
+            }
+        }
+    } catch (e) { console.error("Error serving project book", e); }
+
+    res.status(404).json({ error: "Arquivo DOCX não encontrado para este projeto." });
+};
+
+export const downloadProjectZip = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const fs = require('fs');
+    const path = require('path');
+    const outputDir = path.join(__dirname, '../../generated_books');
+
+    try {
+        if (fs.existsSync(outputDir)) {
+            const files = fs.readdirSync(outputDir);
+            const zipFile = files.find((f: string) => f.includes(id) && f.endsWith('.zip'));
+
+            if (zipFile) {
+                console.log(`[PROJECT] Serving ZIP: ${zipFile}`);
+                return res.download(path.join(outputDir, zipFile));
+            }
+        }
+    } catch (e) { console.error("Error serving project zip", e); }
+
+    res.status(404).json({ error: "Arquivo ZIP não encontrado para este projeto." });
+};
+

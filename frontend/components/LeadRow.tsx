@@ -116,9 +116,9 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
         const billing = (lead.plan?.billing || "monthly").toLowerCase();
         const isAn = billing === 'annual' || billing === 'anual';
 
-        if (planName === 'STARTER') displayAmount = isAn ? 'R$ 24,90' : 'R$ 28,90';
-        else if (planName === 'PRO') displayAmount = isAn ? 'R$ 14,90' : 'R$ 18,90';
-        else if (planName === 'BLACK') displayAmount = isAn ? 'R$ 8,90' : 'R$ 9,90';
+        if (planName.includes('STARTER')) displayAmount = isAn ? 'R$ 24,90' : 'R$ 28,90';
+        else if (planName.includes('PRO')) displayAmount = isAn ? 'R$ 14,90' : 'R$ 18,90';
+        else if (planName.includes('BLACK')) displayAmount = isAn ? 'R$ 8,90' : 'R$ 9,90';
         else displayAmount = 'R$ 89,90';
     }
 
@@ -276,7 +276,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                             {/* Download Button */}
                             {(status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || lead.artifactUrl) && (
                                 <a
-                                    href={lead.artifactUrl || `/api/projects/${lead.projectId}/download`}
+                                    href={lead.artifactUrl ? (lead.artifactUrl.startsWith('http') ? lead.artifactUrl : `${getApiBase()}${lead.artifactUrl}`) : `${getApiBase()}/api/projects/${lead.projectId}/download`}
                                     target="_blank"
                                     rel="noreferrer"
                                     className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold py-2 rounded shadow transition flex items-center justify-center gap-1 no-underline"

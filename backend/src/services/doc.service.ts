@@ -395,7 +395,8 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         properties: {
             page: { ...basePageConfig, pageNumbers: { start: 1, formatType: NumberFormat.LOWER_ROMAN } },
             type: SectionType.NEXT_PAGE,
-            verticalAlign: VerticalAlign.CENTER
+            verticalAlign: VerticalAlign.CENTER,
+            differentOddAndEvenPages: true
         },
         children: [
             new Paragraph({
@@ -427,7 +428,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
 
     // PÁGINA 3 (Direita/Ímpar) - PÁGINA DE TÍTULO
     sections.push({
-        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER },
+        properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, verticalAlign: VerticalAlign.CENTER, differentOddAndEvenPages: true },
         children: [
             new Paragraph({
                 children: [new TextRun({ text: metadata.authorName || "Autor", font: "Garamond", bold: true, size: 32 })],
@@ -571,6 +572,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
                 page: { ...basePageConfig, pageNumbers: { formatType: NumberFormat.DECIMAL } }, // DYNAMIC START (REMOVED start: 11)
                 type: SectionType.ODD_PAGE, // Ensure it falls on odd page (usually right side)
                 titlePage: true,
+                differentOddAndEvenPages: true,
             },
             children: [
                 new Paragraph({
@@ -603,6 +605,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
                 page: basePageConfig,
                 type: SectionType.ODD_PAGE,
                 titlePage: true,
+                differentOddAndEvenPages: true
             },
             children: [
                 // Chapter Number (Visual Only)
@@ -641,6 +644,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
                 page: basePageConfig,
                 type: SectionType.ODD_PAGE,
                 titlePage: true,
+                differentOddAndEvenPages: true
             },
             children: [
                 createTitle("Conclusão"),
@@ -687,6 +691,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
             verticalAlign: VerticalAlign.CENTER, // Force Center
             type: SectionType.ODD_PAGE,
             titlePage: true,
+            differentOddAndEvenPages: true
         },
         children: [
             new Paragraph({

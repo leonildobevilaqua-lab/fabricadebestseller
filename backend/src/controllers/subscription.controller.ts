@@ -167,116 +167,135 @@ export const SubscriptionController = {
         // --- IMMEDIATE RESPONSE TO PREVENT TIMEOUTS ---
         res.json({ received: true });
 
-        // Handle Status Updates
-        if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
-            const payment = event.payment;
-            const subId = payment.subscription;
-            const transactionId = payment.id || payment.publicId || uuidv4();
-            const paidValue: number = payment.value || payment.netValue || 0;
+        try {
+            // Handle Status Updates
+            if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
+                const payment = event.payment;
+                const subId = payment.subscription;
+                const transactionId = payment.id || payment.publicId || uuidv4();
+                const paidValue: number = payment.value || payment.netValue || 0;
 
-            if (subId) {
-                console.log(`[WEBHOOK] Subscription Payment ${subId} Confirmed!`);
-                await reloadDB();
-                const rawLeads = await getVal('/leads') || [];
-                const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+                if (subId) {
+                    console.log(`[WEBHOOK] Subscription Payment ${subId} Confirmed!`);
+                    await reloadDB();
+                    const rawLeads = await getVal('/leads') || [];
+                    const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
-                const leadIndex = leads.findIndex((l: any) => l.asaas_subscription_id === subId);
-                if (leadIndex !== -1) {
-                    const lead = leads[leadIndex];
-                    const planDisplayName = (lead.plan?.name || 'Assinatura').toUpperCase();
-                    const billingLabel = (lead.plan?.billing === 'annual' || lead.plan?.billing === 'anual') ? 'Anual' : 'Mensal';
+                    const leadIndex = leads.findIndex((l: any) => l.asaas_subscription_id === subId);
+                    if (leadIndex !== -1) {
+                        const lead = leads[leadIndex];
+                        const planDisplayName = (lead.plan?.name || 'Assinatura').toUpperCase();
+                        const billingLabel = (lead.plan?.billing === 'annual' || lead.plan?.billing === 'anual') ? 'Anual' : 'Mensal';
 
-                    console.log(`[WEBHOOK] Activating Plan ${planDisplayName} for ${lead.email}`);
+                        console.log(`[WEBHOOK] Activating Plan ${planDisplayName} for ${lead.email}`);
 
-                    const updatedLead = {
-                        ...lead,
-                        plan: { ...lead.plan, status: 'ACTIVE', lastPayment: new Date() },
-                        status: 'SUBSCRIBER'
-                    };
-                    await setVal(`/leads[${leadIndex}]`, updatedLead);
-                    const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-                    await setVal(`/users/${safeEmail}/plan`, updatedLead.plan);
+                        const updatedLead = {
+                            ...lead,
+                            plan: { ...lead.plan, status: 'ACTIVE', lastPayment: new Date() },
+                            status: 'SUBSCRIBER'
+                        };
+                        await setVal(`/leads[${leadIndex}]`, updatedLead);
+                        const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                        await setVal(`/users/${safeEmail}/plan`, updatedLead.plan);
+
+                        // --- FINANCIAL TRACKING (Admin Order Logging) ---
+                        try {
+                            await pushVal('/orders', {
+                                id: transactionId,
+                                email: lead.email,
+                                name: lead.name,
+                                amount: paidValue,
+                                type: 'SUBSCRIPTION',
+                                description: `Plano ${planDisplayName} - ${billingLabel}`,
+                                date: new Date(),
+                                paymentInfo: {
+                                    provider: 'ASAAS',
+                                    id: transactionId,
+                                    amount: paidValue,
+                                    plan: planDisplayName,
+                                    status: 'CONFIRMED'
+                                }
+                            });
+                        } catch (e) {
+                            console.warn('[WEBHOOK] Order logging failed:', e);
+                        }
+
+                        // === META CAPI: Purchase (Assinatura) ===
+                        await sendPurchaseEvent({
+                            eventId: transactionId,
+                            email: lead.email,
+                            phone: lead.phone || lead.fullPhone,
+                            value: paidValue,
+                            contentName: `Plano ${planDisplayName} ${billingLabel}`,
+                            clientIp: req.headers['x-forwarded-for'] as string || req.ip,
+                            clientUserAgent: req.headers['user-agent'] as string,
+                        });
+                    }
+                } else {
+                    // Pagamento avulso (geração de livro)
+                    console.log(`[WEBHOOK] One-off Payment ${payment.id} Confirmed!`);
 
                     // --- FINANCIAL TRACKING (Admin Order Logging) ---
                     try {
+                        const customerData = await AsaasProvider.getCustomer(payment.customer);
+
                         await pushVal('/orders', {
                             id: transactionId,
-                            email: lead.email,
-                            name: lead.name,
+                            email: customerData?.email || 'unknown',
+                            name: customerData?.name || 'unknown',
                             amount: paidValue,
-                            type: 'SUBSCRIPTION',
-                            description: `Plano ${planDisplayName} - ${billingLabel}`,
+                            type: 'BOOK',
+                            description: `Geração de Livro - Avulso (via Asaas Sub Webhook)`,
                             date: new Date(),
                             paymentInfo: {
                                 provider: 'ASAAS',
                                 id: transactionId,
                                 amount: paidValue,
-                                plan: planDisplayName,
                                 status: 'CONFIRMED'
                             }
                         });
-                    } catch (e) {
-                        console.warn('[WEBHOOK] Order logging failed:', e);
-                    }
 
-                    // === META CAPI: Purchase (Assinatura) ===
-                    await sendPurchaseEvent({
-                        eventId: transactionId,
-                        email: lead.email,
-                        phone: lead.phone || lead.fullPhone,
-                        value: paidValue,
-                        contentName: `Plano ${planDisplayName} ${billingLabel}`,
-                        clientIp: req.headers['x-forwarded-for'] as string || req.ip,
-                        clientUserAgent: req.headers['user-agent'] as string,
-                    });
-                }
-            } else {
-                // Pagamento avulso (geração de livro)
-                console.log(`[WEBHOOK] One-off Payment ${payment.id} Confirmed!`);
+                        if (customerData?.email) {
+                            const safeEmail = customerData.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                            let currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                            currentCredits += 1;
+                            await setVal(`/credits/${safeEmail}`, currentCredits);
+                            console.log(`[WEBHOOK] Added 1 credit to ${customerData.email}. Total: ${currentCredits}`);
 
-                // --- FINANCIAL TRACKING (Admin Order Logging) ---
-                try {
-                    const customerData = await AsaasProvider.getCustomer(payment.customer);
+                            // --- UPDATE LEAD FOR ADMIN VISIBILITY ---
+                            const rawLeads = await getVal('/leads') || [];
+                            const leadsArray = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+                            const leadIdx = leadsArray.findIndex((l: any) => l.email?.toLowerCase().trim() === customerData.email.toLowerCase().trim());
 
-                    await pushVal('/orders', {
-                        id: transactionId,
-                        email: customerData?.email || 'unknown',
-                        name: customerData?.name || 'unknown',
-                        amount: paidValue,
-                        type: 'BOOK',
-                        description: `Geração de Livro - Avulso (via Asaas Sub Webhook)`,
-                        date: new Date(),
-                        paymentInfo: {
-                            provider: 'ASAAS',
-                            id: transactionId,
-                            amount: paidValue,
-                            status: 'CONFIRMED'
+                            if (leadIdx !== -1) {
+                                await setVal(`/leads/${leadIdx}/paymentInfo`, {
+                                    provider: 'ASAAS',
+                                    id: transactionId,
+                                    amount: paidValue,
+                                    status: 'CONFIRMED'
+                                });
+                                await setVal(`/leads/${leadIdx}/status`, 'APPROVED');
+                            }
+
+                            await sendPurchaseEvent({
+                                eventId: transactionId,
+                                email: customerData.email,
+                                phone: customerData.mobilePhone || customerData.phone,
+                                value: paidValue,
+                                contentName: 'Livro Avulso',
+                                clientIp: req.headers['x-forwarded-for'] as string || req.ip,
+                                clientUserAgent: req.headers['user-agent'] as string,
+                            });
                         }
-                    });
-
-                    if (customerData?.email) {
-                        const safeEmail = customerData.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-                        let currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-                        currentCredits += 1;
-                        await setVal(`/credits/${safeEmail}`, currentCredits);
-                        console.log(`[WEBHOOK] Added 1 credit to ${customerData.email}. Total: ${currentCredits}`);
-
-                        await sendPurchaseEvent({
-                            eventId: transactionId,
-                            email: customerData.email,
-                            phone: customerData.mobilePhone || customerData.phone,
-                            value: paidValue,
-                            contentName: 'Livro Avulso',
-                            clientIp: req.headers['x-forwarded-for'] as string || req.ip,
-                            clientUserAgent: req.headers['user-agent'] as string,
-                        });
+                    } catch (e) {
+                        console.warn('[WEBHOOK] Order logging/Meta CAPI failed:', e);
                     }
-                } catch (e) {
-                    console.warn('[WEBHOOK] Order logging/Meta CAPI failed:', e);
                 }
             }
-        }
 
-        // res.json moved to top
+            // res.json moved to top
+        } catch (procError) {
+            console.error("[WEBHOOK PROCESSING ERROR]", procError);
+        }
     }
 };

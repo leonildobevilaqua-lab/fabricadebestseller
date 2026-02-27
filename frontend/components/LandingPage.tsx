@@ -1712,17 +1712,67 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                                         {diagramStep === diagramMessages.length - 1 && (
                                             <div className="mt-10 text-center animate-fade-in-up">
+                                                <div className="mb-8 animate-bounce">
+                                                    <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-full mb-2">
+                                                        <Check className="w-10 h-10 text-white" />
+                                                    </div>
+                                                    <h3 className="text-2xl font-black text-white">PARABÉNS!</h3>
+                                                    <p className="text-slate-400 text-sm">Seu livro foi gerado com sucesso.</p>
+                                                </div>
+
                                                 <button
                                                     onClick={() => {
-                                                        window.open(`/api/admin/books/${formData.email}`, '_blank');
+                                                        const base = (import.meta as any).env.VITE_API_URL || window.location.origin;
+                                                        window.open(`${base}/api/admin/books/${formData.email}`, '_blank');
                                                         setIsRewardModalOpen(true);
                                                     }}
-                                                    className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-green-500/20 text-xl flex items-center justify-center gap-3 w-full animate-bounce"
+                                                    className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-green-500/20 text-xl flex items-center justify-center gap-3 w-full"
                                                 >
                                                     <span>⬇️</span>
                                                     BAIXAR LIVRO DIAGRAMADO
                                                 </button>
-                                                <p className="text-slate-500 text-xs mt-4">Enviamos também uma cópia para seu e-mail.</p>
+                                                <p className="text-slate-500 text-xs mt-4 mb-6">Enviamos também uma cópia para seu e-mail.</p>
+
+                                                <button
+                                                    onClick={() => {
+                                                        setDiagramStep(0);
+                                                        setStep(2); // Topic selection
+                                                        setIsWizardOpen(false);
+                                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                    }}
+                                                    className="w-full border-2 border-slate-700 hover:border-yellow-400 text-slate-400 hover:text-yellow-400 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 mb-8"
+                                                >
+                                                    ✏️ QUERO ESCREVER OUTRO LIVRO
+                                                </button>
+
+                                                {/* SERVIÇOS EXTRAS UNLOCKED */}
+                                                <div className="pt-8 border-t border-slate-700 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
+                                                    <div className="mb-6">
+                                                        <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 uppercase tracking-widest mb-1">PRODUTO DE MERCADO</h3>
+                                                        <p className="text-slate-400 text-xs">Transforme seu manuscrito em um Best Seller profissional:</p>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
+                                                        {[
+                                                            { key: 'livro-ingles', icon: '🇺🇸', title: 'Edição em Inglês', price: 24.99 },
+                                                            { key: 'capa-impressa', icon: '🎨', title: 'Capa Profissional', price: 250.00 },
+                                                            { key: 'amazon-impresso', icon: '📦', title: 'Publicar Amazon', price: 69.90 },
+                                                            { key: 'pacote-completo', icon: '🔥', title: 'Kit Bestseller', price: 599.90 },
+                                                        ].map(svc => (
+                                                            <div key={svc.key} className="bg-slate-900/50 border border-slate-700 p-3 rounded-xl flex items-center gap-3 hover:border-emerald-500/50 transition cursor-pointer group" onClick={() => {
+                                                                document.getElementById('servicos-extras')?.scrollIntoView({ behavior: 'smooth' });
+                                                                setIsWizardOpen(false); // Close wizard to show landing section
+                                                            }}>
+                                                                <div className="text-xl">{svc.icon}</div>
+                                                                <div className="flex-1">
+                                                                    <div className="font-bold text-white text-xs group-hover:text-emerald-400 transition">{svc.title}</div>
+                                                                    <div className="text-[10px] text-slate-500">R$ {svc.price.toFixed(2)}</div>
+                                                                </div>
+                                                                <div className="text-slate-600 group-hover:text-emerald-400 text-xs">➔</div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
                                     </div>

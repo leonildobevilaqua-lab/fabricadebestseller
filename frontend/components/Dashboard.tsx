@@ -1,7 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { PenTool, Download, Star, CheckCircle, Clock } from 'lucide-react';
-import { SocialShare } from './SocialShare'; // Assuming Lucide or similar, else inline SVGs
+import { SocialShare } from './SocialShare';
+import { getApiBase } from '../services/api';
+import { ExtraServiceCard } from './ExtraServices';
 
 // Inline Icons fallback
 const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
@@ -502,7 +504,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         </span>
                                         {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl && (
                                             <a
-                                                href={order.downloadUrl}
+                                                href={order.downloadUrl.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl}`}
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
@@ -526,6 +528,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 </div>
 
                 <div className="pt-8 border-t border-slate-200">
+                    <ExtraServiceSection formData={{ email: user?.email, name: user?.name, phone: user?.phone }} />
+                </div>
+
+                <div className="pt-8 border-t border-slate-200">
                     <SocialShare
                         text="Estou criando livros incríveis com Inteligência Artificial! Conheça a Fábrica de Best Sellers."
                         className="opacity-70 hover:opacity-100 transition-opacity"
@@ -536,3 +542,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         </div>
     );
 };
+
+const ExtraServiceSection = ({ formData }: { formData: any }) => {
+    return (
+        <div className="py-8">
+            <div className="mb-8">
+                <h3 className="text-xl font-black text-slate-800 uppercase tracking-wider mb-2">Serviços Extras</h3>
+                <p className="text-slate-500 text-sm">Contrate serviços profissionais para levar sua obra ao próximo nível.</p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                    { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, color: 'blue' },
+                    { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, color: 'blue' },
+                    { key: 'capa-impressa', icon: '🎨', title: 'Capa — Livro Impresso', subtitle: 'Design para KDP / UICLAP', price: 250.00, color: 'purple' },
+                    { key: 'amazon-impresso', icon: '🚀', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico', price: 69.90, color: 'orange' },
+                ].map(svc => (
+                    <ExtraServiceCard
+                        key={svc.key}
+                        serviceId={svc.key}
+                        {...svc as any}
+                        accentColor={svc.color as any}
+                        features={[]} // Simplified for dashboard
+                        formData={formData}
+                        getApiBase={getApiBase}
+                        trackInitiateCheckout={() => { }}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}

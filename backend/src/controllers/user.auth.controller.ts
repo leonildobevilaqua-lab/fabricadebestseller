@@ -206,7 +206,7 @@ export const UserAuthController = {
                 authorName: p.metadata?.authorName || p.metadata?.contact?.name || '',
                 date: p.createdAt,
                 status: p.metadata?.status,
-                downloadUrl: p.metadata?.docLink || p.metadata?.pdfUrl || p.metadata?.finalDocxUrl || `/api/admin/books/${p.id}` // Link fallback per project ID
+                downloadUrl: p.metadata?.docLink || p.metadata?.pdfUrl || p.metadata?.finalDocxUrl || `/api/projects/${p.id}/download` // Link fallback per project ID
             }));
 
             res.json({

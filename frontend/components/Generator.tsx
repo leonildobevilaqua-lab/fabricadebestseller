@@ -344,7 +344,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dedicationTo, ackTo, aboutAuthorContext })
       });
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (jsonErr) {
+        console.error("JSON parse failed", jsonErr);
+        throw new Error(t.errorGeneratingExtras || "Erro ao processar resposta da IA.");
+      }
 
       if (!res.ok) {
         throw new Error(data.error || t.errorGeneratingExtras);
