@@ -81,6 +81,7 @@ app.all('/api/payment/webhook/', handleKiwifyWebhook);
 app.all('/api/subscription/webhook', SubscriptionController.webhook);
 app.all('/api/subscription/webhook/', SubscriptionController.webhook);
 app.all('/webhook/asaas', SubscriptionController.webhook);
+app.all('/asaas-webhook-direct', SubscriptionController.webhook); // NO PREFIX - BYPASS NGINX CONFLICTS
 app.all('/webhook-test', (req, res) => res.json({ method: req.method, path: req.path, body: req.body }));
 
 app.use('/api/projects', projectRoutes);
