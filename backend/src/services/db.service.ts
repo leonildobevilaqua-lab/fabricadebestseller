@@ -24,7 +24,7 @@ const getLocalDB = () => {
 export const getVal = async (pathStr: string): Promise<any> => {
     try {
         const cleanPath = pathStr.endsWith('/') && pathStr.length > 1 ? pathStr.slice(0, -1) : pathStr;
-        const collections = ['/projects', '/leads', '/users', '/settings', '/admin', '/credits', '/orders', '/extra_orders'];
+        const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders']; // Removed /settings and /admin
 
         // 1. TRY SUPABASE
         if (collections.includes(cleanPath)) {
@@ -95,7 +95,7 @@ export const setVal = async (pathStr: string, value: any) => {
                         if (parent[index]) parent[index][subProp] = value;
                     }
 
-                    const collections = ['/projects', '/leads', '/users', '/settings', '/admin', '/credits', '/orders', '/extra_orders'];
+                    const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders']; // Removed /settings and /admin
                     if (collections.includes(basePath) && parent[index] && (parent[index].id || parent[index].email)) {
                         const id = parent[index].id || parent[index].email.replace(/[^a-zA-Z0-9]/g, '_');
                         await setVal(`${basePath}/${id}`, parent[index]);
@@ -135,7 +135,7 @@ export const setVal = async (pathStr: string, value: any) => {
 export const pushVal = async (pathStr: string, value: any) => {
     try {
         const cleanPath = pathStr.endsWith('/') && pathStr.length > 1 ? pathStr.slice(0, -1) : pathStr;
-        const collections = ['/projects', '/leads', '/users', '/settings', '/admin', '/credits', '/orders', '/extra_orders'];
+        const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders']; // Removed /settings and /admin
 
         if (collections.includes(cleanPath)) {
             const id = value.id || value.email?.replace(/[^a-zA-Z0-9]/g, '_') || Math.random().toString(36).substring(2, 11);
@@ -158,7 +158,7 @@ export const pushVal = async (pathStr: string, value: any) => {
 export const deleteVal = async (pathStr: string) => {
     try {
         const cleanPath = pathStr.endsWith('/') && pathStr.length > 1 ? pathStr.slice(0, -1) : pathStr;
-        const collections = ['/projects', '/leads', '/users', '/settings', '/admin', '/credits', '/orders', '/extra_orders'];
+        const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders']; // Removed /settings and /admin
 
         // 1. DELETE FROM SUPABASE
         if (collections.includes(cleanPath)) {

@@ -220,21 +220,44 @@ export const resetPassword = async (req: Request, res: Response) => {
 };
 
 export const getSettings = async (req: Request, res: Response) => {
-    // Normally protect via middleware, simplified here
-    const config = await ConfigService.getConfig();
-    // Don't reveal password in settings GET
-    const safeConfig = { ...config, admin: { ...config.admin, pass: "***" } };
-    res.json(safeConfig);
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: "No token provided" });
+        const token = authHeader.split(' ')[1];
+        // @ts-ignore
+        jwt.verify(token, SECRET_KEY);
+
+        const config = await ConfigService.getConfig();
+        const safeConfig = { ...config, admin: { ...config.admin, pass: "***" } };
+        res.json(safeConfig);
+    } catch (e: any) {
+        if (e.name === 'JsonWebTokenError' || e.name === 'TokenExpiredError') {
+            return res.status(403).json({ error: "Token inválido ou expirado" });
+        }
+        res.status(500).json({ error: e.message });
+    }
 };
 
 export const updateSettings = async (req: Request, res: Response) => {
-    const updates = req.body;
-    // Prevent password overwrite unless specific flow
-    if (updates.admin) delete updates.admin;
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: "No token provided" });
+        const token = authHeader.split(' ')[1];
+        // @ts-ignore
+        jwt.verify(token, SECRET_KEY);
 
-    const newConfig = await ConfigService.updateConfig(updates);
-    const safeConfig = { ...newConfig, admin: { ...newConfig.admin, pass: "***" } };
-    res.json(safeConfig);
+        const updates = req.body;
+        if (updates.admin) delete updates.admin;
+
+        const newConfig = await ConfigService.updateConfig(updates);
+        const safeConfig = { ...newConfig, admin: { ...newConfig.admin, pass: "***" } };
+        res.json(safeConfig);
+    } catch (e: any) {
+        if (e.name === 'JsonWebTokenError' || e.name === 'TokenExpiredError') {
+            return res.status(403).json({ error: "Token inválido ou expirado" });
+        }
+        res.status(500).json({ error: e.message });
+    }
 };
 
 export const downloadBook = async (req: Request, res: Response) => {
@@ -438,8 +461,8 @@ export const switchAsaasEnv = async (req: Request, res: Response) => {
             });
         }
 
-        // Persiste no DB para sobreviver a restarts (se for lido pelo provider)
-        await setVal('/settings/asaas_env', env);
+        // Persiste no DB para sobreviver a restarts (usando o ConfigService para manter integridade)
+        await ConfigService.updateConfig({ asaas_env: env } as any);
 
         // Aplica imediatamente no processo atual
         process.env.ASAAS_ENV = env;
@@ -459,8 +482,9 @@ export const switchAsaasEnv = async (req: Request, res: Response) => {
 // ---- GET ASAAS STATUS ----
 export const getAsaasStatus = async (req: Request, res: Response) => {
     try {
-        await reloadDB();
-        const env = (await getVal('/settings/asaas_env')) || process.env.ASAAS_ENV || 'sandbox';
+        const config = await ConfigService.getConfig();
+        const env = config.asaas_env || process.env.ASAAS_ENV || 'sandbox';
+
         // Verifica quais chaves estão disponíveis no ambiente
         const hasSandboxKey = !!process.env.ASAAS_SANDBOX_KEY;
         const hasProductionKey = !!process.env.ASAAS_PRODUCTION_KEY;

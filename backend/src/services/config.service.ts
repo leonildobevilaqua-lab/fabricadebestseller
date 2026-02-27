@@ -11,6 +11,7 @@ export interface AppConfig {
         llama: string;
     };
     activeProvider: 'gemini' | 'openai' | 'anthropic' | 'deepseek' | 'llama';
+    asaas_env?: 'sandbox' | 'production';
     admin: {
         user: string;
         pass: string;
@@ -47,6 +48,7 @@ const defaultConfig: AppConfig = {
         llama: ""
     },
     activeProvider: 'gemini',
+    asaas_env: 'sandbox',
     admin: {
         user: "contato@leonildobevilaqua.com.br",
         pass: "Leo129520-*-"
@@ -82,11 +84,19 @@ export const getConfig = async (): Promise<AppConfig> => {
 
     // Merge Settings (Providers, etc)
     if (settingsData) {
-        finalConfig = { ...finalConfig, ...settingsData };
+        // If settingsData is an array (legacy corruption), prioritize root object if it existed
+        // But since we fixed db.service, it should be an object or null.
+        if (typeof settingsData === 'object' && !Array.isArray(settingsData)) {
+            finalConfig = { ...finalConfig, ...settingsData };
+            // Ensure providers sub-object is also merged to avoid losing defaults
+            if (settingsData.providers) {
+                finalConfig.providers = { ...defaultConfig.providers, ...settingsData.providers };
+            }
+        }
     }
 
     // Merge Admin (User/Pass) - Prioritize Root /admin key
-    if (adminData) {
+    if (adminData && typeof adminData === 'object' && !Array.isArray(adminData)) {
         finalConfig.admin = { ...finalConfig.admin, ...adminData };
     }
 
@@ -100,18 +110,14 @@ export const getConfig = async (): Promise<AppConfig> => {
         finalConfig.admin.pass = process.env.ADMIN_PASS;
     }
 
-    // --- LLM PROVIDER OVERRIDES VIA ENV (STRICT PRIORITY) ---
-    // Specifically fix GEMINI to ignore DB old key if ENV is present
+    // --- LLM PROVIDER OVERRIDES VIA ENV (STRICT PRIORITY - SURVIVES SAVE) ---
     const envGemini = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    if (envGemini && envGemini.length > 10) {
-        finalConfig.providers.gemini = envGemini;
-    }
-    // Also protect OpenAI
+    if (envGemini && envGemini.length > 10) finalConfig.providers.gemini = envGemini;
+
     if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 10) {
         finalConfig.providers.openai = process.env.OPENAI_API_KEY;
     }
     if (process.env.ANTHROPIC_API_KEY) finalConfig.providers.anthropic = process.env.ANTHROPIC_API_KEY;
-
 
     return finalConfig;
 };
