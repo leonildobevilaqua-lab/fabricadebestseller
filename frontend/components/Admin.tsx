@@ -420,6 +420,11 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [hasSandboxKey, setHasSandboxKey] = useState(false);
     const [hasProductionKey, setHasProductionKey] = useState(false);
 
+    // Sales Filter State
+    const [salesFilter, setSalesFilter] = useState<'all' | 'today' | 'week' | 'month' | 'custom'>('all');
+    const [salesStartDate, setSalesStartDate] = useState('');
+    const [salesEndDate, setSalesEndDate] = useState('');
+
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const rToken = params.get('resetToken');
@@ -832,6 +837,36 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             return false;
         }
     };
+    // Filtering Orders logic
+    const getFilteredOrders = () => {
+        if (!Array.isArray(orders)) return [];
+        let filtered = [...orders];
+
+        if (salesFilter !== 'all') {
+            const now = new Date();
+            filtered = filtered.filter(o => {
+                const dStr = o.date || o.created_at;
+                if (!dStr) return false;
+                const d = new Date(dStr);
+                if (isNaN(d.getTime())) return false;
+
+                if (salesFilter === 'today') {
+                    return d.toLocaleDateString() === now.toLocaleDateString();
+                } else if (salesFilter === 'week') {
+                    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    return d >= oneWeekAgo;
+                } else if (salesFilter === 'month') {
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                } else if (salesFilter === 'custom') {
+                    if (salesStartDate && d < new Date(salesStartDate + 'T00:00:00')) return false;
+                    if (salesEndDate && d > new Date(salesEndDate + 'T23:59:59')) return false;
+                }
+                return true;
+            });
+        }
+
+        return filtered.sort((a, b) => new Date(b.date || b.created_at).getTime() - new Date(a.date || a.created_at).getTime());
+    };
 
     const isLogged = !!token;
 
@@ -1216,6 +1251,87 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             ))}
                                         </tbody>
                                     </table>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+                                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <h3 className="font-bold text-slate-700">Histórico de Pedidos / Vendas</h3>
+
+                                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                                        <select
+                                            value={salesFilter}
+                                            onChange={e => setSalesFilter(e.target.value as any)}
+                                            className="p-2 border rounded-md text-slate-700 font-medium"
+                                        >
+                                            <option value="all">Todo o Período</option>
+                                            <option value="today">Hoje</option>
+                                            <option value="week">Últimos 7 dias</option>
+                                            <option value="month">Este Mês</option>
+                                            <option value="custom">Data Personalizada</option>
+                                        </select>
+
+                                        {salesFilter === 'custom' && (
+                                            <div className="flex items-center gap-2">
+                                                <input type="date" value={salesStartDate} onChange={e => setSalesStartDate(e.target.value)} className="p-2 border rounded-md" />
+                                                <span className="text-slate-500">até</span>
+                                                <input type="date" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)} className="p-2 border rounded-md" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left min-w-[800px]">
+                                        <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
+                                            <tr>
+                                                <th className="p-4 w-40">Data</th>
+                                                <th className="p-4">Cliente</th>
+                                                <th className="p-4">Produto</th>
+                                                <th className="p-4 w-32">Valor</th>
+                                                <th className="p-4 w-32">Gateway</th>
+                                                <th className="p-4 w-32">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 bg-white">
+                                            {getFilteredOrders().length === 0 && <tr><td colSpan={6} className="p-8 text-center text-slate-400">Nenhuma venda encontrada para o período selecionado.</td></tr>}
+                                            {getFilteredOrders().map((order: any, idx: number) => {
+                                                const amount = Number(order.paymentInfo?.amount || order.amount || 0);
+                                                const formattedAmt = amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                                const dt = order.date || order.created_at;
+                                                const formattedDt = dt ? (new Date(dt).toLocaleDateString() + " " + new Date(dt).toLocaleTimeString()) : "N/A";
+                                                const clientEmail = order.customerEmail || order.email || "N/A";
+                                                const prodName = order.paymentInfo?.productName || order.planName || "Serviço Avulso/Assinatura";
+                                                const status = order.paymentInfo?.status || order.status || "PAGO";
+
+                                                return (
+                                                    <tr key={order.id || idx} className="hover:bg-slate-50 transition">
+                                                        <td className="p-4 font-mono text-xs">{formattedDt}</td>
+                                                        <td className="p-4">
+                                                            <div className="font-bold text-slate-700">{order.customerName || order.name || "-"}</div>
+                                                            <div className="text-xs text-slate-500">{clientEmail}</div>
+                                                        </td>
+                                                        <td className="p-4 text-slate-600 font-medium">{prodName}</td>
+                                                        <td className="p-4 font-bold text-emerald-600">{formattedAmt}</td>
+                                                        <td className="p-4 text-xs font-bold text-slate-400 uppercase">{order.gateway || 'KIWIFY/ASAAS'}</td>
+                                                        <td className="p-4">
+                                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${status.toUpperCase() === 'APPROVED' || status.toUpperCase() === 'PAID' || status.toUpperCase() === 'PAGO' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                                {status}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div className="bg-slate-50 p-4 border-t border-slate-200 text-right">
+                                    <span className="text-slate-600">Total filtrado: </span>
+                                    <span className="text-xl font-black text-slate-800 ml-2">
+                                        {getFilteredOrders().reduce((acc, order) => {
+                                            const val = Number(order.paymentInfo?.amount || order.amount || 0);
+                                            return acc + (isNaN(val) ? 0 : val);
+                                        }, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                    </span>
                                 </div>
                             </div>
                         </div>
