@@ -182,7 +182,9 @@ const App: React.FC = () => {
           onLogout={resetApp}
           onNewBook={() => {
             setStep(1); // Reset wizard
-            window.open('/factory', '_blank');
+            setCurrentView('generator');
+            window.history.pushState({}, '', '/factory');
+            window.scrollTo(0, 0);
           }}
         />
       </ErrorBoundary>
@@ -196,7 +198,11 @@ const App: React.FC = () => {
         <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <button
-              onClick={() => setCurrentView('dashboard')}
+              onClick={() => {
+                setCurrentView('dashboard');
+                window.history.pushState({}, '', '/');
+                window.scrollTo(0, 0);
+              }}
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
               <span className="text-xl">⬅</span>
@@ -221,7 +227,11 @@ const App: React.FC = () => {
               <Generator
                 metadata={metadata}
                 updateMetadata={updateMetadata}
-                onReset={() => setCurrentView('dashboard')} // Go back to dash
+                onReset={() => {
+                  setCurrentView('dashboard');
+                  window.history.pushState({}, '', '/');
+                  window.scrollTo(0, 0);
+                }}
                 language={lang}
                 userContact={userContact}
                 setAppStep={setStep}
