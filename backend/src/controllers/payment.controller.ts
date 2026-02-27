@@ -246,6 +246,9 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
         const payload = req.body;
         console.log("Webhook Received:", JSON.stringify(payload));
 
+        // --- IMMEDIATE RESPONSE TO PREVENT TIMEOUTS ---
+        res.status(200).json({ received: true });
+
         let status = '';
         let email = '';
         let productName = '';
@@ -468,7 +471,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             }
         }
 
-        res.status(200).json({ received: true });
+        // res.status(200) moved to top
     } catch (error) {
         console.error("Webhook Error", error);
         res.status(500).json({ error: "Internal Error" });

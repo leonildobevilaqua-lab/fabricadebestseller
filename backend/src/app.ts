@@ -14,9 +14,10 @@ app.use(express.json());
 import paymentRoutes from './routes/payment.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import purchaseRoutes from './routes/purchase.routes';
+import { handleKiwifyWebhook } from './controllers/payment.controller'; // Direct link for speed
+import { SubscriptionController } from './controllers/subscription.controller';
 import jwt from 'jsonwebtoken'; // Added for Golden Route
 import userRoutes from './routes/user.routes';
-import { SubscriptionController } from './controllers/subscription.controller';
 import { createBookGenerationCharge } from './controllers/payment.controller'; // Emergency Import
 
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
@@ -70,13 +71,18 @@ app.post('/api/purchase-direct', createBookGenerationCharge);
 app.get('/api/auth-master-test', (req: express.Request, res: express.Response) => {
     res.json({ status: "Active", version: "v7.0", message: "Dual Protocol Active" });
 });
+// --- WEBHOOK ENDPOINTS (PRIORITY - NO REDIRECTS - POST ONLY) ---
+// These are defined at root to bypass any potential router-level issues or trailing slash redirects
+app.post('/api/payment/webhook', handleKiwifyWebhook);
+app.post('/api/payment/webhook/', handleKiwifyWebhook); // Support both with/without slash manually to avoid 301
+app.post('/api/subscription/webhook', SubscriptionController.webhook);
+app.post('/api/subscription/webhook/', SubscriptionController.webhook);
+app.post('/webhook/asaas', SubscriptionController.webhook);
+
 app.use('/api/projects', projectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
-app.use('/api/purchase', purchaseRoutes); // REGISTER NEW ROUTE
-
-// Alias for user's configured webhook
-app.post('/webhook/asaas', SubscriptionController.webhook); // Direct mapping
+app.use('/api/purchase', purchaseRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/user', userRoutes);
 app.use('/downloads', express.static(path.join(__dirname, '../generated_books')));

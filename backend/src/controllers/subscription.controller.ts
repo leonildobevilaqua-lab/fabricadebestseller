@@ -164,6 +164,9 @@ export const SubscriptionController = {
         const event = req.body;
         console.log("Asaas Webhook Event:", event.event);
 
+        // --- IMMEDIATE RESPONSE TO PREVENT TIMEOUTS ---
+        res.json({ received: true });
+
         // Handle Status Updates
         if (event.event === 'PAYMENT_CONFIRMED' || event.event === 'PAYMENT_RECEIVED') {
             const payment = event.payment;
@@ -274,6 +277,6 @@ export const SubscriptionController = {
             }
         }
 
-        res.json({ received: true });
+        // res.json moved to top
     }
 };
