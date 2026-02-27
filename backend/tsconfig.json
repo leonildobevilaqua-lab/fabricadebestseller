@@ -9,5 +9,12 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true
-    }
+    },
+    "exclude": [
+        "checkData.ts",
+        "recover_user.ts",
+        "recreate_user.ts",
+        "dist",
+        "node_modules"
+    ]
 }
