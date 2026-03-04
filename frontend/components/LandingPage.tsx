@@ -1821,33 +1821,82 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             )
             }
 
-            {/* --- HERO SECTION --- */}
-            <main className="pt-32 pb-20 px-6">
-                <div className="max-w-4xl mx-auto text-center">
-                    <div className="animate-fade-in-up">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-yellow-400 text-sm font-bold mb-8">
-                            <Star className="w-4 h-4 fill-current" />
-                            <span>Tecnologia de I.A. Avançada</span>
+            {/* --- HERO SECTION --- (CENTERED & COMPACT) */}
+            <main className="relative pt-12 pb-16 px-6 overflow-hidden min-h-[95vh] flex flex-col justify-center">
+                {/* Background Decor */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[400px] bg-yellow-500/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+                <div className="max-w-6xl mx-auto text-center relative z-10 w-full">
+                    <div className="flex flex-col items-center space-y-6 animate-fade-in-up">
+
+                        {/* 1. Persuasive Text Content */}
+                        <div className="max-w-4xl space-y-3">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-yellow-500 text-[10px] font-black uppercase tracking-[0.2em] animate-one-time-fade-in">
+                                <Star className="w-3 h-3 fill-current" />
+                                <span>{lang === 'pt' ? 'Escala & Liberdade Financeira' : lang === 'en' ? 'Scale & Financial Freedom' : 'Escala y Libertad Financiera'}</span>
+                            </div>
+
+                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.15] tracking-tighter">
+                                <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">
+                                    {translations[lang].heroTitle}
+                                </span>
+                                <span className="block text-yellow-400 text-glow">
+                                    {translations[lang].heroSubtitle}
+                                </span>
+                            </h1>
+
+                            <p className="text-base md:text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
+                                {translations[lang].heroDesc}
+                            </p>
                         </div>
-                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight">
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200 transition-all duration-500 ease-in-out">
-                                {rotatingWord}
-                            </span> {translations[lang].heroTitle}
-                            <span className="block mt-3 text-yellow-400 whitespace-nowrap">{translations[lang].heroSubtitle}</span>
-                        </h1>
-                        <p className="text-xl md:text-2xl text-slate-400 mb-10 max-w-3xl mx-auto leading-relaxed whitespace-pre-line">
-                            {translations[lang].heroDesc}
-                        </p>
-                        <button
-                            onClick={() => document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-lg md:text-xl font-bold px-10 py-5 rounded-full shadow-xl shadow-yellow-500/20 hover:shadow-yellow-500/40 transition-all transform hover:-translate-y-1 flex items-center gap-3 mx-auto"
-                        >
-                            {translations[lang].heroButton}
-                            <Zap className="w-6 h-6 fill-current" />
-                        </button>
+
+                        {/* 2. Centered Video Content */}
+                        <div className="w-full max-w-4xl relative animate-fade-in" style={{ animationDelay: '300ms' }}>
+                            {/* Glow behind video */}
+                            <div className="absolute -inset-4 bg-yellow-500/5 blur-3xl rounded-[3rem] pointer-events-none"></div>
+
+                            {/* Video Container */}
+                            <div className="relative glass-panel rounded-2xl p-2 shadow-[0_20px_80px_rgba(0,0,0,0.8)] border border-white/5 overflow-hidden transform hover:scale-[1.005] transition-all duration-700">
+                                <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-white/5">
+                                    <iframe
+                                        className="w-full h-full"
+                                        src="https://www.youtube.com/embed/cwCp2DS0C84?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=cwCp2DS0C84"
+                                        title="Fábrica de Best Sellers"
+                                        frameBorder="0"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                        allowFullScreen
+                                    ></iframe>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 3. Button Below Video with Pulse Effect */}
+                        <div className="flex flex-col items-center gap-4 pt-2 w-full max-w-md mx-auto">
+                            <button
+                                onClick={() => document.getElementById('planos')?.scrollIntoView({ behavior: 'smooth' })}
+                                className="group relative bg-yellow-500 hover:bg-yellow-400 text-slate-900 text-lg font-black px-12 py-5 rounded-2xl shadow-xl transition-all transform hover:-translate-y-1 hover:scale-[1.03] flex items-center justify-center gap-3 w-full animate-pulse-gold"
+                            >
+                                <Zap className="w-6 h-6 fill-current group-hover:rotate-12 transition-transform" />
+                                {translations[lang].heroButton}
+                            </button>
+
+                            <div className="flex items-center gap-4 opacity-60">
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span className="text-green-400 font-mono text-[10px] font-black tracking-widest uppercase">
+                                        {lang === 'pt' ? 'Sistema Online' : 'System Online'}
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">
+                                    +1.200 Livros Gerados este Mês
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
+
+
 
             {/* --- PROBLEM SECTION --- */}
             <section className="py-20 bg-slate-800/50 border-y border-slate-800">

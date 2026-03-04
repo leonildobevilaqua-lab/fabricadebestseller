@@ -4,10 +4,10 @@ import React from 'react';
 
 export const pt = {
     landing: {
-        heroTitle: "SEU LIVRO PROFISSIONAL",
-        heroSubtitle: "EM MENOS DE 20 MINUTOS.",
-        heroDesc: "Esqueça os meses de escrita e os altos custos com designers.\nA Fábrica de Best Sellers entrega seu livro finalizado em poucos minutos.",
-        heroButton: "QUERO GERAR MEU FUTURO BEST SELLER AGORA",
+        heroTitle: "LIVRARIA DE RENDAS PASSIVAS",
+        heroSubtitle: "SUA FÁBRICA DE BEST SELLERS",
+        heroDesc: "Apresentamos a tecnologia que pesquisa, estrutura e redige um livro completo, com 12 capítulos e +160 páginas... em apenas 30 minutos.",
+        heroButton: "ATIVAR MINHA FÁBRICA AGORA",
         offerTitle: "Escolha a Melhor Opção para Você",
         singleGeneration: "GERAÇÃO AVULSA DE LIVROS",
         offerSubtitle: "Comece agora ou garanta seu crédito para depois.",
@@ -205,10 +205,10 @@ export const pt = {
 
 export const en = {
     landing: {
-        heroTitle: "YOUR PROFESSIONAL BOOK",
-        heroSubtitle: "IN LESS THAN 20 MINUTES.",
-        heroDesc: "Forget months of writing and high costs with designers.\nThe Best Seller Factory delivers your book ready for sale for just $5.00.",
-        heroButton: "GENERATE MY BEST SELLER NOW",
+        heroTitle: "PASSIVE INCOME BOOKSHELF",
+        heroSubtitle: "YOUR BEST SELLER FACTORY",
+        heroDesc: "Introducing the technology that researches, structures, and writes a complete book, with 12 chapters and +160 pages... in just 30 minutes.",
+        heroButton: "ACTIVATE MY FACTORY NOW",
         offerTitle: "Choose the Best Option for You",
         singleGeneration: "ONE-TIME BOOK GENERATION",
         offerSubtitle: "Start now or secure your credit for later.",
@@ -406,10 +406,10 @@ export const en = {
 
 export const es = {
     landing: {
-        heroTitle: "TU LIBRO PROFESIONAL",
-        heroSubtitle: "EN MENOS DE 20 MINUTOS.",
-        heroDesc: "Olvida los meses de escritura y los altos costos con diseñadores.\nFábrica de Best Sellers entrega tu libro listo para la venta por solo $5.00.",
-        heroButton: "GENERAR MI BEST SELLER AHORA",
+        heroTitle: "LIBRERÍA DE RENTAS PASIVAS",
+        heroSubtitle: "TU FÁBRICA DE BEST SELLERS",
+        heroDesc: "Presentamos la tecnología que investiga, estructura y redacta un libro completo, con 12 capítulos y +160 páginas... en apenas 30 minutos.",
+        heroButton: "ACTIVAR MI FÁBRICA AHORA",
         offerTitle: "Elige la Mejor Opción para Ti",
         singleGeneration: "GENERACIÓN DE LIBRO ÚNICA",
         offerSubtitle: "Comienza ahora o asegura tu crédito para después.",
