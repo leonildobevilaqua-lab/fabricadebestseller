@@ -11,6 +11,19 @@ const PORT = process.env.PORT || 3005;
 // --- INICIO DO BLOCO SALVA-VIDAS (CHAVEIRO MESTRE) ---
 import { setVal, getVal, pushVal } from './services/db.service';
 
+// Inicializa a configuração do Asaas a partir do DB
+(async () => {
+    try {
+        const config = (await getVal('/config')) || {};
+        if (config.asaas_env) {
+            process.env.ASAAS_ENV = config.asaas_env;
+            console.log(`[BOOT] Asaas Environment set to: ${config.asaas_env}`);
+        }
+    } catch (e) {
+        console.error("Erro ao carregar config inicial", e);
+    }
+})();
+
 app.get('/reset-admin-force', async (req, res) => {
     try {
         console.log("Iniciando reset forçado de senha no Supabase...");
