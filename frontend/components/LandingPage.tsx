@@ -12,7 +12,6 @@ const Zap = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" h
 const BookOpen = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>;
 const X = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>;
 const Check = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polyline points="20 6 9 17 4 12" /></svg>;
-const Lock = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><rect width="18" height="11" x="3" y="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>;
 const Star = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
 const FileText = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M14.5 2H6a2 0 0 0-2 2v16a2 0 0 0 2 2h12a2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" x2="8" y1="13" y2="13" /><line x1="16" x2="8" y1="17" y2="17" /><line x1="10" x2="8" y1="9" y2="9" /></svg>;
 const ChevronDown = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="m6 9 6 6 6-6" /></svg>;
@@ -622,7 +621,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
         if (!formData.email) return;
 
         // Rastreamento Meta Pixel — InitiateCheckout (Livro Avulso)
-        trackInitiateCheckout('Livro Avulso', 89.90);
+        trackInitiateCheckout('Livro Avulso', 39.90);
 
         const baseUrl = getApiBase().replace(/\/$/, "");
         try {
@@ -1019,7 +1018,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                 onChange={e => setFormData({ ...formData, password: e.target.value } as any)}
                                                             />
                                                             <div className="absolute left-3 top-3.5 text-slate-500">
-                                                                <Lock className="w-4 h-4" />
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                                                             </div>
                                                         </div>
                                                         <p className="text-[10px] text-slate-500 mt-1">Essa senha será usada para acessar sua Área do Membro.</p>
@@ -1101,7 +1100,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                     disabled={!formData.name || !formData.email || !formData.phone || !(formData as any).lgpdConsent}
                                                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-5 rounded-xl text-xl shadow-lg shadow-indigo-500/20 transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:grayscale disabled:pointer-events-none flex items-center justify-center gap-3"
                                                 >
-                                                    <Lock className="w-6 h-6" />
+                                                    <Zap className="w-6 h-6 fill-current" />
                                                     CONTINUAR PARA PAGAMENTO
                                                 </button>
                                             </div>
@@ -1250,7 +1249,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                             <>
                                                 <div className="text-center mb-8">
                                                     <div className="inline-block p-4 bg-yellow-500/10 rounded-full mb-4">
-                                                        <Lock className="w-10 h-10 text-yellow-400" />
+                                                        <Zap className="w-10 h-10 text-yellow-400 fill-current" />
                                                     </div>
                                                     <h2 className="text-2xl font-bold text-white mb-2">
                                                         {formData.type === 'VOUCHER' ? 'FINALIZAR COMPRA DO VALE-PRESENTE' : (activeDiscount > 0 ? `${activeDiscount}% DE DESCONTO APLICADO!` : 'TUDO PRONTO PARA INICIAR')}
@@ -1281,7 +1280,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                                                     // FORCE AVULSO PRICE (Truth from Backend)
                                                     if (isAvulsoMode) {
-                                                        displayPrice = 89.90;
+                                                        displayPrice = 39.90;
                                                         finalLink = 'https://pay.kiwify.com.br/oG5S7uJ'; // Standard Avulso Link
                                                     }
 
@@ -1966,27 +1965,23 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 </div>
             </section>
 
-            {/* --- PRICING SECTION --- */}
-            <PricingSection onSelectPlan={startWizard} lang={lang} onLoginClick={onLoginClick} />
-
             {/* --- COMPRA AVULSA (ONE-OFF) --- */}
-            <section className="py-24 bg-slate-900 border-t border-slate-800 relative overflow-hidden">
+            <section className="py-24 bg-slate-900 border-t border-slate-800 relative overflow-hidden" id="planos">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
                 <div className="max-w-4xl mx-auto px-6 relative z-10 text-center">
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2.5rem] p-10 md:p-16 border border-slate-700 shadow-2xl relative">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 blur-[100px] rounded-full"></div>
 
                         <span className="inline-block bg-yellow-500/10 text-yellow-500 text-xs font-black px-4 py-2 rounded-full border border-yellow-500/20 uppercase tracking-widest mb-6">
-                            Flexibilidade Total
+                            Acesso Vitalício à Tecnologia - Sem Mensalidade
                         </span>
 
-                        <h2 className="text-3xl md:text-5xl font-black text-white mb-6">
-                            Não quer assinar um plano agora? <br />
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-500">Gere apenas um livro</span>
+                        <h2 className="text-4xl md:text-5xl font-black mb-6 text-white leading-tight">
+                            Gere seu Futuro Best Seller Agora
                         </h2>
 
                         <p className="text-slate-400 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-                            Acesso imediato para criar seu Best Seller sem mensalidade. Ideal para testar a potência da nossa IA ou para projetos pontuais de alta qualidade.
+                            Acesso imediato para criar seu Futuro Best Seller sem mensalidade. Ideal para projetos pontuais de alta qualidade.
                         </p>
 
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-10">
@@ -1994,7 +1989,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Pagamento Único</p>
                                 <div className="flex items-end gap-1">
                                     <span className="text-slate-400 text-2xl font-bold mb-2">R$</span>
-                                    <span className="text-7xl font-black text-white tracking-tight">89,90</span>
+                                    <span className="text-7xl font-black text-white tracking-tight">39,90</span>
                                 </div>
                             </div>
 
@@ -2002,10 +1997,12 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
 
                             <ul className="text-left space-y-3">
                                 {[
-                                    '1 Livro Completo (+160 páginas)',
+                                    '1 Livro Completo (Até 12 Capítulos e +170 págs)',
+                                    '1 Tradução Gratuita no Mês (Inglês ou Espanhol)',
+                                    'Pesquisa Avançada com IA e Conteúdo VIP',
                                     'Diagramação Profissional Inclusa',
-                                    'Exportação em PDF e DOCX',
-                                    'Sem fidelidade ou renovação'
+                                    'Exportação apenas em WORD Editável',
+                                    'Pagamento Único Sem Renovação'
                                 ].map((item, i) => (
                                     <li key={i} className="flex items-center gap-3 text-slate-300">
                                         <Check className="w-5 h-5 text-yellow-500" />
@@ -2019,7 +2016,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             onClick={() => startWizard()}
                             className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black py-5 px-12 rounded-2xl text-xl shadow-xl shadow-yellow-500/20 transition-all transform hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto"
                         >
-                            GERAR MEU LIVRO AGORA (R$ 89,90)
+                            SUA OBRA PRONTA POR APENAS R$ 39,90
                         </button>
 
                         <p className="mt-6 text-slate-500 text-xs flex items-center justify-center gap-2">

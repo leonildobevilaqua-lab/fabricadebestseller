@@ -10,7 +10,7 @@ const upload = multer();
 // FONTE DA VERDADE — PREÇOS FIXOS TABELADOS (sem descontos progressivos)
 // -----------------------------------------------------------------
 const PRICING_RULES: Record<string, number> = {
-    'AVULSO': 89.90, // Sem plano ativo
+    'AVULSO': 39.90, // Sem plano ativo
     'STARTER_MENSAL': 28.90,
     'STARTER_ANUAL': 24.90,
     'PRO_MENSAL': 18.90,
@@ -361,7 +361,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 
             // Fallback: Price Safety Net (only if keywords didn't catch it)
             if (!isBookGeneration && !isSubscription) {
-                const generationPrices = [24.90, 22.41, 21.17, 19.92, 26.90, 24.21, 22.87, 21.52, 19.90, 17.91, 16.92, 15.92, 21.90, 19.71, 18.62, 17.52, 14.90, 13.41, 12.67, 11.92, 16.90, 15.21, 14.37, 13.52, 39.90];
+                const generationPrices = [89.90, 39.90, 24.90, 22.41, 21.17, 19.92, 26.90, 24.21, 22.87, 21.52, 19.90, 17.91, 16.92, 15.92, 21.90, 19.71, 18.62, 17.52, 14.90, 13.41, 12.67, 11.92, 16.90, 15.21, 14.37, 13.52];
                 const isExactPrice = generationPrices.some(p => Math.abs(p - amount) < 0.05);
 
                 if (isExactPrice || (amount > 8 && amount < 45)) {
@@ -542,7 +542,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         for (const recentConfirmedPayment of recentConfirmedPayments) {
             const desc = (recentConfirmedPayment.description || "").toLowerCase();
             const isGen = desc.includes('livro') || desc.includes('geração') || desc.includes('geracao');
-            const validGenPrices = [89.90, 28.90, 24.90, 18.90, 14.90, 9.90, 8.90, 16.90, 15.21, 14.37, 13.52, 26.90, 21.90];
+            const validGenPrices = [89.90, 39.90, 28.90, 24.90, 18.90, 14.90, 9.90, 8.90, 16.90, 15.21, 14.37, 13.52, 26.90, 21.90];
             const isGenPrice = validGenPrices.some(vp => Math.abs(vp - recentConfirmedPayment.value) < 0.1);
 
             let isPlan = !isGen && (desc.includes('assinatura') || desc.includes('plano') || desc.includes('starter') || desc.includes('pro') || desc.includes('black'));
@@ -653,7 +653,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         const usageCount = leads.filter((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS' || l.status === 'APPROVED')).length;
 
         // Pricing Logic
-        let bookPrice = PRICING_RULES['AVULSO'] || 89.90;
+        let bookPrice = PRICING_RULES['AVULSO'] || 39.90;
         let planLabel = 'Avulso';
         let planName = userPlan ? userPlan.name : (pendingPlan ? pendingPlan.name : 'NONE');
 

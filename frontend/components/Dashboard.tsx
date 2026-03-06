@@ -208,7 +208,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const orders = stats?.orders || [];
 
     // --- PRICING REFORMULADO (FIXED PRICE PER PLAN) ---
-    let currentFixedPrice = 89.90; // Default Avulso (Single Purchase)
+    let currentFixedPrice = 39.90; // Default Avulso (Single Purchase)
 
     // ONLY APPLY DISCOUNTS IF PLAN IS ACTIVE
     if (planStatus === 'ACTIVE') {
@@ -330,6 +330,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             )}
                         </div>
                     </div>
+                    {/* LEGACY BANNER: For users who are still active subscribers */}
+                    {planStatus === 'ACTIVE' && planName !== 'FREE' && (
+                        <div className="mt-8 pt-6 border-t border-slate-700/50">
+                            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 flex items-start md:items-center gap-4">
+                                <span className="text-3xl">⚠️</span>
+                                <div>
+                                    <h4 className="text-yellow-500 font-bold mb-1">Atenção: Você tem uma Condição Exclusiva Legacy!</h4>
+                                    <p className="text-slate-300 text-sm leading-relaxed">
+                                        Como assinante fundador, você tem o direito garantido de gerar novos livros pelo valor promocional de <strong>R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</strong> enquanto sua assinatura atual <strong>{planName}</strong> for mantida ativa. Aproveite!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* WHATSAPP VIP GROUP INVITATION */}
@@ -363,136 +377,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     </div>
                 </div>
 
-                {/* PLAN OVERVIEW SECTION */}
-                <div className="bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden text-center border border-slate-800 shadow-2xl">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 via-purple-500 to-indigo-500"></div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 text-left">
-                        {/* LEFT COLUMN */}
-                        <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
-                            <div className="inline-block bg-yellow-400 p-3 rounded-full mb-6 shadow-[0_0_20px_rgba(250,204,21,0.3)]">
-                                <Star className="text-slate-900 w-8 h-8 fill-current" />
-                            </div>
-
-                            <h2 className="text-3xl font-black mb-2 uppercase leading-tight">
-                                PLANO {planName} <br />
-                                <span className="text-indigo-400">{billing === 'annual' ? 'ANUAL' : 'MENSAL'}</span>
-                            </h2>
-                            <p className="text-slate-400 text-sm font-bold tracking-widest uppercase mb-8">
-                                ÁREA VIP DE MEMBROS ASSINANTES
-                            </p>
-
-                            {/* Expiration Logic */}
-                            {stats?.plan?.status === 'ACTIVE' ? (() => {
-                                const start = new Date(stats.plan.startDate || stats.plan.lastPayment || Date.now());
-                                const isAnnual = stats.plan.billing === 'annual';
-                                const expiration = new Date(start);
-                                expiration.setDate(start.getDate() + (isAnnual ? 365 : 30));
-
-                                const now = new Date();
-                                const diffTime = expiration.getTime() - now.getTime();
-                                const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                const isAlert = daysRemaining <= 5 && daysRemaining >= 0;
-
-                                return (
-                                    <div className={`w-full mb-8 p-6 rounded-2xl border ${isAlert ? 'bg-red-500/10 border-red-500/50 animate-pulse' : 'bg-slate-800/50 border-slate-700'}`}>
-                                        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                                            <div>
-                                                <p className="text-xs font-bold uppercase text-slate-400 mb-1">Seu plano vence em:</p>
-                                                <p className={`text-2xl font-black ${isAlert ? 'text-red-400' : 'text-white'}`}>
-                                                    {expiration.toLocaleDateString()}
-                                                </p>
-                                                {isAlert && (
-                                                    <p className="text-sm font-bold text-red-400 mt-1">
-                                                        ⚠️ Restam {daysRemaining} dias!
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="text-center md:text-right md:border-l md:border-slate-600 md:pl-6">
-                                                <p className="text-xs text-slate-400 font-bold uppercase">Renovação</p>
-                                                <p className="text-lg font-bold text-white">
-                                                    R$ {stats?.subscriptionPrice ? stats.subscriptionPrice.toFixed(2).replace('.', ',') : (planName === 'BLACK' ? '79,90' : planName === 'PRO' ? '39,90' : '19,90')} <span className="text-xs font-normal text-slate-500">/{isAnnual ? 'ano' : 'mês'}</span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })() : (
-                                <div className="w-full mb-8 p-6 rounded-2xl bg-slate-800/50 border border-slate-700">
-                                    <p className="text-xs font-bold uppercase text-slate-400 mb-1">Status da Assinatura:</p>
-                                    <p className="text-xl font-bold text-white">GRATUITO / INATIVO</p>
-                                </div>
-                            )}
-
-                            {/* Price Unlock Box */}
-                            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-emerald-500/30 p-6 rounded-2xl w-full relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-16 -mt-16 group-hover:bg-emerald-500/20 transition-all"></div>
-
-                                <p className="text-emerald-400 font-bold text-xs uppercase tracking-wider mb-4 leading-relaxed">
-                                    COM ESTE PLANO ATIVO, SEU CUSTO FIXO POR GERAÇÃO É DE:
-                                </p>
-
-                                <div className="flex flex-col gap-1 items-center lg:items-start">
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-4xl">💰</span>
-                                        <div>
-                                            <span className="text-4xl md:text-5xl font-black text-white tracking-tight">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</span>
-                                            <span className="text-slate-400 text-sm font-bold ml-2">/geração</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-emerald-400 text-xs font-bold uppercase mt-2">✅ Valor Fixo Garantido</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* RIGHT COLUMN */}
-                        <div className="flex flex-col gap-8 lg:border-l lg:border-slate-800 lg:pl-8">
-                            {/* Benefits List */}
-                            <div className="flex-1 space-y-4">
-                                <div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-6">
-                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">O QUE ESTÁ INCLUÍDO:</p>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6">
-                                    <div className="space-y-3">
-                                        {[
-                                            "Acesso à Plataforma Fábrica de Best Sellers",
-                                            "Geração de Livros (14 Capítulos)",
-                                            "Conteúdo Robusto (+160 Páginas)",
-                                            "Diagramação Automática Profissional",
-                                            "Folha de Rosto & Título Diagramadas",
-                                            "Sumário Automático",
-                                            "Histórico de livros gerados",
-                                            "Pág. Agradecimento, Dedicatória e Sobre o Autor",
-                                            "Acesso à Comunidade",
-                                            "Kit de Marketing e Vendas",
-                                            "Suporte Prioritário",
-                                            "Mentoria"
-                                        ].map((item, idx) => (
-                                            <div key={idx} className="flex items-start gap-3 text-sm text-slate-300">
-                                                <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                                                <span className="leading-tight">{item}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-
-                                    <div className="bg-slate-800/30 rounded-xl p-6 border border-slate-700/50 h-max self-start md:w-64 text-center">
-                                        <p className="text-emerald-400 font-bold text-sm uppercase tracking-widest mb-4">Seu Benefício</p>
-                                        <div className="space-y-4">
-                                            <div className="text-3xl font-black text-white">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</div>
-                                            <p className="text-xs text-slate-400 leading-relaxed">
-                                                Preço fixo por livro gerado, exclusivo para assinantes do plano <strong>{planName}</strong>.
-                                            </p>
-                                        </div>
-                                        <div className="mt-6 pt-4 border-t border-slate-700/50">
-                                            <p className="text-[10px] text-emerald-500 uppercase font-black tracking-widest">✅ MELHOR PREÇO GARANTIDO</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                {/* PLAN OVERVIEW SECTION (REMOVED) */}
 
                 {/* History */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

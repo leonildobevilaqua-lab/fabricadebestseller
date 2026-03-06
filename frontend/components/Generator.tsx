@@ -1131,52 +1131,64 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           <div className="grid md:grid-cols-2 gap-6 text-left">
 
             {/* Translations */}
-            {(products.english_book || products.spanish_book) && (
+            {true && (
               <div className="col-span-1 md:col-span-2 bg-gradient-to-r from-purple-50 to-indigo-50 p-6 rounded-xl border border-purple-100 flex flex-col md:flex-row gap-6 items-center">
                 <div className="flex-1">
                   <h4 className="font-bold text-lg text-purple-900 mb-1">Internacionalização (Tradução)</h4>
-                  <p className="text-sm text-purple-700">Alcance leitores em todo o mundo traduzindo sua obra.</p>
+                  <p className="text-sm text-purple-700">Alcance leitores em todo o mundo traduzindo sua obra. (1 Tradução Gratuita Inclusa)</p>
                 </div>
                 <div className="flex gap-3">
                   {language !== 'en' && (
                     <button
                       onClick={() => {
-                        // 1. Open Payment
-                        window.open(products.english_book || 'https://pay.kiwify.com.br/YOUR_LINK', '_blank');
-                        // 2. Ask for confirmation (Simulated "Wait for Payment")
-                        if (confirm("Após confirmar o pagamento na nova aba, clique em OK para iniciar a tradução automática.")) {
-                          fetch(`${API.getApiBase()}/api/projects/${projectId}/translate`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ targetLang: 'en' })
-                          }).then(res => res.json()).then(data => {
-                            alert(data.message);
-                          });
+                        const hasUsedFreeTranslation = project?.metadata?.translations && (project.metadata.translations['es'] || project.metadata.translations['en']);
+
+                        if (hasUsedFreeTranslation && !project?.metadata?.translations?.['en']) {
+                          window.open(products.english_book || 'https://pay.kiwify.com.br/oG5S7uJ', '_blank');
+                          if (!confirm("Após confirmar o pagamento adicional na nova aba, clique em OK para iniciar a 2ª tradução automática.")) return;
+                        } else if (!project?.metadata?.translations?.['en']) {
+                          if (!confirm("Confirmar o uso da sua tradução gratuita para Inglês?")) return;
                         }
+
+                        fetch(`${API.getApiBase()}/api/projects/${projectId}/translate`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ targetLang: 'en' })
+                        }).then(res => res.json()).then(data => {
+                          alert(data.message);
+                        });
                       }}
                       className="bg-white border border-purple-200 text-purple-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-purple-100 shadow-sm flex items-center gap-2"
                     >
-                      🇺🇸 Inglês (R$ 24,90)
+                      {project?.metadata?.translations && project.metadata.translations['en'] ? '🇺🇸 Inglês (Traduzido)' :
+                        (project?.metadata?.translations && project.metadata.translations['es'] ? '🇺🇸 Inglês (R$ 24,90)' : '🇺🇸 Inglês (Grátis)')}
                     </button>
                   )}
 
                   {language !== 'es' && (
                     <button
                       onClick={() => {
-                        window.open(products.spanish_book || 'https://pay.kiwify.com.br/YOUR_LINK', '_blank');
-                        if (confirm("Após confirmar o pagamento na nova aba, clique em OK para iniciar a tradução automática.")) {
-                          fetch(`${API.getApiBase()}/api/projects/${projectId}/translate`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ targetLang: 'es' })
-                          }).then(res => res.json()).then(data => {
-                            alert(data.message);
-                          });
+                        const hasUsedFreeTranslation = project?.metadata?.translations && (project.metadata.translations['es'] || project.metadata.translations['en']);
+
+                        if (hasUsedFreeTranslation && !project?.metadata?.translations?.['es']) {
+                          window.open(products.spanish_book || 'https://pay.kiwify.com.br/oG5S7uJ', '_blank');
+                          if (!confirm("Após confirmar o pagamento adicional na nova aba, clique em OK para iniciar a 2ª tradução automática.")) return;
+                        } else if (!project?.metadata?.translations?.['es']) {
+                          if (!confirm("Confirmar o uso da sua tradução gratuita para Espanhol?")) return;
                         }
+
+                        fetch(`${API.getApiBase()}/api/projects/${projectId}/translate`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ targetLang: 'es' })
+                        }).then(res => res.json()).then(data => {
+                          alert(data.message);
+                        });
                       }}
                       className="bg-white border border-purple-200 text-purple-700 px-4 py-2 rounded-lg text-sm font-bold hover:bg-purple-100 shadow-sm flex items-center gap-2"
                     >
-                      🇪🇸 Espanhol (R$ 24,90)
+                      {project?.metadata?.translations && project.metadata.translations['es'] ? '🇪🇸 Espanhol (Traduzido)' :
+                        (project?.metadata?.translations && project.metadata.translations['en'] ? '🇪🇸 Espanhol (R$ 24,90)' : '🇪🇸 Espanhol (Grátis)')}
                     </button>
                   )}
                 </div>

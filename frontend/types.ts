@@ -21,6 +21,7 @@ export interface BookMetadata {
   autoGenerate?: boolean;
   contentStyle?: string;
   writingTone?: string;
+  translations?: Record<string, any>;
 }
 
 export type JobStatus = 'IDLE' | 'RESEARCHING' | 'WAITING_TITLE' | 'GENERATING_STRUCTURE' | 'WAITING_STRUCTURE' | 'WRITING' | 'WAITING_DETAILS' | 'COMPLETED' | 'FAILED' | 'REVIEW_STRUCTURE' | 'WRITING_CHAPTERS' | 'GENERATING_MARKETING';
