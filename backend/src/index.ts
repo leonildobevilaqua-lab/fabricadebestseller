@@ -14,7 +14,7 @@ import { setVal, getVal, pushVal } from './services/db.service';
 // Inicializa a configuração do Asaas a partir do DB
 (async () => {
     try {
-        const config = (await getVal('/config')) || {};
+        const config = (await getVal('/settings')) || {};
         if (config.asaas_env) {
             process.env.ASAAS_ENV = config.asaas_env;
             console.log(`[BOOT] Asaas Environment set to: ${config.asaas_env}`);
