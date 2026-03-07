@@ -566,6 +566,11 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     const handleSubscribe = async () => {
         if (!selectedPlan || !formData.email) return;
 
+        if (!formData.document || formData.document.trim().length < 11) {
+            alert("Por favor, preencha um CPF ou CNPJ válido nos Dados de Faturamento antes de assinar.");
+            return;
+        }
+
         // Rastreamento Meta Pixel — InitiateCheckout
         const PLAN_PRICES: Record<string, Record<string, number>> = {
             STARTER: { monthly: 19.90, annual: 147.90 },
@@ -620,6 +625,11 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     const handleBookPayment = async () => {
         if (!formData.email) return;
 
+        if (!formData.document || formData.document.trim().length < 11) {
+            alert("Por favor, preencha um CPF ou CNPJ válido nos Dados de Faturamento antes de prosseguir.");
+            return;
+        }
+
         // Rastreamento Meta Pixel — InitiateCheckout (Livro Avulso)
         trackInitiateCheckout('Livro Avulso', 39.90);
 
@@ -634,7 +644,14 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     payer: {
                         name: formData.name,
                         cpfCnpj: formData.document,
-                        phone: formData.phone
+                        phone: formData.phone,
+                        postalCode: formData.cep,
+                        address: formData.address,
+                        addressNumber: formData.addressNumber,
+                        complement: formData.addressComplement,
+                        province: formData.neighborhood,
+                        city: formData.city,
+                        state: formData.state
                     }
                 })
             });
@@ -1362,31 +1379,40 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                         }
                                                     }
 
-                                                    if (needToPaySubscription) {
-                                                        const TEST_USER_DATA = {
-                                                            name: "Usuário Teste",
-                                                            email: "teste@exemplo.com.br",
-                                                            cpf: "000.000.000-00",
-                                                            phone: "+5511999999999",
-                                                            cardLast4: "4242"
-                                                        };
+                                                    const needBillingData = !isVoucher && !paymentConfirmed;
 
+                                                    if (paymentConfirmed) {
+                                                        return (
+                                                            <div className="w-full bg-emerald-900/20 border border-emerald-500/50 p-6 rounded-xl animate-pulse text-center">
+                                                                <div className="flex justify-center mb-4">
+                                                                    <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                                                                </div>
+                                                                <h3 className="text-xl font-bold text-emerald-400 mb-2">PAGAMENTO CONFIRMADO!</h3>
+                                                                <p className="text-emerald-200 mb-4">Iniciando a produção do seu livro automaticamente...</p>
+                                                                <SocialShare className="mt-4" text="Acabei de entrar para a Fábrica de Best Sellers! 🚀" />
+                                                            </div>
+                                                        );
+                                                    }
+
+                                                    if (needBillingData) {
                                                         return (
                                                             <div className="space-y-4">
-                                                                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                                                                    <div className="flex">
-                                                                        <div className="flex-shrink-0">
-                                                                            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                                                                                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                                                                            </svg>
-                                                                        </div>
-                                                                        <div className="ml-3">
-                                                                            <p className="text-sm text-yellow-700">
-                                                                                Você selecionou o plano <strong>{pName}</strong>. Para DESBLOQUEAR as condições EXCLUSIVAS que o plano oferece, por favor, ative sua assinatura.
-                                                                            </p>
+                                                                {needToPaySubscription && (
+                                                                    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                                                                        <div className="flex">
+                                                                            <div className="flex-shrink-0">
+                                                                                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                                                                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                                                                                </svg>
+                                                                            </div>
+                                                                            <div className="ml-3">
+                                                                                <p className="text-sm text-yellow-700">
+                                                                                    Você selecionou o plano <strong>{pName}</strong>. Para DESBLOQUEAR as condições EXCLUSIVAS que o plano oferece, por favor, ative sua assinatura.
+                                                                                </p>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
+                                                                )}
 
                                                                 {/* --- BILLING DATA FORM --- */}
                                                                 <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 mb-4 animate-fade-in">
@@ -1462,12 +1488,24 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <button
-                                                                    onClick={handleSubscribe}
-                                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl text-lg shadow-lg transition-all transform hover:-translate-y-1 block text-center"
-                                                                >
-                                                                    1. ATIVAR ASSINATURA (R$ {subPrice})
-                                                                </button>
+
+                                                                {needToPaySubscription ? (
+                                                                    <button
+                                                                        onClick={handleSubscribe}
+                                                                        className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl text-lg shadow-lg transition-all transform hover:-translate-y-1 block text-center"
+                                                                    >
+                                                                        1. ATIVAR ASSINATURA (R$ {subPrice})
+                                                                    </button>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={handleBookPayment}
+                                                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
+                                                                    >
+                                                                        {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
+                                                                        COMPRAR CRÉDITO AGORA! (R$ {finalPriceStr})
+                                                                    </button>
+                                                                )}
+
                                                                 <p className="text-center text-[10px] text-slate-500 mt-2">
                                                                     Ao clicar, você será redirecionado para o ambiente seguro do Asaas.
                                                                 </p>
@@ -1480,10 +1518,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                     <p className="text-xs text-slate-400 mb-3 text-center">Simular confirmação de pagamento:</p>
 
                                                                     <button
-                                                                        //... existing code
                                                                         onClick={async () => {
-                                                                            if (confirm(`SIMULAR PAGAMENTO DA ASSINATURA?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}\nPlano: ${pName} (${billing})`)) {
-                                                                                // Robust URL Resolution Strategy (Matches Admin.tsx)
+                                                                            if (confirm(`SIMULAR PAGAMENTO?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}`)) {
                                                                                 const getApiBase = () => {
                                                                                     const env = (import.meta as any).env.VITE_API_URL;
                                                                                     if (env) return env;
@@ -1516,13 +1552,12 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                                     });
 
                                                                                     if (res.ok) {
-                                                                                        // Auto-Login and trigger Welcome Modal
                                                                                         localStorage.setItem('bsf_plan_just_activated', 'true');
                                                                                         onStart({
                                                                                             name: formData.name,
                                                                                             email: formData.email,
                                                                                             phone: formData.phone
-                                                                                        }, bookData); // Pass bookData to persist topic info
+                                                                                        }, bookData);
                                                                                     } else {
                                                                                         const txt = await res.text();
                                                                                         alert(`❌ Erro no Servidor (${res.status}):\n${txt}`);
@@ -1549,59 +1584,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                         );
                                                     }
 
-                                                    {/* IIFE FOR STEP 3 UI RENDERING */ }
-                                                    if (paymentConfirmed) {
-                                                        return (
-                                                            <div className="w-full bg-emerald-900/20 border border-emerald-500/50 p-6 rounded-xl animate-pulse text-center">
-                                                                <div className="flex justify-center mb-4">
-                                                                    <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-                                                                </div>
-                                                                <h3 className="text-xl font-bold text-emerald-400 mb-2">PAGAMENTO CONFIRMADO!</h3>
-                                                                <p className="text-emerald-200 mb-4">Iniciando a produção do seu livro automaticamente...</p>
-                                                                <SocialShare className="mt-4" text="Acabei de entrar para a Fábrica de Best Sellers! 🚀" />
-                                                            </div>
-                                                        );
-                                                    }
-
-                                                    if (needToPaySubscription && chosenPlan) {
-                                                        return (
-                                                            <div className="space-y-6 animate-fade-in">
-                                                                <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 text-center">
-                                                                    <p className="text-sm text-slate-300 mb-3">
-                                                                        Se você ainda não efetuou o pagamento da Assinatura que escolheu, clique no botão abaixo para finalizar o processo.
-                                                                    </p>
-                                                                    <button
-                                                                        onClick={() => window.open(subLink, '_blank')}
-                                                                        className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-lg text-sm shadow mb-3 transition-all border border-slate-600"
-                                                                    >
-                                                                        Efetuar o pagamento da Assinatura
-                                                                    </button>
-                                                                    <p className="text-xs text-yellow-500/80">
-                                                                        💡 Com o pagamento da assinatura você <strong>DESBLOQUERÁ</strong> os benefícios do plano escolhido e descontos futuros.
-                                                                    </p>
-                                                                </div>
-                                                                <div>
-                                                                    <button
-                                                                        onClick={handleBookPayment}
-                                                                        className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
-                                                                    >
-                                                                        {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
-                                                                        COMPRAR CRÉDITO AGORA! (R$ {finalPriceStr})
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        );
-                                                    }
-
-                                                    return (
-                                                        <button
-                                                            onClick={handleBookPayment}
-                                                            className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
-                                                        >
-                                                            {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
-                                                            COMPRAR CRÉDITO AGORA! (R$ {finalPriceStr})
-                                                        </button>
-                                                    );
+                                                    return null;
                                                 })()}
 
                                                 {

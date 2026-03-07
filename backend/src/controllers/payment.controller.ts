@@ -951,7 +951,12 @@ export const createCharge = async (req: Request, res: Response) => {
             name: payer?.name || email.split('@')[0],
             email,
             cpfCnpj: payer?.cpfCnpj,
-            phone: payer?.phone
+            phone: payer?.phone,
+            postalCode: payer?.postalCode,
+            address: payer?.address,
+            addressNumber: payer?.addressNumber,
+            complement: payer?.complement,
+            province: payer?.province
         });
         const payment = await AsaasProvider.createPayment(customerId, price, `Geração de Livro - ${type || 'Avulso'} (${cleanPlan})`);
 
