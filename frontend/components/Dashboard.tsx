@@ -22,6 +22,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const [loading, setLoading] = useState(true);
     const [isPurchasing, setIsPurchasing] = useState(false);
     const [hasCredits, setHasCredits] = useState(false);
+    const [pendingInvoice, setPendingInvoice] = useState(false);
+    const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
     // FUNÇÃO 1: GERA O BOLETO/PIX E ABRE O ASAAS
     const handleBuyCredit = async (price: number) => {
@@ -65,28 +67,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const handleVerifyAndEnter = async () => {
         try {
             setLoading(true);
-
-            const getApiBase = () => {
-                const host = window.location.hostname;
-                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-                return 'https://api.fabricadebestseller.com.br';
-            };
-
-            // Pergunta ao servidor: "Eu tenho crédito?"
-            // Using /payment/access as it is our specialized credit checker
             const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
             const data = await res.json();
 
-            // STRICT CHECK: Only entry if credits are actually confirmed.
-            // Ignore 'hasActiveProject' here because this button is specifically for validating a NEW payment.
-            // STRICT CHECK: Only entry if credits are actually confirmed.
+            if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
+                setPendingInvoice(true);
+                setInvoiceUrl(data.invoiceUrl);
+            } else {
+                setPendingInvoice(false);
+            }
+
             if (data.hasAccess && data.credits > 0) {
+                setHasCredits(true);
                 // Determine if there is ANY pending invoice (Subscription or Credit)
                 const isBlockedByPending = (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE');
 
                 if (isBlockedByPending) {
-                    // Even if has credits, if there is a pending invoice, we block the NEW attempt
-                    // to ensure that multiple generation attempts without paying are restricted.
                     alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como PENDENTE no banco.\n\nPor favor, realize o pagamento para continuar com esta geração.`);
                     if (data.invoiceUrl) window.open(data.invoiceUrl, '_blank');
                 } else {
@@ -94,14 +90,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     onNewBook();
                 }
             } else {
+                setHasCredits(false);
                 if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
                     alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação ou realize o pagamento.`);
                     if (data.invoiceUrl) window.open(data.invoiceUrl, '_blank');
                 } else if (data.hasAccess && data.hasActiveProject) {
-                    // Caso ele tenha acesso por projeto ativo mas não tenha créditos (ex: reconectando)
                     onNewBook();
                 } else {
-                    alert('⚠️ Não identificamos créditos disponíveis. Se você acabou de pagar, aguarde alguns instantes e tente novamente.');
+                    alert('⚠️ Não identificamos créditos disponíveis. Se você acabou de pagar, aguarde alguns instantes e verifique novamente.');
                 }
             }
         } catch (error) {
@@ -143,6 +139,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     const payData = await resPayment.json();
                     if (payData.credits > 0) setHasCredits(true);
                     else setHasCredits(false);
+
+                    if (payData.latestInvoiceStatus === 'PENDING' || payData.latestInvoiceStatus === 'OVERDUE') {
+                        setPendingInvoice(true);
+                        setInvoiceUrl(payData.invoiceUrl);
+                    } else {
+                        setPendingInvoice(false);
+                    }
                 }
             } catch (e) {
                 console.error("Failed to fetch dashboard stats", e);
@@ -304,6 +307,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         <span className="text-[10px] opacity-70 font-bold uppercase tracking-widest">Clique para utilizar seu crédito</span>
                                     </button>
                                 </div>
+                            ) : pendingInvoice ? (
+                                <>
+                                    <div className="text-center mb-6">
+                                        <div className="inline-block p-3 bg-yellow-500/20 text-yellow-500 rounded-full mb-2 animate-pulse">
+                                            <Clock size={24} />
+                                        </div>
+                                        <p className="text-sm font-bold text-yellow-400">AGUARDANDO PAGAMENTO</p>
+                                        <p className="text-xs text-slate-400 mt-2">Identificamos uma fatura em aberto.</p>
+                                    </div>
+                                    <div className="flex flex-col gap-3">
+                                        <button
+                                            onClick={handleVerifyAndEnter}
+                                            className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-600"
+                                        >
+                                            <CheckCircle size={18} /> ATUALIZAR STATUS
+                                        </button>
+                                        {invoiceUrl && (
+                                            <a
+                                                href={invoiceUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="w-full text-center text-xs text-slate-400 hover:text-white underline mt-2"
+                                            >
+                                                Pagar Agora / Visualizar Fatura
+                                            </a>
+                                        )}
+                                    </div>
+                                </>
                             ) : (
                                 <>
                                     <div className="text-center mb-6">
@@ -323,7 +354,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             onClick={handleVerifyAndEnter}
                                             className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-600"
                                         >
-                                            <span>✅</span> JÁ PAGUEI - GERAR AGORA
+                                            <CheckCircle size={18} /> JÁ PAGUEI - VERIFICAR
                                         </button>
                                     </div>
                                 </>
