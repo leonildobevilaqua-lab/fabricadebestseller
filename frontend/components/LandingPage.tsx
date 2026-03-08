@@ -1476,7 +1476,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                 )}
 
                                                                 <p className="text-center text-[10px] text-slate-500 mt-2">
-                                                                    Ao clicar, você será redirecionado para o ambiente seguro do Asaas.
+                                                                    Ao clicar, você será redirecionado para o ambiente seguro da Kiwify.
                                                                 </p>
 
                                                                 <div className="my-2 border-t border-slate-700/50"></div>
@@ -1965,14 +1965,14 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         </div>
 
                         <button
-                            onClick={() => startWizard()}
+                            onClick={() => window.open('https://pay.kiwify.com.br/QPTslcx', '_blank')}
                             className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black py-5 px-12 rounded-2xl text-xl shadow-xl shadow-yellow-500/20 transition-all transform hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto"
                         >
                             SUA OBRA PRONTA POR APENAS R$ 39,90
                         </button>
 
                         <p className="mt-6 text-slate-500 text-xs flex items-center justify-center gap-2">
-                            <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Asaas (PIX ou Cartão)
+                            <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Kiwify (PIX ou Cartão)
                         </p>
                     </div>
                 </div>
@@ -2225,7 +2225,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                             {t[lang].upsell.items.package.button}
                                         </a>
                                         <p className="mt-4 text-white/60 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                            <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Asaas
+                                            <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Kiwify
                                         </p>
                                     </div>
                                 </div>
@@ -2379,7 +2379,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                     trackInitiateCheckout={trackInitiateCheckout}
                                 />
                                 <p className="mt-4 text-xs text-slate-500 flex items-center justify-center gap-2">
-                                    <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Asaas (PIX, Boleto, Cartão)
+                                    <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Kiwify (PIX, Boleto, Cartão)
                                 </p>
                             </div>
                         </div>

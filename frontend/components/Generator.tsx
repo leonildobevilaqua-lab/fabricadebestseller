@@ -438,7 +438,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               setUpsellOffer({
                 price: access.bookPrice,
                 planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
-                link: access.checkoutUrl,
+                link: `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(userContact?.email || '')}`,
                 level: access.discountLevel,
                 subscriptionPrice: subPrice,
                 subscriptionLink: "#"
@@ -1098,6 +1098,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             const isCompleted = project?.metadata?.status === 'COMPLETED';
 
             if (isCompleted) {
+              const kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(userContact?.email || '')}`;
+              window.open(kiwifyUrl, '_blank');
               // RESET TO START (Input Form) - FORCE NEW TOPIC
               // We reset to Step 0 (Start) or 1 depending on App logic, but crucial is clearing 'topic'
               setShowUpsell(false);

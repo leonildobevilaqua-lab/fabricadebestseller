@@ -2,7 +2,7 @@
 /**
  * ExtraServices.tsx
  * Componentes para a seção de Serviços Extras da Landing Page.
- * Lógica de pagamento via Asaas (POST /api/payment/extra-service).
+ * Lógica de pagamento via Kiwify (POST /api/payment/extra-service).
  * Após pagamento, equipe contata o cliente por e-mail com detalhes.
  */
 import React, { useState } from 'react';
@@ -164,7 +164,7 @@ const ExtraBuyModal: React.FC<{
                         >
                             {loading ? '⏳ Gerando fatura...' : `💳 Pagar R$ ${formatBRL(price)}`}
                         </button>
-                        <p className="text-center text-xs text-slate-500 mt-3">🔒 Pagamento seguro via Asaas (PIX, Boleto ou Cartão)</p>
+                        <p className="text-center text-xs text-slate-500 mt-3">🔒 Pagamento seguro via Kiwify (PIX, Boleto ou Cartão)</p>
                     </>
                 ) : (
                     <div className="text-center">

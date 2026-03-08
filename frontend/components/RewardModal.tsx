@@ -111,7 +111,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ isOpen, onClose, onCla
                             className="w-full relative overflow-hidden group bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-green-500/20 transform hover:scale-[1.02]"
                         >
                             <span className="relative z-10 flex items-center justify-center gap-2 text-lg">
-                                GERAR LIVRO AGORA! 🚀
+                                {offer?.isCompleted ? 'COMPRAR NOVO CRÉDITO (R$ 39,90)' : 'GERAR LIVRO AGORA! 🚀'}
                             </span>
                             {/* Shine effect */}
                             <div className="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine"></div>
