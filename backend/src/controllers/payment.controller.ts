@@ -521,25 +521,59 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
         } catch (e) { console.error("[ASAAS_FETCH]", e); }
 
-        // FAST TRACK ACTIVATION: Verify very recent payments directly from Asaas.
-        // This solves the issue of users paying and Webhook delaying.
-        // Only checking the last 7 days to prevent old payments from granting ghost credits, but allowing Asaas YYYY-MM-DD truncated dates to pass cleanly.
-        const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+        // KIWIFY FAST-TRACK: Identify confirmed Kiwify orders in our DB that haven't been redeemed yet
+        try {
+            const confirmedKiwifyOrders = orders.filter((o: any) =>
+                o.paymentInfo?.provider === 'KIWIFY' &&
+                (o.status === 'paid' || o.order_status === 'approved' || o.order_status === 'completed') &&
+                o.paymentInfo?.payerEmail?.toLowerCase().trim() === (email as string).toLowerCase().trim()
+            );
 
+            const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+
+            for (const order of confirmedKiwifyOrders) {
+                const txId = order.paymentInfo?.transactionId || order.id || order.order_id;
+                if (!txId || redeemedIds.includes(txId)) continue;
+
+                console.log(`[CHECK_ACCESS] Fast-track Found confirmed Kiwify order ${txId} for ${email}.`);
+
+                const pName = (order.paymentInfo?.product || order.product_name || "").toLowerCase();
+                const isGen = pName.includes('livro') || pName.includes('geração') || pName.includes('geracao');
+                const isPlan = pName.includes('assinatura') || pName.includes('plano') || pName.includes('starter') || pName.includes('pro') || pName.includes('black');
+
+                if (isPlan && (!userPlan || userPlan.status !== 'ACTIVE')) {
+                    userPlan = {
+                        status: 'ACTIVE',
+                        name: pName.includes('black') ? 'BLACK' : pName.includes('pro') ? 'PRO' : 'STARTER',
+                        billing: pName.includes('anual') ? 'annual' : 'monthly',
+                        lastPayment: new Date(),
+                        startDate: new Date(),
+                        provider: 'KIWIFY'
+                    };
+                    await setVal(`/users/${safeEmail}/plan`, userPlan);
+                    console.log(`[CHECK_ACCESS] Activated Kiwify plan via fast-track.`);
+                } else if (isGen || (!isPlan && order.paymentInfo?.amount >= 10)) {
+                    credits += 1;
+                    await setVal(`/credits/${safeEmail}`, credits);
+                    console.log(`[CHECK_ACCESS] Granted Kiwify credit via fast-track.`);
+                }
+
+                redeemedIds.push(txId);
+                await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
+            }
+        } catch (e) {
+            console.error("[KIWIFY_FAST_TRACK_ERROR]", e);
+        }
+
+        // ASAAS FAST-TRACK (Restored)
+        const oneWeekAgo = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
         const recentConfirmedPayments = asaasPayments.filter((p: any) => {
             const isConfirmed = p.status === 'RECEIVED' || p.status === 'CONFIRMED';
             if (!isConfirmed) return false;
-
-            // ABSOLUTE GHOST CREDIT PREVENTION:
-            // Only fast-track the SINGLE most recent invoice. 
-            // This guarantees old payments (even if unredeemed due to DB wipe) will NEVER grant ghost credits.
             const pId = p.invoiceNumber || p.id;
             if (pId !== latestInvoiceNumber) return false;
-
-            // Ensure it's somewhat recent (7 days allowed for Asaas YYYY-MM-DD truncation matching)
             const pDate = new Date(p.paymentDate || p.clientPaymentDate || p.dateCreated);
             if (pDate < oneWeekAgo) return false;
-
             return true;
         });
 
@@ -600,8 +634,8 @@ export const checkAccess = async (req: Request, res: Response) => {
             // --- CRITICAL FIX: Inject Order for Admin Panel (Webhook Delay Fallback) ---
             try {
                 const ordersRaw = await getVal('/orders') || [];
-                const orders = Array.isArray(ordersRaw) ? ordersRaw : Object.values(ordersRaw);
-                const orderExists = orders.some((o: any) => o.paymentInfo?.transactionId === recentConfirmedPayment.id);
+                const orders_fresh = Array.isArray(ordersRaw) ? ordersRaw : Object.values(ordersRaw);
+                const orderExists = orders_fresh.some((o: any) => o.paymentInfo?.transactionId === recentConfirmedPayment.id);
 
                 if (!orderExists) {
                     const paymentInfo = {

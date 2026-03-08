@@ -234,13 +234,24 @@ export const UserAuthController = {
 
         try {
             const passwordHash = await bcrypt.hash(password, 10);
+            const existingUser = await getVal(`/users/${safeEmail}`) || {};
 
             const newUser = {
-                profile: { name, email, cpf, phone },
-                auth: { passwordHash },
-                plan: null, // Será ativado no webhook
-                orders: [],
-                stats: { purchaseCycleCount: 0, createdAt: new Date() }
+                ...existingUser,
+                profile: {
+                    name: name || existingUser.profile?.name,
+                    email: email || existingUser.profile?.email,
+                    cpf: cpf || existingUser.profile?.cpf,
+                    phone: phone || existingUser.profile?.phone
+                },
+                auth: { ...(existingUser.auth || {}), passwordHash },
+                plan: existingUser.plan || null,
+                orders: existingUser.orders || [],
+                stats: {
+                    ...(existingUser.stats || {}),
+                    purchaseCycleCount: existingUser.stats?.purchaseCycleCount || 0,
+                    createdAt: existingUser.stats?.createdAt || new Date()
+                }
             };
 
             await setVal(`/users/${safeEmail}`, newUser);
