@@ -24,11 +24,12 @@ export const pt = {
             { step: "04", title: "Baixe o Arquivo" },
         ],
         faq: [
-            { q: "Como funciona o Vale-Presente?", a: "Você realiza a compra e recebe um link exclusivo. Envie esse link para quem você quiser presentear (ou guarde para você). Ao acessar o link, o sistema libera a criação do livro sem custos." },
-            { q: "O livro vem com capa?", a: "O foco é o miolo diagramado. A capa deve ser criada à parte, mas fornecemos o texto da contracapa e orelhas." },
-            { q: "Posso editar o texto depois?", a: "Sim, o arquivo é seu (DOCX). Você tem total liberdade editorial." },
-            { q: "Serve para publicar na Amazon?", a: "Sim, medidas 6x9 inches (15.24 x 22.86 cm) já configuradas para KDP." },
-            { q: "Quantas páginas?", a: "Garantia de estrutura robusta com mais de 160 páginas geradas." },
+            { q: "Quem detém os direitos autorais do livro gerado?", a: "Você! 100% dos direitos autorais da obra gerada são única e exclusivamente seus. Sendo livre para publicar, vender e colocar seu próprio nome, sem necessidade de repasse ou pagar por royalties." },
+            { q: "A Inteligência Artificial comete plágio?", a: "Não. A nossa inteligência artificial gera conteúdos únicos e inéditos para cada projeto, baseados no tema que você definir." },
+            { q: "O livro vem com capa?", a: "O foco é o miolo diagramado. A capa deve ser criada à parte, mas fornecemos o texto pronto da contracapa e orelhas no final da geração." },
+            { q: "Posso editar o texto depois?", a: "Sim, absolutamente. O arquivo gerado e disponibilizado para download é no formato Word Microsoft (.DOCX), dando total liberdade editorial." },
+            { q: "Serve para publicar na Amazon Kindle (KDP)?", a: "Sim, os livros são formatados no tamanho internacional 6x9 inches (15.24 x 22.86 cm) perfeitamente ajustados e aceitos para KDP impresso e eBook." },
+            { q: "Quanto tempo demora para ficar pronto?", a: "Após a definição e aprovação dos capítulos na plataforma, sua obra é escrita e diagramada em tempo real na sua frente, levando de 15 a 25 minutos." },
         ],
         problemTitle: "Você sempre sonhou em escrever um livro,\nmas parou em um desses obstáculos?",
         problems: [

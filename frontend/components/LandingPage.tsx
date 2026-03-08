@@ -1978,6 +1978,49 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 </div>
             </section>
 
+            {/* SEÇÃO DE AFILIADOS */}
+            <section className="py-24 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-900 relative overflow-hidden border-t border-indigo-500/20 text-center">
+                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
+                <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[120px] pointer-events-none"></div>
+
+                <div className="max-w-4xl mx-auto px-4 relative z-10">
+                    <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-sm font-bold tracking-widest uppercase mb-6 shadow-sm shadow-indigo-500/10">
+                        <span>🤝</span> PARCERIA LUCRATIVA
+                    </div>
+
+                    <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight leading-tight">
+                        Seja um <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Afiliado</span> e Ganhe Dinheiro
+                    </h2>
+
+                    <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
+                        Recomende a tecnologia da Fábrica de Best Sellers e garanta uma <strong className="text-white">comissão de 40% (R$ 13,53)</strong> por cada crédito avulso vendido através do seu link.
+                    </p>
+
+                    <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-3xl p-8 md:p-12 shadow-2xl inline-block max-w-2xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center text-left mb-8">
+                            <div>
+                                <h3 className="text-2xl font-bold text-white mb-2">Comissão Alta</h3>
+                                <p className="text-slate-400">Receba R$ 13,53 direito na sua conta Kiwify por cada indicação bem-sucedida.</p>
+                            </div>
+                            <div>
+                                <h3 className="text-2xl font-bold text-white mb-2">Alta Conversão</h3>
+                                <p className="text-slate-400">Produto único no mercado. A oferta vende praticamente sozinha para autores e aspirantes.</p>
+                            </div>
+                        </div>
+
+                        <a
+                            href="https://dashboard.kiwify.com/join/affiliate/BSkFJDW1"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-black text-xl py-5 px-10 rounded-2xl shadow-xl shadow-indigo-500/30 transition-all transform hover:scale-[1.05] active:scale-[0.98]"
+                        >
+                            🔗 QUERO SER UM AFILIADO AGORA
+                        </a>
+                        <p className="text-xs text-slate-500 mt-4 uppercase tracking-widest font-bold">Processado via Kiwify</p>
+                    </div>
+                </div>
+            </section>
+
             {/* --- UPLOAD SECTION (HIDDEN TEMPORARILY) ---
             <section className="py-20 bg-slate-900 border-t border-slate-800">
                 <div className="max-w-4xl mx-auto px-6 text-center">
@@ -2393,48 +2436,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 </div>
             </section>
 
-            {/* SEÇÃO DE AFILIADOS */}
-            <section className="py-24 bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-900 relative overflow-hidden border-t border-indigo-500/20 text-center">
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>
-                <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-indigo-500/20 rounded-full blur-[120px] pointer-events-none"></div>
-
-                <div className="max-w-4xl mx-auto px-4 relative z-10">
-                    <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-sm font-bold tracking-widest uppercase mb-6 shadow-sm shadow-indigo-500/10">
-                        <span>🤝</span> PARCERIA LUCRATIVA
-                    </div>
-
-                    <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight leading-tight">
-                        Seja um <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Afiliado</span> e Ganhe Dinheiro
-                    </h2>
-
-                    <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        Recomende a tecnologia da Fábrica de Best Sellers e garanta uma <strong className="text-white">comissão de 40% (R$ 13,53)</strong> por cada crédito avulso vendido através do seu link.
-                    </p>
-
-                    <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-3xl p-8 md:p-12 shadow-2xl inline-block max-w-2xl mx-auto">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center text-left mb-8">
-                            <div>
-                                <h3 className="text-2xl font-bold text-white mb-2">Comissão Alta</h3>
-                                <p className="text-slate-400">Receba R$ 13,53 direito na sua conta Kiwify por cada indicação bem-sucedida.</p>
-                            </div>
-                            <div>
-                                <h3 className="text-2xl font-bold text-white mb-2">Alta Conversão</h3>
-                                <p className="text-slate-400">Produto único no mercado. A oferta vende praticamente sozinha para autores e aspirantes.</p>
-                            </div>
-                        </div>
-
-                        <a
-                            href="https://dashboard.kiwify.com/join/affiliate/BSkFJDW1"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-black text-xl py-5 px-10 rounded-2xl shadow-xl shadow-indigo-500/30 transition-all transform hover:scale-[1.05] active:scale-[0.98]"
-                        >
-                            🔗 QUERO SER UM AFILIADO AGORA
-                        </a>
-                        <p className="text-xs text-slate-500 mt-4 uppercase tracking-widest font-bold">Processado via Kiwify</p>
-                    </div>
-                </div>
-            </section>            <footer className="py-12 text-center text-slate-600 border-t border-slate-800">
+            <footer className="py-12 text-center text-slate-600 border-t border-slate-800">
                 <SocialShare className="mb-8" />
                 <p>&copy; {new Date().getFullYear()} Fábrica de Best Sellers. {t[lang].footer.rights}</p>
                 <div className="flex justify-center gap-4 text-xs mt-4">
