@@ -317,9 +317,13 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             }
 
             status = payload.order_status;
+            if (payload.order_status === 'approved' || payload.event === 'order_approved') {
+                status = 'paid';
+            }
             email = payload.Customer?.email || payload.customer?.email;
             productName = payload.Product?.name || payload.product?.name || "Produto";
             amount = (payload.amount || payload.total || 0) / 100;
+            if (!amount && payload.event === 'order_approved') amount = 39.90; // Safeback
             payerName = payload.Customer?.full_name || payload.customer?.full_name;
         }
 
@@ -365,8 +369,8 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 const isExactPrice = generationPrices.some(p => Math.abs(p - amount) < 0.05);
 
                 if (isExactPrice || (amount > 8 && amount < 45)) {
-                    // Treat known subscription amounts as subscriptions, rest as generation
-                    if (Math.abs(amount - 19.90) < 0.05 || Math.abs(amount - 39.90) < 0.05 || Math.abs(amount - 79.90) < 0.05) {
+                    // 39.90 is the new Avulso price, NEVER treat it as subscription fallback anymore
+                    if (Math.abs(amount - 19.90) < 0.05 || Math.abs(amount - 79.90) < 0.05) {
                         isSubscription = true;
                     } else {
                         isBookGeneration = true;

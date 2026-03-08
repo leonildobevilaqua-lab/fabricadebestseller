@@ -25,38 +25,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const [pendingInvoice, setPendingInvoice] = useState(false);
     const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
 
-    // FUNÇÃO 1: GERA O BOLETO/PIX E ABRE O ASAAS
+    // FUNÇÃO 1: REDIRECIONA PARA CHECKOUT KIWIFY
     const handleBuyCredit = async (price: number) => {
         try {
             setLoading(true);
-            setIsPurchasing(true); // Show spinner if needed or just use logic
+            setIsPurchasing(true); // Manter UI em "Waiting"
 
-            const getApiBase = () => {
-                const host = window.location.hostname;
-                if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-                return 'https://api.fabricadebestseller.com.br';
-            };
+            const kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(user.email)}`;
+            const win = window.open(kiwifyUrl, '_blank');
 
-            // Chama o backend para criar a cobrança request
-            const res = await fetch(`${getApiBase()}/api/payment/purchase/book-generation`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: user.email })
-            });
-
-            const data = await res.json();
-
-            if (data.invoiceUrl) {
-                // OBRIGATÓRIO: Abre em nova aba
-                const win = window.open(data.invoiceUrl, '_blank');
-                if (!win) alert("Por favor, permita popups para abrir o pagamento.");
-                setIsPurchasing(true); // Keep UI in "Waiting" state
-            } else {
-                alert('Erro ao gerar cobrança.');
-                setIsPurchasing(false);
-            }
+            if (!win) alert("Por favor, permita popups para abrir o pagamento.");
         } catch (error) {
-            alert('Erro de conexão com o Checkout.');
+            alert('Erro ao tentar abrir o checkout.');
             setIsPurchasing(false);
         } finally {
             setLoading(false);
