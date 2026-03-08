@@ -7,7 +7,7 @@ import { AsaasProvider } from '../services/asaas.provider';
 // FONTE DA VERDADE — PREÇOS FIXOS TABELADOS (Mirror do payment.controller)
 // -----------------------------------------------------------------
 const PRICING_RULES: Record<string, number> = {
-    'AVULSO': 89.90,
+    'AVULSO': 39.90,
     'STARTER_MENSAL': 28.90,
     'STARTER_ANUAL': 24.90,
     'PRO_MENSAL': 18.90,

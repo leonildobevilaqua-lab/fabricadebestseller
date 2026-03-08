@@ -195,7 +195,7 @@ export const UserAuthController = {
             const pName = isPlanActive ? (user.plan?.name || "FREE").toUpperCase() : "FREE";
             const isAnnual = user.plan?.billing === 'annual' || user.plan?.billing === 'anual';
 
-            let nextBookPrice = 89.90; // Default Free
+            let nextBookPrice = 39.90; // Default Free (Kiwify standard)
             if (pName.includes('BLACK')) nextBookPrice = isAnnual ? 8.90 : 9.90;
             else if (pName.includes('PRO')) nextBookPrice = isAnnual ? 14.90 : 18.90;
             else if (pName.includes('STARTER')) nextBookPrice = isAnnual ? 24.90 : 28.90;
