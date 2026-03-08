@@ -16,6 +16,17 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
     const [name, setName] = useState('');
     const [registerSuccess, setRegisterSuccess] = useState('');
 
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const emailParam = params.get('email');
+        const nameParam = params.get('name');
+        const mode = params.get('mode');
+
+        if (emailParam) setEmail(emailParam);
+        if (nameParam) setName(nameParam);
+        if (mode === 'register') setIsRegistering(true);
+    }, []);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
