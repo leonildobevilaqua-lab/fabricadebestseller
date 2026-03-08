@@ -30,6 +30,9 @@ export const pt = {
             { q: "Posso editar o texto depois?", a: "Sim, absolutamente. O arquivo gerado e disponibilizado para download é no formato Word Microsoft (.DOCX), dando total liberdade editorial." },
             { q: "Serve para publicar na Amazon Kindle (KDP)?", a: "Sim, os livros são formatados no tamanho internacional 6x9 inches (15.24 x 22.86 cm) perfeitamente ajustados e aceitos para KDP impresso e eBook." },
             { q: "Quanto tempo demora para ficar pronto?", a: "Após a definição e aprovação dos capítulos na plataforma, sua obra é escrita e diagramada em tempo real na sua frente, levando de 15 a 25 minutos." },
+            { q: "O pagamento é seguro?", a: "Sim, utilizamos a Kiwify, uma das maiores e mais seguras plataformas de pagamentos do Brasil, com criptografia de ponta a ponta." },
+            { q: "Como recebo o acesso após a compra?", a: "Imediatamente após a confirmação do pagamento, você será redirecionado para criar sua senha de acesso e já poderá começar a gerar seu livro." },
+            { q: "Preciso ter conhecimento técnico?", a: "Nenhum! Nossa plataforma foi desenhada para ser intuitiva. Se você sabe digitar um tema, você sabe criar um Best Seller conosco." },
         ],
         problemTitle: "Você sempre sonhou em escrever um livro,\nmas parou em um desses obstáculos?",
         problems: [
