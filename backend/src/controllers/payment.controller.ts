@@ -712,8 +712,8 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
         } catch (e) { }
 
-        const portalAccess = !!((userPlan && userPlan.status === 'ACTIVE') || hasActiveProject);
-        const hasAccess = (credits > 0 || hasActiveProject) && (latestInvoiceStatus !== 'PENDING' && latestInvoiceStatus !== 'OVERDUE');
+        const portalAccess = !!((userPlan && userPlan.status === 'ACTIVE') || hasActiveProject || credits > 0);
+        const hasAccess = (credits > 0) || (hasActiveProject) || (userPlan?.status === 'ACTIVE' && latestInvoiceStatus !== 'OVERDUE');
 
         res.json({
             hasAccess,
