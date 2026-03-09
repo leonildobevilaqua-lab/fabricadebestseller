@@ -52,12 +52,44 @@ export const create = async (req: Request, res: Response) => {
         // if (isLocal) console.log(`[PROJECT] DEV MODE DETECTED: Bypassing Credit Check for ${authorName}`);
 
         if (!isResuming && safeEmail && !isLocal) {
-            const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
 
-            // Check for any manually APPROVED leads (Voucher/Manual) that haven't been consumed?
-            // For now, we rely on 'credits'. 
-            // If the user paid, the webhook added a credit. 
-            // If admin approved 'CREDIT', it added a credit.
+            // --- KIWIFY/ASAAS FAST-TRACK SYNC ---
+            // If credits <= 0, try one last time to sync from raw orders/payments before denying
+            if (credits <= 0) {
+                console.log(`[PROJECT] Credits 0 for ${contact.email}, attempting fast-track sync (KIWIFY/ASAAS)...`);
+                try {
+                    const rawOrders = await getVal('/orders') || [];
+                    const orders = Array.isArray(rawOrders) ? rawOrders : Object.values(rawOrders);
+                    const userEmail = contact.email.toLowerCase().trim();
+
+                    const confirmedOrders = orders.filter((o: any) =>
+                        (o.paymentInfo?.provider === 'KIWIFY' || o.paymentInfo?.provider === 'ASAAS') &&
+                        (o.status === 'paid' || o.order_status === 'approved' || o.order_status === 'completed' || o.paymentInfo?.status === 'CONFIRMED' || o.paymentInfo?.status === 'RECEIVED') &&
+                        (o.paymentInfo?.payerEmail?.toLowerCase().trim() === userEmail || o.email?.toLowerCase().trim() === userEmail)
+                    );
+
+                    const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+
+                    for (const order of confirmedOrders) {
+                        const txId = order.paymentInfo?.transactionId || order.id || order.order_id;
+                        if (!txId || redeemedIds.includes(txId)) continue;
+
+                        const pName = (order.paymentInfo?.product || order.product_name || order.description || "").toLowerCase();
+                        const isGen = pName.includes('livro') || pName.includes('geração') || pName.includes('geracao');
+
+                        if (isGen || (order.paymentInfo?.amount || order.amount) >= 10) {
+                            credits += 1;
+                            await setVal(`/credits/${safeEmail}`, credits);
+                            redeemedIds.push(txId);
+                            await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
+                            console.log(`[PROJECT] Fast-track granted ${order.paymentInfo?.provider} credit to ${contact.email} during project creation.`);
+                        }
+                    }
+                } catch (e) {
+                    console.error("[PROJECT_FAST_TRACK_ERROR]", e);
+                }
+            }
 
             if (credits <= 0) {
                 console.log(`[PROJECT] Denied creation for ${contact.email}: No credits. Creating PENDING lead.`);
@@ -394,13 +426,45 @@ export const startResearch = async (req: Request, res: Response) => {
             }
         }
 
-        // ACCESS CHECK DISABLED at Step 2 per business rule: Payment is validated at entry.
-        // if (!hasAccess) {
-        // console.warn(`[startResearch] BLOCKED ${userEmail}. Ledger: ${(await getVal(`/credits/${(userEmail as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_')}`)) || 0} Status: ${currentStatus}`);
-        // return res.status(402).json({ error: "Aguardando confirmação de pagamento. (Passo 2)", code: "PAYMENT_REQUIRED", details: `Email: ${userEmail}, Status: ${currentStatus}` });
-        // }
-        // Force Access for Flow Continuity
-        hasAccess = true;
+        // 4. KIWIFY/ASAAS FAST-TRACK (Final Attempt)
+        if (!hasAccess) {
+            try {
+                const rawOrders = await getVal('/orders') || [];
+                const orders = Array.isArray(rawOrders) ? rawOrders : Object.values(rawOrders);
+                const userEmailLower = userEmail.toLowerCase().trim();
+                const confirmedOrders = orders.filter((o: any) =>
+                    (o.paymentInfo?.provider === 'KIWIFY' || o.paymentInfo?.provider === 'ASAAS') &&
+                    (o.status === 'paid' || o.order_status === 'approved' || o.order_status === 'completed' || o.paymentInfo?.status === 'CONFIRMED' || o.paymentInfo?.status === 'RECEIVED') &&
+                    (o.paymentInfo?.payerEmail?.toLowerCase().trim() === userEmailLower || o.email?.toLowerCase().trim() === userEmailLower)
+                );
+
+                const safeEmail = userEmailLower.replace(/[^a-zA-Z0-9]/g, '_');
+                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+
+                for (const order of confirmedOrders) {
+                    const txId = order.paymentInfo?.transactionId || order.id || order.order_id;
+                    if (!txId || redeemedIds.includes(txId)) continue;
+
+                    const pName = (order.paymentInfo?.product || order.product_name || order.description || "").toLowerCase();
+                    const isGen = pName.includes('livro') || pName.includes('geração') || pName.includes('geracao');
+
+                    if (isGen || (order.paymentInfo?.amount || order.amount) >= 10) {
+                        hasAccess = true;
+                        console.log(`[startResearch] Granted Access via ${order.paymentInfo?.provider} Fast-track for ${userEmail}`);
+                        break;
+                    }
+                }
+            } catch (e) { console.error("[startResearch] Fast-track error", e); }
+        }
+
+        if (!hasAccess) {
+            console.warn(`[startResearch] BLOCKED ${userEmail}. Status: ${currentStatus}`);
+            return res.status(402).json({
+                error: "Você precisa adquirir um crédito ou aguardar a confirmação do pagamento para gerar este livro.",
+                code: "PAYMENT_REQUIRED",
+                details: `Email: ${userEmail}`
+            });
+        }
     }
 
     // Update status and ensure language is in metadata (even if in-memory)

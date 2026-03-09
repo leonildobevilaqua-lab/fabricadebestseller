@@ -133,7 +133,8 @@ const App: React.FC = () => {
   const handleLoginSuccess = (data: any) => {
     setUserContact({
       name: data.user.name,
-      email: data.user.email
+      email: data.user.email,
+      phone: data.user.phone || data.user.profile?.phone || ''
     });
     localStorage.setItem('bsf_token', data.token);
     setHasAccess(true);

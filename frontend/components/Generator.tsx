@@ -493,8 +493,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         fetch(`${API.getApiBase()}/api/payment/check-access?email=${userContact.email}&t=${Date.now()}`)
           .then(r => r.json())
           .then(access => {
-            // If we confirmed it's a payment error, OR if access check says no access
-            if (isPaymentError || !access.hasAccess) {
+            // If we confirmed it's a payment error AND access check ALSO says no access
+            if (!access.hasAccess || access.credits <= 0) {
               setUpsellOffer({
                 price: access.bookPrice,
                 planName: access.plan?.name || "STARTER",
@@ -504,14 +504,18 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               setShowPaymentGate(true);
               setError(null); // Clear generic error
             } else {
-              // Access seems OK, but startResearch failed for other reasons
-              const msg = isPaymentError ? "Pagamento necessário." : (e.message || String(e));
-              setError(`Debug Loop 1: ${msg}`);
+              // Access seems OK, but createProject failed. 
+              // This might be a sync delay. Try to reset and retry once after a short delay.
+              console.log("Access confirmed but creation failed. Retrying...");
+              setTimeout(() => {
+                initialized.current = false;
+                initProject();
+              }, 2000);
             }
           })
           .catch(err => {
             console.error("Access check fail", err);
-            setError(`Debug Loop 2: ${err.message || String(err)}`);
+            setError(`Erro ao validar acesso: ${err.message || String(err)}`);
           });
         return;
       }
