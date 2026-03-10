@@ -307,32 +307,45 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             productName = pm.description || "Assinatura"; // Asaas description
         } else {
             // KIWIFY (Default)
+            // Support for NEW nested order structure (from user payload)
+            const kiwifyData = payload.order || payload;
+
             // Check for Token (User provided: 9f1su6po412)
-            const token = req.query.token || req.body.token || req.params.token;
+            const token = req.query.token || req.body.token || req.params.token || payload.signature;
             if (token) {
-                console.log("Kiwify Token present:", token);
+                console.log("Kiwify/Asaas Token/Signature present:", token);
+                // We log but don't block yet to ensure service continuity
                 if (token === '9f1su6po412') console.log("Token MATCHES production key.");
-                else console.warn("Token mismatch! Expected 9f1su6po412");
-            } else {
-                console.log("No Kiwify token found in request (Safe to ignore if not configured in dashboard, but user provided one).");
             }
 
-            status = payload.order_status || payload.status || (payload.event === 'order_approved' ? 'approved' : '');
+            // Status normalization
+            status = kiwifyData.order_status || kiwifyData.status || (payload.webhook_event_type === 'order_approved' ? 'approved' : '');
 
-            if (status === 'approved' || status === 'completed' || status === 'paid' || payload.event === 'order_approved') {
+            if (status === 'approved' || status === 'completed' || status === 'paid' || payload.webhook_event_type === 'order_approved' || payload.event === 'order_approved') {
                 status = 'paid';
             }
 
-            email = payload.Customer?.email || payload.customer?.email || payload.email;
-            productName = payload.Product?.name || payload.product?.name || payload.product_name || "Produto";
-            amount = (payload.amount || payload.total || payload.order_amount || 0) / 100;
+            // Field mapping (robustness for different versions)
+            email = kiwifyData.Customer?.email || kiwifyData.customer?.email || kiwifyData.email || payload.email;
+            productName = kiwifyData.Product?.product_name || kiwifyData.Product?.name || kiwifyData.product?.name || kiwifyData.product_name || "Produto";
 
-            // Pix fix: If amount is still 0 but it's approved, try fetching from other keys
-            if (!amount) amount = Number(payload.amount_decimal || payload.value || 0);
+            // Amount mapping (Kiwify sends in cents in 'Commissions' or 'amount')
+            const rawAmount = kiwifyData.Commissions?.charge_amount || kiwifyData.amount || kiwifyData.total || kiwifyData.order_amount || 0;
+            amount = Number(rawAmount) / 100;
 
-            if (!amount && status === 'paid') amount = 39.90; // Emergency Safeback
+            // Fix: If amount is STILL 0 but it's approved, try fetching directly from decimal fields
+            if (!amount) amount = Number(kiwifyData.amount_decimal || kiwifyData.value || 0);
 
-            payerName = payload.Customer?.full_name || payload.customer?.full_name || payload.customer_name;
+            if (!amount && status === 'paid') amount = 39.90; // Emergency fallback
+
+            payerName = kiwifyData.Customer?.full_name || kiwifyData.customer?.full_name || kiwifyData.customer_name || kiwifyData.Customer?.first_name || "Produtor";
+
+            // Capture Order Reference (Sale ID) if available
+            const orderRef = kiwifyData.order_ref || kiwifyData.order_id || payload.order_id;
+            if (orderRef) {
+                // Attach to payload for the next processing step
+                (payload as any)._txId = orderRef;
+            }
         }
 
         // --- EMERGENCY LOGGING: Always save the order to DB for Fast-Track visibility ---
@@ -343,7 +356,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 amount: amount,
                 product: productName,
                 provider: isAsaas ? 'ASAAS' : 'KIWIFY',
-                transactionId: payload.id || payload.payment?.id || payload.order_id || uuidv4(),
+                transactionId: (payload as any)._txId || payload.id || payload.payment?.id || payload.order_id || uuidv4(),
                 env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
             };
 
@@ -367,7 +380,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 amount: amount,
                 product: productName,
                 provider: isAsaas ? 'ASAAS' : 'KIWIFY',
-                transactionId: payload.id || payload.payment?.id || payload.order_id || uuidv4(),
+                transactionId: (payload as any)._txId || payload.id || payload.payment?.id || payload.order_id || uuidv4(),
                 env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
             };
 
