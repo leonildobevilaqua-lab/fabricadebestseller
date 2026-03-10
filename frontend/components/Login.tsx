@@ -22,9 +22,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
         const nameParam = params.get('name');
         const mode = params.get('mode');
 
-        // Prevent literal placeholders like {email} from being filled
-        if (emailParam && !emailParam.includes('{email}')) setEmail(emailParam);
-        if (nameParam && !nameParam.includes('{name}')) setName(nameParam);
+        // Prevent literal placeholders like {{email}} or {{full_name}} from being filled
+        if (emailParam && !emailParam.includes('{') && !emailParam.includes('}')) setEmail(emailParam);
+        if (nameParam && !nameParam.includes('{') && !nameParam.includes('}')) setName(nameParam);
         if (mode === 'register') setIsRegistering(true);
     }, []);
 

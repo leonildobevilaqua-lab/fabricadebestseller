@@ -259,10 +259,11 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
         let isAsaas = false;
 
         // --- DETECT PROVIDER ---
-        if (payload.event && payload.payment) {
-            // ASAAS
+        // Asaas typically uses 'event' and 'payment', but 'payment.customer' is a strong indicator of Asaas.
+        if (payload.event && payload.payment && payload.payment.customer) {
+            // ASAAS (Confirmed)
             isAsaas = true;
-            console.log("Identifying Asaas Webhook");
+            console.log("Identifying Asaas Webhook (Confirmed by customer ID)");
             const evt = payload.event;
             const pm = payload.payment;
 
@@ -316,32 +317,59 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 console.log("No Kiwify token found in request (Safe to ignore if not configured in dashboard, but user provided one).");
             }
 
-            status = payload.order_status;
-            if (payload.order_status === 'approved' || payload.event === 'order_approved') {
+            status = payload.order_status || payload.status || (payload.event === 'order_approved' ? 'approved' : '');
+
+            if (status === 'approved' || status === 'completed' || status === 'paid' || payload.event === 'order_approved') {
                 status = 'paid';
             }
-            email = payload.Customer?.email || payload.customer?.email;
-            productName = payload.Product?.name || payload.product?.name || "Produto";
-            amount = (payload.amount || payload.total || 0) / 100;
-            if (!amount && payload.event === 'order_approved') amount = 39.90; // Safeback
-            payerName = payload.Customer?.full_name || payload.customer?.full_name;
+
+            email = payload.Customer?.email || payload.customer?.email || payload.email;
+            productName = payload.Product?.name || payload.product?.name || payload.product_name || "Produto";
+            amount = (payload.amount || payload.total || payload.order_amount || 0) / 100;
+
+            // Pix fix: If amount is still 0 but it's approved, try fetching from other keys
+            if (!amount) amount = Number(payload.amount_decimal || payload.value || 0);
+
+            if (!amount && status === 'paid') amount = 39.90; // Emergency Safeback
+
+            payerName = payload.Customer?.full_name || payload.customer?.full_name || payload.customer_name;
+        }
+
+        // --- EMERGENCY LOGGING: Always save the order to DB for Fast-Track visibility ---
+        if (email) {
+            const tempPaymentInfo = {
+                payer: payerName || "Desconhecido",
+                payerEmail: email,
+                amount: amount,
+                product: productName,
+                provider: isAsaas ? 'ASAAS' : 'KIWIFY',
+                transactionId: payload.id || payload.payment?.id || payload.order_id || uuidv4(),
+                env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
+            };
+
+            const orderRecord = {
+                ...payload,
+                date: new Date(),
+                status: status === 'paid' ? 'paid' : status,
+                paymentInfo: tempPaymentInfo
+            };
+
+            await pushVal('/orders', orderRecord);
+            console.log(`[WEBHOOK] Order logged for ${email} (${status})`);
         }
 
         if (status === 'paid' && email) {
             console.log(`Payment confirmed for ${email} - Product: ${productName}`);
 
-            // Extract Payment Info
             const paymentInfo = {
                 payer: payerName || "Desconhecido",
                 payerEmail: email,
                 amount: amount,
                 product: productName,
                 provider: isAsaas ? 'ASAAS' : 'KIWIFY',
-                transactionId: payload.id || payload.payment?.id,
+                transactionId: payload.id || payload.payment?.id || payload.order_id || uuidv4(),
                 env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
             };
-
-            await pushVal('/orders', { ...payload, date: new Date(), paymentInfo });
 
             const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 

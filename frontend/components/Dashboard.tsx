@@ -57,16 +57,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 setPendingInvoice(false);
             }
 
-            if (data.hasAccess && data.credits > 0) {
-                setHasCredits(true);
-                // Determine if there is ANY pending invoice (Subscription or Credit)
-                const isBlockedByPending = (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE');
+            if (data.hasAccess && (data.credits > 0 || data.hasActiveProject)) {
+                setHasCredits(data.credits > 0);
 
-                if (isBlockedByPending) {
-                    alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como PENDENTE no banco.\n\nPor favor, realize o pagamento para continuar com esta geração.`);
-                    if (data.invoiceUrl) window.open(data.invoiceUrl, '_blank');
+                // --- CRITICAL FIX: IF USER HAS CREDITS, WE DO NOT BLOCK THEM WITH INVOICE ALERTS ---
+                // We only show the invoice alert if they have NO credits and NO active project.
+                // Or if they are trying to generate and the BACKEND says they are blocked (but our new backend allows credits).
+
+                if (data.credits > 0 || data.hasActiveProject) {
+                    console.log('Confirmed Access via Credits/Project');
+                    onNewBook();
                 } else {
-                    alert('Pagamento Confirmado! Iniciando Geração...');
+                    // This part might be reached if hasAccess is true but credits/activeProject are false (unlikely with our logic)
+                    alert('Acesso autorizado.');
                     onNewBook();
                 }
             } else {
@@ -74,8 +77,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
                     alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação ou realize o pagamento.`);
                     if (data.invoiceUrl) window.open(data.invoiceUrl, '_blank');
-                } else if (data.hasAccess && data.hasActiveProject) {
-                    onNewBook();
                 } else {
                     alert('⚠️ Não identificamos créditos disponíveis. Se você acabou de pagar, aguarde alguns instantes e verifique novamente.');
                 }
