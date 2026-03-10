@@ -372,7 +372,8 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
         }
 
         if (status === 'paid' && email) {
-            console.log(`Payment confirmed for ${email} - Product: ${productName}`);
+            const saleId = (payload as any)._txId || "N/A";
+            console.log(`[WEBHOOK] PAYMENT CONFIRMED! | Sale ID: ${saleId} | Email: ${email} | Product: ${productName}`);
 
             const paymentInfo = {
                 payer: payerName || "Desconhecido",
