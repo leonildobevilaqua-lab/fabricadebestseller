@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { PenTool, Download, Star, CheckCircle, Clock, MessageCircle, ExternalLink } from 'lucide-react';
 import { SocialShare } from './SocialShare';
 import { getApiBase } from '../services/api';
-import { ExtraServiceCard } from './ExtraServices';
+import { ExtraServiceCard, ExtraServiceBuyButton } from './ExtraServices';
 
 // Inline Icons fallback
 const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
@@ -389,9 +389,33 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     </div>
                 </div>
 
-                {/* PLAN OVERVIEW SECTION (REMOVED) */}
+                {/* [NEW] VIDEO SECTION */}
+                <div className="bg-white rounded-3xl p-6 md:p-10 border border-slate-200 shadow-xl overflow-hidden">
+                    <div className="text-center mb-8">
+                        <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight leading-tight">
+                            ASSISTA A ESTE VÍDEO E VEJA AS ÚNICAS ALTERAÇÕES QUE VOCÊ PRECISARÁ FAZER NO SEU LIVRO GERADO!
+                        </h3>
+                    </div>
+                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-slate-100 flex items-center justify-center border border-slate-200">
+                        {/* Placeholder for Video - Update src with real link when available */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50">
+                            <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-xl mb-4 animate-pulse">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
+                            </div>
+                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Aguardando Link do Vídeo</p>
+                        </div>
+                        <iframe
+                            className="absolute inset-0 w-full h-full"
+                            src="https://www.youtube.com/embed/dQw4w9WgXcQ" // Generic placeholder
+                            title="Vídeo de Instruções"
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                        ></iframe>
+                    </div>
+                </div>
 
-                {/* History */}
+                {/* History (Meus Livros) */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                         <h3 className="font-bold text-slate-800 text-lg">Meus Livros</h3>
@@ -455,9 +479,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     )}
                 </div>
 
-                <div className="pt-8 border-t border-slate-200">
-                    <ExtraServiceSection formData={{ email: user?.email, name: user?.name, phone: user?.phone }} />
-                </div>
+                {/* Extra Services Section (Re-implemented with Landing Page Design) */}
+                <ExtraServiceSection formData={{ email: user?.email, name: user?.name, phone: user?.phone }} />
 
                 <div className="pt-8 border-t border-slate-200">
                     <SocialShare
@@ -471,33 +494,161 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     );
 };
 
+// --- [RE-IMPLEMENTED] EXTRA SERVICE SECTION (LANDING PAGE STYLE) ---
 const ExtraServiceSection = ({ formData }: { formData: any }) => {
     return (
-        <div className="py-8">
-            <div className="mb-8">
-                <h3 className="text-xl font-black text-slate-800 uppercase tracking-wider mb-2">Serviços Extras</h3>
-                <p className="text-slate-500 text-sm">Contrate serviços profissionais para levar sua obra ao próximo nível.</p>
-            </div>
+        <section className="py-12 bg-slate-950 rounded-[40px] relative overflow-hidden shadow-2xl border border-slate-800">
+            <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950"></div>
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                    { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, color: 'blue' },
-                    { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, color: 'blue' },
-                    { key: 'capa-impressa', icon: '🎨', title: 'Capa — Livro Impresso', subtitle: 'Design para KDP / UICLAP', price: 250.00, color: 'purple' },
-                    { key: 'amazon-impresso', icon: '🚀', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico', price: 69.90, color: 'orange' },
-                ].map(svc => (
-                    <ExtraServiceCard
-                        key={svc.key}
-                        serviceId={svc.key}
-                        {...svc as any}
-                        accentColor={svc.color as any}
-                        features={[]} // Simplified for dashboard
-                        formData={formData}
-                        getApiBase={getApiBase}
-                        trackInitiateCheckout={() => { }}
-                    />
-                ))}
+            <div className="relative max-w-6xl mx-auto px-6">
+                <div className="text-center mb-12">
+                    <span className="inline-block bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-4 py-2 rounded-full border border-emerald-500/20 uppercase tracking-widest mb-4">
+                        Serviços Extras Profissionais
+                    </span>
+                    <h2 className="text-3xl md:text-4xl font-black text-white mb-4 uppercase tracking-tight">
+                        Transforme Seu Livro em <span className="text-emerald-400">Produto de Mercado</span>
+                    </h2>
+                    <p className="text-slate-500 text-sm max-w-2xl mx-auto font-medium">
+                        Contrate separadamente ou em Pacote Completo com desconto. Atendimento via e-mail pós-pagamento.
+                    </p>
+                </div>
+
+                {/* ── TRADUÇÃO ── */}
+                <div className="mb-10">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center justify-center text-sm">🌍</div>
+                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Tradução</h3>
+                        <div className="flex-1 h-px bg-blue-500/20"></div>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        {[
+                            { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX pronto'] },
+                            { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX pronto'] },
+                        ].map(svc => (
+                            <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="blue" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── DESIGN DE CAPA ── */}
+                <div className="mb-10">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-lg flex items-center justify-center text-sm">🎨</div>
+                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Design de Capa</h3>
+                        <div className="flex-1 h-px bg-purple-500/20"></div>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                        {[
+                            { key: 'capa-impressa', icon: '📗', title: 'Capa — Livro Impresso', subtitle: 'Design profissional para KDP / UICLAP', price: 250.00, features: ['Dimensões exatas para impressão', 'Capa + Lombada + Contra-capa', 'Arquivo PDF Alta Resolução'] },
+                            { key: 'capa-digital', icon: '📱', title: 'Capa — Livro Digital', subtitle: 'Design otimizado para Amazon Kindle', price: 149.90, features: ['Formato 1600×2560px', 'JPG e PNG em alta qualidade', 'Otimizado para lojas digitais'] },
+                        ].map(svc => (
+                            <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="purple" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── PUBLICAÇÃO ── */}
+                <div className="mb-10">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center text-sm">🚀</div>
+                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Publicação</h3>
+                        <div className="flex-1 h-px bg-orange-500/20"></div>
+                    </div>
+                    <div className="grid sm:grid-cols-3 gap-4">
+                        {[
+                            { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico global', price: 69.90, features: ['Upload e configuração KDP', 'Revisão de formato e margens'] },
+                            { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Publicação do ebook Kindle', price: 59.90, features: ['Upload Kindle Direct Publishing', 'Revisão do arquivo mobi/epub'] },
+                            { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Impresso', subtitle: 'Publicação na maior plataforma BR', price: 59.90, features: ['Cadastro e upload UICLAP', 'Disponível sob demanda'] },
+                        ].map(svc => (
+                            <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="orange" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── REGISTROS LEGAIS ── */}
+                <div className="mb-12">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-amber-500/20 border border-amber-500/30 rounded-lg flex items-center justify-center text-sm">📋</div>
+                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Registros Legais</h3>
+                        <div className="flex-1 h-px bg-amber-500/20"></div>
+                    </div>
+                    <div className="grid sm:grid-cols-3 gap-4">
+                        {[
+                            { key: 'ficha-catalografica', icon: '🗂️', title: 'Ficha Catalográfica', subtitle: 'Obrigatória para gráficas', price: 59.90, features: ['Padrão AACR2 / RDA', 'Emitida por bibliotecária'] },
+                            { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Livro Impresso', subtitle: 'Registro oficial na CBL', price: 49.90, features: ['Número ISBN único', 'Código de barras incluso'] },
+                            { key: 'isbn-digital', icon: '📗', title: 'ISBN — Livro Digital', subtitle: 'Registro oficial edição digital', price: 49.90, features: ['Número ISBN único', 'Pronto para E-book'] },
+                        ].map(svc => (
+                            <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="amber" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
+                        ))}
+                    </div>
+                </div>
+
+                {/* ── PACOTE COMPLETO ── */}
+                <div className="relative bg-gradient-to-br from-emerald-900/30 via-slate-800/60 to-slate-900 border border-emerald-500/40 rounded-3xl p-8 shadow-2xl">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-900 text-[10px] font-black px-6 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+                        🔥 MAIOR ECONOMIA
+                    </div>
+
+                    <div className="flex flex-col md:flex-row gap-8 items-center justify-between">
+                        <div className="flex-1">
+                            <h3 className="text-2xl font-black text-white mb-2 uppercase">Pacote Completo</h3>
+                            <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                                Tradução (EN+ES) + Capa Impressa + Publicação Amazon + ISBN + Ficha Catalográfica.
+                            </p>
+                            <div className="flex flex-wrap gap-x-4 gap-y-2">
+                                {['🌍 Tradução', '📗 Capa', '🚀 Amazon', '🔢 ISBN', '🗂️ Ficha'].map((item, i) => (
+                                    <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-300 bg-slate-800/50 px-2 py-1 rounded-lg">
+                                        <span className="w-1 h-1 rounded-full bg-emerald-400"></span>
+                                        {item}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="text-center md:text-right">
+                            <div className="flex items-end justify-center md:justify-end gap-1 mb-4">
+                                <span className="text-slate-500 text-sm mb-1">R$</span>
+                                <span className="text-5xl font-black text-white tracking-tighter">599,90</span>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    // Using standard modal trigger for the button
+                                    const btn = document.getElementById('btn-extra-pacote-completo');
+                                    if (btn) btn.click();
+                                }}
+                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black px-8 py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 uppercase text-xs tracking-widest"
+                            >
+                                Contratar Pacote Completo
+                            </button>
+                            {/* Hidden internal button for logic */}
+                            <div className="hidden">
+                                <ExtraServiceBuyButton
+                                    serviceKey="pacote-completo"
+                                    serviceName="Pacote Completo de Serviços"
+                                    price={599.90}
+                                    label="Contratar Pacote Completo"
+                                    accentClass="bg-emerald-500"
+                                    formData={formData}
+                                    getApiBase={getApiBase}
+                                    trackInitiateCheckout={() => { }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-8 text-center">
+                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">
+                        🔒 Pagamento Seguro via Kiwify · Suporte via E-mail
+                    </p>
+                </div>
             </div>
-        </div>
+        </section>
     );
 }
+
+const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>;
+const IconZap = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
+const IconGlobe = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>;
+const IconPalette = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5" /><circle cx="17.5" cy="10.5" r=".5" /><circle cx="8.5" cy="7.5" r=".5" /><circle cx="6.5" cy="12.5" r=".5" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H17c2.8 0 5-2.2 5-5 0-5.5-4.5-10-10-10z" /></svg>;
