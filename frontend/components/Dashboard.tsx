@@ -396,17 +396,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             ASSISTA A ESTE VÍDEO E VEJA AS ÚNICAS ALTERAÇÕES QUE VOCÊ PRECISARÁ FAZER NO SEU LIVRO GERADO!
                         </h3>
                     </div>
-                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-slate-100 flex items-center justify-center border border-slate-200">
-                        {/* Placeholder for Video - Update src with real link when available */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50">
-                            <div className="w-20 h-20 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-xl mb-4 animate-pulse">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-                            </div>
-                            <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Aguardando Link do Vídeo</p>
-                        </div>
+                    <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-200">
                         <iframe
                             className="absolute inset-0 w-full h-full"
-                            src="https://www.youtube.com/embed/dQw4w9WgXcQ" // Generic placeholder
+                            src="https://www.youtube.com/embed/uBvagSevkaI"
                             title="Vídeo de Instruções"
                             frameBorder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
