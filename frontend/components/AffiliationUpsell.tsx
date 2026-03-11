@@ -22,9 +22,8 @@ export const AffiliationUpsell: React.FC = () => {
 
     const handleCTAClick = () => {
         trackInitiateCheckout('Afiliacao - Pasta Secreta', 99.90);
-        // Track purchase as well if it's the final upsell step according to briefing logic
         trackPurchase(99.90, 'BRL', 'Afiliacao - Pasta Secreta');
-        window.open('https://dashboard.kiwify.com/join/affiliate/BSkFJDW1', '_blank', 'noopener,noreferrer');
+        window.open('https://pay.kiwify.com.br/eAZIvMi', '_blank', 'noopener,noreferrer');
     };
 
     return (
@@ -108,6 +107,15 @@ export const AffiliationUpsell: React.FC = () => {
                                 SIM! QUERO ACESSO À PASTA SECRETA E ME AFILIAR
                                 <ChevronRight size={20} />
                             </button>
+
+                            <a 
+                                href="/login"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="block w-full mt-4 py-4 border border-blue-500/30 text-blue-400 font-bold uppercase text-center hover:bg-blue-500/10 transition-all text-[10px] tracking-widest"
+                            >
+                                Já sou membro? Ir para o Login
+                            </a>
                             
                             <p className="mt-4 text-[10px] text-gray-500 text-center font-bold uppercase tracking-widest">
                                 🔒 Acesso imediato à área VIP de criativos
@@ -145,8 +153,8 @@ export const AffiliationUpsell: React.FC = () => {
                             <div className="flex gap-4 p-4 hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 rounded-sm">
                                 <Download className="text-blue-500 shrink-0" size={24} />
                                 <div>
-                                    <h4 className="font-black uppercase text-sm mb-1 tracking-widest">Pasta Secreta</h4>
-                                    <p className="text-gray-400 text-sm leading-relaxed">Download imediato de todo o material validado para lucro de R$ 1.000,00/dia.</p>
+                                    <h4 className="font-black uppercase text-sm mb-1 tracking-widest">Acesso imediato</h4>
+                                    <p className="text-gray-400 text-sm leading-relaxed">Acesso imediato a todo o material de marketing validado que me fizeram lucrar mais de R$ 1.000,00 por dia.</p>
                                 </div>
                             </div>
                             <div className="flex gap-4 p-4 hover:bg-white/5 transition-colors border border-transparent hover:border-white/10 rounded-sm">

@@ -416,6 +416,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             <h3 className="text-2xl md:text-3xl font-black text-white mb-3 uppercase tracking-tight">
                                 Torne-se um Representante Autorizado e Lucre com a Nossa Estrutura! 🚀
                             </h3>
+                            <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-2xl bg-black border border-slate-700 mb-6">
+                                <iframe 
+                                    className="absolute inset-0 w-full h-full"
+                                    src="https://www.youtube.com/embed/qyZ5F1oZJyg"
+                                    title="Vídeo de Representante"
+                                    frameBorder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                ></iframe>
+                            </div>
                             <p className="text-slate-400 text-lg leading-relaxed mb-6">
                                 "Você já viu como é fácil criar livros de alta performance. Agora, que tal ganhar dinheiro vendendo essa solução para o mundo?"
                             </p>
@@ -432,7 +442,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 <span className="text-4xl font-black text-[#d4af37] text-glow">R$ 99,90</span>
                             </div>
                             <a 
-                                href="/afiliacao"
+                                href="https://pay.kiwify.com.br/eAZIvMi"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="w-full bg-[#d4af37] hover:bg-yellow-400 text-black font-black py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 uppercase text-xs tracking-widest hover:scale-105 active:scale-95"
                             >
                                 QUERO ME TORNAR UM REPRESENTANTE AGORA
