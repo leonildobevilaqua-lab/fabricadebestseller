@@ -145,6 +145,8 @@ export const RegistrationUpsell: React.FC = () => {
                             <div className="text-4xl font-black underline underline-offset-8 decoration-[#d4af37]">R$ 99,90</div>
                             <a 
                                 href="https://pay.kiwify.com.br/HNBPplQ"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="block w-full py-5 bg-[#d4af37] text-black font-black uppercase text-center hover:bg-yellow-400 transition-colors flex items-center justify-center gap-2 group-hover:scale-[1.02] active:scale-95 duration-200"
                             >
                                 GARANTIR REGISTROS
@@ -187,6 +189,8 @@ export const RegistrationUpsell: React.FC = () => {
                             <div className="text-5xl font-black text-glow">R$ 349,90</div>
                             <a 
                                 href="https://pay.kiwify.com.br/At2Y6VS"
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="block w-full py-5 bg-[#d4af37] text-black font-black uppercase text-center hover:bg-yellow-400 transition-colors flex items-center justify-center gap-2 group-hover:scale-[1.02] active:scale-95 duration-200"
                             >
                                 GARANTIR COMBO COMPLETO
@@ -219,6 +223,8 @@ export const RegistrationUpsell: React.FC = () => {
             <footer className="py-24 px-6 text-center bg-black/50 border-t border-white/5">
                 <a 
                     href="/login"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="inline-block px-8 py-4 border border-gray-700 hover:border-white text-gray-500 hover:text-white text-sm font-black uppercase tracking-widest transition-all hover:bg-white/5 rounded-sm"
                 >
                     Não quero proteger meu livro agora, ir para Área de Membros
