@@ -15,6 +15,8 @@ import { trackPageView } from './services/meta-pixel';
 import { WelcomeModal } from './components/WelcomeModal';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfUse } from './components/TermsOfUse';
+import { RegistrationUpsell } from './components/RegistrationUpsell';
+
 
 
 const App: React.FC = () => {
@@ -157,6 +159,7 @@ const App: React.FC = () => {
 
   if (path === '/privacy-policy' || path === '/politica-privacidade') return <PrivacyPolicy />;
   if (path === '/terms' || path === '/termos-uso' || path === '/terms-of-use') return <TermsOfUse />;
+  if (path === '/registro') return <RegistrationUpsell />;
 
   // RENDER VIEWS
   if (currentView === 'login') {
