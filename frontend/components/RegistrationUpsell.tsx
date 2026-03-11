@@ -20,31 +20,31 @@ export const RegistrationUpsell: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-yellow-500/30">
+        <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-yellow-500/30 pb-20 md:pb-0">
+            {/* STICKY TOP TIMER */}
+            <div className="bg-[#1a1a1a] border-b border-[#d4af37] py-2 sticky top-0 z-[60] shadow-[0_0_20px_rgba(212,175,55,0.2)]">
+                <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4">
+                    <div className="flex items-center gap-2">
+                        <Clock size={18} className="text-[#d4af37] animate-pulse" />
+                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#d4af37]">Vagas subsidiadas expiram em:</span>
+                    </div>
+                    <span className="font-mono text-2xl md:text-3xl font-black text-[#d4af37] leading-none">{formatTime(timeLeft)}</span>
+                </div>
+            </div>
+
             {/* ALERT HEADER */}
             <motion.header 
-                initial={{ opacity: 0, y: -50 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-[#b20000] py-6 px-4 text-center border-b-4 border-[#d4af37] sticky top-0 z-50 shadow-2xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="bg-[#b20000] py-8 px-4 text-center border-b-4 border-[#d4af37] relative z-50 shadow-2xl"
             >
-                <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white drop-shadow-lg">
+                <h1 className="text-2xl md:text-4xl font-black uppercase tracking-tighter text-white drop-shadow-lg italic">
                     ⚠️ ATENÇÃO: NÃO FECHE ESTA PÁGINA AINDA.
                 </h1>
-                <p className="mt-2 text-sm md:text-lg font-medium text-yellow-200 max-w-3xl mx-auto">
+                <p className="mt-3 text-sm md:text-lg font-bold text-yellow-200 max-w-3xl mx-auto uppercase tracking-wide">
                     Garanta a legalização e o design profissional do seu livro com valores subsidiados pela Editora 360 Express.
                 </p>
             </motion.header>
-
-            {/* COUNTDOWN FLOATER */}
-            <div className="fixed bottom-6 right-6 z-50 hidden md:block">
-                <div className="bg-[#1a1a1a] border-2 border-[#d4af37] p-4 rounded-sm flex items-center gap-3 shadow-[0_0_20px_rgba(212,175,55,0.3)] animate-float">
-                    <Clock className="text-[#d4af37]" />
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-gray-400">Oferta expira em:</p>
-                        <p className="text-xl font-mono font-bold text-[#d4af37]">{formatTime(timeLeft)}</p>
-                    </div>
-                </div>
-            </div>
 
             <main className="max-w-5xl mx-auto px-6 py-12 space-y-20">
                 {/* SALES VIDEO */}
@@ -77,33 +77,37 @@ export const RegistrationUpsell: React.FC = () => {
                         <table className="w-full border-collapse bg-[#111] ring-1 ring-white/10">
                             <thead>
                                 <tr className="bg-[#1a1a1a] text-[#d4af37] border-b border-white/10">
-                                    <th className="py-6 px-6 text-left font-black uppercase italic">Serviço</th>
-                                    <th className="py-6 px-6 text-center font-black uppercase">CBL (Oficial)</th>
-                                    <th className="py-6 px-6 text-right font-black uppercase italic">Fábrica de BS</th>
+                                    <th className="py-6 px-4 md:px-6 text-left font-black uppercase italic">Serviço</th>
+                                    <th className="py-6 px-4 md:px-6 text-center font-black uppercase">CBL (Oficial)</th>
+                                    <th className="py-6 px-4 md:px-6 text-right font-black uppercase italic">Fábrica de BS</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
                                 <tr className="hover:bg-white/5 transition-colors">
-                                    <td className="py-6 px-6 font-bold">ISBN (Registro Único)</td>
-                                    <td className="py-6 px-6 text-center text-gray-500 line-through">R$ 28,60</td>
-                                    <td className="py-6 px-6 text-right font-black text-green-400">
-                                        R$ 28,60 <span className="block text-[10px] text-gray-400 font-normal">Nós fazemos por você</span>
+                                    <td className="py-6 px-4 md:px-6 font-bold text-sm md:text-base">ISBN (Registro Único)</td>
+                                    <td className="py-6 px-4 md:px-6 text-center text-gray-500 line-through text-sm">R$ 28,60</td>
+                                    <td className="py-6 px-4 md:px-6 text-right font-black text-green-400 text-sm md:text-base">
+                                        R$ 28,60 <span className="block text-[10px] text-gray-400 font-normal mt-1">Nós fazemos por você</span>
                                     </td>
                                 </tr>
                                 <tr className="hover:bg-white/5 transition-colors">
-                                    <td className="py-6 px-6 font-bold">Código de Barras</td>
-                                    <td className="py-6 px-6 text-center text-gray-500 line-through">R$ 41,20</td>
-                                    <td className="py-6 px-6 text-right font-black text-green-400">R$ 29,90</td>
+                                    <td className="py-6 px-4 md:px-6 font-bold text-sm md:text-base">Código de Barras</td>
+                                    <td className="py-6 px-4 md:px-6 text-center text-gray-500 line-through text-sm">R$ 41,20</td>
+                                    <td className="py-6 px-4 md:px-6 text-right font-black text-green-400 text-sm md:text-base">R$ 29,90</td>
                                 </tr>
                                 <tr className="hover:bg-white/5 transition-colors">
-                                    <td className="py-6 px-6 font-bold">Ficha Catalográfica</td>
-                                    <td className="py-6 px-6 text-center text-gray-500 line-through">R$ 68,60</td>
-                                    <td className="py-6 px-6 text-right font-black text-green-400">R$ 49,90</td>
+                                    <td className="py-6 px-4 md:px-6 font-bold text-sm md:text-base">Ficha Catalográfica</td>
+                                    <td className="py-6 px-4 md:px-6 text-center text-gray-500 line-through text-sm">R$ 68,60</td>
+                                    <td className="py-6 px-4 md:px-6 text-right font-black text-green-400 text-sm md:text-base">R$ 49,90</td>
                                 </tr>
                                 <tr className="bg-[#d4af37]/10">
-                                    <td className="py-8 px-6 font-black text-xl uppercase italic">TOTAL</td>
-                                    <td className="py-8 px-6 text-center font-bold text-red-500 text-lg">R$ 138,40</td>
-                                    <td className="py-8 px-6 text-right font-black text-3xl text-[#d4af37] text-glow">R$ 99,90</td>
+                                    <td className="py-8 px-4 md:px-6 font-black text-lg md:text-xl uppercase italic">VALOR TOTAL</td>
+                                    <td className="py-8 px-4 md:px-6 text-center font-bold text-red-500 text-sm md:text-lg">R$ 138,40</td>
+                                    <td className="py-8 px-4 md:px-6 text-right flex flex-col items-end">
+                                        <div className="text-gray-400 text-xs md:text-sm line-through decoration-[#b20000] decoration-2 font-bold mb-1">R$ 108,40</div>
+                                        <div className="font-black text-2xl md:text-4xl text-[#d4af37] text-glow leading-none">R$ 99,90</div>
+                                        <div className="text-[10px] text-yellow-500 uppercase font-bold mt-2 animate-pulse">Desconto Extra Aplicado!</div>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -193,45 +197,36 @@ export const RegistrationUpsell: React.FC = () => {
                 </div>
 
                 {/* TRUST BADGES */}
-                <section className="grid grid-cols-2 md:grid-cols-2 gap-8 pt-12 border-t border-white/5">
+                <section className="grid grid-cols-2 gap-8 pt-12 border-t border-white/5">
                     <div className="flex flex-col items-center text-center space-y-2 group">
                         <div className="p-4 bg-white/5 rounded-full group-hover:bg-green-500/20 transition-colors">
                             <ShieldCheck className="w-8 h-8 text-green-500" />
                         </div>
                         <h5 className="font-black uppercase text-xs tracking-widest">Compra Segura</h5>
-                        <p className="text-[10px] text-gray-500 uppercase">Tecnologia SSL & Kiwify</p>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-tight">Tecnologia SSL & Kiwify</p>
                     </div>
                     <div className="flex flex-col items-center text-center space-y-2 group">
                         <div className="p-4 bg-white/5 rounded-full group-hover:bg-[#d4af37]/20 transition-colors">
                             <Award className="w-8 h-8 text-[#d4af37]" />
                         </div>
-                        <h5 className="font-black uppercase text-xs tracking-widest">Garantia Satisfaction</h5>
-                        <p className="text-[10px] text-gray-500 uppercase">Qualidade Editorial 360 Express</p>
+                        <h5 className="font-black uppercase text-xs tracking-widest">Garantia Satisfação</h5>
+                        <p className="text-[10px] text-gray-500 uppercase tracking-tight">Qualidade Editorial 360 Express</p>
                     </div>
                 </section>
             </main>
 
             {/* DISCRETE FOOTER */}
-            <footer className="py-20 px-6 text-center bg-black/50">
+            <footer className="py-24 px-6 text-center bg-black/50 border-t border-white/5">
                 <a 
                     href="/login"
-                    className="text-gray-600 hover:text-gray-400 text-sm font-medium transition-colors underline underline-offset-4"
+                    className="inline-block px-8 py-4 border border-gray-700 hover:border-white text-gray-500 hover:text-white text-sm font-black uppercase tracking-widest transition-all hover:bg-white/5 rounded-sm"
                 >
                     Não quero proteger meu livro agora, ir para Área de Membros
                 </a>
-                <p className="mt-8 text-[10px] text-gray-800 uppercase tracking-widest font-bold">
+                <p className="mt-12 text-[10px] text-gray-700 uppercase tracking-widest font-black">
                     © 2026 Fábrica de Best Seller - Todos os direitos reservados
                 </p>
             </footer>
-
-            {/* MOBILE TIMER BAR */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#1a1a1a] border-t-2 border-[#d4af37] p-3 flex justify-between items-center z-[100]">
-                <div className="flex items-center gap-2">
-                    <Clock size={16} className="text-[#d4af37]" />
-                    <span className="text-xs font-bold uppercase tracking-tight">Vagas subsidiadas expiram em:</span>
-                </div>
-                <span className="font-mono font-black text-[#d4af37]">{formatTime(timeLeft)}</span>
-            </div>
         </div>
     );
 };
