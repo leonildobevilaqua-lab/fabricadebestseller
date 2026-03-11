@@ -408,6 +408,39 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     </div>
                 </div>
 
+                {/* [NEW] REPRESENTANTE SECTION */}
+                <div className="bg-slate-900 rounded-3xl p-6 md:p-10 border border-slate-800 shadow-2xl overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                        <div className="flex-1 text-center md:text-left">
+                            <h3 className="text-2xl md:text-3xl font-black text-white mb-3 uppercase tracking-tight">
+                                Torne-se um Representante Autorizado e Lucre com a Nossa Estrutura! 🚀
+                            </h3>
+                            <p className="text-slate-400 text-lg leading-relaxed mb-6">
+                                "Você já viu como é fácil criar livros de alta performance. Agora, que tal ganhar dinheiro vendendo essa solução para o mundo?"
+                            </p>
+                            <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl inline-block">
+                                <p className="text-blue-400 font-bold text-sm">
+                                    Destaque: Acesso à <span className="text-white">PASTA SECRETA DE CRIATIVOS</span> (Artes, Vídeos e Copies validadas).
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 text-center min-w-[280px]">
+                            <div className="mb-4">
+                                <span className="text-slate-500 text-xs line-through block font-bold">DE: R$ 297,90</span>
+                                <span className="text-4xl font-black text-[#d4af37] text-glow">R$ 99,90</span>
+                            </div>
+                            <a 
+                                href="/afiliacao"
+                                className="w-full bg-[#d4af37] hover:bg-yellow-400 text-black font-black py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 uppercase text-xs tracking-widest hover:scale-105 active:scale-95"
+                            >
+                                QUERO ME TORNAR UM REPRESENTANTE AGORA
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 {/* History (Meus Livros) */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-100 flex justify-between items-center">

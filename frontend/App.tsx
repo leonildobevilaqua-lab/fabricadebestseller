@@ -16,6 +16,7 @@ import { WelcomeModal } from './components/WelcomeModal';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfUse } from './components/TermsOfUse';
 import { RegistrationUpsell } from './components/RegistrationUpsell';
+import { AffiliationUpsell } from './components/AffiliationUpsell';
 
 
 
@@ -160,6 +161,7 @@ const App: React.FC = () => {
   if (path === '/privacy-policy' || path === '/politica-privacidade') return <PrivacyPolicy />;
   if (path === '/terms' || path === '/termos-uso' || path === '/terms-of-use') return <TermsOfUse />;
   if (path === '/registro') return <RegistrationUpsell />;
+  if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
 
   // RENDER VIEWS
   if (currentView === 'login') {
