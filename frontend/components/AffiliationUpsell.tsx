@@ -204,12 +204,22 @@ export const AffiliationUpsell: React.FC = () => {
 
             {/* TRUST AREA */}
             <footer className="py-24 px-6 text-center bg-[#03060f] border-t border-white/5">
+                <div className="mb-12">
+                    <a 
+                        href="/login"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-block px-8 py-4 border border-green-500/30 hover:border-green-400 text-green-500/70 hover:text-green-400 text-sm font-black uppercase tracking-widest transition-all hover:bg-green-500/5 rounded-sm"
+                    >
+                        Não quero lucrar agora, ir para Área de Membros
+                    </a>
+                </div>
                 <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-center gap-12 opacity-50 mb-12">
                     <div className="flex items-center gap-2 uppercase text-[10px] font-black tracking-[0.3em]">
                         <ShieldCheck className="text-blue-500" /> Compra 100% Segura
                     </div>
                     <div className="flex items-center gap-2 uppercase text-[10px] font-black tracking-[0.3em]">
-                        <Award className="text-[#d4af37]" /> Suporte VIP
+                        <Award className="text-[#d4af37] " /> Suporte VIP
                     </div>
                     <div className="flex items-center gap-2 uppercase text-[10px] font-black tracking-[0.3em]">
                         <CheckCircle2 className="text-green-500" /> Acesso Imediato

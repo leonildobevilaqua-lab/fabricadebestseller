@@ -225,7 +225,7 @@ export const RegistrationUpsell: React.FC = () => {
                     href="/login"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block px-8 py-4 border border-gray-700 hover:border-white text-gray-500 hover:text-white text-sm font-black uppercase tracking-widest transition-all hover:bg-white/5 rounded-sm"
+                    className="inline-block px-8 py-4 border border-green-500/30 hover:border-green-400 text-green-500/70 hover:text-green-400 text-sm font-black uppercase tracking-widest transition-all hover:bg-green-500/5 rounded-sm"
                 >
                     Não quero proteger meu livro agora, ir para Área de Membros
                 </a>
