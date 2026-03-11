@@ -376,9 +376,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         </div>
 
                         <a
-                            href={planName.includes('BLACK') ? 'https://chat.whatsapp.com/HbXoRWvUgpr9a2gM6AVDEJ' :
-                                planName.includes('PRO') ? 'https://chat.whatsapp.com/Ids5VgSl5jX8ogjKbEmewZ' :
-                                    'https://chat.whatsapp.com/KIwHj9hc4gr8cvf7dCzP0E'}
+                            href="https://chat.whatsapp.com/GZrrpmLXD91J5lAjhgv9Jr"
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full md:w-auto bg-[#25D366] hover:bg-[#20bd5a] text-white font-black px-8 py-5 rounded-2xl transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm hover:scale-105 active:scale-95"
