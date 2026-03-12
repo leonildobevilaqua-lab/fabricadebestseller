@@ -1817,7 +1817,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-white/5">
                                     <iframe
                                         className="w-full h-full"
-                                        src="https://www.youtube.com/embed/ehkPM8azQzU?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=ehkPM8azQzU"
+                                        src="https://www.youtube.com/embed/6i_teiiQVsg?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=6i_teiiQVsg"
                                         title="Fábrica de Best Sellers"
                                         frameBorder="0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
