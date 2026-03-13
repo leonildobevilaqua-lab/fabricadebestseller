@@ -2143,7 +2143,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.english.title}</h3>
                                 <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.english.desc}</p>
                                 <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 149,90</span>
+                                    <span className="text-xl font-black text-white">R$ 24,99</span>
                                     <a href={products.trans_en} target="_blank" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-indigo-500/10">{t[lang].upsell.items.english.button}</a>
                                 </div>
                             </div>
@@ -2159,7 +2159,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.coverPrinted.title}</h3>
                                 <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.coverPrinted.desc}</p>
                                 <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 99,90</span>
+                                    <span className="text-xl font-black text-white">R$ 250,00</span>
                                     <a href={products.cover_card} target="_blank" className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-purple-500/10">{t[lang].upsell.items.coverPrinted.button}</a>
                                 </div>
                             </div>
@@ -2175,7 +2175,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.amazonPrinted.title}</h3>
                                 <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.amazonPrinted.desc}</p>
                                 <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 199,90</span>
+                                    <span className="text-xl font-black text-white">R$ 69,90</span>
                                     <a href={products.pub_amazon_printed} target="_blank" className="px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-orange-500/10">{t[lang].upsell.items.amazonPrinted.button}</a>
                                 </div>
                             </div>
@@ -2191,7 +2191,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.uiclap.title}</h3>
                                 <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.uiclap.desc}</p>
                                 <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 89,90</span>
+                                    <span className="text-xl font-black text-white">R$ 59,90</span>
                                     <a href={products.pub_uiclap} target="_blank" className="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-green-500/10">{t[lang].upsell.items.uiclap.button}</a>
                                 </div>
                             </div>
@@ -2317,8 +2317,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         </div>
                         <div className="grid sm:grid-cols-2 gap-6">
                             {([
-                                { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX formatado pronto', 'Entrega em até 5 dias úteis'] },
-                                { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX formatado pronto', 'Entrega em até 5 dias úteis'] },
+                                { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX formatado pronto', 'Entrega em até 5 dias úteis'], href: products.trans_en },
+                                { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX formatado pronto', 'Entrega em até 5 dias úteis'], href: products.trans_es },
                             ] as const).map(svc => (
                                 <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="blue" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
                             ))}
@@ -2334,8 +2334,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         </div>
                         <div className="grid sm:grid-cols-2 gap-6">
                             {([
-                                { key: 'capa-impressa', icon: '📗', title: 'Capa — Livro Impresso', subtitle: 'Design profissional para impressão KDP / UICLAP', price: 250.00, features: ['Dimensões exatas para impressão', 'Capa + Lombada + Contra-capa', 'Arquivo PDF em alta resolução', 'Revisões incluídas'] },
-                                { key: 'capa-digital', icon: '📱', title: 'Capa — Livro Digital (Ebook)', subtitle: 'Design otimizado para Amazon Kindle e lojas digitais', price: 149.90, features: ['Formato 1600×2560px', 'JPG e PNG em alta qualidade', 'Otimizado para catálogos digitais', 'Revisões incluídas'] },
+                                { key: 'capa-impressa', icon: '📗', title: 'Capa — Livro Impresso', subtitle: 'Design profissional para impressão KDP / UICLAP', price: 250.00, features: ['Dimensões exatas para impressão', 'Capa + Lombada + Contra-capa', 'Arquivo PDF em alta resolução', 'Revisões incluídas'], href: products.cover_card },
+                                { key: 'capa-digital', icon: '📱', title: 'Capa — Livro Digital (Ebook)', subtitle: 'Design otimizado para Amazon Kindle e lojas digitais', price: 149.90, features: ['Formato 1600×2560px', 'JPG e PNG em alta qualidade', 'Otimizado para catálogos digitais', 'Revisões incluídas'], href: products.cover_ebook },
                             ] as const).map(svc => (
                                 <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="purple" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
                             ))}
@@ -2351,9 +2351,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         </div>
                         <div className="grid sm:grid-cols-3 gap-6">
                             {([
-                                { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico na maior livraria do mundo', price: 69.90, features: ['Upload e configuração KDP', 'Revisão de formato e margens', 'Disponível para venda global', 'Orientação sobre precificação'] },
-                                { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Publicação do ebook Kindle na Amazon', price: 59.90, features: ['Upload e configuração KDP', 'Revisão do arquivo mobi/epub', 'Disponível em 12+ países', 'Orientação sobre royalties'] },
-                                { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Impresso', subtitle: 'Publicação na maior plataforma editorial brasileira', price: 59.90, features: ['Cadastro e upload UICLAP', 'Revisão de formato e capa', 'Disponível para impressão sob demanda', 'Suporte no processo editorial'] },
+                                { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico na maior livraria do mundo', price: 69.90, features: ['Upload e configuração KDP', 'Revisão de formato e margens', 'Disponível para venda global', 'Orientação sobre precificação'], href: products.pub_amazon_printed },
+                                { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Publicação do ebook Kindle na Amazon', price: 59.90, features: ['Upload e configuração KDP', 'Revisão do arquivo mobi/epub', 'Disponível em 12+ países', 'Orientação sobre royalties'], href: products.pub_amazon_digital },
+                                { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Impresso', subtitle: 'Publicação na maior plataforma editorial brasileira', price: 59.90, features: ['Cadastro e upload UICLAP', 'Revisão de formato e capa', 'Disponível para impressão sob demanda', 'Suporte no processo editorial'], href: products.pub_uiclap },
                             ] as const).map(svc => (
                                 <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="orange" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
                             ))}
@@ -2369,9 +2369,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                         </div>
                         <div className="grid sm:grid-cols-3 gap-6">
                             {([
-                                { key: 'ficha-catalografica', icon: '🗂️', title: 'Ficha Catalográfica', subtitle: 'Obrigatória para publicação em gráficas e editoras', price: 59.90, features: ['Padrão AACR2 / RDA', 'Emitida por bibliotecária habilitada', 'Prazo: até 3 dias úteis', 'Arquivo PDF para inserir no livro'] },
-                                { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Livro Impresso', subtitle: 'Registro oficial na Câmara Brasileira do Livro', price: 49.90, features: ['Número ISBN único para o livro', 'Registro na CBL', 'Código de barras incluso', 'Prazo: até 15 dias úteis'] },
-                                { key: 'isbn-digital', icon: '📗', title: 'ISBN — Livro Digital', subtitle: 'Registro oficial da edição digital na CBL', price: 49.90, features: ['Número ISBN único para o ebook', 'Registro na CBL', 'Código de barras incluso', 'Prazo: até 15 dias úteis'] },
+                                { key: 'ficha-catalografica', icon: '🗂️', title: 'Ficha Catalográfica', subtitle: 'Obrigatória para publicação em gráficas e editoras', price: 59.90, features: ['Padrão AACR2 / RDA', 'Emitida por bibliotecária habilitada', 'Prazo: até 3 dias úteis', 'Arquivo PDF para inserir no livro'], href: products.catalog_card },
+                                { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Livro Impresso', subtitle: 'Registro oficial na Câmara Brasileira do Livro', price: 49.90, features: ['Número ISBN único para o livro', 'Registro na CBL', 'Código de barras incluso', 'Prazo: até 15 dias úteis'], href: products.isbn_printed },
+                                { key: 'isbn-digital', icon: '📗', title: 'ISBN — Livro Digital', subtitle: 'Registro oficial da edição digital na CBL', price: 49.90, features: ['Número ISBN único para o ebook', 'Registro na CBL', 'Código de barras incluso', 'Prazo: até 15 dias úteis'], href: products.isbn_digital },
                             ] as const).map(svc => (
                                 <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="amber" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
                             ))}
@@ -2410,7 +2410,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                     <span className="text-slate-400 text-2xl mb-2">R$</span>
                                     <span className="text-7xl font-black text-white tracking-tighter">599,90</span>
                                 </div>
-                                <p className="text-emerald-400 text-sm font-bold mb-8">Todos os serviços individuais somam R$ 583,68</p>
+                                <p className="text-emerald-400 text-sm font-bold mb-8">Economize mais de R$ 300,00 contratando o combo completo!</p>
                                 <ExtraServiceBuyButton
                                     serviceKey="pacote-completo"
                                     serviceName="Pacote Completo de Serviços"
@@ -2420,6 +2420,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                     formData={formData}
                                     getApiBase={getApiBase}
                                     trackInitiateCheckout={trackInitiateCheckout}
+                                    href={products.complete_package}
                                 />
                                 <p className="mt-4 text-xs text-slate-500 flex items-center justify-center gap-2">
                                     <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Kiwify (PIX, Boleto, Cartão)

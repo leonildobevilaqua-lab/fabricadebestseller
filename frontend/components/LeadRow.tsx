@@ -274,15 +274,22 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                             )}
 
                             {/* Download Button */}
-                            {(status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || lead.artifactUrl) && (
-                                <a
-                                    href={lead.artifactUrl ? (lead.artifactUrl.startsWith('http') ? lead.artifactUrl : `${getApiBase()}${lead.artifactUrl}`) : `${getApiBase()}/api/projects/${lead.projectId}/download`}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold py-2 rounded shadow transition flex items-center justify-center gap-1 no-underline"
-                                >
-                                    📥 KIT COMPLETO (ZIP)
-                                </a>
+                            {(status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || lead.artifactUrl || lead.projectId || lead.details?.projectId) && (
+                                <div className="space-y-1">
+                                    <a
+                                        href={lead.artifactUrl ? (lead.artifactUrl.startsWith('http') ? lead.artifactUrl : `${getApiBase()}${lead.artifactUrl}`) : `${getApiBase()}/api/projects/${lead.projectId || lead.details?.projectId || lead.email?.replace(/[^a-zA-Z0-9]/g, '_')}/download`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold py-2 rounded shadow transition flex items-center justify-center gap-1 no-underline"
+                                    >
+                                        📥 KIT COMPLETO (ZIP)
+                                    </a>
+                                    {(lead.projectId || lead.details?.projectId) && (
+                                        <div className="text-[9px] text-slate-400 text-center font-mono uppercase">
+                                            ID: {(lead.projectId || lead.details?.projectId).substring(0, 8)}...
+                                        </div>
+                                    )}
+                                </div>
                             )}
 
                             {/* Regenerate */}

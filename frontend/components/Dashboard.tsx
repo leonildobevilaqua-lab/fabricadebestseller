@@ -24,6 +24,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const [hasCredits, setHasCredits] = useState(false);
     const [pendingInvoice, setPendingInvoice] = useState(false);
     const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
+    const [products, setProducts] = useState<any>({});
 
     // FUNÇÃO 1: REDIRECIONA PARA CHECKOUT KIWIFY
     const handleBuyCredit = async (price: number) => {
@@ -106,14 +107,23 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 if (token) headers['Authorization'] = `Bearer ${token}`;
 
                 // Parallel fetch
-                const [resUser, resPayment] = await Promise.all([
+                const [meRes, resPayment] = await Promise.all([
                     fetch(`${getApiBase()}/api/user/me?email=${user.email}`, { headers }),
                     fetch(`${getApiBase()}/api/payment/access?email=${user.email}`)
                 ]);
 
-                if (resUser.ok) {
-                    const data = await resUser.json();
-                    setStats(data);
+                if (meRes.ok) {
+                    const meData = await meRes.json();
+                    if (meData.user) {
+                        setStats(meData);
+                    }
+                }
+
+                // --- FETCH PUBLIC CONFIG (Kiwify Links) ---
+                const configRes = await fetch(`${getApiBase()}/api/payment/public-config`);
+                const configData = await configRes.json();
+                if (configData.productLinks) {
+                    setProducts(configData.productLinks);
                 }
 
                 if (resPayment.ok) {
@@ -425,11 +435,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 ></iframe>
                             </div>
                             <p className="text-slate-400 text-lg leading-relaxed mb-6">
-                                "Você já viu como é fácil criar livros de alta performance. Agora, que tal ganhar dinheiro vendendo essa solução para o mundo?"
+                                "Você já viu como é fácil criar livros de alta performance. Agora, tenha <span className="text-emerald-400 font-bold">acesso imediato a todo o material de marketing validado</span> que me fizeram lucrar mais de R$ 1.000,00 por dia!"
                             </p>
                             <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl inline-block">
                                 <p className="text-blue-400 font-bold text-sm">
-                                    Destaque: Acesso à <span className="text-white">PASTA SECRETA DE CRIATIVOS</span> (Artes, Vídeos e Copies validadas).
+                                    Destaque: Acesso à <span className="text-white">PASTA SECRETA DE CRIATIVOS</span> (Vídeos, Artes e Copies de Alta Conversão).
                                 </p>
                             </div>
                         </div>
@@ -443,7 +453,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 href="https://pay.kiwify.com.br/eAZIvMi"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="w-full bg-[#d4af37] hover:bg-yellow-400 text-black font-black py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-yellow-500/20 uppercase text-xs tracking-widest hover:scale-105 active:scale-95"
+                                className="w-full bg-[#ADFF2F] hover:bg-[#7CFC00] text-black font-black py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#ADFF2F]/20 uppercase text-xs tracking-widest hover:scale-105 active:scale-95"
                             >
                                 QUERO ME TORNAR UM REPRESENTANTE AGORA
                             </a>
@@ -516,7 +526,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 </div>
 
                 {/* Extra Services Section (Re-implemented with Landing Page Design) */}
-                <ExtraServiceSection formData={{ email: user?.email, name: user?.name, phone: user?.phone }} />
+                <ExtraServiceSection formData={{ email: user?.email, name: user?.name, phone: user?.phone }} products={products} />
 
                 <div className="pt-8 border-t border-slate-200">
                     <SocialShare
@@ -531,7 +541,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 };
 
 // --- [RE-IMPLEMENTED] EXTRA SERVICE SECTION (LANDING PAGE STYLE) ---
-const ExtraServiceSection = ({ formData }: { formData: any }) => {
+const ExtraServiceSection = ({ formData, products }: { formData: any, products: any }) => {
     return (
         <section className="py-12 bg-slate-950 rounded-[40px] relative overflow-hidden shadow-2xl border border-slate-800">
             <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950"></div>
@@ -559,8 +569,8 @@ const ExtraServiceSection = ({ formData }: { formData: any }) => {
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                         {[
-                            { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX pronto'] },
-                            { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX pronto'] },
+                            { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX pronto'], href: products.trans_en },
+                            { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX pronto'], href: products.trans_es },
                         ].map(svc => (
                             <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="blue" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
                         ))}
@@ -576,8 +586,8 @@ const ExtraServiceSection = ({ formData }: { formData: any }) => {
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                         {[
-                            { key: 'capa-impressa', icon: '📗', title: 'Capa — Livro Impresso', subtitle: 'Design profissional para KDP / UICLAP', price: 250.00, features: ['Dimensões exatas para impressão', 'Capa + Lombada + Contra-capa', 'Arquivo PDF Alta Resolução'] },
-                            { key: 'capa-digital', icon: '📱', title: 'Capa — Livro Digital', subtitle: 'Design otimizado para Amazon Kindle', price: 149.90, features: ['Formato 1600×2560px', 'JPG e PNG em alta qualidade', 'Otimizado para lojas digitais'] },
+                            { key: 'capa-impressa', icon: '📗', title: 'Capa — Livro Impresso', subtitle: 'Design profissional para KDP / UICLAP', price: 250.00, features: ['Dimensões exatas para impressão', 'Capa + Lombada + Contra-capa', 'Arquivo PDF Alta Resolução'], href: products.cover_card },
+                            { key: 'capa-digital', icon: '📱', title: 'Capa — Livro Digital', subtitle: 'Design otimizado para Amazon Kindle', price: 149.90, features: ['Formato 1600×2560px', 'JPG e PNG em alta qualidade', 'Otimizado para lojas digitais'], href: products.cover_ebook },
                         ].map(svc => (
                             <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="purple" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
                         ))}
@@ -593,9 +603,9 @@ const ExtraServiceSection = ({ formData }: { formData: any }) => {
                     </div>
                     <div className="grid sm:grid-cols-3 gap-4">
                         {[
-                            { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico global', price: 69.90, features: ['Upload e configuração KDP', 'Revisão de formato e margens'] },
-                            { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Publicação do ebook Kindle', price: 59.90, features: ['Upload Kindle Direct Publishing', 'Revisão do arquivo mobi/epub'] },
-                            { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Impresso', subtitle: 'Publicação na maior plataforma BR', price: 59.90, features: ['Cadastro e upload UICLAP', 'Disponível sob demanda'] },
+                            { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico global', price: 69.90, features: ['Upload e configuração KDP', 'Revisão de formato e margens'], href: products.pub_amazon_printed },
+                            { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Publicação do ebook Kindle', price: 59.90, features: ['Upload Kindle Direct Publishing', 'Revisão do arquivo mobi/epub'], href: products.pub_amazon_digital },
+                            { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Impresso', subtitle: 'Publicação na maior plataforma BR', price: 59.90, features: ['Cadastro e upload UICLAP', 'Disponível sob demanda'], href: products.pub_uiclap },
                         ].map(svc => (
                             <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="orange" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
                         ))}
@@ -611,9 +621,9 @@ const ExtraServiceSection = ({ formData }: { formData: any }) => {
                     </div>
                     <div className="grid sm:grid-cols-3 gap-4">
                         {[
-                            { key: 'ficha-catalografica', icon: '🗂️', title: 'Ficha Catalográfica', subtitle: 'Obrigatória para gráficas', price: 59.90, features: ['Padrão AACR2 / RDA', 'Emitida por bibliotecária'] },
-                            { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Livro Impresso', subtitle: 'Registro oficial na CBL', price: 49.90, features: ['Número ISBN único', 'Código de barras incluso'] },
-                            { key: 'isbn-digital', icon: '📗', title: 'ISBN — Livro Digital', subtitle: 'Registro oficial edição digital', price: 49.90, features: ['Número ISBN único', 'Pronto para E-book'] },
+                            { key: 'ficha-catalografica', icon: '🗂️', title: 'Ficha Catalográfica', subtitle: 'Obrigatória para gráficas', price: 59.90, features: ['Padrão AACR2 / RDA', 'Emitida por bibliotecária'], href: products.catalog_card },
+                            { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Livro Impresso', subtitle: 'Registro oficial na CBL', price: 49.90, features: ['Número ISBN único', 'Código de barras incluso'], href: products.isbn_printed },
+                            { key: 'isbn-digital', icon: '📗', title: 'ISBN — Livro Digital', subtitle: 'Registro oficial edição digital', price: 49.90, features: ['Número ISBN único', 'Pronto para E-book'], href: products.isbn_digital },
                         ].map(svc => (
                             <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="amber" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
                         ))}
@@ -668,6 +678,7 @@ const ExtraServiceSection = ({ formData }: { formData: any }) => {
                                     formData={formData}
                                     getApiBase={getApiBase}
                                     trackInitiateCheckout={() => { }}
+                                    href={products.complete_package}
                                 />
                             </div>
                         </div>

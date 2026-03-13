@@ -27,7 +27,7 @@ interface BuyButtonProps {
     formData: { email: string; name: string; phone?: string };
     getApiBase: () => string;
     trackInitiateCheckout: (name: string, value: number) => void;
-    [key: string]: unknown;
+    href?: string;
 }
 
 // ─── MAPA DE CORES POR TEMA ───────────────────────────────────────────────────
@@ -194,19 +194,31 @@ const ExtraBuyModal: React.FC<{
 
 // ─── BOTÃO DE COMPRA (com modal embutido) ─────────────────────────────────────
 export const ExtraServiceBuyButton: React.FC<BuyButtonProps> = ({
-    serviceKey, serviceName, price, label, accentClass, formData, getApiBase, trackInitiateCheckout
+    serviceKey, serviceName, price, label, accentClass, formData, getApiBase, trackInitiateCheckout, href
 }) => {
     const [modalOpen, setModalOpen] = useState(false);
 
     return (
         <>
-            <button
-                id={`btn-extra-${serviceKey}`}
-                onClick={() => setModalOpen(true)}
-                className={`w-full font-black py-4 rounded-xl text-lg transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] ${accentClass}`}
-            >
-                {label}
-            </button>
+            {href ? (
+                <a
+                    id={`link-extra-${serviceKey}`}
+                    href={href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`w-full font-black py-4 rounded-xl text-lg transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] text-center flex items-center justify-center ${accentClass}`}
+                >
+                    {label}
+                </a>
+            ) : (
+                <button
+                    id={`btn-extra-${serviceKey}`}
+                    onClick={() => setModalOpen(true)}
+                    className={`w-full font-black py-4 rounded-xl text-lg transition-all shadow-lg hover:scale-[1.02] active:scale-[0.98] ${accentClass}`}
+                >
+                    {label}
+                </button>
+            )}
 
             <ExtraBuyModal
                 isOpen={modalOpen}
@@ -227,7 +239,8 @@ export const ExtraServiceCard: React.FC<ExtraServiceData & {
     formData: { email: string; name: string; phone?: string };
     getApiBase: () => string;
     trackInitiateCheckout: (name: string, value: number) => void;
-}> = ({ serviceId, icon, title, subtitle, price, features, accentColor, formData, getApiBase, trackInitiateCheckout }) => {
+    href?: string;
+}> = ({ serviceId, icon, title, subtitle, price, features, accentColor, formData, getApiBase, trackInitiateCheckout, href }) => {
     const [modalOpen, setModalOpen] = useState(false);
     const acc = ACCENT_CLASSES[accentColor] || ACCENT_CLASSES.blue;
 
@@ -261,13 +274,25 @@ export const ExtraServiceCard: React.FC<ExtraServiceData & {
                     <p className="text-xs text-slate-500 mt-0.5">Pagamento único · Detalhes enviados por e-mail</p>
                 </div>
 
-                <button
-                    id={`btn-card-${serviceId}`}
-                    onClick={() => setModalOpen(true)}
-                    className={`w-full font-black py-3 rounded-xl text-sm transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99] ${acc.btn}`}
-                >
-                    Contratar — R$ {formatBRL(price)}
-                </button>
+                {href ? (
+                    <a
+                        id={`link-card-${serviceId}`}
+                        href={href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={`w-full font-black py-4 rounded-xl text-center text-sm transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center ${acc.btn}`}
+                    >
+                        Contratar — R$ {formatBRL(price)}
+                    </a>
+                ) : (
+                    <button
+                        id={`btn-card-${serviceId}`}
+                        onClick={() => setModalOpen(true)}
+                        className={`w-full font-black py-4 rounded-xl text-sm transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99] ${acc.btn}`}
+                    >
+                        Contratar — R$ {formatBRL(price)}
+                    </button>
+                )}
             </div>
 
             <ExtraBuyModal
