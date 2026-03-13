@@ -277,7 +277,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                             {(status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || lead.artifactUrl || lead.projectId || lead.details?.projectId) && (
                                 <div className="space-y-1">
                                     <a
-                                        href={lead.artifactUrl ? (lead.artifactUrl.startsWith('http') ? lead.artifactUrl : `${getApiBase()}${lead.artifactUrl}`) : `${getApiBase()}/api/projects/${lead.projectId || lead.details?.projectId || lead.email?.replace(/[^a-zA-Z0-9]/g, '_')}/download`}
+                                        href={lead.artifactUrl ? (lead.artifactUrl.startsWith('http') ? lead.artifactUrl : `${getApiBase()}${lead.artifactUrl}`) : `${getApiBase()}/api/projects/${lead.projectId || lead.details?.projectId || lead.project_id || lead.id}/download`}
                                         target="_blank"
                                         rel="noreferrer"
                                         className="w-full bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold py-2 rounded shadow transition flex items-center justify-center gap-1 no-underline"

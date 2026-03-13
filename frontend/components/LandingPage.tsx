@@ -86,7 +86,19 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     }, [step]);
 
     const [processingStage, setProcessingStage] = useState(0);
-    const [products, setProducts] = useState<any>({});
+    const [products, setProducts] = useState<any>({
+        trans_en: "https://pay.kiwify.com.br/VqifT9S",
+        trans_es: "https://pay.kiwify.com.br/1Aj655e",
+        cover_card: "https://pay.kiwify.com.br/rW2Qn9s",
+        cover_ebook: "https://pay.kiwify.com.br/NxPHXje",
+        pub_amazon_printed: "https://pay.kiwify.com.br/UeY5s8m",
+        pub_amazon_digital: "https://pay.kiwify.com.br/FOxvupC",
+        pub_uiclap: "https://pay.kiwify.com.br/5MZbxZi",
+        catalog_card: "https://pay.kiwify.com.br/lR4QshD",
+        isbn_printed: "https://pay.kiwify.com.br/0s1kX6G",
+        isbn_digital: "https://pay.kiwify.com.br/e0bVf7g",
+        complete_package: "https://pay.kiwify.com.br/N4L5K4X"
+    });
 
     // Voucher / Gift Redemption
     const [giftSourceEmail, setGiftSourceEmail] = useState<string | null>(null);
@@ -100,6 +112,44 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
     useEffect(() => {
         paymentConfirmedRef.current = paymentConfirmed;
     }, [paymentConfirmed]);
+
+    useEffect(() => {
+        // Load config from API (for overrides)
+        const fetchConfig = async () => {
+            try {
+                const baseUrl = getApiBase().replace(/\/$/, "");
+                const res = await fetch(`${baseUrl}/api/payment/config`);
+                const data = await res.json();
+                if (data.products) {
+                    setProducts(prev => ({ ...prev, ...data.products }));
+                }
+            } catch (e) {
+                console.error("Failed to load public config", e);
+            }
+        };
+        fetchConfig();
+
+        // Check for Gift Code in URL
+        const params = new URLSearchParams(window.location.search);
+        const giftCode = params.get('gift_code');
+        if (giftCode) {
+            try {
+                const sourceEmail = atob(giftCode);
+                setGiftSourceEmail(sourceEmail);
+                // Auto-check validity
+                const baseUrl = getApiBase().replace(/\/$/, "");
+                fetch(`${baseUrl}/api/payment/access?email=${sourceEmail}&_t=${Date.now()}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.hasAccess) setVoucherCredits(data.credits);
+                    });
+                // Open wizard if gift code is present
+                setIsWizardOpen(true);
+            } catch (e) {
+                console.error("Invalid gift code");
+            }
+        }
+    }, [initialState]);
 
     // Upload Book State
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -262,45 +312,12 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
         return () => clearInterval(interval);
     }, [lang]);
 
-    useEffect(() => {
-        // Load config
-        fetch('/api/payment/config')
-            .then(res => res.json())
-            .then(data => setProducts(data.products || {}))
-            .catch(console.error);
-
-        // Check for Gift Code in URL
-        const params = new URLSearchParams(window.location.search);
-        const giftCode = params.get('gift_code');
-        if (giftCode) {
-            try {
-                const sourceEmail = atob(giftCode);
-                setGiftSourceEmail(sourceEmail);
-                // Auto-check validity
-                fetch(`/api/payment/access?email=${sourceEmail}&_t=${Date.now()}`)
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.hasAccess) setVoucherCredits(data.credits);
-                    });
-                // Open wizard if gift code is present
-                setIsWizardOpen(true);
-            } catch (e) {
-                console.error("Invalid gift code");
-            }
-        }
-    }, []);
-
     // Initial State (Upsell Recovery)
     useEffect(() => {
         if (initialState) {
             if (initialState.email) {
-                // If preserving user (upsell), we keep Email/Phone but force Name clear if requested?
-                // User said: "Tem que mandar ele para a página onde ele vai ter que inserir novamente o nome dele"
-                // So we default name to empty if it's a "reset" flow.
                 const shouldClearName = initialState.resetData === true;
-
                 setFormData(prev => {
-                    // Try to recover phone from localStorage if missing in props
                     let recoveredPhone = initialState.phone || prev.phone || '';
                     if (!recoveredPhone) {
                         try {
@@ -310,9 +327,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                             }
                         } catch (e) { }
                     }
-
                     return {
-                        ...prev, // Keep existing fields like document, cep, etc.
+                        ...prev,
                         email: initialState.email,
                         phone: recoveredPhone,
                         name: shouldClearName ? '' : (initialState.name || prev.name || '')

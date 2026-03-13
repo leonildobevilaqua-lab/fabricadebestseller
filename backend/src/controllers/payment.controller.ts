@@ -909,21 +909,24 @@ export const getPublicConfig = async (req: Request, res: Response) => {
         const { getConfig } = require('../services/config.service');
         const config = await getConfig();
         const p = config.products || {};
+        const products = {
+            trans_en: p.english_book,
+            trans_es: p.spanish_book,
+            cover_card: p.cover_printed,
+            cover_ebook: p.cover_ebook,
+            pub_amazon_printed: p.pub_amazon_printed,
+            pub_amazon_digital: p.pub_amazon_digital,
+            pub_uiclap: p.pub_uiclap,
+            isbn_printed: p.isbn_printed,
+            isbn_digital: p.isbn_digital,
+            catalog_card: p.catalog_card,
+            complete_package: p.complete_package,
+            sales_page: p.sales_page
+        };
+
         res.json({
-            products: {
-                trans_en: p.english_book,
-                trans_es: p.spanish_book,
-                cover_card: p.cover_printed,
-                cover_ebook: p.cover_ebook,
-                pub_amazon_printed: p.pub_amazon_printed,
-                pub_amazon_digital: p.pub_amazon_digital,
-                pub_uiclap: p.pub_uiclap,
-                isbn_printed: p.isbn_printed,
-                isbn_digital: p.isbn_digital,
-                catalog_card: p.catalog_card,
-                complete_package: p.complete_package,
-                sales_page: p.sales_page
-            }
+            products,
+            productLinks: products // For compatibility with Dashboard.tsx
         });
     } catch (e) {
         console.error("Failed to load public config:", e);
