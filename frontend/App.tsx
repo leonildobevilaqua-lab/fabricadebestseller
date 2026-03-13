@@ -17,6 +17,8 @@ import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfUse } from './components/TermsOfUse';
 import { RegistrationUpsell } from './components/RegistrationUpsell';
 import { AffiliationUpsell } from './components/AffiliationUpsell';
+import LandingPageEnglish from './components/LandingPageEnglish';
+import LandingPageSpanish from './components/LandingPageSpanish';
 
 
 
@@ -171,7 +173,43 @@ const App: React.FC = () => {
   if (path === '/registro') return <RegistrationUpsell />;
   if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
 
+  // NEW LANDING CATCHES
+  if (path === '/english' || path === '/en') {
+    return (
+      <LanguageContext.Provider value={{ lang: 'en', setLang: () => {}, t: translations['en'] }}>
+        <ErrorBoundary>
+          <LandingPageEnglish
+            onStart={handleStart}
+            onAdmin={() => setShowAdmin(true)}
+            lang='en'
+            setLang={() => {}}
+            initialState={landingProps}
+            onLoginClick={() => setCurrentView('login')}
+          />
+        </ErrorBoundary>
+      </LanguageContext.Provider>
+    );
+  }
+
+  if (path === '/espanol' || path === '/es') {
+    return (
+      <LanguageContext.Provider value={{ lang: 'es', setLang: () => {}, t: translations['es'] }}>
+        <ErrorBoundary>
+          <LandingPageSpanish
+            onStart={handleStart}
+            onAdmin={() => setShowAdmin(true)}
+            lang='es'
+            setLang={() => {}}
+            initialState={landingProps}
+            onLoginClick={() => setCurrentView('login')}
+          />
+        </ErrorBoundary>
+      </LanguageContext.Provider>
+    );
+  }
+
   // RENDER VIEWS
+
   if (currentView === 'login') {
     return (
       <Login

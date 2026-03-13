@@ -947,7 +947,11 @@ export const es = {
         backToDashboard: "Volver al Dashboard",
         logout: "Salir",
         loading: "Cargando...",
-        error: "Error"
+        error: "Error",
+        disclaimer: {
+            facebook: "Este sitio no forma parte del sitio web de Facebook o Facebook Inc. Además, este sitio NO está respaldado por Facebook de ninguna manera. FACEBOOK es una marca comercial de FACEBOOK, Inc.",
+            legal: "AVISO LEGAL: Las cifras de ventas indicadas anteriormente son mis cifras de ventas personales. Por favor, comprenda que mis resultados no son típicos, no estoy sugiriendo que los duplicará (o hará algo por el estilo). Tengo el beneficio de practicar marketing y publicidad de respuesta directa desde 2018 y tengo un grupo establecido de seguidores como resultado. Estoy usando estas referencias solo como ejemplo. Sus resultados variarán y dependerán de muchos factores... incluyendo, pero no limitado a, sus antecedentes, experiencia y ética de trabajo. Todo negocio conlleva riesgos, así como esfuerzos y acciones masivos y constantes."
+        }
     },
     dashboard: {
         welcome: "Bienvenido,",
