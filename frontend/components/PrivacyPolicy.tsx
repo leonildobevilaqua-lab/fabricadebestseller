@@ -1,4 +1,5 @@
 import React from 'react';
+import Disclaimer from './Disclaimer';
 
 export const PrivacyPolicy: React.FC = () => {
     return (
@@ -68,8 +69,9 @@ export const PrivacyPolicy: React.FC = () => {
                 </section>
             </div>
 
-            <div className="mt-12 border-t pt-8 text-center">
-                <a href="/" className="text-blue-600 hover:underline">Voltar para a Página Inicial</a>
+            <div className="mt-12 border-t pt-8 text-center pb-12">
+                <a href="/" className="text-blue-600 hover:underline mb-8 inline-block">Voltar para a Página Inicial</a>
+                <Disclaimer />
             </div>
         </div>
     );

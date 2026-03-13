@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Award, Clock, ChevronRight, CheckCircle2, Rocket, Download, Target, Briefcase } from 'lucide-react';
 import { trackInitiateCheckout, trackPurchase } from '../services/meta-pixel';
+import Disclaimer from './Disclaimer';
 
 export const AffiliationUpsell: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes
@@ -225,9 +226,10 @@ export const AffiliationUpsell: React.FC = () => {
                         <CheckCircle2 className="text-green-500" /> Acesso Imediato
                     </div>
                 </div>
-                <p className="mt-12 text-[10px] text-gray-700 uppercase tracking-widest font-black">
+                <p className="mt-12 text-[10px] text-gray-700 uppercase tracking-widest font-black mb-6">
                     © 2026 Fábrica de Best Seller - Todos os direitos reservados
                 </p>
+                <Disclaimer />
             </footer>
             
             {/* Custom Styles for text glow */}

@@ -6,6 +6,7 @@ import { RewardModal } from './RewardModal';
 import { ExtraServiceCard, ExtraServiceBuyButton } from './ExtraServices';
 import * as API from '../services/api';
 import { trackInitiateCheckout, trackLead } from '../services/meta-pixel';
+import Disclaimer from './Disclaimer';
 
 // --- INLINE ICONS (No external dependency to crash) ---
 const Zap = (props: any) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
@@ -2132,167 +2133,6 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                 </div>
             </section>
 
-            {/* UPSELL SERVICES SECTION (NEW PREMIUM DESIGN) */}
-            <section className="py-24 bg-slate-900 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
-                <div className="max-w-7xl mx-auto px-6 relative z-10">
-                    <div className="text-center mb-16">
-                        <span className="inline-block px-4 py-1.5 rounded-full bg-indigo-500/10 text-indigo-400 text-xs font-bold uppercase tracking-widest mb-4 border border-indigo-500/20">
-                            {t[lang].upsell.tag}
-                        </span>
-                        <h2 className="text-4xl md:text-5xl font-black text-white mb-4">
-                            {t[lang].upsell.title}
-                        </h2>
-                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-                            {t[lang].upsell.subtitle}
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* TRADUÇÃO - INGLÊS */}
-                        {products.trans_en && (
-                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-indigo-500/50 transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 blur-[50px] rounded-full"></div>
-                                <div className="p-3 bg-indigo-500/10 rounded-xl w-fit mb-6 group-hover:bg-indigo-500/20 transition-colors">
-                                    <Globe className="w-6 h-6 text-indigo-400" />
-                                </div>
-                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.english.title}</h3>
-                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.english.desc}</p>
-                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 24,99</span>
-                                    <a href={products.trans_en} target="_blank" className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-indigo-500/10">{t[lang].upsell.items.english.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* CAPA IMPRESSA */}
-                        {products.cover_card && (
-                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-purple-500/50 transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 blur-[50px] rounded-full"></div>
-                                <div className="p-3 bg-purple-500/10 rounded-xl w-fit mb-6 group-hover:bg-purple-500/20 transition-colors">
-                                    <FileImage className="w-6 h-6 text-purple-400" />
-                                </div>
-                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.coverPrinted.title}</h3>
-                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.coverPrinted.desc}</p>
-                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 250,00</span>
-                                    <a href={products.cover_card} target="_blank" className="px-5 py-2.5 bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-purple-500/10">{t[lang].upsell.items.coverPrinted.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* AMAZON IMPRESSO */}
-                        {products.pub_amazon_printed && (
-                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-orange-500/50 transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-orange-500/5 blur-[50px] rounded-full"></div>
-                                <div className="p-3 bg-orange-500/10 rounded-xl w-fit mb-6 group-hover:bg-orange-500/20 transition-colors">
-                                    <ShoppingCart className="w-6 h-6 text-orange-400" />
-                                </div>
-                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.amazonPrinted.title}</h3>
-                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.amazonPrinted.desc}</p>
-                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 69,90</span>
-                                    <a href={products.pub_amazon_printed} target="_blank" className="px-5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-orange-500/10">{t[lang].upsell.items.amazonPrinted.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* UICLAP */}
-                        {products.pub_uiclap && (
-                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-green-500/50 transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-green-500/5 blur-[50px] rounded-full"></div>
-                                <div className="p-3 bg-green-500/10 rounded-xl w-fit mb-6 group-hover:bg-green-500/20 transition-colors">
-                                    <Truck className="w-6 h-6 text-green-400" />
-                                </div>
-                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.uiclap.title}</h3>
-                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.uiclap.desc}</p>
-                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 59,90</span>
-                                    <a href={products.pub_uiclap} target="_blank" className="px-5 py-2.5 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-green-500/10">{t[lang].upsell.items.uiclap.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* ISBN */}
-                        {products.isbn_printed && (
-                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-blue-500/50 transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 blur-[50px] rounded-full"></div>
-                                <div className="p-3 bg-blue-500/10 rounded-xl w-fit mb-6 group-hover:bg-blue-500/20 transition-colors">
-                                    <Barcode className="w-6 h-6 text-blue-400" />
-                                </div>
-                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.isbn.title}</h3>
-                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.isbn.desc}</p>
-                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 49,90</span>
-                                    <a href={products.isbn_printed} target="_blank" className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-blue-500/10">{t[lang].upsell.items.isbn.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* SALES PAGE */}
-                        {products.sales_page && (
-                            <div className="bg-slate-800/40 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl hover:border-pink-500/50 transition-all group relative overflow-hidden">
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-pink-500/5 blur-[50px] rounded-full"></div>
-                                <div className="p-3 bg-pink-500/10 rounded-xl w-fit mb-6 group-hover:bg-pink-500/20 transition-colors">
-                                    <MousePointer2 className="w-6 h-6 text-pink-400" />
-                                </div>
-                                <h3 className="font-bold text-xl mb-2 text-white">{t[lang].upsell.items.salesPage.title}</h3>
-                                <p className="text-sm text-slate-400 mb-6 h-10 leading-relaxed">{t[lang].upsell.items.salesPage.desc}</p>
-                                <div className="flex justify-between items-center bg-slate-900/40 p-3 rounded-xl border border-slate-700/30">
-                                    <span className="text-xl font-black text-white">R$ 349,90</span>
-                                    <a href={products.sales_page} target="_blank" className="px-5 py-2.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg font-bold text-sm transition-all shadow-lg shadow-pink-500/10">{t[lang].upsell.items.salesPage.button}</a>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* COMPLETE PACKAGE (FEATURED) */}
-                        {products.complete_package && (
-                            <div className="col-span-1 md:col-span-2 lg:col-span-3 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white p-8 md:p-12 rounded-[2rem] relative overflow-hidden shadow-2xl shadow-indigo-500/20 transform hover:scale-[1.01] transition-all border border-white/10 group mt-8">
-                                <div className="absolute top-0 right-0 bg-white/20 backdrop-blur-md text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl uppercase tracking-[0.2em] border-b border-l border-white/10">{t[lang].upsell.items.package.badge}</div>
-
-                                <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-white/10 blur-[100px] rounded-full pointer-events-none"></div>
-                                <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-400/20 blur-[100px] rounded-full pointer-events-none group-hover:bg-indigo-400/30 transition-all"></div>
-
-                                <div className="flex flex-col lg:flex-row items-center justify-between gap-10 relative z-10 text-center lg:text-left">
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-center lg:justify-start gap-4 mb-6">
-                                            <div className="p-4 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20">
-                                                <Star className="w-8 h-8 text-yellow-300 fill-yellow-300" />
-                                            </div>
-                                            <div>
-                                                <h3 className="text-3xl md:text-4xl font-black tracking-tight">{t[lang].upsell.items.package.title}</h3>
-                                                <div className="flex gap-1 mt-1 justify-center lg:justify-start">
-                                                    {[1, 2, 3, 4, 5].map(s => <Star key={s} className="w-4 h-4 fill-yellow-300 text-yellow-300" />)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <p className="text-lg md:text-xl font-medium text-white/90 mb-0 max-w-2xl leading-relaxed">
-                                            {t[lang].upsell.items.package.desc}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex flex-col items-center lg:items-end min-w-[280px]">
-                                        <div className="mb-6">
-                                            <span className="text-white/60 text-lg line-through block font-medium">{t[lang].upsell.items.package.from} R$ 899,90</span>
-                                            <div className="text-6xl md:text-7xl font-black tracking-tighter shadow-sm">
-                                                <span className="text-3xl align-top mt-2 inline-block mr-1">R$</span>
-                                                599,90
-                                            </div>
-                                        </div>
-                                        <a href={products.complete_package} target="_blank" className="bg-white text-indigo-600 px-10 py-5 rounded-2xl font-black text-xl shadow-2xl hover:bg-slate-50 hover:scale-105 active:scale-95 transition-all w-full flex items-center justify-center gap-3">
-                                            <Zap className="w-6 h-6 fill-current" />
-                                            {t[lang].upsell.items.package.button}
-                                        </a>
-                                        <p className="mt-4 text-white/60 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                                            <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Kiwify
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </section>
 
             {/* ═══════════════════════════════════════════════════════════
                 SEÇÃO: SERVIÇOS EXTRAS
@@ -2461,6 +2301,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                     <span>•</span>
                     <a href="/terms-of-use" className="hover:text-white transition">{t[lang].footer.terms}</a>
                 </div>
+                <Disclaimer />
             </footer>
 
             {

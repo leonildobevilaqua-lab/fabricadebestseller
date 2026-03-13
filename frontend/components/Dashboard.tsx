@@ -4,6 +4,7 @@ import { PenTool, Download, Star, CheckCircle, Clock, MessageCircle, ExternalLin
 import { SocialShare } from './SocialShare';
 import { getApiBase } from '../services/api';
 import { ExtraServiceCard, ExtraServiceBuyButton } from './ExtraServices';
+import Disclaimer from './Disclaimer';
 
 // Inline Icons fallback
 const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
@@ -679,10 +680,11 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                     </div>
                 </div>
 
-                <div className="mt-8 text-center">
-                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest">
+                <div className="mt-8 text-center pb-12">
+                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mb-4">
                         🔒 Pagamento Seguro via Kiwify · Suporte via E-mail
                     </p>
+                    <Disclaimer />
                 </div>
             </div>
         </section>
