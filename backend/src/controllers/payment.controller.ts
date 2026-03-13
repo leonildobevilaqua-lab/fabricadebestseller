@@ -99,7 +99,15 @@ export const getLeads = async (req: Request, res: Response) => {
             if ((!updatedLead.plan || updatedLead.plan.name === 'AVULSO') && userPlan && userPlan.status === 'ACTIVE') {
                 updatedLead.plan = userPlan;
             }
-            // Same for paymentInfo - if undefined on Lead but exists in recent orders... (not strictly needed since UI derives price from plan if missing, but it fixes the name "Plano Pro").
+
+            // ATTACH PROJECT DATA IF MISSING
+            if (!updatedLead.projectId && !updatedLead.details?.projectId) {
+                const project = await getProjectByEmail(lead.email);
+                if (project) {
+                    updatedLead.projectId = project.id;
+                    if (!updatedLead.bookTitle) updatedLead.bookTitle = project.metadata.bookTitle;
+                }
+            }
 
             return updatedLead;
         }));
@@ -898,10 +906,27 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
 // DUMMY IMPLEMENTATION TO FIX BUILD (config.service missing)
 export const getPublicConfig = async (req: Request, res: Response) => {
     try {
-        // const { getConfig } = await import('../services/config.service');
-        // const config = await getConfig();
-        res.json({ products: {} });
+        const { getConfig } = require('../services/config.service');
+        const config = await getConfig();
+        const p = config.products || {};
+        res.json({
+            products: {
+                trans_en: p.english_book,
+                trans_es: p.spanish_book,
+                cover_card: p.cover_printed,
+                cover_ebook: p.cover_ebook,
+                pub_amazon_printed: p.pub_amazon_printed,
+                pub_amazon_digital: p.pub_amazon_digital,
+                pub_uiclap: p.pub_uiclap,
+                isbn_printed: p.isbn_printed,
+                isbn_digital: p.isbn_digital,
+                catalog_card: p.catalog_card,
+                complete_package: p.complete_package,
+                sales_page: p.sales_page
+            }
+        });
     } catch (e) {
+        console.error("Failed to load public config:", e);
         res.status(500).json({ error: "Failed to load config" });
     }
 };

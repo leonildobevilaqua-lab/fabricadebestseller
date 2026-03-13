@@ -29,13 +29,13 @@ export const AffiliationUpsell: React.FC = () => {
     return (
         <div className="min-h-screen bg-[#050b1a] text-white font-sans selection:bg-blue-500/30 pb-20 md:pb-0 overflow-x-hidden">
             {/* STICKY TOP TIMER */}
-            <div className="bg-[#0a1529] border-b border-[#d4af37] py-2 sticky top-0 z-[60] shadow-[0_0_20px_rgba(212,175,55,0.2)]">
-                <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4">
-                    <div className="flex items-center gap-2">
-                        <Clock size={18} className="text-[#d4af37] animate-pulse" />
-                        <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-[#d4af37]">Oportunidade limitada expira em:</span>
+            <div className="bg-[#b20000] border-b-2 border-[#d4af37] py-4 sticky top-0 z-[60] shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
+                <div className="max-w-5xl mx-auto px-4 flex flex-col items-center justify-center gap-2">
+                    <div className="flex items-center gap-3">
+                        <Clock size={24} className="text-white animate-pulse" />
+                        <span className="text-sm md:text-base font-black uppercase tracking-[0.2em] text-white">OPORTUNIDADE LIMITADA EXPIRA EM:</span>
                     </div>
-                    <span className="font-mono text-2xl md:text-3xl font-black text-[#d4af37] leading-none">{formatTime(timeLeft)}</span>
+                    <span className="font-mono text-4xl md:text-5xl font-black text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">{formatTime(timeLeft)}</span>
                 </div>
             </div>
 
@@ -112,9 +112,9 @@ export const AffiliationUpsell: React.FC = () => {
                                 href="/login"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="block w-full mt-4 py-4 border border-blue-500/30 text-blue-400 font-bold uppercase text-center hover:bg-blue-500/10 transition-all text-[10px] tracking-widest"
+                                className="block w-full mt-4 py-4 bg-[#ADFF2F] hover:bg-[#7CFC00] text-black font-black uppercase text-center transition-all transform hover:scale-105 active:scale-95 rounded-xl shadow-[0_10px_30px_rgba(173,255,47,0.2)]"
                             >
-                                Já sou membro? Ir para o Login
+                                IR PARA ÁREA VIP DE MEMBROS
                             </a>
                             
                             <p className="mt-4 text-[10px] text-gray-500 text-center font-bold uppercase tracking-widest">
@@ -209,9 +209,9 @@ export const AffiliationUpsell: React.FC = () => {
                         href="/login"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block px-8 py-4 border border-green-500/30 hover:border-green-400 text-green-500/70 hover:text-green-400 text-sm font-black uppercase tracking-widest transition-all hover:bg-green-500/5 rounded-sm"
+                        className="inline-block px-10 py-6 bg-[#ADFF2F] hover:bg-[#7CFC00] text-black text-lg font-black uppercase tracking-tighter transition-all transform hover:scale-105 active:scale-95 rounded-xl shadow-[0_10px_40px_rgba(173,255,47,0.3)]"
                     >
-                        Não quero lucrar agora, ir para Área de Membros
+                        NÃO QUERO LUCRAR AGORA, IR PARA ÁREA DE MEMBROS
                     </a>
                 </div>
                 <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-center gap-12 opacity-50 mb-12">

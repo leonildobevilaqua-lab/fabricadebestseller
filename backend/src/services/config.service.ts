@@ -56,15 +56,15 @@ const defaultConfig: AppConfig = {
     products: {
         english_book: "https://pay.kiwify.com.br/VqifT9S",
         spanish_book: "https://pay.kiwify.com.br/1Aj655e",
-        cover_printed: "https://pay.kiwify.com.br/i45JRf1",
+        cover_printed: "https://pay.kiwify.com.br/rW2Qn9s",
         cover_ebook: "https://pay.kiwify.com.br/NxPHXje",
-        pub_amazon_printed: "https://pay.kiwify.com.br/QbQGtgm",
+        pub_amazon_printed: "https://pay.kiwify.com.br/UeY5s8m",
         pub_amazon_digital: "https://pay.kiwify.com.br/FOxvupC",
         pub_uiclap: "https://pay.kiwify.com.br/5MZbxZi",
-        catalog_card: "https://pay.kiwify.com.br/hv6UVlU",
-        isbn_printed: "https://pay.kiwify.com.br/rZdo3Jv",
-        isbn_digital: "https://pay.kiwify.com.br/qoM41Tt",
-        complete_package: "https://pay.kiwify.com.br/IHk1tZd",
+        catalog_card: "https://pay.kiwify.com.br/lR4QshD",
+        isbn_printed: "https://pay.kiwify.com.br/0s1kX6G",
+        isbn_digital: "https://pay.kiwify.com.br/e0bVf7g",
+        complete_package: "https://pay.kiwify.com.br/N4L5K4X",
         sales_page: "",
         hosting: ""
     }
