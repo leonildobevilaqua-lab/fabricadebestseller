@@ -5,6 +5,7 @@ import { SocialShare } from './SocialShare';
 import { getApiBase } from '../services/api';
 import { ExtraServiceCard, ExtraServiceBuyButton } from './ExtraServices';
 import Disclaimer from './Disclaimer';
+import { useLanguage } from '../i18n/context';
 
 // Inline Icons fallback
 const IconBook = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>;
@@ -19,6 +20,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout }) => {
+    const { t, lang } = useLanguage();
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isPurchasing, setIsPurchasing] = useState(false);
@@ -33,12 +35,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             setLoading(true);
             setIsPurchasing(true); // Manter UI em "Waiting"
 
-            const kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(user.email)}`;
+            let kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(user.email)}`;
+            
+            // International checkout link provided in prompt
+            if (lang === 'en' && Math.abs(price - 39.90) < 0.1) {
+                kiwifyUrl = `https://pay.kiwify.com/DdposAY?email=${encodeURIComponent(user.email)}`;
+            }
+
             const win = window.open(kiwifyUrl, '_blank');
 
-            if (!win) alert("Por favor, permita popups para abrir o pagamento.");
+            if (!win) alert(lang === 'en' ? "Please allow popups to open the payment page." : "Por favor, permita popups para abrir o pagamento.");
         } catch (error) {
-            alert('Erro ao tentar abrir o checkout.');
+            alert(lang === 'en' ? 'Error trying to open checkout.' : 'Erro ao tentar abrir o checkout.');
             setIsPurchasing(false);
         } finally {
             setLoading(false);
@@ -61,31 +69,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
             if (data.hasAccess && (data.credits > 0 || data.hasActiveProject)) {
                 setHasCredits(data.credits > 0);
-
-                // --- CRITICAL FIX: IF USER HAS CREDITS, WE DO NOT BLOCK THEM WITH INVOICE ALERTS ---
-                // We only show the invoice alert if they have NO credits and NO active project.
-                // Or if they are trying to generate and the BACKEND says they are blocked (but our new backend allows credits).
-
                 if (data.credits > 0 || data.hasActiveProject) {
-                    console.log('Confirmed Access via Credits/Project');
                     onNewBook();
                 } else {
-                    // This part might be reached if hasAccess is true but credits/activeProject are false (unlikely with our logic)
-                    alert('Acesso autorizado.');
                     onNewBook();
                 }
             } else {
                 setHasCredits(false);
                 if (data.latestInvoiceStatus === 'PENDING' || data.latestInvoiceStatus === 'OVERDUE') {
-                    alert(`A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação ou realize o pagamento.`);
+                    const msg = lang === 'en' 
+                        ? `Invoice ${data.latestInvoiceNumber || ''} is still pending at the bank. Please wait for processing or complete the payment.` 
+                        : `A fatura ${data.latestInvoiceNumber || ''} ainda consta como pendente no banco. Aguarde a compensação ou realize o pagamento.`;
+                    alert(msg);
                     if (data.invoiceUrl) window.open(data.invoiceUrl, '_blank');
                 } else {
-                    alert('⚠️ Não identificamos créditos disponíveis. Se você acabou de pagar, aguarde alguns instantes e verifique novamente.');
+                    alert(lang === 'en' 
+                        ? '⚠️ No available credits found. If you just paid, please wait a moment and check again.' 
+                        : '⚠️ Não identificamos créditos disponíveis. Se você acabou de pagar, aguarde alguns instantes e verifique novamente.');
                 }
             }
         } catch (error) {
             console.error(error);
-            alert("Erro ao verificar status.");
+            alert(lang === 'en' ? "Error verifying status." : "Erro ao verificar status.");
         } finally {
             setLoading(false);
         }
@@ -162,7 +167,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     */
 
     const handleDeleteProject = async (projectId: string) => {
-        if (!window.confirm('Tem certeza que deseja excluir esse projeto? Isso não pode ser desfeito.')) return;
+        if (!window.confirm((t as any).dashboard.confirmDelete)) return;
 
         try {
             const getApiBase = () => {
@@ -188,11 +193,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 const dataUser = await resUser.json();
                 setStats(dataUser);
             } else {
-                alert('Erro ao excluir projeto.');
+                alert(lang === 'en' ? 'Error deleting project.' : 'Erro ao excluir projeto.');
             }
         } catch (e) {
             console.error('Delete error', e);
-            alert('Falha na comunicação.');
+            alert(lang === 'en' ? 'Communication failure.' : 'Falha na comunicação.');
         }
     };
 
@@ -231,12 +236,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         <div className="bg-indigo-600 text-white p-1.5 rounded-lg">
                             <IconBook />
                         </div>
-                        <span className="font-serif font-bold text-xl text-slate-800 hidden md:block">Fábrica de Best Sellers</span>
+                        <span className="font-serif font-bold text-xl text-slate-800 hidden md:block">{(t as any).dashboard.factoryName}</span>
                     </div>
 
                     <div className="flex items-center gap-4">
                         <div className="text-right mr-2 hidden sm:block">
-                            <p className="text-xs text-slate-400 font-bold uppercase">Bem-vindo,</p>
+                            <p className="text-xs text-slate-400 font-bold uppercase">{(t as any).dashboard.welcome}</p>
                             <p className="text-sm font-bold text-slate-800">{user.name}</p>
                         </div>
                         <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase border 
@@ -244,13 +249,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 planName === 'PRO' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' :
                                     'bg-gray-100 text-gray-600 border-gray-200'}`}>
                             {planName}
-                            {planStatus !== 'ACTIVE' && planName !== 'FREE' && <span className="ml-1 opacity-60">(INATIVO)</span>}
+                            {planStatus !== 'ACTIVE' && planName !== 'FREE' && <span className="ml-1 opacity-60">{(t as any).dashboard.statusInactive}</span>}
                         </div>
                         <button
                             onClick={onLogout}
                             className="text-xs font-bold text-red-400 hover:text-red-500 uppercase tracking-widest border border-red-200 hover:border-red-400 px-3 py-1 rounded-full transition"
                         >
-                            Sair
+                            {(t as any).dashboard.logout}
                         </button>
                     </div>
                 </div>
@@ -266,17 +271,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         <div className="text-center md:text-left">
                             <h2 className="text-2xl md:text-3xl font-black mb-4 flex items-center justify-center md:justify-start gap-3">
                                 <span className="text-emerald-400"><IconBook /></span>
-                                GERADOR DE BEST SELLERS
+                                {(t as any).dashboard.generatorTitle}
                             </h2>
                             <p className="text-slate-400 text-lg max-w-xl leading-relaxed">
                                 {hasCredits ? (
-                                    <>Você possui <span className="text-emerald-400 font-black">CRÉDITO DISPONÍVEL</span> para uma nova geração. Clique no botão ao lado para começar agora!</>
+                                    (t as any).dashboard.creditAvailable
                                 ) : (
                                     <>
-                                        Você está no modo <strong>{planStatus === 'ACTIVE' ? planName : 'AVULSO'}</strong>.
-                                        Sua taxa fixa por geração de livro é de
-                                        <span className="text-white font-bold mx-1">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</span>.
-                                        Aproveite o poder da IA para criar sua biblioteca agora mesmo.
+                                        {(t as any).dashboard.currentMode} <strong>{planStatus === 'ACTIVE' ? planName : (t as any).dashboard.modeAvulso}</strong>.
+                                        {(t as any).dashboard.feeLabel}
+                                        <span className="text-white font-bold mx-1">
+                                            {lang === 'en' ? '$' : 'R$'} {lang === 'en' ? nextBookDisplayPrice.toFixed(2) : nextBookDisplayPrice.toFixed(2).replace('.', ',')}
+                                        </span>
+                                        {lang === 'en' ? 'Leverage the power of AI to create your library right now.' : 'Aproveite o poder da IA para criar sua biblioteca agora mesmo.'}
                                     </>
                                 )}
                             </p>
@@ -289,14 +296,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         <div className="inline-block p-3 bg-emerald-500/20 rounded-full mb-2 animate-bounce">
                                             <span className="text-2xl">✨</span>
                                         </div>
-                                        <p className="text-xs text-emerald-400 uppercase font-bold tracking-widest">Acesso Liberado!</p>
+                                        <p className="text-xs text-emerald-400 uppercase font-bold tracking-widest">{(t as any).dashboard.accessReleased}</p>
                                     </div>
                                     <button
                                         onClick={onNewBook}
                                         className="w-full bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-black py-6 rounded-2xl transition-all flex flex-col items-center justify-center gap-1 shadow-2xl shadow-emerald-500/40 transform hover:scale-[1.05] active:scale-95 group"
                                     >
-                                        <span className="text-2xl group-hover:animate-pulse">🚀 GERAR LIVRO AGORA!</span>
-                                        <span className="text-[10px] opacity-70 font-bold uppercase tracking-widest">Clique para utilizar seu crédito</span>
+                                        <span className="text-2xl group-hover:animate-pulse">{(t as any).dashboard.generateButton}</span>
+                                        <span className="text-[10px] opacity-70 font-bold uppercase tracking-widest">{(t as any).dashboard.clickToUseCredit}</span>
                                     </button>
                                 </div>
                             ) : pendingInvoice ? (
@@ -305,15 +312,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         <div className="inline-block p-3 bg-yellow-500/20 text-yellow-500 rounded-full mb-2 animate-pulse">
                                             <Clock size={24} />
                                         </div>
-                                        <p className="text-sm font-bold text-yellow-400">AGUARDANDO PAGAMENTO</p>
-                                        <p className="text-xs text-slate-400 mt-2">Identificamos uma fatura em aberto.</p>
+                                        <p className="text-sm font-bold text-yellow-400">{(t as any).dashboard.waitingPayment}</p>
+                                        <p className="text-xs text-slate-400 mt-2">{(t as any).dashboard.waitInvoice}</p>
                                     </div>
                                     <div className="flex flex-col gap-3">
                                         <button
                                             onClick={handleVerifyAndEnter}
                                             className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-600"
                                         >
-                                            <CheckCircle size={18} /> ATUALIZAR STATUS
+                                            <CheckCircle size={18} /> {(t as any).dashboard.refreshStatus}
                                         </button>
                                         {invoiceUrl && (
                                             <a
@@ -322,7 +329,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 rel="noreferrer"
                                                 className="w-full text-center text-xs text-slate-400 hover:text-white underline mt-2"
                                             >
-                                                Pagar Agora / Visualizar Fatura
+                                                {(t as any).dashboard.payNow}
                                             </a>
                                         )}
                                     </div>
@@ -330,8 +337,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             ) : (
                                 <>
                                     <div className="text-center mb-6">
-                                        <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">Custo da Geração</p>
-                                        <div className="text-4xl font-black text-white">R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</div>
+                                        <p className="text-xs text-slate-500 uppercase font-bold tracking-widest mb-1">{lang === 'en' ? 'Generation Cost' : 'Custo da Geração'}</p>
+                                        <div className="text-4xl font-black text-white">{lang === 'en' ? '$' : 'R$'} {lang === 'en' ? nextBookDisplayPrice.toFixed(2) : nextBookDisplayPrice.toFixed(2).replace('.', ',')}</div>
                                     </div>
 
                                     <div className="flex flex-col gap-3">
@@ -339,14 +346,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             onClick={() => handleBuyCredit(nextBookDisplayPrice)}
                                             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 text-lg"
                                         >
-                                            <span>🛒</span> ADQUIRIR CRÉDITO
+                                            <span>🛒</span> {(t as any).dashboard.buyCredit}
                                         </button>
 
                                         <button
                                             onClick={handleVerifyAndEnter}
                                             className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-600"
                                         >
-                                            <CheckCircle size={18} /> JÁ PAGUEI - VERIFICAR
+                                            <CheckCircle size={18} /> {(t as any).dashboard.alreadyPaid}
                                         </button>
                                     </div>
                                 </>
@@ -359,9 +366,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 flex items-start md:items-center gap-4">
                                 <span className="text-3xl">⚠️</span>
                                 <div>
-                                    <h4 className="text-yellow-500 font-bold mb-1">Atenção: Você tem uma Condição Exclusiva Legacy!</h4>
+                                    <h4 className="text-yellow-500 font-bold mb-1">{(t as any).dashboard.legacyWarning}</h4>
                                     <p className="text-slate-300 text-sm leading-relaxed">
-                                        Como assinante fundador, você tem o direito garantido de gerar novos livros pelo valor promocional de <strong>R$ {nextBookDisplayPrice.toFixed(2).replace('.', ',')}</strong> enquanto sua assinatura atual <strong>{planName}</strong> for mantida ativa. Aproveite!
+                                        {lang === 'en' ? `As a founding subscriber, you have the guaranteed right to generate new books at the promotional price of <strong>$ ${nextBookDisplayPrice.toFixed(2)}</strong> while your current <strong>${planName}</strong> subscription is kept active. Enjoy!` : `Como assinante fundador, você tem o direito garantido de gerar novos livros pelo valor promocional de <strong>R$ ${nextBookDisplayPrice.toFixed(2).replace('.', ',')}</strong> enquanto sua assinatura atual <strong>${planName}</strong> for mantida ativa. Aproveite!` }
                                     </p>
                                 </div>
                             </div>
@@ -379,9 +386,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 <MessageCircle size={36} />
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">Comunidade VIP Exclusiva 🚀</h3>
+                                <h3 className="text-2xl font-black text-slate-900 mb-2 uppercase tracking-tight">{(t as any).dashboard.communityTitle}</h3>
                                 <p className="text-slate-500 max-w-xl leading-relaxed font-semibold">
-                                    Não fique de fora! Entre agora no nosso grupo de WhatsApp e receba <span className="text-emerald-600">informações privilegiadas, promoções relâmpago, orientações estratégicas e brindes semanais</span> exclusivos para nossos membros.
+                                    {lang === 'en' ? "Don't be left out! Join our WhatsApp group now and receive privileged information, lightning deals, strategic guidance and weekly freebies exclusive to our members." : "Não fique de fora! Entre agora no nosso grupo de WhatsApp e receba informações privilegiadas, promoções relâmpago, orientações estratégicas e brindes semanais exclusivos para nossos membros."}
                                 </p>
                             </div>
                         </div>
@@ -392,7 +399,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             rel="noopener noreferrer"
                             className="w-full md:w-auto bg-[#25D366] hover:bg-[#20bd5a] text-white font-black px-8 py-5 rounded-2xl transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-3 uppercase tracking-widest text-sm hover:scale-105 active:scale-95"
                         >
-                            <span>Entrar no Grupo</span>
+                            <span>{(t as any).dashboard.joinGroup}</span>
                             <ExternalLink size={18} />
                         </a>
                     </div>
@@ -402,14 +409,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 <div className="bg-white rounded-3xl p-6 md:p-10 border border-slate-200 shadow-xl overflow-hidden">
                     <div className="text-center mb-8">
                         <h3 className="text-xl md:text-2xl font-black text-slate-900 uppercase tracking-tight leading-tight">
-                            ASSISTA A ESTE VÍDEO E VEJA AS ÚNICAS ALTERAÇÕES QUE VOCÊ PRECISARÁ FAZER NO SEU LIVRO GERADO!
+                            {(t as any).dashboard.videoTitle}
                         </h3>
                     </div>
                     <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-200">
                         <iframe
                             className="absolute inset-0 w-full h-full"
                             src="https://www.youtube.com/embed/uBvagSevkaI"
-                            title="Vídeo de Instruções"
+                            title={lang === 'en' ? "Instructional Video" : "Vídeo de Instruções"}
                             frameBorder="0"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
@@ -422,17 +429,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 {/* History (Meus Livros) */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className="font-bold text-slate-800 text-lg">Meus Livros</h3>
+                        <h3 className="font-bold text-slate-800 text-lg">{(t as any).dashboard.myBooks}</h3>
                         <span className="text-xs font-bold text-slate-400 uppercase bg-slate-100 px-2 py-1 rounded">
-                            {displayOrders.length} Projetos
+                            {displayOrders.length} {(t as any).dashboard.projectsCount}
                         </span>
                     </div>
 
                     {displayOrders.length === 0 ? (
                         <div className="p-12 text-center text-slate-400">
                             <div className="mb-4 opacity-50"><IconBook /></div>
-                            <p>Você ainda não gerou nenhum livro.</p>
-                            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-indigo-600 font-bold hover:underline mt-2">Começar agora</button>
+                            <p>{(t as any).dashboard.noBooks}</p>
+                            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-indigo-600 font-bold hover:underline mt-2">{(t as any).dashboard.startNow}</button>
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-100">
@@ -443,9 +450,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             📚
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-800">{order.title || "Livro Sem Título"}</h4>
-                                            {order.authorName && <p className="text-xs text-slate-600 font-medium">Autor: {order.authorName}</p>}
-                                            <p className="text-xs text-slate-500 uppercase mt-1">{order.date ? new Date(order.date).toLocaleDateString() : 'Data desconhecida'}</p>
+                                            <h4 className="font-bold text-slate-800">{order.title || (t as any).dashboard.bookTitleFallback}</h4>
+                                            {order.authorName && <p className="text-xs text-slate-600 font-medium">{(t as any).dashboard.authorLabel} {order.authorName}</p>}
+                                            <p className="text-xs text-slate-500 uppercase mt-1">{order.date ? new Date(order.date).toLocaleDateString() : (t as any).dashboard.dateUnknown}</p>
                                         </div>
                                     </div>
 
@@ -454,9 +461,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
                                                 'bg-yellow-100 text-yellow-700'
                                             }`}>
-                                            {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') ? 'LIVRO GERADO' :
-                                                order.status === 'IN_PROGRESS' ? 'PROCESSANDO...' :
-                                                    'Aguardando'}
+                                            {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') ? (t as any).dashboard.statusGenerated :
+                                                order.status === 'IN_PROGRESS' ? (t as any).dashboard.statusProcessing :
+                                                    (t as any).dashboard.statusWaiting}
                                         </span>
                                         {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl && (
                                             <a
@@ -464,7 +471,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 target="_blank"
                                                 rel="noreferrer"
                                                 className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                                                title="Baixar Kit Completo (ZIP)"
+                                                title={(t as any).dashboard.downloadKit}
                                             >
                                                 <IconDownload />
                                             </a>
@@ -472,7 +479,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         <button
                                             onClick={() => handleDeleteProject(order.id)}
                                             className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                                            title="Excluir Projeto"
+                                            title={(t as any).dashboard.deleteProject}
                                         >
                                             <IconTrash />
                                         </button>
@@ -489,29 +496,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     <div className="relative z-10 grid lg:grid-cols-2 gap-10 items-center">
                         <div>
                             <span className="inline-block bg-blue-600/10 text-blue-400 text-[10px] font-black px-4 py-2 rounded-full border border-blue-500/20 uppercase tracking-widest mb-4">
-                                🚀 Área do Afiliado Representante
+                                {(t as any).dashboard.affiliate.tag}
                             </span>
                             <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter leading-tight italic">
-                                <span className="text-blue-500">A Chave do Cofre:</span> <br />
-                                Copie e Cole meus Criativos que Vendem!
+                                <span className="text-blue-500">{(t as any).dashboard.affiliate.title}</span> <br />
+                                {(t as any).dashboard.affiliate.subtitle}
                             </h2>
                             <p className="text-slate-400 text-lg mb-8 leading-relaxed font-medium">
-                                Acesso imediato a todo o material de marketing validado que me fizeram lucrar mais de R$ 1.000,00 por dia.
+                                {(t as any).dashboard.affiliate.desc}
                             </p>
                             <a
-                                href="https://pay.kiwify.com.br/eAZIvMi"
+                                href={lang === 'en' ? "https://pay.kiwify.com/DdposAY" : "https://pay.kiwify.com.br/eAZIvMi"}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="inline-flex items-center gap-3 bg-[#d4af37] hover:bg-yellow-400 text-black font-black uppercase py-4 px-8 rounded-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:scale-105 active:scale-98"
                             >
-                                💳 QUERO ACESSO À PASTA SECRETA — R$ 99,90 <ExternalLink size={20} />
+                                {(t as any).dashboard.affiliate.button} <ExternalLink size={20} />
                             </a>
                         </div>
                         <div className="aspect-video bg-black rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
                             <iframe
                                 className="w-full h-full"
                                 src="https://www.youtube.com/embed/qyZ5F1oZJyg"
-                                title="A Chave do Cofre"
+                                title={(t as any).dashboard.affiliate.title}
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 allowFullScreen
@@ -525,7 +532,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                 <div className="pt-8 border-t border-slate-200">
                     <SocialShare
-                        text="Estou criando livros incríveis com Inteligência Artificial! Conheça a Fábrica de Best Sellers."
+                        text={lang === 'en' ? "I'm creating amazing books with AI! Check out Best Seller Factory." : "Estou criando livros incríveis com Inteligência Artificial! Conheça a Fábrica de Best Sellers."}
                         className="opacity-70 hover:opacity-100 transition-opacity"
                     />
                 </div>
@@ -537,6 +544,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
 // --- [RE-IMPLEMENTED] EXTRA SERVICE SECTION (LANDING PAGE STYLE) ---
 const ExtraServiceSection = ({ formData, products }: { formData: any, products: any }) => {
+    const { t, lang } = useLanguage();
     return (
         <section className="py-12 bg-slate-950 rounded-[40px] relative overflow-hidden shadow-2xl border border-slate-800">
             <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950"></div>
@@ -545,13 +553,13 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
             <div className="relative max-w-6xl mx-auto px-6">
                 <div className="text-center mb-12">
                     <span className="inline-block bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-4 py-2 rounded-full border border-emerald-500/20 uppercase tracking-widest mb-4">
-                        Serviços Extras Profissionais
+                        {(t as any).dashboard.extraServices.title}
                     </span>
                     <h2 className="text-3xl md:text-4xl font-black text-white mb-4 uppercase tracking-tight">
-                        Transforme Seu Livro em <span className="text-emerald-400">Produto de Mercado</span>
+                        {(t as any).dashboard.extraServices.subtitle}
                     </h2>
                     <p className="text-slate-500 text-sm max-w-2xl mx-auto font-medium">
-                        Contrate separadamente ou em Pacote Completo com desconto. Atendimento via e-mail pós-pagamento.
+                        {(t as any).dashboard.extraServices.desc}
                     </p>
                 </div>
 
@@ -559,13 +567,13 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                 <div className="mb-10">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center justify-center text-sm">🌍</div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Tradução</h3>
+                        <h3 className="text-xs font-black text-white uppercase tracking-widest">{(t as any).dashboard.extraServices.translation}</h3>
                         <div className="flex-1 h-px bg-blue-500/20"></div>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                         {[
-                            { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX pronto'], href: products.trans_en },
-                            { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX pronto'], href: products.trans_es },
+                            { key: 'livro-ingles', icon: '🇺🇸', title: (t as any).dashboard.extraServices.items.engBook.title, subtitle: (t as any).dashboard.extraServices.items.engBook.subtitle, price: lang === 'en' ? 4.90 : 24.99, features: (t as any).dashboard.extraServices.items.engBook.features, href: products.trans_en },
+                            { key: 'livro-espanhol', icon: '🇪🇸', title: (t as any).dashboard.extraServices.items.espBook.title, subtitle: (t as any).dashboard.extraServices.items.espBook.subtitle, price: lang === 'en' ? 4.90 : 24.99, features: (t as any).dashboard.extraServices.items.espBook.features, href: products.trans_es },
                         ].map(svc => (
                             <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="blue" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
                         ))}
@@ -576,13 +584,13 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                 <div className="mb-10">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-lg flex items-center justify-center text-sm">🎨</div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Design de Capa</h3>
+                        <h3 className="text-xs font-black text-white uppercase tracking-widest">{(t as any).dashboard.extraServices.coverDesign}</h3>
                         <div className="flex-1 h-px bg-purple-500/20"></div>
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                         {[
-                            { key: 'capa-impressa', icon: '📗', title: 'Capa — Livro Impresso', subtitle: 'Design profissional para KDP / UICLAP', price: 250.00, features: ['Dimensões exatas para impressão', 'Capa + Lombada + Contra-capa', 'Arquivo PDF Alta Resolução'], href: products.cover_card },
-                            { key: 'capa-digital', icon: '📱', title: 'Capa — Livro Digital', subtitle: 'Design otimizado para Amazon Kindle', price: 149.90, features: ['Formato 1600×2560px', 'JPG e PNG em alta qualidade', 'Otimizado para lojas digitais'], href: products.cover_ebook },
+                            { key: 'capa-impressa', icon: '📗', title: (t as any).dashboard.extraServices.items.printCover.title, subtitle: (t as any).dashboard.extraServices.items.printCover.subtitle, price: lang === 'en' ? 49.90 : 250.00, features: (t as any).dashboard.extraServices.items.printCover.features, href: products.cover_card },
+                            { key: 'capa-digital', icon: '📱', title: (t as any).dashboard.extraServices.items.digitalCover.title, subtitle: (t as any).dashboard.extraServices.items.digitalCover.subtitle, price: lang === 'en' ? 29.90 : 149.90, features: (t as any).dashboard.extraServices.items.digitalCover.features, href: products.cover_ebook },
                         ].map(svc => (
                             <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="purple" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
                         ))}
@@ -593,14 +601,14 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                 <div className="mb-10">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-8 h-8 bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center text-sm">🚀</div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Publicação</h3>
+                        <h3 className="text-xs font-black text-white uppercase tracking-widest">{(t as any).dashboard.extraServices.publication}</h3>
                         <div className="flex-1 h-px bg-orange-500/20"></div>
                     </div>
                     <div className="grid sm:grid-cols-3 gap-4">
                         {[
-                            { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico global', price: 69.90, features: ['Upload e configuração KDP', 'Revisão de formato e margens'], href: products.pub_amazon_printed },
-                            { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Publicação do ebook Kindle', price: 59.90, features: ['Upload Kindle Direct Publishing', 'Revisão do arquivo mobi/epub'], href: products.pub_amazon_digital },
-                            { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Impresso', subtitle: 'Publicação na maior plataforma BR', price: 59.90, features: ['Cadastro e upload UICLAP', 'Disponível sob demanda'], href: products.pub_uiclap },
+                            { key: 'amazon-impresso', icon: '📦', title: (t as any).dashboard.extraServices.items.amazonPub.title + ' — ' + (lang === 'en' ? 'Print' : 'Impresso'), subtitle: (t as any).dashboard.extraServices.items.amazonPub.subtitle, price: lang === 'en' ? 14.90 : 69.90, features: (t as any).dashboard.extraServices.items.amazonPub.features, href: products.pub_amazon_printed },
+                            { key: 'amazon-digital', icon: '📲', title: (t as any).dashboard.extraServices.items.amazonPub.title + ' — ' + (lang === 'en' ? 'Digital' : 'Digital'), subtitle: (t as any).dashboard.extraServices.items.amazonPub.subtitle, price: lang === 'en' ? 12.90 : 59.90, features: (t as any).dashboard.extraServices.items.amazonPub.features, href: products.pub_amazon_digital },
+                            { key: 'uiclap-impresso', icon: '🇧🇷', title: (t as any).dashboard.extraServices.items.shelfPub.title + ' — ' + (lang === 'en' ? 'Print' : 'Impresso'), subtitle: (t as any).dashboard.extraServices.items.shelfPub.subtitle, price: lang === 'en' ? 12.90 : 59.90, features: (t as any).dashboard.extraServices.items.shelfPub.features, href: products.pub_uiclap },
                         ].map(svc => (
                             <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="orange" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
                         ))}
@@ -611,14 +619,14 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                 <div className="mb-12">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="w-8 h-8 bg-amber-500/20 border border-amber-500/30 rounded-lg flex items-center justify-center text-sm">📋</div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">Registros Legais</h3>
+                        <h3 className="text-xs font-black text-white uppercase tracking-widest">{(t as any).dashboard.extraServices.legal}</h3>
                         <div className="flex-1 h-px bg-amber-500/20"></div>
                     </div>
                     <div className="grid sm:grid-cols-3 gap-4">
                         {[
-                            { key: 'ficha-catalografica', icon: '🗂️', title: 'Ficha Catalográfica', subtitle: 'Obrigatória para gráficas', price: 59.90, features: ['Padrão AACR2 / RDA', 'Emitida por bibliotecária'], href: products.catalog_card },
-                            { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Livro Impresso', subtitle: 'Registro oficial na CBL', price: 49.90, features: ['Número ISBN único', 'Código de barras incluso'], href: products.isbn_printed },
-                            { key: 'isbn-digital', icon: '📗', title: 'ISBN — Livro Digital', subtitle: 'Registro oficial edição digital', price: 49.90, features: ['Número ISBN único', 'Pronto para E-book'], href: products.isbn_digital },
+                            { key: 'ficha-catalografica', icon: '🗂️', title: (t as any).dashboard.extraServices.items.cataloging.title, subtitle: (t as any).dashboard.extraServices.items.cataloging.subtitle, price: lang === 'en' ? 12.90 : 59.90, features: (t as any).dashboard.extraServices.items.cataloging.features, href: products.catalog_card },
+                            { key: 'isbn-impresso', icon: '📘', title: (t as any).dashboard.extraServices.items.isbn.title + ' — ' + (lang === 'en' ? 'Print' : 'Impresso'), subtitle: (t as any).dashboard.extraServices.items.isbn.subtitle, price: lang === 'en' ? 9.90 : 49.90, features: (t as any).dashboard.extraServices.items.isbn.features, href: products.isbn_printed },
+                            { key: 'isbn-digital', icon: '📗', title: (t as any).dashboard.extraServices.items.isbn.title + ' — ' + (lang === 'en' ? 'Digital' : 'Digital'), subtitle: (t as any).dashboard.extraServices.items.isbn.subtitle, price: lang === 'en' ? 9.90 : 49.90, features: (t as any).dashboard.extraServices.items.isbn.features, href: products.isbn_digital },
                         ].map(svc => (
                             <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="amber" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
                         ))}
@@ -628,17 +636,17 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                 {/* ── PACOTE COMPLETO ── */}
                 <div className="relative bg-gradient-to-br from-emerald-900/30 via-slate-800/60 to-slate-900 border border-emerald-500/40 rounded-3xl p-8 shadow-2xl">
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-900 text-[10px] font-black px-6 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                        🔥 MAIOR ECONOMIA
+                        {(t as any).dashboard.extraServices.bestValue}
                     </div>
 
                     <div className="flex flex-col md:flex-row gap-8 items-center justify-between">
                         <div className="flex-1">
-                            <h3 className="text-2xl font-black text-white mb-2 uppercase">Pacote Completo</h3>
+                            <h3 className="text-2xl font-black text-white mb-2 uppercase">{(t as any).dashboard.extraServices.completePackage}</h3>
                             <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                                Tradução (EN+ES) + Capa Impressa + Publicação Amazon + ISBN + Ficha Catalográfica.
+                                {(t as any).dashboard.extraServices.packageDesc}
                             </p>
                             <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                {['🌍 Tradução', '📗 Capa', '🚀 Amazon', '🔢 ISBN', '🗂️ Ficha'].map((item, i) => (
+                                {[(t as any).dashboard.extraServices.items.engBook.title, (t as any).dashboard.extraServices.items.printCover.title, (t as any).dashboard.extraServices.items.amazonPub.title, (t as any).dashboard.extraServices.items.isbn.title, (t as any).dashboard.extraServices.items.cataloging.title].map((item, i) => (
                                     <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-300 bg-slate-800/50 px-2 py-1 rounded-lg">
                                         <span className="w-1 h-1 rounded-full bg-emerald-400"></span>
                                         {item}
@@ -649,8 +657,8 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
 
                         <div className="text-center md:text-right">
                             <div className="flex items-end justify-center md:justify-end gap-1 mb-4">
-                                <span className="text-slate-500 text-sm mb-1">R$</span>
-                                <span className="text-5xl font-black text-white tracking-tighter">599,90</span>
+                                <span className="text-slate-500 text-sm mb-1">{lang === 'en' ? '$' : 'R$'}</span>
+                                <span className="text-5xl font-black text-white tracking-tighter">{lang === 'en' ? '119.90' : '599,90'}</span>
                             </div>
                             <button
                                 onClick={() => {
@@ -660,15 +668,15 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                                 }}
                                 className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black px-8 py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 uppercase text-xs tracking-widest"
                             >
-                                Contratar Pacote Completo
+                                {(t as any).dashboard.extraServices.hirePackage}
                             </button>
                             {/* Hidden internal button for logic */}
                             <div className="hidden">
                                 <ExtraServiceBuyButton
                                     serviceKey="pacote-completo"
                                     serviceName="Pacote Completo de Serviços"
-                                    price={599.90}
-                                    label="Contratar Pacote Completo"
+                                    price={lang === 'en' ? 119.90 : 599.90}
+                                    label={(t as any).dashboard.extraServices.hirePackage}
                                     accentClass="bg-emerald-500"
                                     formData={formData}
                                     getApiBase={getApiBase}
@@ -682,7 +690,7 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
 
                 <div className="mt-8 text-center pb-12">
                     <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mb-4">
-                        🔒 Pagamento Seguro via Kiwify · Suporte via E-mail
+                        {lang === 'en' ? '🔒 Secure Payment via Kiwify · Email Support' : '🔒 Pagamento Seguro via Kiwify · Suporte via E-mail'}
                     </p>
                     <Disclaimer />
                 </div>

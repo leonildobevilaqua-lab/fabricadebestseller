@@ -40,7 +40,7 @@ const SUBSCRIPTION_PRICES: any = {
 export const createLead = async (req: Request, res: Response) => {
     try {
         await reloadDB();
-        const { name, email, phone, countryCode, type, topic, authorName, tag, plan, discount } = req.body;
+        const { name, email, phone, countryCode, type, topic, authorName, tag, plan, discount, language } = req.body;
         // Create a unique ID or use email
         const id = new Date().getTime().toString();
 
@@ -68,6 +68,7 @@ export const createLead = async (req: Request, res: Response) => {
             tag,
             plan: resolvedPlan,
             discount,
+            language: language || 'pt',
             env: process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox'
         };
         await pushVal('/leads', lead);
@@ -356,6 +357,14 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             }
         }
 
+        // --- DETECT LANGUAGE ---
+        let detectedLang = 'pt';
+        const pNameLower = (productName || "").toLowerCase();
+        const kiwifyDataRaw = payload.order || payload;
+        if (pNameLower.includes('generation') || pNameLower.includes('factory') || pNameLower.includes('bestseller') || kiwifyDataRaw.currency === 'USD' || kiwifyDataRaw.order_currency === 'USD') {
+            detectedLang = 'en';
+        }
+
         // --- EMERGENCY LOGGING: Always save the order to DB for Fast-Track visibility ---
         if (email) {
             const tempPaymentInfo = {
@@ -364,6 +373,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 amount: amount,
                 product: productName,
                 provider: isAsaas ? 'ASAAS' : 'KIWIFY',
+                language: detectedLang,
                 transactionId: (payload as any)._txId || payload.id || payload.payment?.id || payload.order_id || uuidv4(),
                 env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
             };
@@ -389,6 +399,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 amount: amount,
                 product: productName,
                 provider: isAsaas ? 'ASAAS' : 'KIWIFY',
+                language: detectedLang,
                 transactionId: (payload as any)._txId || payload.id || payload.payment?.id || payload.order_id || uuidv4(),
                 env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
             };
@@ -443,6 +454,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 // Save last payment date
                 await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
                 await setVal(`/users/${safeEmail}/lastBookPaymentDate`, new Date());
+                await setVal(`/users/${safeEmail}/language`, detectedLang);
 
                 // Also update Lead if exists: find newest, preferably PENDING
                 let leadIndex = -1;
@@ -493,6 +505,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                         startDate: new Date(),
                         lastPayment: new Date()
                     });
+                    await setVal(`/users/${safeEmail}/language`, detectedLang);
 
                     // Search for lead again to ensure fresh scope index
                     const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
@@ -501,6 +514,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                         await setVal(`/leads[${leadIndex}]/plan`, { name: detectedPlan, billing });
                         await setVal(`/leads[${leadIndex}]/status`, 'SUBSCRIBER');
                         await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
+                        await setVal(`/leads[${leadIndex}]/language`, detectedLang);
                     } else {
                         // Create Subscriber Lead
                         const newLead = {
@@ -512,6 +526,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                             status: 'SUBSCRIBER',
                             plan: { name: detectedPlan, billing },
                             paymentInfo,
+                            language: detectedLang,
                             tag: `PLANO ${detectedPlan}`
                         };
                         await pushVal('/leads', newLead);
@@ -1118,7 +1133,7 @@ export const EXTRA_SERVICES_CATALOG: Record<string, { label: string; price: numb
  */
 export const createExtraServiceCharge = async (req: Request, res: Response) => {
     try {
-        const { email, name, phone, cpfCnpj, serviceKey } = req.body;
+        const { email, name, phone, cpfCnpj, serviceKey, lang } = req.body;
 
         if (!email || !serviceKey) {
             return res.status(400).json({ error: 'E-mail e serviço são obrigatórios.' });
@@ -1129,7 +1144,7 @@ export const createExtraServiceCharge = async (req: Request, res: Response) => {
             return res.status(400).json({ error: `Serviço desconhecido: ${serviceKey}` });
         }
 
-        console.log(`[EXTRA] ${email} => "${service.label}" R$ ${service.price}`);
+        console.log(`[EXTRA] ${email} [${lang || 'pt'}] => "${service.label}" ${lang === 'en' ? '$' : 'R$'} ${service.price}`);
 
         const customerId = await AsaasProvider.createCustomer({
             name: name || email.split('@')[0],
@@ -1158,6 +1173,7 @@ export const createExtraServiceCharge = async (req: Request, res: Response) => {
                 status: 'PENDING',
                 date: new Date(),
                 asaas_payment_id: payment.id,
+                language: lang || 'pt'
             });
         } catch (dbErr) {
             console.warn('[EXTRA] Falha ao salvar pedido (não crítico):', dbErr);
@@ -1168,7 +1184,9 @@ export const createExtraServiceCharge = async (req: Request, res: Response) => {
             invoiceUrl: payment.invoiceUrl || payment.bankSlipUrl,
             price: service.price,
             serviceName: service.label,
-            message: `Fatura gerada! Após o pagamento, você receberá os detalhes no e-mail ${email}.`,
+            message: (lang === 'en')
+                ? `Invoice generated! After payment, you'll receive instructions at ${email}.`
+                : `Fatura gerada! Após o pagamento, você receberá os detalhes no e-mail ${email}.`,
         });
     } catch (e: any) {
         console.error('[EXTRA SERVICE]', e.message);

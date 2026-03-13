@@ -1331,7 +1331,16 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                         finalLink = 'https://pay.kiwify.com.br/QPTslcx';
                                                     }
 
-                                                    const finalPriceStr = displayPrice.toFixed(2).replace('.', ',');
+                                                    // OVERRIDE FOR INTERNATIONAL FLOW (USA)
+                                                    if (lang === 'en') {
+                                                        displayPrice = 39.90;
+                                                        finalLink = 'https://pay.kiwify.com/DdposAY';
+                                                    }
+
+                                                    const finalPriceStr = lang === 'en' 
+                                                        ? displayPrice.toFixed(2) 
+                                                        : displayPrice.toFixed(2).replace('.', ',');
+                                                    const currencySymbol = lang === 'en' ? '$' : 'R$';
 
                                                     // --- SUBSCRIPTION ENFORCEMENT LOGIC ---
                                                     const realPlan = (window as any).currentUserPlan; // Backend Plan
@@ -1480,7 +1489,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         onClick={handleSubscribe}
                                                                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl text-lg shadow-lg transition-all transform hover:-translate-y-1 block text-center"
                                                                     >
-                                                                        1. ATIVAR ASSINATURA (R$ {subPrice})
+                                                                        1. ATIVAR ASSINATURA ({currencySymbol} {subPrice})
                                                                     </button>
                                                                 ) : (
                                                                     <button
@@ -1488,7 +1497,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                                                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
                                                                     >
                                                                         {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
-                                                                        COMPRAR CRÉDITO AGORA! (R$ {finalPriceStr})
+                                                                        COMPRAR CRÉDITO AGORA! ({currencySymbol} {finalPriceStr})
                                                                     </button>
                                                                 )}
 

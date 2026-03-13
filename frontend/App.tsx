@@ -21,7 +21,15 @@ import { AffiliationUpsell } from './components/AffiliationUpsell';
 
 
 const App: React.FC = () => {
-  const [lang, setLang] = useState<'pt' | 'en' | 'es'>(() => (localStorage.getItem('bsf_lang') as any) || 'pt');
+  const [lang, setLang] = useState<'pt' | 'en' | 'es'>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const langParam = params.get('lang') as any;
+    if (langParam && ['pt', 'en', 'es'].includes(langParam)) {
+      localStorage.setItem('bsf_lang', langParam);
+      return langParam;
+    }
+    return (localStorage.getItem('bsf_lang') as any) || 'pt';
+  });
 
   // Translation Helper
   const translations = { pt, en, es };

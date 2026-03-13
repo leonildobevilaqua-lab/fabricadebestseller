@@ -44,6 +44,64 @@ const MARGIN_OUTSIDE = Math.round(1.52 * TWIPS_PER_CM);
 const MARGIN_HEADER = Math.round(0.89 * TWIPS_PER_CM);
 const MARGIN_FOOTER = Math.round(0.89 * TWIPS_PER_CM);
 
+const getDocTranslations = (lang: string = 'pt') => {
+    const t: Record<string, any> = {
+        pt: {
+            chapter: "CAPÍTULO",
+            acknowledgments: "AGRADECIMENTOS",
+            dedication: "DEDICATÓRIA",
+            summary: "SUMÁRIO",
+            introduction: "INTRODUÇÃO",
+            conclusion: "CONCLUSÃO",
+            aboutAuthorM: "SOBRE O AUTOR",
+            aboutAuthorF: "SOBRE A AUTORA",
+            amazonSynopsis: "Sinopse Amazon",
+            backCover: "Texto da Contra Capa",
+            flapCopy: "Texto da Orelha da Capa",
+            backFlapCopy: "Texto da Orelha da Contra Capa",
+            youtubeDesc: "Descrição Youtube",
+            keywords: "Palavras Chave",
+            professionalSynopsis: "SINOPSE PADRÃO PROFISSIONAL AMAZON",
+            kitName: "kit_completo",
+            bookFile: "Livro",
+            originalAmazonSynopsisFile: "Sinopse_Amazon",
+            backCoverFile: "Texto_Contra_Capa",
+            flapCopyFile: "Texto_Orelha_Capa",
+            backFlapCopyFile: "Texto_Orelha_Contra_Capa",
+            youtubeDescFile: "Youtube_Descricao",
+            keywordsFile: "Palavras_Chave",
+            professionalSynopsisFile: "Sinopse_Padrao_Profissional_Amazon"
+        },
+        en: {
+            chapter: "CHAPTER",
+            acknowledgments: "ACKNOWLEDGEMENTS",
+            dedication: "DEDICATION",
+            summary: "TABLE OF CONTENTS",
+            introduction: "INTRODUCTION",
+            conclusion: "CONCLUSION",
+            aboutAuthorM: "ABOUT THE AUTHOR",
+            aboutAuthorF: "ABOUT THE AUTHOR",
+            amazonSynopsis: "Amazon Synopsis",
+            backCover: "Back Cover Text",
+            flapCopy: "Flap Copy",
+            backFlapCopy: "Back Flap Copy",
+            youtubeDesc: "YouTube Description",
+            keywords: "Keywords",
+            professionalSynopsis: "PROFESSIONAL STANDARD AMAZON SYNOPSIS",
+            kitName: "complete_kit",
+            bookFile: "Book",
+            originalAmazonSynopsisFile: "Amazon_Synopsis",
+            backCoverFile: "Back_Cover_Text",
+            flapCopyFile: "Flap_Copy",
+            backFlapCopyFile: "Back_Flap_Copy",
+            youtubeDescFile: "YouTube_Description",
+            keywordsFile: "Keywords",
+            professionalSynopsisFile: "Professional_Standard_Amazon_Synopsis"
+        }
+    };
+    return t[lang] || t.pt;
+};
+
 export const generateBookDocx = async (project: BookProject): Promise<string> => {
     console.log(`[DocService] Generating DOCX for ID: ${project.id} | Title: ${project.metadata.bookTitle}`);
     if (!project.structure) {
@@ -56,6 +114,9 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     const mainChapters = project.structure.filter(c => c.id !== 0 && !['introdução', 'introduction', 'intro'].some(term => c.title.toLowerCase().includes(term)));
 
     mainChapters.sort((a, b) => a.id - b.id);
+
+    const lang = project.metadata.language || 'pt';
+    const tr = getDocTranslations(lang);
 
     const content: BookContent = {
         introduction: introChapter ? introChapter.content : "",
@@ -99,7 +160,7 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     // 4. Generate Extras & Zip (If Marketing exists)
     if (project.marketing) {
         try {
-            const zipName = `kit_completo_${safeEmail}_${project.id}.zip`;
+            const zipName = `${tr.kitName}_${safeEmail}_${project.id}.zip`;
             const zipPath = path.join(outputDir, zipName);
 
             const output = fs.createWriteStream(zipPath);
@@ -108,7 +169,7 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
             archive.pipe(output);
 
             // Add Book
-            archive.append(buffer, { name: project.metadata.bookTitle ? `${project.metadata.bookTitle}.docx` : 'Livro.docx' });
+            archive.append(buffer, { name: project.metadata.bookTitle ? `${project.metadata.bookTitle}.docx` : `${tr.bookFile}.docx` });
 
             // Helper to add docx string
             const addDoc = async (name: string, title: string, content: string) => {
@@ -117,13 +178,13 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
             };
 
             const m = project.marketing;
-            if (m.salesSynopsis) await addDoc('Sinopse_Amazon.docx', 'Sinopse Amazon', m.salesSynopsis);
-            if (m.backCover) await addDoc('Texto_Contra_Capa.docx', 'Texto da Contra Capa', m.backCover);
-            if (m.flapCopy) await addDoc('Texto_Orelha_Capa.docx', 'Texto da Orelha da Capa', m.flapCopy);
-            if (m.backFlapCopy) await addDoc('Texto_Orelha_Contra_Capa.docx', 'Texto da Orelha da Contra Capa', m.backFlapCopy);
-            if (m.youtubeDescription) await addDoc('Youtube_Descricao.docx', 'Descrição Youtube', m.youtubeDescription);
-            if (m.keywords && m.keywords.length > 0) await addDoc('Palavras_Chave.docx', 'Palavras Chave', m.keywords.join(', '));
-            if (content.marketing && content.marketing.description) await addDoc('Sinopse_Padrao_Profissional_Amazon.docx', 'SINOPSE PADRÃO PROFISSIONAL AMAZON', content.marketing.description);
+            if (m.salesSynopsis) await addDoc(`${tr.originalAmazonSynopsisFile}.docx`, tr.amazonSynopsis, m.salesSynopsis);
+            if (m.backCover) await addDoc(`${tr.backCoverFile}.docx`, tr.backCover, m.backCover);
+            if (m.flapCopy) await addDoc(`${tr.flapCopyFile}.docx`, tr.flapCopy, m.flapCopy);
+            if (m.backFlapCopy) await addDoc(`${tr.backFlapCopyFile}.docx`, tr.backFlapCopy, m.backFlapCopy);
+            if (m.youtubeDescription) await addDoc(`${tr.youtubeDescFile}.docx`, tr.youtubeDesc, m.youtubeDescription);
+            if (m.keywords && m.keywords.length > 0) await addDoc(`${tr.keywordsFile}.docx`, tr.keywords, m.keywords.join(', '));
+            if (content.marketing && content.marketing.description) await addDoc(`${tr.professionalSynopsisFile}.docx`, tr.professionalSynopsis, content.marketing.description);
 
             // Close archive
             await archive.finalize();
@@ -344,8 +405,9 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     };
 
     const createChapterNumberTitle = (num: number, title: string, bookmarkName?: string) => {
+        const tr = getDocTranslations(metadata.language || 'pt');
         const cleanTitle = sanitizeText(title).replace(/\*/g, '');
-        const capChildren: any[] = [new TextRun({ text: `CAPÍTULO ${num}`, bold: true, font: "Garamond", size: 48 })];
+        const capChildren: any[] = [new TextRun({ text: `${tr.chapter} ${num}`, bold: true, font: "Garamond", size: 48 })];
 
         if (bookmarkName) {
             // Fix: BookmarkStart(name: string, id: number) based on type feedback
@@ -479,13 +541,15 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         footers: { default: new Footer({ children: [] }) },
     });
 
+    const tr = getDocTranslations(metadata.language || 'pt');
+
     // PÁGINA 5 (Direita/Ímpar) - AGRADECIMENTO
     // (Force placement even if empty to maintain structure)
     sections.push({
         properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
-                children: [new TextRun({ text: "AGRADECIMENTOS", bold: true, font: "Garamond", size: 24 })],
+                children: [new TextRun({ text: tr.acknowledgments, bold: true, font: "Garamond", size: 24 })],
                 alignment: AlignmentType.CENTER,
                 spacing: { after: 2000 } // Push content down slightly if needed, but VerticalAlign.CENTER does most work
             }),
@@ -516,7 +580,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true, verticalAlign: VerticalAlign.CENTER },
         children: [
             new Paragraph({
-                children: [new TextRun({ text: "DEDICATÓRIA", bold: true, font: "Garamond", size: 24 })],
+                children: [new TextRun({ text: tr.dedication, bold: true, font: "Garamond", size: 24 })],
                 alignment: AlignmentType.CENTER,
                 spacing: { after: 2000 }
             }),
@@ -548,11 +612,11 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         properties: { type: SectionType.NEXT_PAGE, page: basePageConfig, mirrorMargins: true },
         children: [
             new Paragraph({
-                children: [new TextRun({ text: "SUMÁRIO", bold: true, font: "Garamond", size: 48 })],
+                children: [new TextRun({ text: tr.summary, bold: true, font: "Garamond", size: 48 })],
                 alignment: AlignmentType.CENTER,
                 spacing: { before: 1200, after: 800 }
             }),
-            new TableOfContents("Sumário", {
+            new TableOfContents(tr.summary, {
                 hyperlink: true,
                 headingStyleRange: "1-2",
                 stylesWithLevels: [
@@ -577,7 +641,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
             },
             children: [
                 new Paragraph({
-                    children: [new TextRun({ text: "INTRODUÇÃO", bold: true, font: "Garamond", size: 48 })],
+                    children: [new TextRun({ text: tr.introduction, bold: true, font: "Garamond", size: 48 })],
                     heading: HeadingLevel.HEADING_1,
                     alignment: AlignmentType.CENTER,
                     spacing: { before: 2400, after: 1200 },
@@ -612,7 +676,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
             children: [
                 // Chapter Number (Visual Only)
                 new Paragraph({
-                    children: [new TextRun({ text: `CAPÍTULO ${index + 1}`, bold: true, font: "Garamond", size: 48 })],
+                    children: [new TextRun({ text: `${tr.chapter} ${index + 1}`, bold: true, font: "Garamond", size: 48 })],
                     heading: HeadingLevel.HEADING_1, // Included in TOC as Level 1
                     alignment: AlignmentType.CENTER,
                     spacing: { before: 2400, after: 400 },
@@ -650,7 +714,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
                 differentOddAndEvenPages: true
             },
             children: [
-                createTitle("Conclusão"),
+                createTitle(tr.conclusion),
                 ...createTextParams(content.conclusion)
             ],
             headers: {
@@ -673,7 +737,7 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     // Heuristic: Ends in 'a' -> Female (mostly). 
     // Exceptions like 'Luca', 'Jean' can be added if needed, but for now simple is better.
     const isFemale = firstName.endsWith('a') && firstName !== 'luca';
-    const authorTitle = isFemale ? "SOBRE A AUTORA" : "SOBRE O AUTOR";
+    const authorTitle = isFemale ? tr.aboutAuthorF : tr.aboutAuthorM;
 
     // Detect Plan from Metadata (Tag or Explicit Plan object)
     // tag might be "Id_STARTER_monthly" or "Nível 2 (STARTER)"

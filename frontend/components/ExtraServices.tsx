@@ -6,6 +6,7 @@
  * Após pagamento, equipe contata o cliente por e-mail com detalhes.
  */
 import React, { useState } from 'react';
+import { useLanguage } from '../i18n/context';
 
 // ─── TIPOS ────────────────────────────────────────────────────────────────────
 interface ExtraServiceData {
@@ -39,8 +40,10 @@ const ACCENT_CLASSES = {
     emerald: { border: 'border-emerald-500/30 hover:border-emerald-400/50', bg: 'from-emerald-900/40', icon: 'bg-emerald-500/20 border-emerald-500/30', sub: 'text-emerald-300', btn: 'bg-emerald-500 hover:bg-emerald-400 text-slate-900 shadow-emerald-500/25' },
 };
 
-const formatBRL = (value: number) =>
-    value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const formatCurrency = (value: number, lang: string) =>
+    lang === 'en' 
+        ? value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        : value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ─── MODAL DE COMPRA ──────────────────────────────────────────────────────────
 const ExtraBuyModal: React.FC<{
@@ -53,6 +56,7 @@ const ExtraBuyModal: React.FC<{
     onClose: () => void;
     onTrack: (name: string, price: number) => void;
 }> = ({ isOpen, serviceKey, serviceName, price, formData, getApiBase, onClose, onTrack }) => {
+    const { t, lang } = useLanguage();
     const [email, setEmail] = useState(formData.email || '');
     const [name, setName] = useState(formData.name || '');
     const [phone, setPhone] = useState(formData.phone || '');
@@ -61,8 +65,8 @@ const ExtraBuyModal: React.FC<{
     const [error, setError] = useState('');
 
     const handleBuy = async () => {
-        if (!email || !email.includes('@')) { setError('Por favor, insira um e-mail válido.'); return; }
-        if (!name.trim()) { setError('Por favor, confirme seu nome.'); return; }
+        if (!email || !email.includes('@')) { setError((t as any).dashboard.extraServices.modal.emailError); return; }
+        if (!name.trim()) { setError((t as any).dashboard.extraServices.modal.nameError); return; }
 
         setLoading(true);
         setError('');
@@ -72,17 +76,17 @@ const ExtraBuyModal: React.FC<{
             const res = await fetch(`${base}/api/payment/extra-service`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email.trim(), name: name.trim(), phone: phone.trim(), serviceKey }),
+                body: JSON.stringify({ email: email.trim(), name: name.trim(), phone: phone.trim(), serviceKey, lang }),
             });
             const data = await res.json();
             if (data.invoiceUrl) {
                 setInvoiceUrl(data.invoiceUrl);
                 window.open(data.invoiceUrl, '_blank');
             } else {
-                setError(data.error || 'Erro ao gerar fatura. Tente novamente.');
+                setError(data.error || (t as any).dashboard.extraServices.modal.genError);
             }
         } catch (e) {
-            setError('Erro de conexão. Verifique sua internet e tente novamente.');
+            setError((t as any).dashboard.extraServices.modal.connError);
         } finally {
             setLoading(false);
         }
@@ -101,44 +105,44 @@ const ExtraBuyModal: React.FC<{
                 {!invoiceUrl ? (
                     <>
                         <div className="mb-6">
-                            <p className="text-xs text-emerald-400 font-black uppercase tracking-widest mb-1">Serviço Selecionado</p>
+                            <p className="text-xs text-emerald-400 font-black uppercase tracking-widest mb-1">{(t as any).dashboard.extraServices.modal.selectedService}</p>
                             <h3 className="text-xl font-black text-white">{serviceName}</h3>
                             <p className="text-3xl font-black text-white mt-2">
-                                R$ <span className="text-emerald-400">{formatBRL(price)}</span>
+                                {lang === 'en' ? '$' : 'R$'} <span className="text-emerald-400">{formatCurrency(price, lang)}</span>
                             </p>
                         </div>
 
                         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4 mb-6">
                             <p className="text-emerald-300 text-sm font-semibold flex items-center gap-2">
-                                📧 Após o pagamento confirmado, nossa equipe enviará todas as instruções de início dos trabalhos para o seu e-mail.
+                                {(t as any).dashboard.extraServices.modal.instruction}
                             </p>
                         </div>
 
                         <div className="space-y-4 mb-6">
                             <div>
-                                <label className="block text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">Seu Nome *</label>
+                                <label className="block text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">{(t as any).dashboard.extraServices.modal.nameLabel}</label>
                                 <input
                                     type="text"
                                     id={`extra-name-${serviceKey}`}
                                     value={name}
                                     onChange={e => setName(e.target.value)}
-                                    placeholder="Nome completo"
+                                    placeholder={(t as any).dashboard.extraServices.modal.namePlaceholder}
                                     className="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">Seu E-mail *</label>
+                                <label className="block text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">{(t as any).dashboard.extraServices.modal.emailLabel}</label>
                                 <input
                                     type="email"
                                     id={`extra-email-${serviceKey}`}
                                     value={email}
                                     onChange={e => setEmail(e.target.value)}
-                                    placeholder="seu@email.com"
+                                    placeholder={(t as any).dashboard.extraServices.modal.emailPlaceholder}
                                     className="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="block text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">WhatsApp (opcional)</label>
+                                <label className="block text-slate-400 text-xs uppercase tracking-widest mb-1 font-bold">{(t as any).dashboard.extraServices.modal.phoneLabel}</label>
                                 <input
                                     type="tel"
                                     id={`extra-phone-${serviceKey}`}
@@ -162,28 +166,26 @@ const ExtraBuyModal: React.FC<{
                             disabled={loading}
                             className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-slate-600 text-slate-900 font-black py-4 rounded-xl text-lg transition-all shadow-lg shadow-emerald-500/25 hover:scale-[1.02] active:scale-[0.98]"
                         >
-                            {loading ? '⏳ Gerando fatura...' : `💳 Pagar R$ ${formatBRL(price)}`}
+                            {loading ? (t as any).dashboard.extraServices.modal.genInvoice : (t as any).dashboard.extraServices.modal.payButton.replace('{price}', formatCurrency(price, lang))}
                         </button>
-                        <p className="text-center text-xs text-slate-500 mt-3">🔒 Pagamento seguro via Kiwify (PIX, Boleto ou Cartão)</p>
+                        <p className="text-center text-xs text-slate-500 mt-3">{(t as any).dashboard.extraServices.modal.securePayment}</p>
                     </>
                 ) : (
                     <div className="text-center">
                         <div className="w-20 h-20 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center text-4xl mx-auto mb-6">✅</div>
-                        <h3 className="text-2xl font-black text-white mb-3">Fatura Gerada!</h3>
-                        <p className="text-slate-400 mb-6 leading-relaxed">
-                            A página de pagamento foi aberta em uma nova aba. <br />
-                            <span className="text-emerald-400 font-semibold">Após a confirmação do pagamento, nossa equipe entrará em contato pelo e-mail <strong>{email}</strong> com todas as instruções de início dos trabalhos.</span>
-                        </p>
+                        <h3 className="text-2xl font-black text-white mb-3">{(t as any).dashboard.extraServices.modal.invoiceGenTitle}</h3>
+                        <p className="text-slate-400 mb-6 leading-relaxed" 
+                           dangerouslySetInnerHTML={{ __html: (t as any).dashboard.extraServices.modal.invoiceGenDesc.replace('{email}', email) }} />
                         <a
                             href={invoiceUrl}
                             target="_blank"
                             rel="noreferrer"
                             className="w-full block bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black py-4 rounded-xl text-lg transition-all mb-3"
                         >
-                            🔗 Acessar Link de Pagamento
+                            {(t as any).dashboard.extraServices.modal.accessLink}
                         </a>
                         <button onClick={onClose} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition-all">
-                            Fechar
+                            {(t as any).dashboard.extraServices.modal.close}
                         </button>
                     </div>
                 )}
@@ -241,6 +243,7 @@ export const ExtraServiceCard: React.FC<ExtraServiceData & {
     trackInitiateCheckout: (name: string, value: number) => void;
     href?: string;
 }> = ({ serviceId, icon, title, subtitle, price, features, accentColor, formData, getApiBase, trackInitiateCheckout, href }) => {
+    const { t, lang } = useLanguage();
     const [modalOpen, setModalOpen] = useState(false);
     const acc = ACCENT_CLASSES[accentColor] || ACCENT_CLASSES.blue;
 
@@ -268,10 +271,10 @@ export const ExtraServiceCard: React.FC<ExtraServiceData & {
 
                 <div className="bg-slate-950/60 rounded-xl p-4 mb-4 border border-white/5">
                     <div className="flex items-baseline gap-1">
-                        <span className="text-slate-500 text-sm">R$</span>
-                        <span className="text-3xl font-black text-white">{formatBRL(price)}</span>
+                        <span className="text-slate-500 text-sm">{lang === 'en' ? '$' : 'R$'}</span>
+                        <span className="text-3xl font-black text-white">{formatCurrency(price, lang)}</span>
                     </div>
-                    <p className="text-xs text-slate-500 mt-0.5">Pagamento único · Detalhes enviados por e-mail</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{(t as any).dashboard.extraServices.card.oneTime}</p>
                 </div>
 
                 {href ? (
@@ -282,7 +285,7 @@ export const ExtraServiceCard: React.FC<ExtraServiceData & {
                         rel="noreferrer"
                         className={`w-full font-black py-4 rounded-xl text-center text-sm transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center ${acc.btn}`}
                     >
-                        Contratar — R$ {formatBRL(price)}
+                        {(t as any).dashboard.extraServices.card.hire.replace('{price}', formatCurrency(price, lang))}
                     </a>
                 ) : (
                     <button
@@ -290,7 +293,7 @@ export const ExtraServiceCard: React.FC<ExtraServiceData & {
                         onClick={() => setModalOpen(true)}
                         className={`w-full font-black py-4 rounded-xl text-sm transition-all shadow-lg hover:scale-[1.01] active:scale-[0.99] ${acc.btn}`}
                     >
-                        Contratar — R$ {formatBRL(price)}
+                        {(t as any).dashboard.extraServices.card.hire.replace('{price}', formatCurrency(price, lang))}
                     </button>
                 )}
             </div>

@@ -205,6 +205,163 @@ export const pt = {
         serverConnectionError: "Não foi possível conectar ao servidor. Verifique se o backend (porta 3001) está rodando.",
         stuckStatus: "Parece que o status travou?",
         forceFinish: "Forçar Avanço"
+    },
+    auth: {
+        loginTitle: "BEM VINDO (A)! ÁREA VIP DE MEMBROS",
+        registerTitle: "🔥 CRIE SUA SENHA",
+        loginDesc: "Faça login e acesse agora!",
+        registerDesc: "Usou a Kiwify? Crie sua senha com o mesmo e-mail usado lá!",
+        loginTab: "Entrar",
+        registerTab: "1º Acesso",
+        emailLabel: "E-mail",
+        passwordLabel: "Senha",
+        nameLabel: "Seu Nome Completo",
+        forgotPassword: "Esqueci minha senha",
+        loginButton: "Entrar",
+        registerButton: "Criar Acesso",
+        loading: "Aguarde...",
+        registerSuccess: "Acesso criado com sucesso! Agora você pode fazer o login.",
+        errorDefault: "Email ou senha incorretos.",
+        errorConnection: "Erro de conexão. Tente novamente.",
+        placeholderEmail: "seu@email.com",
+        placeholderName: "João da Silva",
+        placeholderPassword: "••••••••"
+    },
+    common: {
+        backToDashboard: "Voltar ao Dashboard",
+        logout: "Sair",
+        loading: "Carregando...",
+        error: "Erro",
+        disclaimer: {
+            facebook: "Este site não faz parte do site do Facebook ou Facebook Inc. Além disso, este site NÃO é endossado pelo Facebook de forma alguma. FACEBOOK é uma marca comercial da FACEBOOK, Inc.",
+            legal: "AVISO LEGAL: Os números de vendas indicados acima são meus números de vendas pessoais. Por favor, entenda que meus resultados não são típicos, não estou sugerindo que você os duplicará (ou fará qualquer coisa nesse sentido). Tenho a vantagem de praticar marketing e propaganda de resposta direta desde 2018 e, como resultado, tenho um grupo de seguidores estabelecido. Estou usando essas referências apenas para fins de exemplo. Seus resultados variarão e dependerão de muitos fatores ... incluindo, mas não se limitando a, seu histórico, experiência e ética de trabalho. Todos os negócios envolvem riscos, bem como esforços e ações massivas e consistentes."
+        }
+    },
+    dashboard: {
+        welcome: "Bem-vindo,",
+        factoryName: "Fábrica de Best Sellers",
+        statusInactive: "(INATIVO)",
+        logout: "Sair",
+        myBooks: "Meus Livros",
+        projectsCount: "Projetos",
+        noBooks: "Você ainda não gerou nenhum livro.",
+        startNow: "Começar agora",
+        bookTitleFallback: "Livro Sem Título",
+        authorLabel: "Autor:",
+        dateUnknown: "Data desconhecida",
+        statusGenerated: "LIVRO GERADO",
+        statusProcessing: "PROCESSANDO...",
+        statusWaiting: "Aguardando",
+        downloadKit: "Baixar Kit Completo (ZIP)",
+        deleteProject: "Excluir Projeto",
+        confirmDelete: "Tem certeza que deseja excluir esse projeto? Isso não pode ser desfeito.",
+        generatorTitle: "GERADOR DE BEST SELLERS",
+        creditAvailable: "Você possui CRÉDITO DISPONÍVEL para uma nova geração. Clique no botão ao lado para começar agora!",
+        currentMode: "Você está no modo",
+        modeAvulso: "AVULSO",
+        feeLabel: "Sua taxa fixa por geração de livro é de",
+        accessReleased: "Acesso Liberado!",
+        generateButton: "🚀 GERAR LIVRO AGORA!",
+        clickToUseCredit: "Clique para utilizar seu crédito",
+        waitingPayment: "AGUARDANDO PAGAMENTO",
+        waitInvoice: "Identificamos uma fatura em aberto.",
+        refreshStatus: "ATUALIZAR STATUS",
+        payNow: "Pagar Agora / Visualizar Fatura",
+        buyCredit: "ADQUIRIR CRÉDITO",
+        alreadyPaid: "JÁ PAGUEI - VERIFICAR",
+        legacyWarning: "Atenção: Você tem uma Condição Exclusiva Legacy!",
+        legacyDesc: "Como assinante fundador, você tem o direito garantido de gerar novos livros pelo valor promocional de <strong>R$ {price}</strong> enquanto sua assinatura atual <strong>{plan}</strong> for mantida ativa. Aproveite!",
+        communityTitle: "Comunidade VIP Exclusiva 🚀",
+        communityDesc: "Não fique de fora! Entre agora no nosso grupo de WhatsApp e receba <span class='text-emerald-600'>informações privilegiadas, promoções relâmpago, orientações estratégicas e brindes semanais</span> exclusivos para nossos membros.",
+        joinGroup: "Entrar no Grupo",
+        videoTitle: "ASSISTA A ESTE VÍDEO E VEJA AS ÚNICAS ALTERAÇÕES QUE VOCÊ PRECISARÁ FAZER NO SEU LIVRO GERADO!",
+        extraServices: {
+            title: "Serviços Extras Profissionais",
+            subtitle: "Transforme Seu Livro em Produto de Mercado",
+            desc: "Contrate separadamente ou em Pacote Completo com desconto. Atendimento via e-mail pós-pagamento.",
+            translation: "Tradução",
+            coverDesign: "Design de Capa",
+            publication: "Publicação",
+            legal: "Registros Legais",
+            bestValue: "🔥 MAIOR ECONOMIA",
+            completePackage: "Pacote Completo",
+            packageDesc: "Tradução (EN+ES) + Capa Impressa + Publicação Amazon + ISBN + Ficha Catalográfica.",
+            hirePackage: "Contratar Pacote Completo",
+            securePayment: "🔒 Pagamento Seguro via Kiwify · Suporte via E-mail",
+            items: {
+                engBook: {
+                    title: "Livro em Inglês",
+                    subtitle: "Tradução profissional com IA literária",
+                    features: ["Tradução 100% do conteúdo", "Revisão de naturalidade e estilo", "Arquivo DOCX pronto"]
+                },
+                espBook: {
+                    title: "Livro em Espanhol",
+                    subtitle: "Tradução profissional com IA literária",
+                    features: ["Tradução 100% do conteúdo", "Revisão de naturalidade e estilo", "Arquivo DOCX pronto"]
+                },
+                printCover: {
+                    title: "Capa — Livro Impresso",
+                    subtitle: "Design profissional para KDP / UICLAP",
+                    features: ["Dimensões exatas para impressão", "Capa + Lombada + Contra-capa", "Arquivo PDF Alta Resolução"]
+                },
+                digitalCover: {
+                    title: "Capa — Livro Digital",
+                    subtitle: "Design otimizado para Amazon Kindle",
+                    features: ["Formato 1600×2560px", "JPG e PNG em alta qualidade", "Otimizado para lojas digitais"]
+                },
+                amazonPub: {
+                    title: "Publicação KDP",
+                    subtitle: "Seu livro globalmente na Amazon",
+                    features: ["Auxílio no Kindle Direct Publishing", "Estratégia de categorias/tags", "E-book + Livro Impresso"]
+                },
+                shelfPub: {
+                    title: "Prateleiras Físicas",
+                    subtitle: "UICLAP & Livrarias",
+                    features: ["Disponibilidade na UICLAP", "Possibilidade de lojas físicas", "Opções de cópia do autor"]
+                },
+                isbn: {
+                    title: "Registro ISBN",
+                    subtitle: "RG Internacional para sua obra",
+                    features: ["ISBN válido para o autor", "Código de barras profissional", "Registro oficial brasileiro"]
+                },
+                cataloging: {
+                    title: "Ficha Catalográfica",
+                    subtitle: "Necessária para bibliotecas",
+                    features: ["Identificação bibliográfica", "Padrão para livrarias", "Identificação de autoria"]
+                }
+            },
+            modal: {
+                selectedService: "Serviço Selecionado",
+                instruction: "📧 Após o pagamento confirmado, nossa equipe enviará todas as instruções de início dos trabalhos para o seu e-mail.",
+                nameLabel: "Seu Nome *",
+                namePlaceholder: "Nome completo",
+                emailLabel: "Seu E-mail *",
+                emailPlaceholder: "seu@email.com",
+                phoneLabel: "WhatsApp (opcional)",
+                nameError: "Por favor, confirme seu nome.",
+                emailError: "Por favor, insira um e-mail válido.",
+                genError: "Erro ao gerar fatura. Tente novamente.",
+                connError: "Erro de conexão. Verifique sua internet e tente novamente.",
+                payButton: "💳 Pagar R$ {price}",
+                genInvoice: "⏳ Gerando fatura...",
+                securePayment: "🔒 Pagamento seguro via Kiwify (PIX, Boleto ou Cartão)",
+                invoiceGenTitle: "Fatura Gerada!",
+                invoiceGenDesc: "A página de pagamento foi aberta em uma nova aba. <br /> <span class='text-emerald-400 font-semibold'>Após a confirmação do pagamento, nossa equipe entrará em contato pelo e-mail <strong>{email}</strong> com todas as instruções de início dos trabalhos.</span>",
+                accessLink: "🔗 Acessar Link de Pagamento",
+                close: "Fechar"
+            },
+            card: {
+                oneTime: "Pagamento único · Detalhes enviados por e-mail",
+                hire: "Contratar — R$ {price}"
+            }
+        },
+        affiliate: {
+            tag: "🚀 Área do Afiliado Representante",
+            title: "A Chave do Cofre:",
+            subtitle: "Copie e Cole meus Criativos que Vendem!",
+            desc: "Acesso imediato a todo o material de marketing validado que me fizeram lucrar mais de R$ 1.000,00 por dia.",
+            button: "💳 QUERO ACESSO À PASTA SECRETA — R$ 99,90"
+        }
     }
 };
 
@@ -230,7 +387,7 @@ export const en = {
             { step: "04", title: "Download File" },
         ],
         faq: [
-            { q: "How much does it cost to generate a new book?", a: "If you don't have an active plan, the cost is R$ 39.90 per generation. If you are a subscriber to one of our plans (Starter, Pro, or Black), this value drops significantly, potentially reaching as low as R$ 8.90 per book." },
+            { q: "How much does it cost to generate a new book?", a: "If you don't have an active plan, the cost is $ 39.90 per generation. If you are a subscriber to one of our plans (Starter, Pro, or Black), this value drops significantly, potentially reaching as low as $ 8.90 per book." },
             { q: "Does the book come with a cover?", a: "The focus is on the interior layout. The cover must be created separately, but we provide the ready-made text for the back cover and flaps at the end of the generation." },
             { q: "Can I edit the text later?", a: "Yes, absolutely. The generated file available for download is in Word Microsoft (.DOCX) format, giving total editorial freedom." },
             { q: "Is it ready for Amazon KDP?", a: "Yes, the books are formatted in the international size 6x9 inches (15.24 x 22.86 cm), perfectly adjusted and accepted for both printed KDP and eBooks." },
@@ -406,6 +563,163 @@ export const en = {
         serverConnectionError: "Could not connect to server. Check if backend (port 3001) is running.",
         stuckStatus: "Seems stuck?",
         forceFinish: "Force Advance"
+    },
+    auth: {
+        loginTitle: "WELCOME! VIP MEMBER AREA",
+        registerTitle: "🔥 CREATE YOUR PASSWORD",
+        loginDesc: "Log in and access now!",
+        registerDesc: "Used Kiwify? Create your password with the same email used there!",
+        loginTab: "Login",
+        registerTab: "1st Access",
+        emailLabel: "Email",
+        passwordLabel: "Password",
+        nameLabel: "Your Full Name",
+        forgotPassword: "Forgot my password",
+        loginButton: "Enter",
+        registerButton: "Create Access",
+        loading: "Wait...",
+        registerSuccess: "Access created successfully! Now you can log in.",
+        errorDefault: "Invalid email or password.",
+        errorConnection: "Connection error. Please try again.",
+        placeholderEmail: "your@email.com",
+        placeholderName: "John Doe",
+        placeholderPassword: "••••••••"
+    },
+    common: {
+        backToDashboard: "Back to Dashboard",
+        logout: "Sign Out",
+        loading: "Loading...",
+        error: "Error",
+        disclaimer: {
+            facebook: "This site is not part of the Facebook website or Facebook Inc. Additionally, this site is NOT endorsed by Facebook in any way. FACEBOOK is a trademark of FACEBOOK, Inc.",
+            legal: "LEGAL NOTICE: The sales figures stated above are my personal sales figures. Please understand that my results are not typical, I'm not suggesting you'll duplicate them (or do anything for that matter). I have the benefit of practicing direct response marketing and advertising since 2018 and have an established following as a result. I'm using these references for example purposes only. Your results will vary and depend on many factors... including but not limited to your background, experience, and work ethic. All business entails risk as well as massive and consistent effort and action."
+        }
+    },
+    dashboard: {
+        welcome: "Welcome,",
+        factoryName: "Best Seller Factory",
+        statusInactive: "(INACTIVE)",
+        logout: "Sign Out",
+        myBooks: "My Books",
+        projectsCount: "Projects",
+        noBooks: "You haven't generated any books yet.",
+        startNow: "Start now",
+        bookTitleFallback: "Untitled Book",
+        authorLabel: "Author:",
+        dateUnknown: "Unknown Date",
+        statusGenerated: "BOOK GENERATED",
+        statusProcessing: "PROCESSING...",
+        statusWaiting: "Waiting",
+        downloadKit: "Download Full Kit (ZIP)",
+        deleteProject: "Delete Project",
+        confirmDelete: "Are you sure you want to delete this project? This cannot be undone.",
+        generatorTitle: "BEST SELLER GENERATOR",
+        creditAvailable: "You have CREDIT AVAILABLE for a new generation. Click the button to start now!",
+        currentMode: "You are in mode",
+        modeAvulso: "SINGLE PURCHASE",
+        feeLabel: "Your fixed fee per book generation is",
+        accessReleased: "Access Released!",
+        generateButton: "🚀 GENERATE BOOK NOW!",
+        clickToUseCredit: "Click to use your credit",
+        waitingPayment: "WAITING FOR PAYMENT",
+        waitInvoice: "We identified an open invoice.",
+        refreshStatus: "REFRESH STATUS",
+        payNow: "Pay Now / View Invoice",
+        buyCredit: "BUY CREDIT",
+        alreadyPaid: "ALREADY PAID - VERIFY",
+        legacyWarning: "Attention: You have a Legacy Exclusive Condition!",
+        legacyDesc: "As a founding subscriber, you have the guaranteed right to generate new books at the promotional price of <strong>$ {price}</strong> while your current <strong>{plan}</strong> subscription is kept active. Enjoy!",
+        communityTitle: "Exclusive VIP Community 🚀",
+        communityDesc: "Don't be left out! Join our WhatsApp group now and receive <span class='text-emerald-600'>privileged information, flash deals, strategic guidance, and weekly gifts</span> exclusive to our members.",
+        joinGroup: "Join Group",
+        videoTitle: "WATCH THIS VIDEO AND SEE THE ONLY CHANGES YOU WILL NEED TO MAKE TO YOUR GENERATED BOOK!",
+        extraServices: {
+            title: "Professional Extra Services",
+            subtitle: "Transform Your Book into a Market Product",
+            desc: "Hire separately or as a Complete Package with a discount. Support via email after payment.",
+            translation: "Translation",
+            coverDesign: "Cover Design",
+            publication: "Publication",
+            legal: "Legal Registrations",
+            bestValue: "🔥 BEST VALUE",
+            completePackage: "Complete Package",
+            packageDesc: "Translation (EN+ES) + Printed Cover + Amazon Publication + ISBN + Catalog Card.",
+            hirePackage: "Hire Complete Package",
+            securePayment: "🔒 Secure Payment via Kiwify · Email Support",
+            items: {
+                engBook: {
+                    title: "Book in English",
+                    subtitle: "Professional translation with literary AI",
+                    features: ["100% content translation", "Naturalness and style review", "DOCX file ready"]
+                },
+                espBook: {
+                    title: "Book in Spanish",
+                    subtitle: "Professional translation with literary AI",
+                    features: ["100% content translation", "Naturalness and style review", "DOCX file ready"]
+                },
+                printCover: {
+                    title: "Cover — Print Book",
+                    subtitle: "Professional design for KDP / UICLAP",
+                    features: ["Exact dimensions for printing", "Cover + Spine + Back cover", "High-res PDF file"]
+                },
+                digitalCover: {
+                    title: "Cover — Digital Book",
+                    subtitle: "Design optimized for Amazon Kindle",
+                    features: ["1600×2560px format", "High-quality JPG and PNG", "Optimized for digital stores"]
+                },
+                amazonPub: {
+                    title: "KDP Publication",
+                    subtitle: "Your book globally on Amazon",
+                    features: ["Help with Kindle Direct Publishing", "Strategy for categories/tags", "E-book + Print Book"]
+                },
+                shelfPub: {
+                    title: "Physical Shelves",
+                    subtitle: "UICLAP & Bookstores",
+                    features: ["Availability on UICLAP", "Possibility of physical stores", "Author copy options"]
+                },
+                isbn: {
+                    title: "ISBN Record",
+                    subtitle: "International ID for your work",
+                    features: ["Valid ISBN for the author", "Professional bar code", "Official Brazilian record"]
+                },
+                cataloging: {
+                    title: "Cataloging Card",
+                    subtitle: "Necessary for libraries",
+                    features: ["Library identification", "Standard for bookstores", "Author identification"]
+                }
+            },
+            modal: {
+                selectedService: "Selected Service",
+                instruction: "📧 After payment confirmation, our team will send all instructions to start the work to your email.",
+                nameLabel: "Your Name *",
+                namePlaceholder: "Full Name",
+                emailLabel: "Your Email *",
+                emailPlaceholder: "your@email.com",
+                phoneLabel: "WhatsApp (optional)",
+                nameError: "Please confirm your name.",
+                emailError: "Please enter a valid email.",
+                genError: "Error generating invoice. Try again.",
+                connError: "Connection error. Check your internet and try again.",
+                payButton: "💳 Pay $ {price}",
+                genInvoice: "⏳ Generating invoice...",
+                securePayment: "🔒 Secure payment via Kiwify (Card or Bank)",
+                invoiceGenTitle: "Invoice Generated!",
+                invoiceGenDesc: "The payment page opened in a new tab. <br /> <span class='text-emerald-400 font-semibold'>After payment confirmation, our team will contact you at <strong>{email}</strong> with all instructions.</span>",
+                accessLink: "🔗 Access Payment Link",
+                close: "Close"
+            },
+            card: {
+                oneTime: "One-time payment · Details sent by email",
+                hire: "Hire — $ {price}"
+            }
+        },
+        affiliate: {
+            tag: "🚀 Affiliate Representative Area",
+            title: "The Vault Key:",
+            subtitle: "Copy and Paste my Selling Creatives!",
+            desc: "Immediate access to all validated marketing materials that made me profit over $ 200.00 per day.",
+            button: "💳 I WANT ACCESS TO THE SECRET FOLDER — $ 19.90"
+        }
     }
 };
 
@@ -607,5 +921,158 @@ export const es = {
         serverConnectionError: "No se pudo conectar al servidor. Verifique si el backend (puerto 3001) se está ejecutando.",
         stuckStatus: "¿Parece atascado?",
         forceFinish: "Forzar Avance"
+    },
+    auth: {
+        loginTitle: "¡BIENVENIDO (A)! ÁREA VIP DE MIEMBROS",
+        registerTitle: "🔥 CREA TU CONTRASEÑA",
+        loginDesc: "¡Inicia sesión y accede ahora!",
+        registerDesc: "¿Usaste Kiwify? ¡Crea tu contraseña con el mismo correo usado allí!",
+        loginTab: "Entrar",
+        registerTab: "1er Acceso",
+        emailLabel: "Correo electrónico",
+        passwordLabel: "Contraseña",
+        nameLabel: "Tu Nombre Completo",
+        forgotPassword: "Olvidé mi contraseña",
+        loginButton: "Entrar",
+        registerButton: "Crear Acceso",
+        loading: "Espere...",
+        registerSuccess: "¡Acceso creado con éxito! Ahora puedes iniciar sesión.",
+        errorDefault: "Correo o contraseña incorrectos.",
+        errorConnection: "Error de conexión. Inténtalo de nuevo.",
+        placeholderEmail: "tu@email.com",
+        placeholderName: "Juan Pérez",
+        placeholderPassword: "••••••••"
+    },
+    common: {
+        backToDashboard: "Volver al Dashboard",
+        logout: "Salir",
+        loading: "Cargando...",
+        error: "Error"
+    },
+    dashboard: {
+        welcome: "Bienvenido,",
+        factoryName: "Fábrica de Best Sellers",
+        statusInactive: "(INACTIVO)",
+        logout: "Salir",
+        myBooks: "Mis Libros",
+        projectsCount: "Proyectos",
+        noBooks: "Aún no has generado ningún libro.",
+        startNow: "Comenzar ahora",
+        bookTitleFallback: "Libro Sin Título",
+        authorLabel: "Autor:",
+        dateUnknown: "Fecha desconocida",
+        statusGenerated: "LIBRO GENERADO",
+        statusProcessing: "PROCESANDO...",
+        statusWaiting: "Esperando",
+        downloadKit: "Descargar Kit Completo (ZIP)",
+        deleteProject: "Eliminar Proyecto",
+        confirmDelete: "¿Estás seguro de que deseas eliminar este proyecto? Esto no se puede deshacer.",
+        generatorTitle: "GENERADOR DE BEST SELLERS",
+        creditAvailable: "Tienes CRÉDITO DISPONIBLE para una nueva generación. ¡Haz clic en el botón para comenzar ahora!",
+        currentMode: "Estás en modo",
+        modeAvulso: "ÚNICO",
+        feeLabel: "Tu tarifa fija por generación de libro es de",
+        accessReleased: "¡Acceso Liberado!",
+        generateButton: "🚀 ¡GENERAR LIBRO AHORA!",
+        clickToUseCredit: "Haz clic para usar tu crédito",
+        waitingPayment: "ESPERANDO PAGO",
+        waitInvoice: "Identificamos una factura pendiente.",
+        refreshStatus: "ACTUALIZAR ESTADO",
+        payNow: "Pagar Ahora / Ver Factura",
+        buyCredit: "ADQUIRIR CRÉDITO",
+        alreadyPaid: "YA PAGUÉ - VERIFICAR",
+        legacyWarning: "Atención: ¡Tienes una Condición Exclusiva Legacy!",
+        legacyDesc: "Como suscriptor fundador, tienes el derecho garantizado de generar nuevos libros por el valor promocional de <strong>R$ {price}</strong> mientras tu suscripción actual <strong>{plan}</strong> se mantenga activa. ¡Aprovecha!",
+        communityTitle: "Comunidad VIP Exclusiva 🚀",
+        communityDesc: "¡No te quedes fuera! Únete ahora a nuestro grupo de WhatsApp y recibe <span class='text-emerald-600'>información privilegiada, ofertas relámpago, orientación estratégica y regalos semanales</span> exclusivos para nuestros miembros.",
+        joinGroup: "Unirse al Grupo",
+        videoTitle: "¡MIRA ESTE VIDEO Y MIRA LOS ÚNICOS CAMBIOS QUE NECESITARÁS HACER EN TU LIBRO GENERADO!",
+        extraServices: {
+            title: "Servicios Extras Profesionales",
+            subtitle: "Transforma Tu Libro en un Producto de Mercado",
+            desc: "Contrata por separado o en Paquete Completo con descuento. Atención vía email después del pago.",
+            translation: "Traducción",
+            coverDesign: "Diseño de Portada",
+            publication: "Publicación",
+            legal: "Registros Legais",
+            bestValue: "🔥 MAYOR AHORRO",
+            completePackage: "Paquete Completo",
+            packageDesc: "Traducción (EN+ES) + Portada Impresa + Publicación en Amazon + ISBN + Ficha Catalográfica.",
+            hirePackage: "Contratar Paquete Completo",
+            securePayment: "🔒 Pago Seguro vía Kiwify · Soporte vía Email",
+            items: {
+                engBook: {
+                    title: "Libro en Inglés",
+                    subtitle: "Traducción profesional con IA literária",
+                    features: ["Traducción 100% del contenido", "Revisión de naturalidad y estilo", "Archivo DOCX listo"]
+                },
+                espBook: {
+                    title: "Libro en Español",
+                    subtitle: "Traducción profesional com IA literária",
+                    features: ["Traducción 100% do conteúdo", "Revisão de naturalidade e estilo", "Arquivo DOCX listo"]
+                },
+                printCover: {
+                    title: "Portada — Libro Impreso",
+                    subtitle: "Diseño profesional para KDP / UICLAP",
+                    features: ["Dimensiones exactas para impresión", "Portada + Lomo + Contraportada", "Archivo PDF alta resolución"]
+                },
+                digitalCover: {
+                    title: "Portada — Libro Digital",
+                    subtitle: "Diseño optimizado para Amazon Kindle",
+                    features: ["Formato 1600×2560px", "JPG y PNG en alta calidad", "Optimizado para tiendas digitales"]
+                },
+                amazonPub: {
+                    title: "Publicación KDP",
+                    subtitle: "Tu libro globalmente en Amazon",
+                    features: ["Ayuda en Kindle Direct Publishing", "Estrategia de categorías/tags", "E-book + Libro Impreso"]
+                },
+                shelfPub: {
+                    title: "Estantes Físicos",
+                    subtitle: "UICLAP y Librerías",
+                    features: ["Disponibilidad en UICLAP", "Posibilidad de tiendas físicas", "Opciones de copia del autor"]
+                },
+                isbn: {
+                    title: "Registro ISBN",
+                    subtitle: "Identificación Internacional",
+                    features: ["ISBN válido para el autor", "Código de barras profesional", "Registro oficial brasileño"]
+                },
+                cataloging: {
+                    title: "Ficha Catalográfica",
+                    subtitle: "Necesaria para bibliotecas",
+                    features: ["Identificación bibliográfica", "Estándar para librerías", "Identificación de autoría"]
+                }
+            },
+            modal: {
+                selectedService: "Servicio Seleccionado",
+                instruction: "📧 Tras la confirmación del pago, nuestro equipo enviará todas las instrucciones para iniciar el trabajo a tu correo electrónico.",
+                nameLabel: "Tu Nombre *",
+                namePlaceholder: "Nombre completo",
+                emailLabel: "Tu Correo *",
+                emailPlaceholder: "tu@email.com",
+                phoneLabel: "WhatsApp (opcional)",
+                nameError: "Por favor, confirma tu nombre.",
+                emailError: "Por favor, introduce un correo válido.",
+                genError: "Error al generar la factura. Inténtalo de nuevo.",
+                connError: "Error de conexión. Comprueba tu internet e inténtalo de nuevo.",
+                payButton: "💳 Pagar $ {price}",
+                genInvoice: "⏳ Generando factura...",
+                securePayment: "🔒 Pago seguro vía Kiwify (Tarjeta o Banco)",
+                invoiceGenTitle: "¡Factura Generada!",
+                invoiceGenDesc: "La página de pago se ha abierto en una nueva pestaña. <br /> <span class='text-emerald-400 font-semibold'>Tras la confirmación del pago, nuestro equipo se pondrá en contacto contigo en <strong>{email}</strong> con todas las instrucciones.</span>",
+                accessLink: "🔗 Acceder al Enlace de Pago",
+                close: "Cerrar"
+            },
+            card: {
+                oneTime: "Pago único · Detalles enviados por correo electrónico",
+                hire: "Contratar — $ {price}"
+            }
+        },
+        affiliate: {
+            tag: "🚀 Área de Afiliado Representante",
+            title: "La Llave de la Bóveda:",
+            subtitle: "¡Copia y Pega mis Creativos que Venden!",
+            desc: "Acceso inmediato a todo el material de marketing validado que me hizo ganar más de $ 20.00 por día.",
+            button: "💳 QUIERO ACCESO A LA CARPETA SECRETA — $ 19.90"
+        }
     }
 };

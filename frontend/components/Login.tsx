@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import Disclaimer from './Disclaimer';
+import { useLanguage } from '../i18n/context';
 
 interface LoginProps {
     onLogin: (data: any) => void;
@@ -9,6 +10,7 @@ interface LoginProps {
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword }) => {
+    const { t } = useLanguage();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -57,11 +59,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    setRegisterSuccess("Acesso criado com sucesso! Agora você pode fazer o login.");
+                    setRegisterSuccess((t as any).auth.registerSuccess);
                     setIsRegistering(false);
                     setPassword('');
                 } else {
-                    setError(data.error || "Erro ao criar acesso.");
+                    setError(data.error || (t as any).auth.errorDefault);
                 }
             } else {
                 const res = await fetch(`${baseUrl}/api/user/login`, {
@@ -75,11 +77,11 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                 if (res.ok && data.success) {
                     onLogin(data);
                 } else {
-                    setError(data.error || "Email ou senha incorretos.");
+                    setError(data.error || (t as any).auth.errorDefault);
                 }
             }
         } catch (err) {
-            setError("Erro de conexão. Tente novamente.");
+            setError((t as any).auth.errorConnection);
         } finally {
             setLoading(false);
         }
@@ -97,12 +99,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
 
                 <div className="text-center mb-8">
                     <h2 className="text-xl font-bold text-white mb-2 uppercase tracking-wide">
-                        {isRegistering ? '🔥 CRIE SUA SENHA' : 'BEM VINDO (A)! ÁREA VIP DE MEMBROS'}
+                        {isRegistering ? (t as any).auth.registerTitle : (t as any).auth.loginTitle}
                     </h2>
                     <p className="text-slate-400 text-sm">
                         {isRegistering
-                            ? 'Usou a Kiwify? Crie sua senha com o mesmo e-mail usado lá!'
-                            : 'Faça login e acesse agora!'}
+                            ? (t as any).auth.registerDesc
+                            : (t as any).auth.loginDesc}
                     </p>
                 </div>
 
@@ -111,24 +113,24 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                         className={`flex-1 py-2 text-sm font-bold rounded-md transition ${!isRegistering ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                         onClick={() => { setIsRegistering(false); setError(''); setRegisterSuccess(''); }}
                     >
-                        Entrar
+                        {(t as any).auth.loginTab}
                     </button>
                     <button
                         className={`flex-1 py-2 text-sm font-bold rounded-md transition ${isRegistering ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
                         onClick={() => { setIsRegistering(true); setError(''); setRegisterSuccess(''); }}
                     >
-                        1º Acesso
+                        {(t as any).auth.registerTab}
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {isRegistering && (
                         <div>
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Seu Nome Completo</label>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-1">{(t as any).auth.nameLabel}</label>
                             <input
                                 type="text"
                                 className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                                placeholder="João da Silva"
+                                placeholder={(t as any).auth.placeholderName}
                                 value={name}
                                 onChange={e => setName(e.target.value)}
                                 required={isRegistering}
@@ -137,12 +139,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                     )}
                     <div>
                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
-                            {isRegistering ? 'E-mail (O mesmo usado na Kiwify)' : 'E-mail'}
+                            {(t as any).auth.emailLabel}
                         </label>
                         <input
                             type="email"
                             className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="seu@email.com"
+                            placeholder={(t as any).auth.placeholderEmail}
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             required
@@ -150,12 +152,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                     </div>
                     <div>
                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
-                            {isRegistering ? 'Crie uma Senha' : 'Senha'}
+                            {(t as any).auth.passwordLabel}
                         </label>
                         <input
                             type="password"
                             className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder="••••••••"
+                            placeholder={(t as any).auth.placeholderPassword}
                             value={password}
                             onChange={e => setPassword(e.target.value)}
                             required
@@ -179,7 +181,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                         className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed uppercase"
                         disabled={loading}
                     >
-                        {loading ? 'Aguarde...' : (isRegistering ? 'Criar Acesso' : 'Entrar')}
+                        {loading ? (t as any).auth.loading : (isRegistering ? (t as any).auth.registerButton : (t as any).auth.loginButton)}
                     </button>
                 </form>
 
@@ -189,7 +191,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                             onClick={onForgotPassword}
                             className="text-slate-400 hover:text-white underline"
                         >
-                            Esqueci minha senha
+                            {(t as any).auth.forgotPassword}
                         </button>
                     </div>
                 )}

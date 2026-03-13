@@ -30,7 +30,7 @@ export const researchYoutube = async (topic: string, lang: string = 'pt'): Promi
   // 1. FETCH REAL DATA
   let videos: any[] = [];
   try {
-    videos = await ResearchService.searchYouTube(topic);
+    videos = await ResearchService.searchYouTube(topic, lang);
   } catch (e) { console.warn("YouTube search error", e); }
 
   // FALLBACK: SIMULAÇÃO DE DADOS SE A API FALHAR (CRÍTICO PARA NÃO QUEBRAR O FLUXO)
@@ -86,7 +86,7 @@ export const researchGoogle = async (topic: string, priorContext: string, lang: 
   // 1. FETCH REAL DATA
   let articles: any[] = [];
   try {
-    articles = await ResearchService.searchGoogle(topic + " dores comuns segredos");
+    articles = await ResearchService.searchGoogle(topic + " dores comuns segredos", lang);
   } catch (e) { console.warn("Google search error", e); }
 
   if (!articles || articles.length === 0) {
@@ -140,7 +140,7 @@ export const analyzeCompetitors = async (topic: string, priorContext: string, la
   // 1. FETCH REAL DATA (Amazon via Google)
   let books: any[] = [];
   try {
-    books = await ResearchService.searchAmazon(topic);
+    books = await ResearchService.searchAmazon(topic, lang);
   } catch (e) { console.warn("Amazon search error", e); }
 
   if (!books || books.length === 0) {
