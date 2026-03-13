@@ -22,7 +22,9 @@ router.post('/leads/view', getLeads); // Backup if needed, but get /leads is fin
 router.put('/leads', updateLead);
 router.delete('/leads/:id', deleteLead);
 router.post('/leads/approve', approveLead);
-router.get('/config', require('../controllers/payment.controller').getPublicConfig);
+const paymentController = require('../controllers/payment.controller');
+router.get('/config', paymentController.getPublicConfig);
+router.get('/public-config', paymentController.getPublicConfig);
 
 export default router;
 

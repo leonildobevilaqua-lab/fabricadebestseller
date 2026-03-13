@@ -209,9 +209,9 @@ export const AffiliationUpsell: React.FC = () => {
                         href="/login"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-block px-10 py-6 bg-[#ADFF2F] hover:bg-[#7CFC00] text-black text-lg font-black uppercase tracking-tighter transition-all transform hover:scale-105 active:scale-95 rounded-xl shadow-[0_10px_40px_rgba(173,255,47,0.3)]"
+                        className="inline-block px-10 py-6 bg-[#ADFF2F] hover:bg-[#CCFF00] text-black text-lg font-black uppercase tracking-tighter transition-all transform hover:scale-105 active:scale-95 rounded-xl shadow-[0_10px_40px_rgba(173,255,47,0.4)] animate-pulse border-4 border-white/20"
                     >
-                        NÃO QUERO LUCRAR AGORA, IR PARA ÁREA DE MEMBROS
+                        NÃO QUERO PROTEGER MEU LIVRO AGORA, IR PARA ÁREA DE MEMBROS
                     </a>
                 </div>
                 <div className="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-center gap-12 opacity-50 mb-12">

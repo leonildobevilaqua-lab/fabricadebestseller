@@ -1290,10 +1290,11 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 <th className="p-4 w-32">Valor</th>
                                                 <th className="p-4 w-32">Gateway</th>
                                                 <th className="p-4 w-32">Status</th>
+                                                <th className="p-4 text-right">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 bg-white">
-                                            {getFilteredOrders().length === 0 && <tr><td colSpan={6} className="p-8 text-center text-slate-400">Nenhuma venda encontrada para o período selecionado.</td></tr>}
+                                            {getFilteredOrders().length === 0 && <tr><td colSpan={7} className="p-8 text-center text-slate-400">Nenhuma venda encontrada para o período selecionado.</td></tr>}
                                             {getFilteredOrders().map((order: any, idx: number) => {
                                                 const amount = Number(order.paymentInfo?.amount || order.amount || 0);
                                                 const formattedAmt = amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -1302,6 +1303,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 const clientEmail = order.customerEmail || order.email || "N/A";
                                                 const prodName = order.paymentInfo?.productName || order.planName || "Serviço Avulso/Assinatura";
                                                 const status = order.paymentInfo?.status || order.status || "PAGO";
+                                                const projectId = order.projectId || order.details?.projectId || order.leadId;
 
                                                 return (
                                                     <tr key={order.id || idx} className="hover:bg-slate-50 transition">
@@ -1317,6 +1319,19 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${status.toUpperCase() === 'APPROVED' || status.toUpperCase() === 'PAID' || status.toUpperCase() === 'PAGO' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                                                 {status}
                                                             </span>
+                                                        </td>
+                                                        <td className="p-4 text-right">
+                                                            {projectId && (
+                                                                <a
+                                                                    href={`${getApiBase()}/api/projects/${projectId}/download`}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 p-2 rounded text-xs font-bold transition"
+                                                                    title="Baixar Kit Completo"
+                                                                >
+                                                                    📥 Download
+                                                                </a>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 );

@@ -416,50 +416,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     </div>
                 </div>
 
-                {/* [NEW] REPRESENTANTE SECTION */}
-                <div className="bg-slate-900 rounded-3xl p-6 md:p-10 border border-slate-800 shadow-2xl overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
-                    <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                        <div className="flex-1 text-center md:text-left">
-                            <h3 className="text-2xl md:text-3xl font-black text-white mb-3 uppercase tracking-tight">
-                                Torne-se um Representante Autorizado e Lucre com a Nossa Estrutura! 🚀
-                            </h3>
-                            <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-2xl bg-black border border-slate-700 mb-6">
-                                <iframe 
-                                    className="absolute inset-0 w-full h-full"
-                                    src="https://www.youtube.com/embed/qyZ5F1oZJyg"
-                                    title="Vídeo de Representante"
-                                    frameBorder="0"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
-                                ></iframe>
-                            </div>
-                            <p className="text-slate-400 text-lg leading-relaxed mb-6">
-                                "Você já viu como é fácil criar livros de alta performance. Agora, tenha <span className="text-emerald-400 font-bold">acesso imediato a todo o material de marketing validado</span> que me fizeram lucrar mais de R$ 1.000,00 por dia!"
-                            </p>
-                            <div className="bg-blue-500/10 border border-blue-500/20 p-4 rounded-2xl inline-block">
-                                <p className="text-blue-400 font-bold text-sm">
-                                    Destaque: Acesso à <span className="text-white">PASTA SECRETA DE CRIATIVOS</span> (Vídeos, Artes e Copies de Alta Conversão).
-                                </p>
-                            </div>
-                        </div>
 
-                        <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700 text-center min-w-[280px]">
-                            <div className="mb-4">
-                                <span className="text-slate-500 text-xs line-through block font-bold">DE: R$ 297,90</span>
-                                <span className="text-4xl font-black text-[#d4af37] text-glow">R$ 99,90</span>
-                            </div>
-                            <a 
-                                href="https://pay.kiwify.com.br/eAZIvMi"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="w-full bg-[#ADFF2F] hover:bg-[#7CFC00] text-black font-black py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#ADFF2F]/20 uppercase text-xs tracking-widest hover:scale-105 active:scale-95"
-                            >
-                                QUERO ME TORNAR UM REPRESENTANTE AGORA
-                            </a>
-                        </div>
-                    </div>
-                </div>
 
                 {/* History (Meus Livros) */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -523,6 +480,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             ))}
                         </div>
                     )}
+                </div>
+
+                {/* AFILIADOS - PASTA SECRETA (COPIE E COLE) */}
+                <div className="mb-12 bg-[#050b1a] border-2 border-blue-500/30 rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-[100px] -mr-32 -mt-32"></div>
+                    <div className="relative z-10 grid lg:grid-cols-2 gap-10 items-center">
+                        <div>
+                            <span className="inline-block bg-blue-600/10 text-blue-400 text-[10px] font-black px-4 py-2 rounded-full border border-blue-500/20 uppercase tracking-widest mb-4">
+                                🚀 Área do Afiliado Representante
+                            </span>
+                            <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter leading-tight italic">
+                                <span className="text-blue-500">A Chave do Cofre:</span> <br />
+                                Copie e Cole meus Criativos que Vendem!
+                            </h2>
+                            <p className="text-slate-400 text-lg mb-8 leading-relaxed font-medium">
+                                Acesso imediato a todo o material de marketing validado que me fizeram lucrar mais de R$ 1.000,00 por dia.
+                            </p>
+                            <a
+                                href="https://pay.kiwify.com.br/eAZIvMi"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-3 bg-[#d4af37] hover:bg-yellow-400 text-black font-black uppercase py-4 px-8 rounded-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:scale-105 active:scale-98"
+                            >
+                                💳 QUERO ACESSO À PASTA SECRETA — R$ 99,90 <ExternalLink size={20} />
+                            </a>
+                        </div>
+                        <div className="aspect-video bg-black rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
+                            <iframe
+                                className="w-full h-full"
+                                src="https://www.youtube.com/embed/qyZ5F1oZJyg"
+                                title="A Chave do Cofre"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                allowFullScreen
+                            ></iframe>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Extra Services Section (Re-implemented with Landing Page Design) */}
