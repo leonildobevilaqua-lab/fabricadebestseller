@@ -184,13 +184,35 @@ export const UserAuthController = {
             const projectList = Array.isArray(userProjectsRaw) ? userProjectsRaw : Object.values(userProjectsRaw);
 
             const userProjects = projectList.filter((p: any) => {
-                const projectEmail = p.metadata?.contact?.email || p.contact?.email || '';
-                return projectEmail.toLowerCase().trim() === cleanUser;
+                if (!p) return false;
+                const metadata = p.metadata || {};
+                const contact = metadata.contact || p.contact || {};
+                
+                // Track all possible email locations
+                const emails = [
+                    contact.email,
+                    p.contact?.email,
+                    p.email,
+                    metadata.email,
+                    metadata.userEmail,
+                    p.userEmail,
+                    p.metadata?.userEmail
+                ].filter(Boolean).map(e => String(e).toLowerCase().trim());
+
+                if (emails.includes(cleanUser)) return true;
+
+                // Deep search fallback: if the clean email is found anywhere in the project data
+                try {
+                    const projectStr = JSON.stringify(p).toLowerCase();
+                    if (projectStr.includes(cleanUser)) return true;
+                } catch (err) {}
+
+                return false;
             });
 
             // Usage count based on actual projects
             const usageCount = userProjects.filter((p: any) =>
-                ['COMPLETED', 'LIVRO ENTREGUE', 'WRITING_CHAPTERS', 'SUCCESS'].includes(p.metadata?.status || p.status)
+                ['COMPLETED', 'LIVRO ENTREGUE', 'WRITING_CHAPTERS', 'SUCCESS', 'READY'].includes((p.metadata?.status || p.status || '').toUpperCase())
             ).length;
 
             const cycleIndex = usageCount % 4;
@@ -214,7 +236,7 @@ export const UserAuthController = {
                     date: p.createdAt || metadata.createdAt || new Date(),
                     status: metadata.status || p.status || 'PROCESSING',
                     // Prioritize KIT download URL, fallback to DOCX or generic API
-                    downloadUrl: metadata.kitUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id}/download`
+                    downloadUrl: metadata.kitUrl || metadata.kitLink || metadata.downloadUrl || p.kitUrl || p.downloadUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id}/download`
                 };
             });
 

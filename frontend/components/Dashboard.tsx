@@ -120,7 +120,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                 if (meRes.ok) {
                     const meData = await meRes.json();
-                    if (meData.user) {
+                    if (meData.profile || meData.orders) {
                         setStats(meData);
                     }
                 }
@@ -457,15 +457,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     </div>
 
                                     <div className="flex items-center gap-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS'].includes(order.status)) ? 'bg-green-100 text-green-700' :
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'].includes(order.status)) ? 'bg-green-100 text-green-700' :
                                             (order.status === 'IN_PROGRESS' || order.status === 'WRITING_CHAPTERS') ? 'bg-blue-100 text-blue-700' :
                                                 'bg-yellow-100 text-yellow-700'
                                             }`}>
-                                            {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS'].includes(order.status)) ? (t as any).dashboard.statusGenerated :
+                                            {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'].includes(order.status)) ? (t as any).dashboard.statusGenerated :
                                                 (order.status === 'IN_PROGRESS' || order.status === 'WRITING_CHAPTERS') ? (t as any).dashboard.statusProcessing :
                                                     (t as any).dashboard.statusWaiting}
                                         </span>
-                                        {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS'].includes(order.status)) && order.downloadUrl && (
+                                        {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'].includes(order.status)) && order.downloadUrl && (
                                             <a
                                                 href={order.downloadUrl.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl}`}
                                                 target="_blank"
