@@ -183,32 +183,40 @@ export const UserAuthController = {
             const userProjectsRaw = await getVal('/projects') || [];
             const projectList = Array.isArray(userProjectsRaw) ? userProjectsRaw : Object.values(userProjectsRaw);
 
-            const userProjects = projectList.filter((p: any) => p.metadata?.contact?.email?.toLowerCase().trim() === cleanUser);
+            const userProjects = projectList.filter((p: any) => {
+                const projectEmail = p.metadata?.contact?.email || p.contact?.email || '';
+                return projectEmail.toLowerCase().trim() === cleanUser;
+            });
+
+            // Usage count based on actual projects
             const usageCount = userProjects.filter((p: any) =>
-                (p.metadata?.status === 'COMPLETED' || p.metadata?.status === 'LIVRO ENTREGUE' || p.metadata?.status === 'WRITING_CHAPTERS')
+                ['COMPLETED', 'LIVRO ENTREGUE', 'WRITING_CHAPTERS', 'SUCCESS'].includes(p.metadata?.status || p.status)
             ).length;
 
             const cycleIndex = usageCount % 4;
 
             // PREÇOS (FONTE DA VERDADE 2025)
             const isPlanActive = user.plan?.status === 'ACTIVE';
-            const pName = isPlanActive ? (user.plan?.name || "FREE").toUpperCase() : "FREE";
+            const pNameStr = isPlanActive ? (user.plan?.name || "FREE").toUpperCase() : "FREE";
             const isAnnual = user.plan?.billing === 'annual' || user.plan?.billing === 'anual';
 
-            let nextBookPrice = 39.90; // Default Free (Kiwify standard)
-            if (pName.includes('BLACK')) nextBookPrice = isAnnual ? 8.90 : 9.90;
-            else if (pName.includes('PRO')) nextBookPrice = isAnnual ? 14.90 : 18.90;
-            else if (pName.includes('STARTER')) nextBookPrice = isAnnual ? 24.90 : 28.90;
+            let nextBookPrice = 39.90;
+            if (pNameStr.includes('BLACK')) nextBookPrice = isAnnual ? 8.90 : 9.90;
+            else if (pNameStr.includes('PRO')) nextBookPrice = isAnnual ? 14.90 : 18.90;
+            else if (pNameStr.includes('STARTER')) nextBookPrice = isAnnual ? 24.90 : 28.90;
 
-            const mappedOrders = userProjects.map((p: any) => ({
-                id: p.id,
-                title: p.metadata?.bookTitle || p.metadata?.title || p.metadata?.topic || 'Livro Gerado',
-                authorName: p.metadata?.authorName || p.metadata?.contact?.name || '',
-                date: p.createdAt,
-                status: p.metadata?.status,
-                // Prefer download link with auto-detection (ZIP kit first, then DOCX)
-                downloadUrl: p.metadata?.docLink || p.metadata?.finalDocxUrl || `/api/projects/${p.id}/download`
-            }));
+            const mappedOrders = userProjects.map((p: any) => {
+                const metadata = p.metadata || {};
+                return {
+                    id: p.id || metadata.id,
+                    title: metadata.bookTitle || metadata.title || metadata.topic || p.title || 'Livro Gerado',
+                    authorName: metadata.authorName || metadata.contact?.name || p.authorName || '',
+                    date: p.createdAt || metadata.createdAt || new Date(),
+                    status: metadata.status || p.status || 'PROCESSING',
+                    // Prioritize KIT download URL, fallback to DOCX or generic API
+                    downloadUrl: metadata.kitUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id}/download`
+                };
+            });
 
             res.json({
                 profile: user.profile,

@@ -182,7 +182,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             const headers: any = { 'Content-Type': 'application/json' };
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
-            const res = await fetch(`${getApiBase()}/api/project/${projectId}`, {
+            const res = await fetch(`${getApiBase()}/api/projects/${projectId}`, {
                 method: 'DELETE',
                 headers
             });
@@ -457,15 +457,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                     </div>
 
                                     <div className="flex items-center gap-4">
-                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') ? 'bg-green-100 text-green-700' :
-                                            order.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS'].includes(order.status)) ? 'bg-green-100 text-green-700' :
+                                            (order.status === 'IN_PROGRESS' || order.status === 'WRITING_CHAPTERS') ? 'bg-blue-100 text-blue-700' :
                                                 'bg-yellow-100 text-yellow-700'
                                             }`}>
-                                            {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') ? (t as any).dashboard.statusGenerated :
-                                                order.status === 'IN_PROGRESS' ? (t as any).dashboard.statusProcessing :
+                                            {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS'].includes(order.status)) ? (t as any).dashboard.statusGenerated :
+                                                (order.status === 'IN_PROGRESS' || order.status === 'WRITING_CHAPTERS') ? (t as any).dashboard.statusProcessing :
                                                     (t as any).dashboard.statusWaiting}
                                         </span>
-                                        {(order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && order.downloadUrl && (
+                                        {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS'].includes(order.status)) && order.downloadUrl && (
                                             <a
                                                 href={order.downloadUrl.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl}`}
                                                 target="_blank"
