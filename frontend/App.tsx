@@ -271,6 +271,7 @@ const App: React.FC = () => {
               metadata={metadata}
               setMetadata={setMetadata}
               onNext={nextStep}
+              language={lang}
             />
           )}
 
@@ -284,7 +285,9 @@ const App: React.FC = () => {
                   window.history.pushState({}, '', '/');
                   window.scrollTo(0, 0);
                 }}
-                language={lang}
+                // Use the book-specific language selected by user in InputForm
+                // Falls back to UI language if not set
+                language={((metadata as any).bookLanguage as any) || lang}
                 userContact={userContact}
                 setAppStep={setStep}
               />

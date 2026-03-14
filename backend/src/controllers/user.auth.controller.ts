@@ -202,11 +202,12 @@ export const UserAuthController = {
 
             const mappedOrders = userProjects.map((p: any) => ({
                 id: p.id,
-                title: p.metadata?.title || p.metadata?.topic,
+                title: p.metadata?.bookTitle || p.metadata?.title || p.metadata?.topic || 'Livro Gerado',
                 authorName: p.metadata?.authorName || p.metadata?.contact?.name || '',
                 date: p.createdAt,
                 status: p.metadata?.status,
-                downloadUrl: p.metadata?.docLink || p.metadata?.pdfUrl || p.metadata?.finalDocxUrl || `/api/projects/${p.id}/download` // Link fallback per project ID
+                // Prefer download link with auto-detection (ZIP kit first, then DOCX)
+                downloadUrl: p.metadata?.docLink || p.metadata?.finalDocxUrl || `/api/projects/${p.id}/download`
             }));
 
             res.json({

@@ -17,25 +17,27 @@ interface AmazonBook {
 export const ResearchService = {
 
     /**
-     * Realiza busca orgânica no Google simulando comportamento humano.
-     * Busca por Dores, Mitos e Soluções.
+     * Realiza busca orgânica no Google.
+     * Para INGLÊS: usa geolocalização dos EUA (Google.com, região: United States).
+     * Para PORTUGUÊS: busca normal no Google.com.br.
      */
     async searchGoogle(query: string, lang: string = 'pt'): Promise<SearchResult[]> {
-        console.log(`[RESEARCH] Google Search (${lang}): "${query}"`);
+        const isEnglish = lang === 'en';
+        console.log(`[RESEARCH] Google Search (${lang}, market: ${isEnglish ? 'US' : 'BR'}): "${query}"`);
         try {
             const results = await search({
-                query: query
-            });
+                query: query,
+                // For English: target US region results (Google.com, United States)
+                ...(isEnglish ? { gl: 'us', hl: 'en' } : {})
+            } as any);
 
-            // Verifica o formato retornado pelo google-sr (pode variar baseada na versão)
-            // Geralmente é array de objetos com title, description, link
             if (!results || !Array.isArray(results)) return [];
 
             return results.slice(0, 10).map((r: any) => ({
                 title: r.title || "No Title",
                 description: r.description || r.snippet || "",
                 link: r.link || "",
-                source: "Google"
+                source: isEnglish ? "Google.com (United States)" : "Google"
             }));
         } catch (error) {
             console.error("[RESEARCH] Google Search Failed:", error);
@@ -44,21 +46,26 @@ export const ResearchService = {
     },
 
     /**
-     * Busca vídeos no YouTube para identificar o que o público está consumindo.
+     * Busca vídeos no YouTube.
+     * Para INGLÊS: busca no YouTube.com com localização dos EUA.
+     * Para PORTUGUÊS: busca padrão.
      */
     async searchYouTube(query: string, lang: string = 'pt'): Promise<SearchResult[]> {
-        console.log(`[RESEARCH] YouTube Search (${lang}): "${query}"`);
+        const isEnglish = lang === 'en';
+        console.log(`[RESEARCH] YouTube Search (${lang}, market: ${isEnglish ? 'US' : 'BR'}): "${query}"`);
         try {
-            // Nota: youtube-search-api retorna { items: [...] }
-            const data = await YouTubeSearch.GetListByKeyword(query, false, 10);
+            // For English: add "english" to ensure US-market content
+            const searchQuery = isEnglish ? `${query} english` : query;
+            // youtube-search-api does not support regionCode in the same way, but we adjust the query
+            const data = await YouTubeSearch.GetListByKeyword(searchQuery, false, 10);
 
             if (!data || !data.items) return [];
 
             return data.items.map((item: any) => ({
                 title: item.title || "",
-                description: "YouTube Video - " + (item.length || ""), // Descrição nem sempre vem completa na lista
+                description: "YouTube Video - " + (item.length || ""),
                 link: `https://www.youtube.com/watch?v=${item.id}`,
-                source: "YouTube"
+                source: isEnglish ? "YouTube.com (United States)" : "YouTube"
             }));
 
         } catch (error) {
@@ -68,21 +75,26 @@ export const ResearchService = {
     },
 
     /**
-     * Busca específica na Amazon via Google Dorking para contornar bloqueios e falta de API.
-     * Query: site:amazon.com.br "best sellers" [NICHO]
+     * Busca específica na Amazon via Google Dorking.
+     * Para INGLÊS: usa Amazon.com (Global/EUA) — Top 10 Best Sellers — com termos em inglês.
+     * Para PORTUGUÊS: usa Amazon.com.br com termos em português.
      */
     async searchAmazon(niche: string, lang: string = 'pt'): Promise<AmazonBook[]> {
-        const domain = lang === 'en' ? 'amazon.com' : 'amazon.com.br';
-        const guideTerm = lang === 'en' ? '"step by step" OR "guide"' : '"passo a passo" OR "guia"';
+        const isEnglish = lang === 'en';
+        const domain = isEnglish ? 'amazon.com' : 'amazon.com.br';
+        const guideTerm = isEnglish
+            ? '"best sellers" OR "step by step" OR "guide" OR "how to"'
+            : '"passo a passo" OR "guia" OR "mais vendidos"';
         const query = `site:${domain} ${guideTerm} ${niche}`;
-        
-        console.log(`[RESEARCH] Amazon Search via Google (${lang}): "${query}"`);
+
+        console.log(`[RESEARCH] Amazon Search via Google (lang=${lang}, domain=${domain}): "${query}"`);
 
         try {
-            // Reutiliza a busca do Google com filtro de site
             const results = await search({
                 query: query,
-            });
+                // For English: use US geolocation to get Amazon.com results
+                ...(isEnglish ? { gl: 'us', hl: 'en' } : {})
+            } as any);
 
             if (!results || !Array.isArray(results)) return [];
 
@@ -93,7 +105,7 @@ export const ResearchService = {
             }));
 
         } catch (error) {
-            console.error(`[RESEARCH] Amazon/Google Search (${lang}) Failed:`, error);
+            console.error(`[RESEARCH] Amazon/Google Search (${lang} - ${domain}) Failed:`, error);
             return [];
         }
     }
