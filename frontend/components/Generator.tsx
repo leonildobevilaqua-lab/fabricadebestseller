@@ -1463,7 +1463,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           {/* If stuck for too long, maybe show a hint? (Not implemented yet to avoid clutter) */}
 
           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2 flex justify-between">
-            <span>Status da Produção</span>
+            <span>{t.statusTitle}</span>
             <span>{Math.round(progress)}%</span>
           </h4>
           <div className="space-y-4 font-medium text-sm">
@@ -1472,7 +1472,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 5 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 30 ? <CheckIcon /> : <EmptyCircle />}
               <span className={progress >= 30 ? 'text-slate-500' : 'text-slate-700'}>
-                Pesquisa Avançanda Youtube / Google / Amazon
+                {t.status1}
                 {progress < 30 && progress > 0 && <span className="ml-2 text-xs text-brand-500 animate-pulse">...</span>}
               </span>
             </div>
@@ -1481,7 +1481,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 30 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 45 ? <CheckIcon /> : <EmptyCircle />}
               <span className={progress >= 45 ? 'text-slate-500' : 'text-slate-700'}>
-                Construindo a Estrutura Profissional com Engenharia Reversa p/ 12 Capítulos
+                {t.status2}
               </span>
             </div>
 
@@ -1489,7 +1489,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 45 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 95 ? <CheckIcon /> : <div className={`w-5 h-5 flex items-center justify-center ${progress >= 45 ? '' : ''}`}>{progress >= 45 && <div className="w-2 h-2 bg-brand-500 rounded-full animate-ping"></div>}</div>}
               <span className={progress >= 95 ? 'text-slate-500' : 'text-slate-700'}>
-                Fabricação Profissional do Livro de Forma VIRAL e OTIMIZADA
+                {t.status3}
+                {progress < 95 && progress >= 45 && (
+                  <span className="ml-2 text-[10px] text-brand-400 font-bold bg-brand-50 px-2 py-0.5 rounded-full animate-pulse tracking-tighter uppercase whitespace-nowrap">
+                    {Math.round(progress)}%
+                  </span>
+                )}
               </span>
             </div>
 
@@ -1508,27 +1513,35 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               </div>
             )}
 
-            {/* New Step: Persuasive Writing */}
+            {/* AI Assets Step */}
             <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 95 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 96 ? <CheckIcon /> : <EmptyCircle />}
               <span className={progress >= 96 ? 'text-slate-500' : 'text-slate-700'}>
-                Desenvolvimento de Escrita Persuasiva (SEO & Sinopse Profissional)
+                {t.status4}
+              </span>
+            </div>
+
+            {/* New Step: Persuasive Writing */}
+            <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 96 ? 'opacity-100' : 'opacity-40'}`}>
+              {progress >= 97 ? <CheckIcon /> : <EmptyCircle />}
+              <span className={progress >= 97 ? 'text-slate-500' : 'text-slate-700'}>
+                {t.status5}
               </span>
             </div>
 
             {/* New Step: Config Amazon */}
-            <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 96 ? 'opacity-100' : 'opacity-40'}`}>
-              {progress >= 98 ? <CheckIcon /> : <EmptyCircle />}
-              <span className={progress >= 98 ? 'text-slate-500' : 'text-slate-700'}>
-                Configuração dos Materiais p/ Publicação na Amazon KDP
+            <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 97 ? 'opacity-100' : 'opacity-40'}`}>
+              {progress >= 99 ? <CheckIcon /> : <EmptyCircle />}
+              <span className={progress >= 99 ? 'text-slate-500' : 'text-slate-700'}>
+                {t.status6}
               </span>
             </div>
 
             {/* Final Processing Step */}
-            <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 98 ? 'opacity-100' : 'opacity-40'}`}>
+            <div className={`flex items-center gap-3 transition-opacity duration-500 ${progress >= 99 ? 'opacity-100' : 'opacity-40'}`}>
               {progress >= 100 ? <CheckIcon /> : <EmptyCircle />}
               <span className={progress >= 100 ? 'text-slate-500' : 'text-slate-700'}>
-                Processando todo o Material e Organizando para entregar o Projeto Finalizado.
+                {t.status7}
               </span>
             </div>
 

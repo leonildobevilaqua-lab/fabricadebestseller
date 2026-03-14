@@ -204,7 +204,11 @@ export const pt = {
         fillAuthInfo: "Informe para quem você deseja dedicar ou agradecer.",
         serverConnectionError: "Não foi possível conectar ao servidor. Verifique se o backend (porta 3001) está rodando.",
         stuckStatus: "Parece que o status travou?",
-        forceFinish: "Forçar Avanço"
+        forceFinish: "Forçar Avanço",
+        statusTitle: "Status da Produção",
+        status5: "Desenvolvimento de Escrita Persuasiva (SEO & Sinopse Profissional)",
+        status6: "Configuração dos Materiais p/ Publicação na Amazon KDP",
+        status7: "Projeto Finalizado e Disponível p/ Download"
     },
     auth: {
         loginTitle: "BEM VINDO (A)! ÁREA VIP DE MEMBROS",
@@ -567,7 +571,11 @@ export const en = {
         fillAuthInfo: "Please state who you want to dedicate or thank.",
         serverConnectionError: "Could not connect to server. Check if backend (port 3001) is running.",
         stuckStatus: "Seems stuck?",
-        forceFinish: "Force Advance"
+        forceFinish: "Force Advance",
+        statusTitle: "Production Status",
+        status5: "Developing Persuasive Writing (SEO & Professional Synopsis)",
+        status6: "Configuring Materials for Amazon KDP Publication",
+        status7: "Project Completed and Available for Download"
     },
     auth: {
         loginTitle: "WELCOME! VIP MEMBER AREA",
@@ -930,7 +938,11 @@ export const es = {
         fillAuthInfo: "Informe a quién desea dedicar o agradecer.",
         serverConnectionError: "No se pudo conectar al servidor. Verifique si el backend (puerto 3001) se está ejecutando.",
         stuckStatus: "¿Parece atascado?",
-        forceFinish: "Forzar Avance"
+        forceFinish: "Forzar Avance",
+        statusTitle: "Estado de la Producción",
+        status5: "Desarrollo de Escritura Persuasiva (SEO y Sinopsis Profesional)",
+        status6: "Configuración de Materiales para Publicación en Amazon KDP",
+        status7: "Proyecto Finalizado y Disponible para Descargar"
     },
     auth: {
         loginTitle: "¡BIENVENIDO (A)! ÁREA VIP DE MIEMBROS",
