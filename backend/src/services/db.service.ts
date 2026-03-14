@@ -34,7 +34,17 @@ export const getVal = async (pathStr: string): Promise<any> => {
                 .like('key', `${cleanPath}/%`);
 
             if (!error && data && data.length > 0) {
-                return data.sort((a, b) => a.key.localeCompare(b.key)).map(item => item.value);
+                // CRITICAL FIX: Only return ROOT-LEVEL entries (e.g. /projects/{uuid})
+                // Sub-paths like /projects/{uuid}/metadata/translations must be excluded
+                // A root entry has exactly ONE segment after the collection prefix
+                const rootPattern = new RegExp(`^${cleanPath.replace(/\//g, '\\/')}\\/[^\\/]+$`);
+                const rootEntries = data.filter(item => rootPattern.test(item.key));
+
+                if (rootEntries.length > 0) {
+                    return rootEntries
+                        .sort((a, b) => a.key.localeCompare(b.key))
+                        .map(item => item.value);
+                }
             }
         }
 
