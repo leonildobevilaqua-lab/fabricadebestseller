@@ -7,7 +7,12 @@ export const getApiBase = () => {
     const custom = localStorage.getItem('admin_api_url');
     if (custom) return custom.trim();
     const host = window.location.hostname;
-    if (host === 'localhost' || host === '127.0.0.1') return 'http://127.0.0.1:3005';
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+    
+    // Explicit production override if needed
+    if (host.includes('fabricadebestseller.com.br')) return 'https://api.fabricadebestseller.com.br';
+    
+    // Default to same origin (proxy mode)
     return window.location.origin;
 };
 

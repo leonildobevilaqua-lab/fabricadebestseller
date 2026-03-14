@@ -100,13 +100,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         // Fetch User Stats AND Payment Status on mount
         const fetchMe = async () => {
             try {
-                const getApiBase = () => {
-                    const env = (import.meta as any).env.VITE_API_URL;
-                    if (env) return env;
-                    const host = window.location.hostname;
-                    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
-                    return 'https://api.fabricadebestseller.com.br';
-                };
 
                 const token = localStorage.getItem('bsf_token');
                 const headers: any = { 'Content-Type': 'application/json' };
@@ -450,9 +443,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             📚
                                         </div>
                                         <div>
-                                            <h4 className="font-bold text-slate-800">{order.title || (t as any).dashboard.bookTitleFallback}</h4>
-                                            {order.authorName && <p className="text-xs text-slate-600 font-medium">{(t as any).dashboard.authorLabel} {order.authorName}</p>}
-                                            <p className="text-xs text-slate-500 uppercase mt-1">{order.date ? new Date(order.date).toLocaleDateString() : (t as any).dashboard.dateUnknown}</p>
+                                            <h4 className="font-bold text-slate-800">
+                                                <span className="text-xs text-slate-500 font-normal block mb-1">{(t as any).dashboard.bookTitleLabel}</span>
+                                                {order.title || (t as any).dashboard.bookTitleFallback}
+                                            </h4>
+                                            <p className="text-sm text-slate-600 font-medium mt-1">
+                                                <span className="text-slate-400 font-normal">{(t as any).dashboard.authorLabel}</span> {order.authorName || 'Autor'}
+                                            </p>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                <span className="text-slate-400 font-normal">{(t as any).dashboard.creationDate}:</span> {order.date ? new Date(order.date).toLocaleDateString() : (t as any).dashboard.dateUnknown}
+                                            </p>
                                         </div>
                                     </div>
 
@@ -470,18 +470,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 href={order.downloadUrl.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl}`}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-medium text-sm shadow-lg shadow-indigo-200"
                                                 title={(t as any).dashboard.downloadKit}
                                             >
                                                 <IconDownload />
+                                                <span className="hidden sm:inline">{(t as any).dashboard.downloadKit}</span>
                                             </a>
                                         )}
                                         <button
                                             onClick={() => handleDeleteProject(order.id)}
-                                            className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                                            className="flex items-center gap-2 px-4 py-2 text-rose-600 border border-rose-200 rounded-xl hover:bg-rose-50 transition-all font-medium text-sm"
                                             title={(t as any).dashboard.deleteProject}
                                         >
                                             <IconTrash />
+                                            <span className="hidden sm:inline">{(t as any).dashboard.deleteProject}</span>
                                         </button>
                                     </div>
                                 </div>

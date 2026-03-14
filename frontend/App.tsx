@@ -154,154 +154,143 @@ const App: React.FC = () => {
     setCurrentView('dashboard');
   };
 
-  // Simple Router Check
-  const path = window.location.pathname;
-  if (path === '/admin' || showAdmin) {
-    return (
-      <div className="min-h-screen bg-slate-50 font-sans">
-        <Admin onBack={() => {
-          resetApp();
-          setShowAdmin(false);
-          if (path === '/admin') window.location.href = '/';
-        }} />
-      </div>
-    )
-  }
+  // RENDER VIEWS
+  const renderContent = () => {
+    const path = window.location.pathname;
+    if (path === '/admin' || showAdmin) {
+      return (
+        <div className="min-h-screen bg-slate-50 font-sans">
+          <Admin onBack={() => {
+            resetApp();
+            setShowAdmin(false);
+            if (path === '/admin') window.location.href = '/';
+          }} />
+        </div>
+      );
+    }
 
-  if (path === '/privacy-policy' || path === '/politica-privacidade') return <PrivacyPolicy />;
-  if (path === '/terms' || path === '/termos-uso' || path === '/terms-of-use') return <TermsOfUse />;
-  if (path === '/registro') return <RegistrationUpsell />;
-  if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
+    if (path === '/privacy-policy' || path === '/politica-privacidade') return <PrivacyPolicy />;
+    if (path === '/terms' || path === '/termos-uso' || path === '/terms-of-use') return <TermsOfUse />;
+    if (path === '/registro') return <RegistrationUpsell />;
+    if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
 
-  // NEW LANDING CATCHES
-  if (path === '/english' || path === '/en' || path === '/us') {
-    return (
-      <LanguageContext.Provider value={{ lang: 'en', setLang: () => {}, t: translations['en'] }}>
+    // NEW LANDING CATCHES
+    if (path === '/english' || path === '/en' || path === '/us') {
+      return (
         <ErrorBoundary>
           <LandingPageEnglish
             onStart={handleStart}
             onAdmin={() => setShowAdmin(true)}
             lang='en'
-            setLang={() => {}}
+            setLang={() => { }}
             initialState={landingProps}
             onLoginClick={() => setCurrentView('login')}
           />
         </ErrorBoundary>
-      </LanguageContext.Provider>
-    );
-  }
+      );
+    }
 
-  if (path === '/espanol' || path === '/es') {
-    return (
-      <LanguageContext.Provider value={{ lang: 'es', setLang: () => {}, t: translations['es'] }}>
+    if (path === '/espanol' || path === '/es') {
+      return (
         <ErrorBoundary>
           <LandingPageSpanish
             onStart={handleStart}
             onAdmin={() => setShowAdmin(true)}
             lang='es'
-            setLang={() => {}}
+            setLang={() => { }}
             initialState={landingProps}
             onLoginClick={() => setCurrentView('login')}
           />
         </ErrorBoundary>
-      </LanguageContext.Provider>
-    );
-  }
-
-  // RENDER VIEWS
-
-  if (currentView === 'login') {
-    return (
-      <Login
-        onLogin={handleLoginSuccess}
-        onBack={() => setCurrentView('landing')}
-        onForgotPassword={() => alert("Entre em contato com o suporte para recuperar sua senha.")}
-      />
-    );
-  }
-
-  if (currentView === 'dashboard') {
-    if (!userContact) {
-      // Fallback: If hasAccess is true but no user data, reset/logout to prevent crash
-      setHasAccess(false);
-      setCurrentView('landing');
-      return null;
+      );
     }
-    return (
-      <ErrorBoundary>
-        <Dashboard
-          user={userContact}
-          onLogout={resetApp}
-          onNewBook={() => {
-            setStep(1); // Reset wizard
-            setCurrentView('generator');
-            window.history.pushState({}, '', '/factory');
-            window.scrollTo(0, 0);
-          }}
+
+    if (currentView === 'login') {
+      return (
+        <Login
+          onLogin={handleLoginSuccess}
+          onBack={() => setCurrentView('landing')}
+          onForgotPassword={() => alert("Entre em contato com o suporte para recuperar sua senha.")}
         />
-      </ErrorBoundary>
-    );
-  }
+      );
+    }
 
-  if (currentView === 'generator' && hasAccess) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col font-sans animate-fade-in">
-        {/* Simple Header for Generator */}
-        <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <button
-              onClick={() => {
-                setCurrentView('dashboard');
-                window.history.pushState({}, '', '/');
-                window.scrollTo(0, 0);
-              }}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            >
-              <span className="text-xl">⬅</span>
-              <span className="font-bold text-slate-800">Voltar ao Dashboard</span>
-            </button>
-          </div>
-        </header>
+    if (currentView === 'dashboard') {
+      if (!userContact) {
+        setHasAccess(false);
+        setCurrentView('landing');
+        return null;
+      }
+      return (
+        <ErrorBoundary>
+          <Dashboard
+            user={userContact}
+            onLogout={resetApp}
+            onNewBook={() => {
+              setStep(1);
+              setCurrentView('generator');
+              window.history.pushState({}, '', '/factory');
+              window.scrollTo(0, 0);
+            }}
+          />
+        </ErrorBoundary>
+      );
+    }
 
-        <main className="flex-grow p-6 md:p-12">
-          <StepWizard currentStep={step} />
-
-          {step === 1 && (
-            <InputForm
-              metadata={metadata}
-              setMetadata={setMetadata}
-              onNext={nextStep}
-              language={lang}
-            />
-          )}
-
-          {step >= 2 && (
-            <ErrorBoundary>
-              <Generator
-                metadata={metadata}
-                updateMetadata={updateMetadata}
-                onReset={() => {
+    if (currentView === 'generator' && hasAccess) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans animate-fade-in">
+          <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+              <button
+                onClick={() => {
                   setCurrentView('dashboard');
                   window.history.pushState({}, '', '/');
                   window.scrollTo(0, 0);
                 }}
-                // Site UI Language (labels, instructions)
-                language={lang}
-                // Book Content Language (research, generation logic)
-                bookLanguage={((metadata as any).bookLanguage as any) || lang}
-                userContact={userContact}
-                setAppStep={setStep}
-              />
-            </ErrorBoundary>
-          )}
-        </main>
-      </div>
-    );
-  }
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
+                <span className="text-xl">⬅</span>
+                <span className="font-bold text-slate-800">Voltar ao Dashboard</span>
+              </button>
+            </div>
+          </header>
 
-  // DEFAULT: LANDING PAGE
-  return (
-    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] }}>
+          <main className="flex-grow p-6 md:p-12">
+            <StepWizard currentStep={step} />
+
+            {step === 1 && (
+              <InputForm
+                metadata={metadata}
+                setMetadata={setMetadata}
+                onNext={nextStep}
+                language={lang}
+              />
+            )}
+
+            {step >= 2 && (
+              <ErrorBoundary>
+                <Generator
+                  metadata={metadata}
+                  updateMetadata={updateMetadata}
+                  onReset={() => {
+                    setCurrentView('dashboard');
+                    window.history.pushState({}, '', '/');
+                    window.scrollTo(0, 0);
+                  }}
+                  language={lang}
+                  bookLanguage={((metadata as any).bookLanguage as any) || lang}
+                  userContact={userContact}
+                  setAppStep={setStep}
+                />
+              </ErrorBoundary>
+            )}
+          </main>
+        </div>
+      );
+    }
+
+    return (
       <ErrorBoundary>
         <LandingPage
           onStart={handleStart}
@@ -309,10 +298,15 @@ const App: React.FC = () => {
           lang={lang}
           setLang={setLang}
           initialState={landingProps}
-          onLoginClick={() => setCurrentView('login')} // NEW PROP
+          onLoginClick={() => setCurrentView('login')}
         />
       </ErrorBoundary>
+    );
+  };
 
+  return (
+    <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] }}>
+      {renderContent()}
       {showWelcome && userContact && (
         <WelcomeModal
           onClose={() => setShowWelcome(false)}

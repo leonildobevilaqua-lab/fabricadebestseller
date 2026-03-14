@@ -196,12 +196,13 @@ export const UserAuthController = {
                     metadata.email,
                     metadata.userEmail,
                     p.userEmail,
-                    p.metadata?.userEmail
+                    p.metadata?.userEmail,
+                    p.userId // Adicionado busca por userId literal se houver
                 ].filter(Boolean).map(e => String(e).toLowerCase().trim());
 
                 if (emails.includes(cleanUser)) return true;
 
-                // Deep search fallback: if the clean email is found anywhere in the project data
+                // Deep search fallback: if the clean email is found anywhere in the project data (stringified)
                 try {
                     const projectStr = JSON.stringify(p).toLowerCase();
                     if (projectStr.includes(cleanUser)) return true;
@@ -232,13 +233,13 @@ export const UserAuthController = {
                 return {
                     id: p.id || metadata.id,
                     title: metadata.bookTitle || metadata.title || metadata.topic || p.title || 'Livro Gerado',
-                    authorName: metadata.authorName || metadata.contact?.name || p.authorName || '',
-                    date: p.createdAt || metadata.createdAt || new Date(),
-                    status: metadata.status || p.status || 'PROCESSING',
+                    authorName: metadata.authorName || metadata.contact?.name || p.authorName || 'Autor',
+                    date: p.createdAt || metadata.createdAt || p.date || new Date(),
+                    status: (metadata.status || p.status || 'PROCESSING').toUpperCase(),
                     // Prioritize KIT download URL, fallback to DOCX or generic API
                     downloadUrl: metadata.kitUrl || metadata.kitLink || metadata.downloadUrl || p.kitUrl || p.downloadUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id}/download`
                 };
-            });
+            }).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
             res.json({
                 profile: user.profile,
