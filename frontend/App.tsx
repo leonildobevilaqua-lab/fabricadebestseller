@@ -174,7 +174,7 @@ const App: React.FC = () => {
   if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
 
   // NEW LANDING CATCHES
-  if (path === '/english' || path === '/en') {
+  if (path === '/english' || path === '/en' || path === '/us') {
     return (
       <LanguageContext.Provider value={{ lang: 'en', setLang: () => {}, t: translations['en'] }}>
         <ErrorBoundary>

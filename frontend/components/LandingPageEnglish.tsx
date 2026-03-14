@@ -263,7 +263,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
             }
         } else if (doc.length === 11) {
             if (!validateCpf(doc)) {
-                alert("CPF Inválido! Verifique os números digitados.");
+                alert("Invalid Document ID! Please check the numbers entered.");
             }
         }
     };
@@ -421,7 +421,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
     const handleUpload = async () => {
         if (!uploadData.file || !uploadData.name || !uploadData.email || !uploadData.phone) {
-            alert("Preencha todos os campos e selecione o arquivo.");
+            alert("Please fill in all fields and select the file.");
             return;
         }
         setUploading(true);
@@ -453,11 +453,11 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                 setStep(3);
                 setIsWizardOpen(true);
             } else {
-                alert("Erro ao enviar: " + data.error);
+                alert("Error sending: " + data.error);
             }
         } catch (e) {
             console.error(e);
-            alert("Erro de conexão.");
+            alert("Connection error with the payment server.");
         }
         setUploading(false);
     };
@@ -493,11 +493,11 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
     }, [step]);
 
     const processingMessages = [
-        "Informando os dados para nossa equipe de criação...",
-        "Conectando com nossa plataforma de Inteligência Artificial...",
-        "Criando os processos para a construção do seu novo livro...",
-        "Estruturando os Capítulos...",
-        "Diagramando e Finalizando Arquivo..."
+        "Sending data to our creative team...",
+        "Connecting to our Artificial Intelligence platform...",
+        "Creating the processes for building your new book...",
+        "Structuring the Chapters...",
+        "Formatting and Finalizing File..."
     ];
 
     // --- DATA PERSISTENCE & RECOVERY ---
@@ -523,7 +523,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
             }
 
             if (!currentForm.name || !currentBook.topic) {
-                alert("Sessão expirada. Recarregue a página.");
+                alert("Session expired. Please reload the page.");
                 return;
             }
 
@@ -535,7 +535,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
             // SUBSCRIBER: redirect to member login
             if (status.plan && status.plan.status === 'ACTIVE') {
                 if (status.latestInvoiceStatus === 'PENDING' || status.latestInvoiceStatus === 'OVERDUE') {
-                    alert(`⚠️ Pagamento de assinatura pendente.\n\nA fatura ${status.latestInvoiceNumber || ''} de assinatura está com status PENDENTE.`);
+                    alert(`⚠️ Subscription payment pending.\n\nThe subscription invoice ${status.latestInvoiceNumber || ''} is currently PENDING.`);
                     setStep(3);
                     return;
                 }
@@ -546,9 +546,9 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
             // AVULSO/Credit: only proceed if hasAccess is true
             if (!status.hasAccess) {
                 if (status.latestInvoiceStatus === 'PENDING' || status.latestInvoiceStatus === 'OVERDUE') {
-                    alert(`⚠️ Pagamento ainda não compensado.\n\nA fatura ${status.latestInvoiceNumber || ''} está com status PENDENTE. Aguarde a confirmação bancária.`);
+                    alert(`⚠️ Payment not yet cleared.\n\nThe invoice ${status.latestInvoiceNumber || ''} is currently PENDING. Please wait for bank confirmation.`);
                 } else {
-                    alert("⚠️ Acesso não autorizado.\n\nNenhum crédito ou plano ativo encontrado para este email. Realize o pagamento primeiro.");
+                    alert("⚠️ Unauthorized access.\n\nNo credits or active plan found for this email. Please make the payment first.");
                 }
                 setStep(3); // Send back to paywall
                 return;
@@ -562,12 +562,12 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
             } else {
                 console.warn("Start prevented: No internal credits available or API Error.");
                 setPaymentConfirmed(false);
-                alert("Não foi possível iniciar a produção. Verifique se seu pagamento foi confirmado ou se possui créditos.");
+                alert("Could not start production. Check if your payment was confirmed or if you have credits.");
             }
 
         } catch (e) {
             console.error("Start Error", e);
-            alert("Erro ao iniciar produção. Verifique sua conexão.");
+            alert("Error starting production. Check your connection.");
         }
     };
 
@@ -584,7 +584,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
         if (!selectedPlan || !formData.email) return;
 
         if (!formData.document || formData.document.trim().length < 11) {
-            alert("Por favor, preencha um Document ID válido nos Dados de Faturamento antes de assinar.");
+            alert("Please fill in a valid Document ID in the Billing Data before subscribing.");
             return;
         }
 
@@ -596,8 +596,9 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
         };
         const subValue = PLAN_PRICES[selectedPlan.name]?.[selectedPlan.billing] || 0;
         trackInitiateCheckout(
-            `Plano ${selectedPlan.name} ${selectedPlan.billing === 'annual' ? 'Anual' : 'Mensal'}`,
-            subValue
+            `Plan ${selectedPlan.name} ${selectedPlan.billing === 'annual' ? 'Annual' : 'Monthly'}`,
+            subValue,
+            'USD'
         );
 
         setPaymentSessionStart(Date.now());
@@ -631,11 +632,11 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
             if (data.invoiceUrl) {
                 window.open(data.invoiceUrl, '_blank');
             } else {
-                alert("Erro ao gerar link de assinatura: " + (data.error || "Desconhecido"));
+                alert("Error generating subscription link: " + (data.error || "Unknown"));
             }
         } catch (e) {
             console.error(e);
-            alert("Erro de conexão com o servidor de pagamento.");
+            alert("Connection error with the payment server.");
         }
     };
 
@@ -643,7 +644,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
         if (!formData.email) return;
 
         // Rastreamento Meta Pixel — InitiateCheckout (Livro Avulso)
-        trackInitiateCheckout('Livro Avulso', 39.90);
+        trackInitiateCheckout('Single Book', 39.90, 'USD');
 
         setPaymentSessionStart(Date.now());
         setStartPolling(true);
@@ -684,7 +685,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
         if (shouldPoll) {
             interval = setInterval(async () => {
-                console.log('🔄 Verificando status...'); // MANDATORY DEBUG LOG
+                console.log('🔄 Checking status...'); // MANDATORY DEBUG LOG
                 try {
                     console.log("Polling for:", formData.email);
 
@@ -692,7 +693,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
                     const API_URL = getApiBase();
 
-                    console.log('🔗 Tentando conectar em:', API_URL); // DEBUG OBRIGATÓRIO
+                    console.log('🔗 Attempting to connect to:', API_URL); // DEBUG OBRIGATÓRIO
 
                     const url = `${API_URL}/api/payment/access?email=${formData.email.trim()}&_t=${Date.now()}`;
 
@@ -742,7 +743,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                     id: currentLeadId,
                                     updates: {
                                         discount: correctDiscount,
-                                        tag: `Nível ${data.discountLevel} (${data.plan.name})`
+                                        tag: `Level ${data.discountLevel} (${data.plan.name})`
                                     }
                                 })
                             }).then(() => setDiscountUpdated(true)).catch(console.error);
@@ -753,7 +754,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                     if (data.plan && data.plan.status === 'EXPIRED') {
                         console.warn("Plan Expired");
                         if (!sessionStorage.getItem('expired_alert_' + formData.email)) {
-                            alert("⚠️ SEU PLANO EXPIROU!\n\nPara continuar usufruindo dos benefícios e descontos do SaaS, por favor renove sua assinatura (Mensal ou Anual).");
+                            alert("⚠️ YOUR PLAN HAS EXPIRED!\n\nTo continue enjoying the benefits and discounts of the SaaS, please renew your subscription (Monthly or Annual).");
                             sessionStorage.setItem('expired_alert_' + formData.email, 'true');
                         }
                     }
@@ -872,13 +873,13 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
     const [diagramStep, setDiagramStep] = useState(0);
     const diagramMessages = [
-        "Lendo o material disponível...",
-        "Efetuando primeira analises do conteúdo em anexo...",
-        "Organizando e começando o processo de diagramação profissional...",
-        "Gerando o arquivo totalmente diagramando para revisão...",
-        "Encaminhando o livro diagramado para o departamento de expedição...",
-        "Enviando o livro diagramado de forma profissional ao cliente...",
-        "DOWNLOAD DISPONÍVEL"
+        "Reading available material...",
+        "Performing initial analysis of attached content...",
+        "Organizing and starting the professional layout process...",
+        "Generating the fully laid out file for review...",
+        "Forwarding the laid out book to the shipping department...",
+        "Sending the professionally laid out book to the client...",
+        "DOWNLOAD AVAILABLE"
     ];
 
     useEffect(() => {
@@ -922,7 +923,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                             onClick={onLoginClick}
                             className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm font-bold transition flex items-center gap-2 border border-white/10"
                         >
-                            <span>🔐</span> <span className="hidden md:inline">JÁ SOU ALUNO</span><span className="md:hidden">ENTRAR</span>
+                            <span>🔐</span> <span className="hidden md:inline">I'M ALREADY A MEMBER</span><span className="md:hidden">LOGIN</span>
                         </button>
 
                         {/* Admin Link Removed as per request */}
@@ -965,53 +966,53 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 rounded-xl mb-6 text-center animate-pulse border border-indigo-400/50 shadow-lg shadow-indigo-500/20">
                                                 <div className="flex items-center justify-center gap-2 mb-1">
                                                     <span className="text-2xl">🎉</span>
-                                                    <h3 className="font-black text-white text-lg tracking-wider">BÔNUS DE FIDELIDADE ATIVO</h3>
+                                                    <h3 className="font-black text-white text-lg tracking-wider">LOYALTY BONUS ACTIVE</h3>
                                                 </div>
                                                 <p className="text-indigo-100 text-sm">
-                                                    Você tem <span className="font-bold text-yellow-400 bg-black/20 px-2 py-0.5 rounded border border-yellow-500/30">{activeDiscount}% DE DESCONTO</span> garantido nesta geração.
+                                                    You have <span className="font-bold text-yellow-400 bg-black/20 px-2 py-0.5 rounded border border-yellow-500/30">{activeDiscount}% DISCOUNT</span> guaranteed on this generation.
                                                 </p>
                                             </div>
                                         )}
                                         <div className="text-center mb-8">
                                             <h2 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-2">
-                                                Preencha seus dados para acessar a Fábrica de Best Seller
+                                                Fill in your details to access the Best Seller Factory
                                             </h2>
                                         </div>
 
                                         <div className="space-y-6">
-                                            {/* --- USER DATA (RESPONSÁVEL) --- */}
+                                            {/* --- USER DATA (RESPONSIBLE) --- */}
                                             <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50 space-y-4">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className="bg-yellow-500/10 text-yellow-500 p-2 rounded-lg">👤</span>
                                                     <h3 className="font-bold text-lg text-slate-200">
-                                                        {activeDiscount > 0 ? "Identificação (Cliente Vip)" : "Responsável pelo Projeto"}
+                                                        {activeDiscount > 0 ? "Identification (VIP Client)" : "Project Responsible"}
                                                     </h3>
                                                 </div>
 
                                                 <div>
-                                                    <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Nome Completo</label>
+                                                    <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Full Name</label>
                                                     <input
                                                         value={formData.name}
                                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
                                                         className="w-full bg-slate-900 border-slate-700 rounded-xl p-3 text-white focus:ring-1 focus:ring-yellow-500 outline-none transition-all hover:bg-slate-900/80 items-center"
-                                                        placeholder="Seu nome completo"
+                                                        placeholder="Your full name"
                                                         autoFocus
                                                     />
                                                 </div>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div>
-                                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">E-mail {activeDiscount > 0 && "(Registrado)"}</label>
+                                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">E-mail {activeDiscount > 0 && "(Registered)"}</label>
                                                         <input
                                                             value={formData.email}
                                                             onChange={e => setFormData({ ...formData, email: e.target.value })}
                                                             className={`w-full rounded-xl p-3 text-white outline-none transition-all ${activeDiscount > 0 ? 'bg-slate-800/50 border border-slate-700 text-slate-400 cursor-not-allowed' : 'bg-slate-900 border-slate-700 focus:ring-1 focus:ring-yellow-500 hover:bg-slate-900/80'}`}
-                                                            placeholder="seu@email.com"
+                                                            placeholder="your@email.com"
                                                             readOnly={activeDiscount > 0}
                                                         />
                                                     </div>
 
                                                     <div className="md:col-span-2">
-                                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Senha de Acesso (Crie agora)</label>
+                                                        <label className="block text-xs font-bold text-slate-500 mb-1 uppercase">Access Password (Create now)</label>
                                                         <div className="relative">
                                                             <input
                                                                 type="password"
@@ -1024,7 +1025,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
                                                             </div>
                                                         </div>
-                                                        <p className="text-[10px] text-slate-500 mt-1">Essa senha será usada para acessar sua Área do Membro.</p>
+                                                        <p className="text-[10px] text-slate-500 mt-1">This password will be used to access your Member Area.</p>
                                                     </div>
 
                                                     <div>
@@ -1063,7 +1064,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                     <div className="absolute -top-6 left-2 flex items-center gap-2 animate-bounce pointer-events-none z-10">
                                                         <span className="text-2xl drop-shadow-lg filter">👇</span>
                                                         <span className="text-xs font-bold text-yellow-400 bg-slate-900/80 px-2 py-1 rounded shadow-lg border border-yellow-500/30">
-                                                            CLIQUE AQUI
+                                                            CLICK HERE
                                                         </span>
                                                     </div>
                                                 )}
@@ -1075,21 +1076,21 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                         onChange={e => setFormData({ ...formData, lgpdConsent: e.target.checked } as any)}
                                                     />
                                                     <span className="text-xs text-slate-400 leading-relaxed select-none">
-                                                        Concordo com os <a href="#" className="underline hover:text-white">Termos de Uso</a> e <a href="#" className="underline hover:text-white">Política de Privacidade</a>.
-                                                        Estou ciente e concordo em receber comunicações da Editora 360 Express, incluindo ofertas exclusivas, premiações, atualizações de produtos e materiais de marketing via e-mail ou WhatsApp.
+                                                        I agree with the <a href="#" className="underline hover:text-white">Terms of Use</a> and <a href="#" className="underline hover:text-white">Privacy Policy</a>.
+                                                        I am aware and agree to receive communications from Editora 360 Express, including exclusive offers, awards, product updates, and marketing materials via email or WhatsApp.
                                                         <br />
-                                                        <span className="text-[10px] opacity-70 block mt-1">* Seus dados estão seguros e você pode cancelar a inscrição a qualquer momento.</span>
+                                                        <span className="text-[10px] opacity-70 block mt-1">* Your data is secure and you can unsubscribe at any time.</span>
                                                     </span>
                                                 </label>
 
                                                 <button
                                                     onClick={async () => {
                                                         if (!formData.name || !formData.email || !formData.phone) {
-                                                            alert("Por favor, preencha todos os campos obrigatórios (Nome, Email, Telefone).");
+                                                            alert("Please fill in all required fields (Name, Email, Phone).");
                                                             return;
                                                         }
                                                         if (!(formData as any).lgpdConsent) {
-                                                            alert("É necessário aceitar os termos e consentir com as comunicações para prosseguir.");
+                                                            alert("You must accept the terms and consent to communications to proceed.");
                                                             return;
                                                         }
                                                         // Save user data (Lead Draft) and go to Payment
@@ -1104,7 +1105,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                     className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-5 rounded-xl text-xl shadow-lg shadow-indigo-500/20 transition-all transform hover:-translate-y-1 disabled:opacity-50 disabled:grayscale disabled:pointer-events-none flex items-center justify-center gap-3"
                                                 >
                                                     <Zap className="w-6 h-6 fill-current" />
-                                                    CONTINUAR PARA PAGAMENTO
+                                                    CONTINUE TO PAYMENT
                                                 </button>
                                             </div>
 
@@ -1121,10 +1122,10 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                 <PenTool className="w-10 h-10 text-green-400" />
                                             </div>
                                             <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
-                                                Pagamentos Confirmados! 🚀
+                                                Payment Confirmed! 🚀
                                             </h2>
                                             <p className="text-slate-400">
-                                                Agora, conte-nos sobre o livro que você quer criar.
+                                                Now, tell us about the book you want to create.
                                             </p>
                                         </div>
 
@@ -1132,34 +1133,33 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                             <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className="bg-indigo-500/20 text-indigo-400 p-2 rounded-lg">📘</span>
-                                                <h3 className="font-bold text-lg text-indigo-100">Sobre o Livro</h3>
+                                                <h3 className="font-bold text-lg text-indigo-100">About the Book</h3>
                                             </div>
 
                                             <div>
-                                                <label className="block text-xs font-bold text-indigo-300 mb-1 uppercase">Nome do Autor (Para a Capa)</label>
+                                                <label className="block text-xs font-bold text-indigo-300 mb-1 uppercase">Author Name (For the Cover)</label>
                                                 <input
                                                     value={bookData.authorName}
                                                     onChange={e => setBookData({ ...bookData, authorName: e.target.value })}
                                                     className="w-full bg-indigo-950/50 border-indigo-500/30 border rounded-xl p-3 text-white focus:ring-1 focus:ring-indigo-400 outline-none transition-all hover:bg-indigo-900/50 placeholder-indigo-300/30 text-lg"
-                                                    placeholder="Ex: Dr. João Silva"
+                                                    placeholder="Ex: Dr. John Smith"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-bold text-indigo-300 mb-1 uppercase">Tema/Assunto do Livro</label>
+                                                <label className="block text-xs font-bold text-indigo-300 mb-1 uppercase">Book Theme/Subject</label>
                                                 <textarea
                                                     value={bookData.topic}
                                                     onChange={e => setBookData({ ...bookData, topic: e.target.value })}
                                                     className="w-full bg-indigo-950/50 border-indigo-500/30 border rounded-xl p-3 text-white focus:ring-1 focus:ring-indigo-400 outline-none h-32 resize-none transition-all hover:bg-indigo-900/50 placeholder-indigo-300/30 text-lg leading-relaxed"
-                                                    placeholder="Ex: Guia definitivo sobre investimentos para iniciantes com foco em liberdade financeira..."
                                                 />
-                                                <p className="text-right text-xs text-indigo-300/50 mt-1">Quanto mais detalhes, melhor.</p>
+                                                <p className="text-right text-xs text-indigo-300/50 mt-1">The more details, the better.</p>
                                             </div>
                                         </div>
 
                                         <button
                                             onClick={async () => {
                                                 if (!bookData.authorName || !bookData.topic) {
-                                                    alert("Por favor, preencha o Autor e o Tema do livro.");
+                                                    alert("Please fill in the Author and the Book Theme.");
                                                     return;
                                                 }
                                                 // Save Updated Lead with Book Info
@@ -1171,7 +1171,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                             className="w-full bg-gradient-to-r from-[#eab308] to-[#facc15] hover:from-[#facc15] hover:to-[#fde047] text-slate-900 font-bold py-5 rounded-xl text-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3"
                                         >
                                             <Zap className="w-6 h-6 fill-current" />
-                                            INICIAR FABRICAÇÃO DO LIVRO
+                                            START BOOK PRODUCTION
                                         </button>
                                     </div>
                                 )}
@@ -1207,10 +1207,10 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                 <div className="inline-block p-4 bg-green-500/10 rounded-full mb-4">
                                                     <span className="text-4xl">🎁</span>
                                                 </div>
-                                                <h2 className="text-2xl font-bold text-white mb-2">RESGATAR SEU LIVRO DE PRESENTE</h2>
+                                                <h2 className="text-2xl font-bold text-white mb-2">REDEEM YOUR GIFT BOOK</h2>
                                                 <p className="text-slate-400 text-sm mt-4">
-                                                    Você recebeu um crédito de <b>{giftSourceEmail}</b>.<br />
-                                                    Utilize agora para gerar seu Best Seller sem custos.
+                                                    You received a credit from <b>{giftSourceEmail}</b>.<br />
+                                                    Use it now to generate your Best Seller for free.
                                                 </p>
 
                                                 <div className="mt-8">
@@ -1226,22 +1226,22 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                 if (consumeRes.ok) {
                                                                     onStart(formData, bookData);
                                                                 } else {
-                                                                    alert("Erro ao validar crédito do presente. Tente novamente.");
+                                                                    alert("Error validating gift credit. Please try again.");
                                                                 }
                                                             }}
                                                             className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg flex items-center justify-center gap-2"
                                                         >
                                                             <Zap className="w-5 h-5 fill-current" />
-                                                            RESGATAR E GERAR AGORA
+                                                            REDEEM AND GENERATE NOW
                                                         </button>
                                                     ) : (
                                                         <div className="bg-red-500/20 text-red-400 p-4 rounded-xl border border-red-500/30 flex flex-col items-center gap-3">
-                                                            <span>Poxa! O crédito deste link já foi utilizado ou expirou.</span>
+                                                            <span>Oops! The credit for this link has already been used or expired.</span>
                                                             <button
                                                                 onClick={() => { setGiftSourceEmail(null); setStep(0); }}
                                                                 className="text-white bg-slate-700 px-4 py-2 rounded-lg hover:bg-slate-600 transition font-bold text-xs"
                                                             >
-                                                                Continuar com meu Plano / Comprar
+                                                                Continue with my Plan / Buy Now
                                                             </button>
                                                         </div>
                                                     )}
@@ -1255,11 +1255,11 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                         <Zap className="w-10 h-10 text-yellow-400 fill-current" />
                                                     </div>
                                                     <h2 className="text-2xl font-bold text-white mb-2">
-                                                        {formData.type === 'VOUCHER' ? 'FINALIZAR COMPRA DO VALE-PRESENTE' : (activeDiscount > 0 ? `${activeDiscount}% DE DESCONTO APLICADO!` : 'TUDO PRONTO PARA INICIAR')}
+                                                        {formData.type === 'VOUCHER' ? 'FINALIZE GIFT VOUCHER PURCHASE' : (activeDiscount > 0 ? `${activeDiscount}% DISCOUNT APPLIED!` : 'EVERYTHING READY TO START')}
                                                     </h2>
                                                     <p className="text-slate-400 text-sm mt-4">
                                                         {formData.type === 'VOUCHER'
-                                                            ? 'Após o pagamento, você receberá o link exclusivo para enviar.'
+                                                            ? 'After payment, you will receive the exclusive link to send.'
                                                             : ''}
                                                     </p>
                                                 </div>
@@ -1337,8 +1337,8 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                         finalLink = 'https://pay.kiwify.com/DdposAY';
                                                     }
 
-                                                    const finalPriceStr = lang === 'en' 
-                                                        ? displayPrice.toFixed(2) 
+                                                    const finalPriceStr = lang === 'en'
+                                                        ? displayPrice.toFixed(2)
                                                         : displayPrice.toFixed(2).replace('.', ',');
                                                     const currencySymbol = lang === 'en' ? '$' : '$';
 
@@ -1353,7 +1353,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
                                                     // --- PLAN VARIABLES CALCULATION (Pre-calc for reuse) ---
                                                     let subLink = '';
-                                                    let subPrice = '0,00';
+                                                    let subPrice = '0.00';
                                                     let pName = '';
                                                     let billing = '';
 
@@ -1363,14 +1363,14 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
                                                         // HARDCODED SUBSCRIPTION PRICES (Alinhados ao backend SUBSCRIPTION_PRICES)
                                                         if (pName === 'STARTER') {
-                                                            if (billing === 'annual') { subPrice = '147,90'; }
-                                                            else { subPrice = '19,90'; }
+                                                            if (billing === 'annual') { subPrice = '147.90'; }
+                                                            else { subPrice = '19.90'; }
                                                         } else if (pName === 'PRO') {
-                                                            if (billing === 'annual') { subPrice = '297,90'; }
-                                                            else { subPrice = '39,90'; }
+                                                            if (billing === 'annual') { subPrice = '297.90'; }
+                                                            else { subPrice = '39.90'; }
                                                         } else if (pName === 'BLACK') {
-                                                            if (billing === 'annual') { subPrice = '497,90'; }
-                                                            else { subPrice = '79,90'; }
+                                                            if (billing === 'annual') { subPrice = '497.90'; }
+                                                            else { subPrice = '79.90'; }
                                                         }
                                                     }
 
@@ -1382,9 +1382,9 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                 <div className="flex justify-center mb-4">
                                                                     <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                                                                 </div>
-                                                                <h3 className="text-xl font-bold text-emerald-400 mb-2">PAGAMENTO CONFIRMADO!</h3>
-                                                                <p className="text-emerald-200 mb-4">Iniciando a produção do seu livro automaticamente...</p>
-                                                                <SocialShare className="mt-4" text="Acabei de entrar para a Best Seller Factory! 🚀" />
+                                                                <h3 className="text-xl font-bold text-emerald-400 mb-2">PAYMENT CONFIRMED!</h3>
+                                                                <p className="text-emerald-200 mb-4">Starting your book production automatically...</p>
+                                                                <SocialShare className="mt-4" text="I just joined Best Seller Factory! 🚀" />
                                                             </div>
                                                         );
                                                     }
@@ -1402,7 +1402,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                             </div>
                                                                             <div className="ml-3">
                                                                                 <p className="text-sm text-yellow-700">
-                                                                                    Você selecionou o plano <strong>{pName}</strong>. Para DESBLOQUEAR as condições EXCLUSIVAS que o plano oferece, por favor, ative sua assinatura.
+                                                                                    You selected the <strong>{pName}</strong> plan. To UNLOCK the EXCLUSIVE conditions offered by the plan, please activate your subscription.
                                                                                 </p>
                                                                             </div>
                                                                         </div>
@@ -1413,7 +1413,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                 <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 mb-4 animate-fade-in">
                                                                     <div className="flex items-center gap-2 mb-3">
                                                                         <span className="text-xl">📝</span>
-                                                                        <h3 className="text-sm font-bold text-white uppercase">Dados de Faturamento & Nota Fiscal</h3>
+                                                                        <h3 className="text-sm font-bold text-white uppercase">Billing Information</h3>
                                                                     </div>
                                                                     <div className="grid grid-cols-2 gap-3">
                                                                         <div className="col-span-2">
@@ -1453,10 +1453,10 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                         </div>
 
                                                                         <div className="col-span-2">
-                                                                            <label className="text-[10px] text-slate-400 uppercase font-bold ml-1">Endereço</label>
+                                                                            <label className="text-[10px] text-slate-400 uppercase font-bold ml-1">Street / Address</label>
                                                                             <input
                                                                                 type="text"
-                                                                                placeholder="Rua, Avenida..."
+                                                                                placeholder="Street, Avenue..."
                                                                                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none transition-all placeholder-slate-600 cursor-not-allowed opacity-80"
                                                                                 value={formData.address}
                                                                                 readOnly
@@ -1473,7 +1473,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                             />
                                                                         </div>
                                                                         <div>
-                                                                            <label className="text-[10px] text-slate-400 uppercase font-bold ml-1">City/UF</label>
+                                                                            <label className="text-[10px] text-slate-400 uppercase font-bold ml-1">City/State</label>
                                                                             <input
                                                                                 type="text"
                                                                                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-300 focus:ring-2 focus:ring-emerald-500 outline-none transition-all placeholder-slate-600 cursor-not-allowed opacity-80"
@@ -1489,32 +1489,32 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                         onClick={handleSubscribe}
                                                                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl text-lg shadow-lg transition-all transform hover:-translate-y-1 block text-center"
                                                                     >
-                                                                        1. ATIVAR ASSINATURA ({currencySymbol} {subPrice})
+                                                                        YOU ARE NOW A SUBSCRIBER! SUBSCRIPTION ({currencySymbol} {subPrice})
                                                                     </button>
                                                                 ) : (
                                                                     <button
                                                                         onClick={handleBookPayment}
                                                                         className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-black py-5 rounded-2xl text-xl shadow-xl shadow-green-500/20 transition-all transform hover:-translate-y-1 block text-center"
                                                                     >
-                                                                        {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 DESCONTO NÍVEL {discountLevel} APLICADO!</span>}
-                                                                        COMPRAR CRÉDITO AGORA! ({currencySymbol} {finalPriceStr})
+                                                                        {!isVoucher && discountLevel > 1 && <span className="block text-xs opacity-80 animate-pulse">🎉 LEVEL {discountLevel} DISCOUNT APPLIED!</span>}
+                                                                        BUY CREDIT NOW! ({currencySymbol} {finalPriceStr})
                                                                     </button>
                                                                 )}
 
                                                                 <p className="text-center text-[10px] text-slate-500 mt-2">
-                                                                    Ao clicar, você será redirecionado para o ambiente seguro da Kiwify.
+                                                                    Upon clicking, you will be redirected to the secure Kiwify checkout.
                                                                 </p>
 
                                                                 <div className="my-2 border-t border-slate-700/50"></div>
 
                                                                 {/* STEP 2: SIMULATE CONFIRMATION */}
                                                                 <div className="bg-indigo-900/30 p-4 rounded-xl border border-indigo-500/30 hidden"> {/* HIDDEN FOR PRODUCTION */}
-                                                                    <p className="text-xs text-indigo-300 font-bold mb-2 text-center uppercase">Ambiente de Testes / Simulação</p>
-                                                                    <p className="text-xs text-slate-400 mb-3 text-center">Simular confirmação de pagamento:</p>
+                                                                    <p className="text-xs text-indigo-300 font-bold mb-2 text-center uppercase">Test Environment / Simulation</p>
+                                                                    <p className="text-xs text-slate-400 mb-3 text-center">Simulate payment confirmation:</p>
 
                                                                     <button
                                                                         onClick={async () => {
-                                                                            if (confirm(`SIMULAR PAGAMENTO?\n\nSerá enviado para o Admin os dados:\nNome: ${formData.name}\nEmail: ${formData.email}`)) {
+                                                                            if (confirm(`SIMULATE PAYMENT?\n\nData will be sent to Admin:\nName: ${formData.name}\nEmail: ${formData.email}`)) {
                                                                                 const getApiBase = () => {
                                                                                     const env = (import.meta as any).env.VITE_API_URL;
                                                                                     if (env) return env;
@@ -1540,7 +1540,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                                                 name: formData.name,
                                                                                                 email: formData.email,
                                                                                                 phone: formData.phone,
-                                                                                                cpf: "123.456.789-00 (Simulado)",
+                                                                                                cpf: "123.456.789-00 (Simulated)",
                                                                                                 cardLast4: "4242"
                                                                                             }
                                                                                         })
@@ -1555,25 +1555,25 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                                         }, bookData);
                                                                                     } else {
                                                                                         const txt = await res.text();
-                                                                                        alert(`❌ Erro no Servidor (${res.status}):\n${txt}`);
+                                                                                        alert(`❌ Server Error (${res.status}):\n${txt}`);
                                                                                     }
                                                                                 } catch (err: any) {
-                                                                                    alert(`❌ Erro de Conexão:\n\nTentativa em: ${url}\nErro: ${err.message}\n\nVerifique se o backend está rodando e acessível.`);
+                                                                                    alert(`❌ Connection Error:\n\nAttempt at: ${url}\nError: ${err.message}\n\nCheck if the backend is running and accessible.`);
                                                                                 }
                                                                             }
                                                                         }}
                                                                         className="w-full bg-green-600/80 hover:bg-green-600 text-white font-bold py-3 rounded-lg text-sm shadow transition-all flex items-center justify-center gap-2"
                                                                     >
-                                                                        <span>✅</span> SIMULAR APROVAÇÃO (DEV)
+                                                                        <span>✅</span> SIMULATE APPROVAL (DEV)
                                                                     </button>
                                                                 </div>
 
                                                                 <div className="text-xs text-slate-500 text-center mt-2">
-                                                                    Email monitorado: <span className="text-yellow-500 font-mono">{formData.email}</span>
-                                                                    {paymentConfirmed ? <span className="text-green-500 ml-2 font-bold">✅ Aprovado</span> : <span className="text-red-500 ml-2">⏳ Aguardando</span>}
+                                                                    Monitored email: <span className="text-yellow-500 font-mono">{formData.email}</span>
+                                                                    {paymentConfirmed ? <span className="text-green-500 ml-2 font-bold">✅ Approved</span> : <span className="text-red-500 ml-2">⏳ Waiting</span>}
                                                                 </div>
                                                                 <p className="text-center text-gray-500 text-xs mt-1">
-                                                                    Aguardando confirmação...
+                                                                    Waiting for confirmation...
                                                                 </p>
                                                             </div>
                                                         );
@@ -1586,7 +1586,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                     !paymentConfirmed && (
                                                         <div className="mt-4 text-center space-y-3">
                                                             <p className="text-xs md:text-sm text-slate-300 mb-6 leading-relaxed font-medium">
-                                                                APÓS EFETUAR O PAGAMENTO, RETORNE PARA ESTA PÁGINA E <strong className="text-yellow-400">CLIQUE NO BOTÃO ABAIXO</strong> SE VOCÊ NÃO FOR ENCAMINHADO(A) AUTOMATICAMENTE PARA A ÁREA VIP DE MEMBROS ASSINANTES.
+                                                                AFTER MAKING THE PAYMENT, RETURN TO THIS PAGE AND <strong className="text-yellow-400">CLICK THE BUTTON BELOW</strong> IF YOU ARE NOT AUTOMATICALLY REDIRECTED TO THE VIP MEMBERS AREA.
                                                             </p>
                                                             <button
                                                                 type="button"
@@ -1595,7 +1595,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                     e.stopPropagation();
                                                                     const btn = e.currentTarget;
                                                                     const originalText = btn.innerText;
-                                                                    btn.innerText = "Verificando...";
+                                                                    (btn as any).innerText = 'Verifying...';
                                                                     btn.disabled = true;
 
                                                                     try {
@@ -1616,7 +1616,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
                                                                         if (data.plan && data.plan.status === 'ACTIVE') {
                                                                             if (data.latestInvoiceNumber && data.latestInvoiceStatus !== 'CONFIRMED' && data.latestInvoiceStatus !== 'RECEIVED') {
-                                                                                alert(`A fatura ${data.latestInvoiceNumber} de assinatura ainda consta como aguardando pagamento (${data.latestInvoiceStatus || 'PENDENTE'}) no banco. Aguarde alguns instantes pela compensação.`);
+                                                                                alert('Payment not yet detected. If you have already paid, please wait a few minutes and try again.');
                                                                                 return;
                                                                             }
                                                                             window.location.href = '/login';
@@ -1633,16 +1633,12 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                                 phone: formData.phone
                                                                             });
                                                                         } else {
-                                                                            if (data.latestInvoiceNumber) {
-                                                                                alert(`A fatura ${data.latestInvoiceNumber} ainda consta como aguardando pagamento (${data.latestInvoiceStatus || 'PENDENTE'}) no banco. Aguarde alguns instantes pela compensação.`);
-                                                                            } else {
-                                                                                alert('O pagamento ainda não foi confirmado pelo Banco. Nenhuma fatura pendente foi localizada. Aguarde alguns instantes e tente novamente.');
-                                                                            }
+                                                                            alert('Payment not yet detected. If you have already paid, please wait a few minutes and try again.');
                                                                         }
 
                                                                     } catch (err) {
                                                                         console.error(err);
-                                                                        alert('Erro ao conectar. Tente novamente.');
+                                                                        alert('Error connecting. Please try again.');
                                                                     } finally {
                                                                         btn.innerText = originalText;
                                                                         btn.disabled = false;
@@ -1651,7 +1647,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                                 className="w-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black text-lg md:text-xl py-4 px-6 rounded-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:-translate-y-1 hover:shadow-yellow-500/40 flex items-center justify-center gap-2"
                                                             >
                                                                 <CheckCircle className="w-6 h-6" />
-                                                                JÁ REALIZEI O PAGAMENTO
+                                                                I HAVE ALREADY PAID
                                                             </button>
                                                         </div>
                                                     )
@@ -1670,16 +1666,16 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                             <div className="inline-block p-4 bg-indigo-500/10 rounded-full mb-4">
                                                 <FileText className="w-10 h-10 text-indigo-400 animate-pulse" />
                                             </div>
-                                            <h2 className="text-2xl font-bold text-white mb-2">Diagramando Seu Livro</h2>
+                                            <h2 className="text-2xl font-bold text-white mb-2">Formatting Your Book</h2>
                                             <p className="text-slate-400 text-sm">
-                                                Aguarde enquanto nossa I.A. processa seu arquivo...
+                                                Please wait while our AI processes your file...
                                             </p>
                                         </div>
 
                                         <div className="space-y-6 max-w-lg mx-auto">
                                             {diagramMessages.map((msg, idx) => (
                                                 <div key={idx} className={`flex items-center gap-4 transition-all duration-500 ${idx > diagramStep ? 'opacity-30' : 'opacity-100'}`}>
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 flex-shrink-0 
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 flex-shrink-0
                                                         ${idx < diagramStep ? 'bg-green-500 border-green-500 text-slate-900' :
                                                             idx === diagramStep ? 'border-yellow-400 text-yellow-400 animate-spin-slow' : 'border-slate-600 text-slate-600'}`}>
                                                         {idx < diagramStep ? <Check className="w-5 h-5" /> :
@@ -1699,8 +1695,8 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                     <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500 rounded-full mb-2">
                                                         <Check className="w-10 h-10 text-white" />
                                                     </div>
-                                                    <h3 className="text-2xl font-black text-white">PARABÉNS!</h3>
-                                                    <p className="text-slate-400 text-sm">Seu livro foi gerado com sucesso.</p>
+                                                    <h3 className="text-2xl font-black text-white">CONGRATULATIONS!</h3>
+                                                    <p className="text-slate-400 text-sm">Your book has been successfully generated.</p>
                                                 </div>
 
                                                 <button
@@ -1712,9 +1708,9 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                     className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-8 rounded-xl shadow-lg shadow-green-500/20 text-xl flex items-center justify-center gap-3 w-full"
                                                 >
                                                     <span>⬇️</span>
-                                                    BAIXAR LIVRO DIAGRAMADO
+                                                    DOWNLOAD FORMATTED BOOK
                                                 </button>
-                                                <p className="text-slate-500 text-xs mt-4 mb-6">Enviamos também uma cópia para seu e-mail.</p>
+                                                <p className="text-slate-500 text-xs mt-4 mb-6">We've also sent a copy to your email.</p>
 
                                                 <button
                                                     onClick={() => {
@@ -1725,22 +1721,22 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                     }}
                                                     className="w-full border-2 border-slate-700 hover:border-yellow-400 text-slate-400 hover:text-yellow-400 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 mb-8"
                                                 >
-                                                    ✏️ QUERO ESCREVER OUTRO LIVRO
+                                                    ✏️ I WANT TO WRITE ANOTHER BOOK
                                                 </button>
 
                                                 {/* SERVIÇOS EXTRAS UNLOCKED */}
                                                 <div className="pt-8 border-t border-slate-700 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
                                                     <div className="mb-6">
-                                                        <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 uppercase tracking-widest mb-1">PRODUTO DE MERCADO</h3>
-                                                        <p className="text-slate-400 text-xs">Transforme seu manuscrito em um Best Seller profissional:</p>
+                                                        <h3 className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400 uppercase tracking-widest mb-1">MARKET PRODUCT</h3>
+                                                        <p className="text-slate-400 text-xs">Transform your manuscript into a professional Best Seller:</p>
                                                     </div>
 
                                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
                                                         {[
-                                                            { key: 'livro-ingles', icon: '🇺🇸', title: 'Edição em Inglês', price: 24.99 },
-                                                            { key: 'capa-impressa', icon: '🎨', title: 'Capa Profissional', price: 250.00 },
-                                                            { key: 'amazon-impresso', icon: '📦', title: 'Publicar Amazon', price: 69.90 },
-                                                            { key: 'pacote-completo', icon: '🔥', title: 'Kit Bestseller', price: 599.90 },
+                                                            { key: 'livro-ingles', icon: '🇺🇸', title: 'English Edition', price: 24.99 },
+                                                            { key: 'capa-impressa', icon: '🎨', title: 'Professional Cover', price: 250.00 },
+                                                            { key: 'amazon-impresso', icon: '📦', title: 'Publish on Amazon', price: 69.90 },
+                                                            { key: 'pacote-completo', icon: '🔥', title: 'Bestseller Kit', price: 599.90 },
                                                         ].map(svc => (
                                                             <div key={svc.key} className="bg-slate-900/50 border border-slate-700 p-3 rounded-xl flex items-center gap-3 hover:border-emerald-500/50 transition cursor-pointer group" onClick={() => {
                                                                 document.getElementById('servicos-extras')?.scrollIntoView({ behavior: 'smooth' });
@@ -1766,13 +1762,13 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                         <div className="inline-block p-4 bg-green-500/10 rounded-full mb-6">
                                             <CheckCircle className="w-16 h-16 text-green-400" />
                                         </div>
-                                        <h2 className="text-3xl font-bold text-white mb-2">Vale-Presente Ativo!</h2>
+                                        <h2 className="text-3xl font-bold text-white mb-2">Gift Card Active!</h2>
                                         <p className="text-slate-400 mb-8">
-                                            Seu crédito foi confirmado e está válido por <b>30 dias</b>.
+                                            Your credit has been confirmed and is valid for <b>30 days</b>.
                                         </p>
 
                                         <div className="bg-slate-900 p-6 rounded-xl border border-slate-700 mb-8 text-left">
-                                            <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Link para Enviar ao Presenteado:</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase block mb-2">Link to Send to Recipient:</label>
                                             <div className="flex gap-2">
                                                 <input
                                                     readOnly
@@ -1783,16 +1779,16 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                                     className="bg-slate-700 hover:bg-slate-600 text-white px-4 rounded font-bold"
                                                     onClick={() => navigator.clipboard.writeText(`${window.location.host}/?gift_code=${btoa(formData.email)}`)}
                                                 >
-                                                    Copiar
+                                                    Copy
                                                 </button>
                                             </div>
                                             <p className="text-xs text-slate-500 mt-2">
-                                                * Encaminhe este link para a pessoa. Ela poderá gerar o livro sem pagar nada.
+                                                * Forward this link to the person. They will be able to generate the book for free.
                                             </p>
                                         </div>
 
                                         <button onClick={() => window.location.reload()} className="text-slate-400 hover:text-white underline">
-                                            Voltar ao Início
+                                            Back to Home
                                         </button>
                                     </div>
                                 )}
@@ -1871,7 +1867,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                     </span>
                                 </div>
                                 <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em]">
-                                    +1.200 Livros Gerados este Mês
+                                    +1,200 Books Generated this Month
                                 </p>
                             </div>
                         </div>
@@ -1898,7 +1894,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                         ))}
                     </div>
                     <p className="text-center text-xl text-slate-400 mt-12 max-w-3xl mx-auto italic">
-                        "Ter um livro é a autoridade máxima em qualquer nicho. É o que separa os amadores dos especialistas. E agora, essa autoridade está ao seu alcance pelo preço de um lanche."
+                        "Having a book is the ultimate authority in any niche. It's what separates the amateurs from the experts. And now, that authority is within your reach for the price of a snack."
                     </p>
                 </div>
             </section>
@@ -1951,23 +1947,23 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                         <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 blur-[100px] rounded-full"></div>
 
                         <span className="inline-block bg-yellow-500/10 text-yellow-500 text-xs font-black px-4 py-2 rounded-full border border-yellow-500/20 uppercase tracking-widest mb-6">
-                            Acesso Vitalício à Tecnologia - Sem Mensalidade
+                            Lifetime Access to Technology - No Monthly Fee
                         </span>
 
                         <h2 className="text-4xl md:text-5xl font-black mb-6 text-white leading-tight">
-                            Gere seu Futuro Best Seller Agora
+                            Generate Your Future Best Seller Now
                         </h2>
 
                         <p className="text-slate-400 text-lg mb-10 max-w-2xl mx-auto leading-relaxed">
-                            Acesso imediato para criar seu Futuro Best Seller sem mensalidade. Ideal para projetos pontuais de alta qualidade.
+                            Immediate access to create your Future Best Seller with no monthly fee. Ideal for high-quality one-off projects.
                         </p>
 
                         <div className="flex flex-col md:flex-row items-center justify-center gap-8 mb-10">
                             <div className="text-center md:text-left">
-                                <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">Pagamento Único</p>
+                                <p className="text-xs text-slate-500 uppercase tracking-widest mb-1">One-time Payment</p>
                                 <div className="flex items-end gap-1">
                                     <span className="text-slate-400 text-2xl font-bold mb-2">$</span>
-                                    <span className="text-7xl font-black text-white tracking-tight">39,90</span>
+                                    <span className="text-7xl font-black text-white tracking-tight">39.90</span>
                                 </div>
                             </div>
 
@@ -1975,12 +1971,12 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
                             <ul className="text-left space-y-3">
                                 {[
-                                    '1 Livro Completo (Até 12 Capítulos e +170 págs)',
-                                    '1 Tradução Gratuita no Mês (Inglês ou Espanhol)',
-                                    'Pesquisa Avançada com IA e Conteúdo VIP',
-                                    'Diagramação Profissional Inclusa',
-                                    'Exportação apenas em WORD Editável',
-                                    'Pagamento Único Sem Renovação'
+                                    '1 Complete Book (Up to 12 Chapters and +170 pages)',
+                                    '1 Free Translation per Month (English or Spanish)',
+                                    'Advanced AI Research and VIP Content',
+                                    'Professional Layout Design Included',
+                                    'Export in Editable WORD only',
+                                    'One-time Payment Without Renewal'
                                 ].map((item, i) => (
                                     <li key={i} className="flex items-center gap-3 text-slate-300">
                                         <Check className="w-5 h-5 text-yellow-500" />
@@ -1994,11 +1990,11 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                             onClick={() => window.open('https://pay.kiwify.com/DdposAY', '_blank')}
                             className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black py-5 px-12 rounded-2xl text-xl shadow-xl shadow-yellow-500/20 transition-all transform hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto"
                         >
-                            SUA OBRA PRONTA POR APENAS $ 39.90
+                            YOUR WORK READY FOR ONLY $ 39.90
                         </button>
 
                         <p className="mt-6 text-slate-500 text-xs flex items-center justify-center gap-2">
-                            <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Kiwify (PIX ou Cartão)
+                            <ShieldCheck className="w-4 h-4" /> Secure Payment via Kiwify (Card or Bank Transfer)
                         </p>
                     </div>
                 </div>
@@ -2011,26 +2007,26 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
                 <div className="max-w-4xl mx-auto px-4 relative z-10">
                     <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 px-4 py-1.5 rounded-full text-sm font-bold tracking-widest uppercase mb-6 shadow-sm shadow-indigo-500/10">
-                        <span>🤝</span> PARCERIA LUCRATIVA
+                        <span>🤝</span> PROFITABLE PARTNERSHIP
                     </div>
 
                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6 tracking-tight leading-tight">
-                        Seja um <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Afiliado</span> e Ganhe Dinheiro
+                        Become an <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">Affiliate</span> and Earn Money
                     </h2>
 
                     <p className="text-xl text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-                        Recomende a tecnologia da Best Seller Factory e garanta uma <strong className="text-white">comissão de 40% ($ 13,53)</strong> por cada crédito avulso vendido através do seu link.
+                        Recommend Best Seller Factory technology and earn a <strong className="text-white">40% commission ($ 13.53)</strong> for each one-off credit sold through your link.
                     </p>
 
                     <div className="bg-slate-800/50 backdrop-blur-md border border-slate-700 rounded-3xl p-8 md:p-12 shadow-2xl inline-block max-w-2xl mx-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center text-left mb-8">
                             <div>
-                                <h3 className="text-2xl font-bold text-white mb-2">Comissão Alta</h3>
-                                <p className="text-slate-400">Receba $ 13,53 direito na sua conta Kiwify por cada indicação bem-sucedida.</p>
+                                <h3 className="text-2xl font-bold text-white mb-2">High Commission</h3>
+                                <p className="text-slate-400">Receive $ 13.53 directly in your Kiwify account for each successful referral.</p>
                             </div>
                             <div>
-                                <h3 className="text-2xl font-bold text-white mb-2">Alta Conversão</h3>
-                                <p className="text-slate-400">Produto único no mercado. A oferta vende praticamente sozinha para autores e aspirantes.</p>
+                                <h3 className="text-2xl font-bold text-white mb-2">High Conversion</h3>
+                                <p className="text-slate-400">Unique product on the market. The offer practically sells itself to authors and aspirants.</p>
                             </div>
                         </div>
 
@@ -2040,9 +2036,9 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                             rel="noopener noreferrer"
                             className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-400 hover:to-purple-400 text-white font-black text-xl py-5 px-10 rounded-2xl shadow-xl shadow-indigo-500/30 transition-all transform hover:scale-[1.05] active:scale-[0.98]"
                         >
-                            🔗 QUERO SER UM AFILIADO AGORA
+                            🔗 I WANT TO BE AN AFFILIATE NOW
                         </a>
-                        <p className="text-xs text-slate-500 mt-4 uppercase tracking-widest font-bold">Processado via Kiwify</p>
+                        <p className="text-xs text-slate-500 mt-4 uppercase tracking-widest font-bold">Processed via Kiwify</p>
                     </div>
                 </div>
             </section>
@@ -2157,17 +2153,17 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                 <div className="relative max-w-7xl mx-auto px-6">
                     <div className="text-center mb-16">
                         <span className="inline-block bg-emerald-500/10 text-emerald-400 text-xs font-black px-4 py-2 rounded-full border border-emerald-500/20 uppercase tracking-widest mb-4">
-                            Serviços Extras Profissionais
+                            Professional Extra Services
                         </span>
                         <h2 className="text-4xl md:text-5xl font-black text-white mb-6">
-                            Transforme Seu Livro em{' '}
+                            Transform Your Book into a{' '}
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-                                Produto de Mercado
+                                Market Product
                             </span>
                         </h2>
                         <p className="text-slate-400 text-lg max-w-3xl mx-auto">
-                            Os mesmos serviços disponíveis após a geração do seu livro. Contrate separadamente ou em Pacote Completo com desconto.{' '}
-                            <span className="text-emerald-400 font-semibold">Após o pagamento, você receberá todas as instruções de início dos trabalhos por e-mail.</span>
+                            The same services available after your book is generated. Hire separately or in a discounted Complete Package.{' '}
+                            <span className="text-emerald-400 font-semibold">After payment, you will receive all instructions to start the work by email.</span>
                         </p>
                     </div>
 
@@ -2177,13 +2173,13 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                     <div className="mb-12">
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-10 h-10 bg-blue-500/20 border border-blue-500/30 rounded-xl flex items-center justify-center text-xl">🌍</div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Tradução</h3>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Translation</h3>
                             <div className="flex-1 h-px bg-blue-500/20"></div>
                         </div>
                         <div className="grid sm:grid-cols-2 gap-6">
                             {([
-                                { key: 'livro-ingles', icon: '🇺🇸', title: 'Livro em Inglês', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX formatado pronto', 'Entrega em até 5 dias úteis'], href: products.trans_en },
-                                { key: 'livro-espanhol', icon: '🇪🇸', title: 'Livro em Espanhol', subtitle: 'Tradução profissional com IA literária', price: 24.99, features: ['Tradução 100% do conteúdo', 'Revisão de naturalidade e estilo', 'Arquivo DOCX formatado pronto', 'Entrega em até 5 dias úteis'], href: products.trans_es },
+                                { key: 'livro-ingles', icon: '🇺🇸', title: 'Book in English', subtitle: 'Professional translation with literary AI', price: 24.99, features: ['100% content translation', 'Naturalness and style review', 'Ready-to-use formatted DOCX file', 'Delivery within 5 business days'], href: products.trans_en },
+                                { key: 'livro-espanhol', icon: '🇪🇸', title: 'Book in Spanish', subtitle: 'Professional translation with literary AI', price: 24.99, features: ['100% content translation', 'Naturalness and style review', 'Ready-to-use formatted DOCX file', 'Delivery within 5 business days'], href: products.trans_es },
                             ] as const).map(svc => (
                                 <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="blue" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
                             ))}
@@ -2194,13 +2190,13 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                     <div className="mb-12">
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-10 h-10 bg-purple-500/20 border border-purple-500/30 rounded-xl flex items-center justify-center text-xl">🎨</div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Design de Capa</h3>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Cover Design</h3>
                             <div className="flex-1 h-px bg-purple-500/20"></div>
                         </div>
                         <div className="grid sm:grid-cols-2 gap-6">
                             {([
-                                { key: 'capa-impressa', icon: '📗', title: 'Capa — Livro Impresso', subtitle: 'Design profissional para impressão KDP / UICLAP', price: 250.00, features: ['Dimensões exatas para impressão', 'Capa + Lombada + Contra-capa', 'Arquivo PDF em alta resolução', 'Revisões incluídas'], href: products.cover_card },
-                                { key: 'capa-digital', icon: '📱', title: 'Capa — Livro Digital (Ebook)', subtitle: 'Design otimizado para Amazon Kindle e lojas digitais', price: 149.90, features: ['Formato 1600×2560px', 'JPG e PNG em alta qualidade', 'Otimizado para catálogos digitais', 'Revisões incluídas'], href: products.cover_ebook },
+                                { key: 'capa-impressa', icon: '📗', title: 'Cover — Printed Book', subtitle: 'Professional design for KDP / UICLAP printing', price: 250.00, features: ['Exact dimensions for printing', 'Cover + Spine + Back Cover', 'High-resolution PDF file', 'Revisions included'], href: products.cover_card },
+                                { key: 'capa-digital', icon: '📱', title: 'Cover — Digital Book (Ebook)', subtitle: 'Design optimized for Amazon Kindle and digital stores', price: 149.90, features: ['1600×2560px size', 'High-quality JPG and PNG', 'Optimized for digital catalogs', 'Revisions included'], href: products.cover_ebook },
                             ] as const).map(svc => (
                                 <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="purple" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
                             ))}
@@ -2211,14 +2207,14 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                     <div className="mb-12">
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-10 h-10 bg-orange-500/20 border border-orange-500/30 rounded-xl flex items-center justify-center text-xl">🚀</div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Publicação</h3>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Publication</h3>
                             <div className="flex-1 h-px bg-orange-500/20"></div>
                         </div>
                         <div className="grid sm:grid-cols-3 gap-6">
                             {([
-                                { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Impresso', subtitle: 'Publicação do livro físico na maior livraria do mundo', price: 69.90, features: ['Upload e configuração KDP', 'Revisão de formato e margens', 'Disponível para venda global', 'Orientação sobre precificação'], href: products.pub_amazon_printed },
-                                { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Publicação do ebook Kindle na Amazon', price: 59.90, features: ['Upload e configuração KDP', 'Revisão do arquivo mobi/epub', 'Disponível em 12+ países', 'Orientação sobre royalties'], href: products.pub_amazon_digital },
-                                { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Impresso', subtitle: 'Publicação na maior plataforma editorial brasileira', price: 59.90, features: ['Cadastro e upload UICLAP', 'Revisão de formato e capa', 'Disponível para impressão sob demanda', 'Suporte no processo editorial'], href: products.pub_uiclap },
+                                { key: 'amazon-impresso', icon: '📦', title: 'Amazon KDP — Printed', subtitle: 'Publication of the physical book in the world\'s largest bookstore', price: 69.90, features: ['KDP upload and setup', 'Format and margin review', 'Available for global sale', 'Pricing guidance'], href: products.pub_amazon_printed },
+                                { key: 'amazon-digital', icon: '📲', title: 'Amazon KDP — Digital', subtitle: 'Kindle ebook publication on Amazon', price: 59.90, features: ['KDP upload and setup', 'Mobi/epub file review', 'Available in 12+ countries', 'Royalties guidance'], href: products.pub_amazon_digital },
+                                { key: 'uiclap-impresso', icon: '🇧🇷', title: 'UICLAP — Printed', subtitle: 'Publication on the largest Brazilian editorial platform', price: 59.90, features: ['UICLAP registration and upload', 'Format and cover review', 'Available for print-on-demand', 'Editorial process support'], href: products.pub_uiclap },
                             ] as const).map(svc => (
                                 <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="orange" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
                             ))}
@@ -2229,14 +2225,14 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                     <div className="mb-16">
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-10 h-10 bg-amber-500/20 border border-amber-500/30 rounded-xl flex items-center justify-center text-xl">📋</div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Registros Legais</h3>
+                            <h3 className="text-xl font-black text-white uppercase tracking-widest">Legal Registrations</h3>
                             <div className="flex-1 h-px bg-amber-500/20"></div>
                         </div>
                         <div className="grid sm:grid-cols-3 gap-6">
                             {([
-                                { key: 'ficha-catalografica', icon: '🗂️', title: 'Ficha Catalográfica', subtitle: 'Obrigatória para publicação em gráficas e editoras', price: 59.90, features: ['Padrão AACR2 / RDA', 'Emitida por bibliotecária habilitada', 'Prazo: até 3 dias úteis', 'Arquivo PDF para inserir no livro'], href: products.catalog_card },
-                                { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Livro Impresso', subtitle: 'Registro oficial na Câmara Brasileira do Livro', price: 49.90, features: ['Number ISBN único para o livro', 'Registro na CBL', 'Código de barras incluso', 'Prazo: até 15 dias úteis'], href: products.isbn_printed },
-                                { key: 'isbn-digital', icon: '📗', title: 'ISBN — Livro Digital', subtitle: 'Registro oficial da edição digital na CBL', price: 49.90, features: ['Number ISBN único para o ebook', 'Registro na CBL', 'Código de barras incluso', 'Prazo: até 15 dias úteis'], href: products.isbn_digital },
+                                { key: 'ficha-catalografica', icon: '🗂️', title: 'CIP Data', subtitle: 'Mandatory for publication in printing houses and publishers', price: 59.90, features: ['AACR2 / RDA standard', 'Issued by a licensed librarian', 'Deadline: up to 3 business days', 'PDF file to insert into the book'], href: products.catalog_card },
+                                { key: 'isbn-impresso', icon: '📘', title: 'ISBN — Printed Book', subtitle: 'Official registration in the Brazilian Book Chamber', price: 49.90, features: ['Unique ISBN number for the book', 'CBL registration', 'Barcode included', 'Deadline: up to 15 business days'], href: products.isbn_printed },
+                                { key: 'isbn-digital', icon: '📗', title: 'ISBN — Digital Book', subtitle: 'Official digital edition registration in the CBL', price: 49.90, features: ['Unique ISBN number for the ebook', 'CBL registration', 'Barcode included', 'Deadline: up to 15 business days'], href: products.isbn_digital },
                             ] as const).map(svc => (
                                 <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc} accentColor="amber" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={trackInitiateCheckout} />
                             ))}
@@ -2246,20 +2242,20 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                     {/* ── PACOTE COMPLETO ── */}
                     <div className="relative bg-gradient-to-br from-emerald-900/30 via-slate-800/60 to-slate-900 border-2 border-emerald-500/40 rounded-3xl p-10 shadow-2xl shadow-emerald-900/20">
                         <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-900 text-sm font-black px-8 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-emerald-500/30">
-                            🔥 MAIOR ECONOMIA — PACOTE COMPLETO
+                            🔥 BIGGEST SAVINGS — COMPLETE PACKAGE
                         </div>
 
                         <div className="grid md:grid-cols-2 gap-10 items-center mt-4">
                             <div>
-                                <h3 className="text-3xl font-black text-white mb-3">Tudo em Um Único Pacote</h3>
+                                <h3 className="text-3xl font-black text-white mb-3">All in One Single Package</h3>
                                 <p className="text-slate-400 mb-6 text-lg leading-relaxed">
-                                    Tradução (EN + ES) + Capa Impressa + Publicação Amazon + ISBN + Ficha Catalográfica. Tudo que você precisa para transformar seu livro em um produto profissional de mercado.
+                                    Translation (EN + ES) + Printed Cover + Amazon Publication + ISBN + CIP Data. Everything you need to transform your book into a professional market product.
                                 </p>
                                 <ul className="grid grid-cols-2 gap-3">
                                     {[
-                                        '🌍 Tradução Inglês', '🇪🇸 Tradução Espanhol',
-                                        '📗 Capa Profissional', '🚀 Publicação Amazon',
-                                        '🔢 ISBN Impresso', '🗂️ Ficha Catalográfica',
+                                        '🌍 English Translation', '🇪🇸 Spanish Translation',
+                                        '📗 Professional Cover', '🚀 Amazon Publication',
+                                        '🔢 Printed ISBN', '🗂️ CIP Data',
                                     ].map((item, i) => (
                                         <li key={i} className="flex items-center gap-2 text-sm text-slate-300">
                                             <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0"></span>
@@ -2270,17 +2266,17 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                             </div>
 
                             <div className="text-center">
-                                <p className="text-slate-500 text-sm uppercase tracking-widest mb-2">Investimento total</p>
+                                <p className="text-slate-500 text-sm uppercase tracking-widest mb-2">Total investment</p>
                                 <div className="flex justify-center items-end gap-2 mb-2">
                                     <span className="text-slate-400 text-2xl mb-2">$</span>
-                                    <span className="text-7xl font-black text-white tracking-tighter">599,90</span>
+                                    <span className="text-7xl font-black text-white tracking-tighter">599.90</span>
                                 </div>
-                                <p className="text-emerald-400 text-sm font-bold mb-8">Economize mais de $ 300,00 contratando o combo completo!</p>
+                                <p className="text-emerald-400 text-sm font-bold mb-8">Save more than $ 300.00 by hiring the complete combo!</p>
                                 <ExtraServiceBuyButton
                                     serviceKey="pacote-completo"
-                                    serviceName="Pacote Completo de Serviços"
+                                    serviceName="Complete Services Package"
                                     price={599.90}
-                                    label="Contratar Pacote Completo"
+                                    label="Hire Complete Package"
                                     accentClass="bg-emerald-500 hover:bg-emerald-400 text-slate-900 shadow-emerald-500/30"
                                     formData={formData}
                                     getApiBase={getApiBase}
@@ -2288,7 +2284,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                     href={products.complete_package}
                                 />
                                 <p className="mt-4 text-xs text-slate-500 flex items-center justify-center gap-2">
-                                    <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Kiwify (PIX, Boleto, Cartão)
+                                    <ShieldCheck className="w-4 h-4" /> Secure Payment via Kiwify (Card, Stripe, Bank Transfer)
                                 </p>
                             </div>
                         </div>
@@ -2296,7 +2292,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
 
                     <div className="mt-10 text-center">
                         <p className="text-slate-500 text-sm">
-                            📧 <strong className="text-slate-400">Após o pagamento confirmado</strong>, nossa equipe entrará em contato pelo e-mail cadastrado com todas as instruções para início dos trabalhos.
+                            📧 <strong className="text-slate-400">Once payment is confirmed</strong>, our team will contact you at the registered email address with all the instructions to start the work.
                         </p>
                     </div>
                 </div>
@@ -2322,23 +2318,23 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                             </div>
 
                             <h2 className="text-3xl font-black text-white mt-8 mb-4">
-                                PARABÉNS! <br />
+                                CONGRATULATIONS! <br />
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">
-                                    VOCÊ AGORA É UM ASSINANTE!
+                                    YOU ARE NOW A SUBSCRIBER!
                                 </span>
                             </h2>
 
                             <div className="bg-indigo-900/30 p-4 rounded-xl border border-indigo-500/20 mb-6">
                                 <p className="text-indigo-200 font-bold text-lg mb-1">{celebratedPlan.name}</p>
-                                <p className="text-sm text-indigo-300/70 uppercase tracking-widest">{celebratedPlan.billing === 'annual' ? 'Plano Anual' : 'Plano Mensal'}</p>
+                                <p className="text-sm text-indigo-300/70 uppercase tracking-widest">{celebratedPlan.billing === 'annual' ? 'Annual Plan' : 'Monthly Plan'}</p>
                             </div>
 
                             <p className="text-slate-300 text-lg mb-8 leading-relaxed">
-                                Acabamos de desbloquear as condições exclusivas do seu plano e a
-                                <span className="text-yellow-400 font-bold"> Taxa de Geração Promocional ({
-                                    celebratedPlan.name === 'BLACK' ? '$ 9,90' :
-                                        celebratedPlan.name === 'PRO' ? '$ 18,90' :
-                                            '$ 28,90'
+                                We've just unlocked your plan's exclusive conditions and the
+                                <span className="text-yellow-400 font-bold"> Promotional Generation Fee ({
+                                    celebratedPlan.name === 'BLACK' ? '$ 9.90' :
+                                        celebratedPlan.name === 'PRO' ? '$ 18.90' :
+                                            '$ 28.90'
                                 })</span>.
                             </p>
 
@@ -2350,7 +2346,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                                 }}
                                 className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-900/40 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                             >
-                                ACESSAR ÁREA VIP DE MEMBROS ASSINANTES
+                                ACCESS VIP SUBSCRIBER MEMBER AREA
                             </button>
                         </div>
                     </div>
@@ -2368,13 +2364,13 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onAdmin, lang, se
                 target="_blank"
                 rel="noopener noreferrer"
                 className="fixed bottom-8 right-8 z-[90] bg-[#25D366] hover:bg-[#128C7E] text-white p-4 rounded-full shadow-2xl shadow-green-500/20 transition-all transform hover:scale-110 active:scale-95 flex items-center justify-center group"
-                title="Fale Conosco no WhatsApp"
+                title="Contact us on WhatsApp"
             >
                 <WhatsApp className="w-8 h-8" />
 
                 {/* Tooltip text hidden on mobile, visible on hover on larger screens */}
                 <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-xs group-hover:ml-3 transition-all duration-500 font-bold">
-                    Suporte WhatsApp
+                    WhatsApp Support
                 </span>
 
                 {/* Pulsing ring */}

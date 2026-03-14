@@ -387,11 +387,16 @@ export const en = {
             { step: "04", title: "Download File" },
         ],
         faq: [
-            { q: "How much does it cost to generate a new book?", a: "If you don't have an active plan, the cost is $ 39.90 per generation. If you are a subscriber to one of our plans (Starter, Pro, or Black), this value drops significantly, potentially reaching as low as $ 8.90 per book." },
+            { q: "Who owns the copyright of the generated book?", a: "You! 100% of the copyright of the generated work is solely and exclusively yours. You are free to publish, sell, and put your own name on it, without the need for royalties or sharing profits." },
+            { q: "Does Artificial Intelligence commit plagiarism?", a: "No. Our artificial intelligence generates unique and original content for each project, based on the theme you define." },
             { q: "Does the book come with a cover?", a: "The focus is on the interior layout. The cover must be created separately, but we provide the ready-made text for the back cover and flaps at the end of the generation." },
-            { q: "Can I edit the text later?", a: "Yes, absolutely. The generated file available for download is in Word Microsoft (.DOCX) format, giving total editorial freedom." },
-            { q: "Is it ready for Amazon KDP?", a: "Yes, the books are formatted in the international size 6x9 inches (15.24 x 22.86 cm), perfectly adjusted and accepted for both printed KDP and eBooks." },
-            { q: "How many pages?", a: "We guarantee a robust structure with over 160 pages generated, depending on the chosen topic." },
+            { q: "How much does it cost to generate a new book?", a: "If you don't have an active plan, the cost is $ 39.90 per generation. If you are a subscriber to one of our plans (Starter, Pro, or Black), this price drops significantly, potentially reaching as low as $ 9.90 per book." },
+            { q: "Can I edit the text later?", a: "Yes, absolutely. The file generated and provided for download is in Word Microsoft (.DOCX) format, giving you total editorial freedom." },
+            { q: "Is it suitable for publishing on Amazon Kindle (KDP)?", a: "Yes, the books are formatted in the international size 6x9 inches (15.24 x 22.86 cm), perfectly adjusted and accepted for both printed KDP and eBooks." },
+            { q: "How long does it take to get ready?", a: "After the definition and approval of the chapters on the platform, your work is written and formatted in real-time in front of you, taking from 15 to 25 minutes." },
+            { q: "Is the payment secure?", a: "Yes, we use Kiwify, one of the largest and most secure payment platforms, with end-to-end encryption." },
+            { q: "How do I receive access after purchase?", a: "Immediately after payment confirmation, you will be redirected to our member area to create your password and start generating your book." },
+            { q: "Do I need technical knowledge?", a: "None! Our platform was designed to be intuitive. If you know how to type a theme, you know how to create a Best Seller with us." },
         ],
         problemTitle: "Have you always dreamed of writing a book,\nbut stopped at one of these obstacles?",
         problems: [
@@ -745,11 +750,16 @@ export const es = {
             { step: "04", title: "Descargar Archivo" },
         ],
         faq: [
-            { q: "¿Cuánto cuesta generar un nuevo libro?", a: "Si no tienes un plan activo, el costo es de R$ 39,90 por generación. Si eres suscriptor de uno de nuestros planes (Starter, Pro o Black), este valor baja drásticamente, pudiendo llegar a solo R$ 8,90 por libro." },
+            { q: "¿Quién posee los derechos de autor del libro generado?", a: "¡Usted! El 100% de los derechos de autor de la obra generada son única y exclusivamente suyos. Es libre de publicar, vender y poner su propio nombre, sin necesidad de pagar regalías." },
+            { q: "¿La Inteligencia Artificial comete plagio?", a: "No. Nuestra inteligencia artificial genera contenidos únicos e inéditos para cada proyecto, basados en el tema que usted defina." },
             { q: "¿El libro viene con portada?", a: "El enfoque es el interior diagramado. La portada debe crearse por separado, pero entregamos el texto listo para la contraportada y solapas al finalizar la generación." },
+            { q: "¿Cuánto cuesta generar un nuevo libro?", a: "Si no tienes un plan activo, el costo es de $ 39.90 por generación. Si eres suscriptor de uno de nuestros planes (Starter, Pro o Black), este valor baja drásticamente, pudiendo llegar a solo $ 9.90 por libro." },
             { q: "¿Puedo editar el texto después?", a: "Sí, absolutamente. El archivo generado y disponible para descarga está en formato Word Microsoft (.DOCX), lo que otorga total libertad editorial." },
             { q: "¿Sirve para publicar en Amazon Kindle (KDP)?", a: "Sí, los libros están formateados en el tamaño internacional 6x9 pulgadas (15.24 x 22.86 cm) perfectamente ajustados y aceptados para KDP impreso y eBook." },
-            { q: "¿Cuántas páginas?", a: "Garantizamos una estructura robusta con más de 160 páginas generadas, dependiendo del tema elegido." },
+            { q: "¿Cuánto tiempo tarda en estar listo?", a: "Tras la definición y aprobación de los capítulos en la plataforma, su obra se escribe y maqueta en tiempo real frente a usted, tardando de 15 a 25 minutos." },
+            { q: "¿El pago es seguro?", a: "Sí, utilizamos Kiwify, una de las plataformas de pago más grandes y seguras, con cifrado de extremo a extremo." },
+            { q: "¿Cómo recibo el acceso después de la compra?", a: "Inmediatamente después de la confirmación del pago, será redirigido a nuestra área de miembros para crear su contraseña y comenzar a generar su libro." },
+            { q: "¿Necesito conocimientos técnicos?", a: "¡Ninguno! Nuestra plataforma fue diseñada para ser intuitiva. Si sabe escribir un tema, sabe cómo crear un Best Seller con nosotros." },
         ],
         problemTitle: "¿Siempre soñaste con escribir un libro,\npero te detuviste ante estos obstáculos?",
         problems: [
@@ -998,7 +1008,7 @@ export const es = {
             translation: "Traducción",
             coverDesign: "Diseño de Portada",
             publication: "Publicación",
-            legal: "Registros Legais",
+            legal: "Registros Legales",
             bestValue: "🔥 MAYOR AHORRO",
             completePackage: "Paquete Completo",
             packageDesc: "Traducción (EN+ES) + Portada Impresa + Publicación en Amazon + ISBN + Ficha Catalográfica.",
@@ -1012,8 +1022,8 @@ export const es = {
                 },
                 espBook: {
                     title: "Libro en Español",
-                    subtitle: "Traducción profesional com IA literária",
-                    features: ["Traducción 100% do conteúdo", "Revisão de naturalidade e estilo", "Arquivo DOCX listo"]
+                    subtitle: "Traducción profesional con IA literaria",
+                    features: ["Traducción 100% del contenido", "Revisión de naturalidad y estilo", "Archivo DOCX listo"]
                 },
                 printCover: {
                     title: "Portada — Libro Impreso",
@@ -1038,7 +1048,7 @@ export const es = {
                 isbn: {
                     title: "Registro ISBN",
                     subtitle: "Identificación Internacional",
-                    features: ["ISBN válido para el autor", "Código de barras profesional", "Registro oficial brasileño"]
+                    features: ["ISBN válido para el autor", "Código de barras profesional", "Registro oficial internacional"]
                 },
                 cataloging: {
                     title: "Ficha Catalográfica",

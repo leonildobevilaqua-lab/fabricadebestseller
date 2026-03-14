@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import Disclaimer from './Disclaimer';
 import { useLanguage } from '../i18n/context';
 
 interface LoginProps {
@@ -195,9 +194,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                         </button>
                     </div>
                 )}
-            </div>
-            <div className="w-full max-w-md mt-12 bg-slate-900/50 p-6 rounded-2xl">
-                <Disclaimer />
             </div>
         </div>
     );

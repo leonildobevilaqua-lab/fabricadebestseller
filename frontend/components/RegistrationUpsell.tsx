@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ShieldCheck, Award, Clock, ChevronRight, CheckCircle2 } from 'lucide-react';
-import Disclaimer from './Disclaimer';
 
 export const RegistrationUpsell: React.FC = () => {
     const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
@@ -236,7 +235,6 @@ export const RegistrationUpsell: React.FC = () => {
                 <p className="mt-12 text-[10px] text-gray-700 uppercase tracking-widest font-black mb-6">
                     © 2026 Fábrica de Best Seller - Todos os direitos reservados
                 </p>
-                <Disclaimer />
             </footer>
         </div>
     );
