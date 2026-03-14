@@ -12,6 +12,7 @@ interface GeneratorProps {
   updateMetadata: (data: Partial<BookMetadata>) => void;
   onReset: (props?: any) => void;
   language: 'pt' | 'en' | 'es';
+  bookLanguage?: 'pt' | 'en' | 'es';
   userContact: any;
   setAppStep: (step: number) => void;
 }
@@ -51,7 +52,7 @@ const RotatingMessage = ({ messages }: { messages: string[] }) => {
 
 
 
-export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, onReset, language, userContact, setAppStep }) => {
+export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, onReset, language, bookLanguage, userContact, setAppStep }) => {
   const t = { pt, en, es }[language].generator;
   const [projectId, setProjectId] = useState<string | null>(null);
   const [project, setProject] = useState<BookProject | null>(null);
@@ -408,7 +409,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       const p = await API.createProject(
         metadata.authorName,
         metadata.topic,
-        language,
+        bookLanguage || language,
         userContact,
         true,
         { contentStyle: metadata.contentStyle, writingTone: metadata.writingTone }
@@ -438,7 +439,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               setUpsellOffer({
                 price: access.bookPrice,
                 planName: access.planLabel || (access.plan?.name ? `Plano ${access.plan.name}` : "STARTER"),
-                link: `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(userContact?.email || '')}`,
+                link: language === 'pt' 
+                  ? `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(userContact?.email || '')}`
+                  : `https://pay.kiwify.com/DdposAY?email=${encodeURIComponent(userContact?.email || '')}`,
                 level: access.discountLevel,
                 subscriptionPrice: subPrice,
                 subscriptionLink: "#"
@@ -471,7 +474,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       // We can immediately start the research process.
       if (p.metadata.status === 'IDLE') {
         try {
-          await API.startResearch(p.id, language, userContact?.email);
+          await API.startResearch(p.id, bookLanguage || language, userContact?.email);
         } catch (startErr) {
           console.error("Failed to start research automatically:", startErr);
         }
@@ -548,7 +551,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   const handleApproveStructure = async () => {
     if (!projectId || !project) return;
     try {
-      await API.generateBookContent(projectId, undefined, userContact?.email);
+      await API.generateBookContent(projectId, bookLanguage || language, userContact?.email);
       setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', progress: 41 } });
       setAppStep(3);
     } catch (e: any) {
@@ -564,13 +567,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     setRetryCount(prev => prev + 1);
     try {
       if (progress < 30) {
-        await API.startResearch(projectId);
+        await API.startResearch(projectId, bookLanguage || language);
         setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa automaticamente...' } });
       } else if (progress >= 30 && progress < 41) {
-        await API.generateBookContent(projectId);
+        await API.generateBookContent(projectId, bookLanguage || language);
         setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Iniciando escrita...' } });
       } else {
-        await API.generateBookContent(projectId);
+        await API.generateBookContent(projectId, bookLanguage || language);
         setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita automaticamente...' } });
       }
     } catch (e) {

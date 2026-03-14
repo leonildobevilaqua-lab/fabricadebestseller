@@ -285,9 +285,10 @@ const App: React.FC = () => {
                   window.history.pushState({}, '', '/');
                   window.scrollTo(0, 0);
                 }}
-                // Use the book-specific language selected by user in InputForm
-                // Falls back to UI language if not set
-                language={((metadata as any).bookLanguage as any) || lang}
+                // Site UI Language (labels, instructions)
+                language={lang}
+                // Book Content Language (research, generation logic)
+                bookLanguage={((metadata as any).bookLanguage as any) || lang}
                 userContact={userContact}
                 setAppStep={setStep}
               />

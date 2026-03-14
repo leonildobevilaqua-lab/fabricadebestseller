@@ -36,9 +36,12 @@ export const getVal = async (pathStr: string): Promise<any> => {
             if (!error && data && data.length > 0) {
                 // CRITICAL FIX: Only return ROOT-LEVEL entries (e.g. /projects/{uuid})
                 // Sub-paths like /projects/{uuid}/metadata/translations must be excluded
-                // A root entry has exactly ONE segment after the collection prefix
-                const rootPattern = new RegExp(`^${cleanPath.replace(/\//g, '\\/')}\\/[^\\/]+$`);
-                const rootEntries = data.filter(item => rootPattern.test(item.key));
+                const prefixSegments = cleanPath.split('/').filter(Boolean).length;
+                const rootEntries = data.filter(item => {
+                    const segments = item.key.split('/').filter(Boolean);
+                    // Root entry has exactly ONE more segment than the prefix
+                    return segments.length === prefixSegments + 1;
+                });
 
                 if (rootEntries.length > 0) {
                     return rootEntries
