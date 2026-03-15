@@ -866,12 +866,29 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
         await new Promise(r => setTimeout(r, 1000));
 
-        // 7. Completed / Waiting Details
+        // 7. Finalização e Geração de Arquivo
         await QueueService.updateMetadata(id, {
-            status: 'WAITING_DETAILS',
+            status: 'COMPLETED',
             progress: 100,
             statusMessage: "DIAGRAMAÇÃO CONCLUIDA, LIVRO LIBERADO PARA DOWNLOAD DO CLIENTE..."
         });
+
+        // BUG FIX: Chamar a geração do arquivo DOCX/ZIP ao finalizar
+        console.log(`[PROJECT] Finalizing book ${id}. Generating files...`);
+        const fullProject = await QueueService.getProject(id);
+        if (fullProject) {
+            const artifactPath = await DocService.generateBookDocx(fullProject);
+            console.log(`[PROJECT] Files generated: ${artifactPath}`);
+
+            // Notificar usuário por email
+            if (fullProject.metadata.contact?.email) {
+                try {
+                    await notifyUserBookReady(fullProject.metadata.contact.email, fullProject.metadata.bookTitle || "Seu Livro", artifactPath);
+                } catch (emailErr) {
+                    console.error("Failed to send auto-email after generation:", emailErr);
+                }
+            }
+        }
 
     } catch (error) {
         console.error(error);
@@ -1237,7 +1254,23 @@ export const processDiagramLead = async (req: Request, res: Response) => {
                 });
 
                 // 6. Generate DOCX
-                await DocService.generateBookDocx(project);
+                const artifactPath = await DocService.generateBookDocx(project);
+
+                // Update Status to COMPLETED
+                await QueueService.updateMetadata(project.id, { 
+                    status: 'COMPLETED', 
+                    progress: 100,
+                    statusMessage: "Livro diagramado com sucesso!"
+                });
+
+                // Notify User
+                if (project.metadata.contact?.email) {
+                    try {
+                        await notifyUserBookReady(project.metadata.contact.email, project.metadata.bookTitle || "Seu Livro", artifactPath);
+                    } catch (emailErr) {
+                        console.error("Failed to send auto-email for diagram lead:", emailErr);
+                    }
+                }
 
                 // Update Project ID in Lead (Status is already Approved)
                 await setVal(`/leads[${leadIndex}]/projectId`, project.id);
