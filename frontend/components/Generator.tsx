@@ -1277,7 +1277,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                   </ul>
                   <div className="flex justify-between items-end">
                     <span className="text-2xl font-bold">R$ 599,90</span>
-                    <a href={products.complete_package} target="_blank" className="bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-300">Quero Tudo</a>
+                    <a href="https://pay.kiwify.com.br/IHk1tZd" target="_blank" rel="noopener noreferrer" className="bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold text-sm hover:bg-yellow-300">Quero Tudo</a>
                   </div>
                 </div>
               )}

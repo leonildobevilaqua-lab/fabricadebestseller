@@ -2285,7 +2285,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                     formData={formData}
                                     getApiBase={getApiBase}
                                     trackInitiateCheckout={trackInitiateCheckout}
-                                    href={products.complete_package}
+                                    href="https://pay.kiwify.com.br/IHk1tZd"
                                 />
                                 <p className="mt-4 text-xs text-slate-500 flex items-center justify-center gap-2">
                                     <ShieldCheck className="w-4 h-4" /> Pagamento Seguro via Kiwify (PIX, Boleto, Cartão)

@@ -662,16 +662,14 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                                 <span className="text-slate-500 text-sm mb-1">{lang === 'en' ? '$' : 'R$'}</span>
                                 <span className="text-5xl font-black text-white tracking-tighter">{lang === 'en' ? '119.90' : '599,90'}</span>
                             </div>
-                            <button
-                                onClick={() => {
-                                    // Using standard modal trigger for the button
-                                    const btn = document.getElementById('btn-extra-pacote-completo');
-                                    if (btn) btn.click();
-                                }}
-                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black px-8 py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 uppercase text-xs tracking-widest"
+                            <a
+                                href="https://pay.kiwify.com.br/IHk1tZd"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black px-8 py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 uppercase text-xs tracking-widest inline-block"
                             >
                                 {(t as any).dashboard.extraServices.hirePackage}
-                            </button>
+                            </a>
                             {/* Hidden internal button for logic */}
                             <div className="hidden">
                                 <ExtraServiceBuyButton
@@ -683,7 +681,7 @@ const ExtraServiceSection = ({ formData, products }: { formData: any, products: 
                                     formData={formData}
                                     getApiBase={getApiBase}
                                     trackInitiateCheckout={() => { }}
-                                    href={products.complete_package}
+                                    href="https://pay.kiwify.com.br/IHk1tZd"
                                 />
                             </div>
                         </div>
