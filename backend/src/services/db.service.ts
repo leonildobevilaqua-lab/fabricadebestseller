@@ -26,10 +26,34 @@ export const getVal = async (pathStr: string): Promise<any> => {
         const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
         const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
         
-        // 1. TYPICAL COLLECTIONS (Automatic List)
+        // 1. COLLECTIONS CONFIG
         const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
         const isCollectionRoot = collections.includes(normalized);
 
+        // 0. HYBRID MODE: Check LOCAL DB FIRST (Bypasses Supabase Quota Drops)
+        const localDB = getLocalDB();
+        
+        if (isCollectionRoot) {
+            const results: any[] = [];
+            for (const [k, v] of Object.entries(localDB)) {
+                if (k.startsWith(`${normalized}/`)) {
+                    const parsed = typeof v === 'string' ? JSON.parse(v) : v;
+                    results.push(parsed);
+                }
+            }
+            if (results.length > 0) {
+                console.log(`[DB] Serving collection ${normalized} from localDB (${results.length} items)`);
+                return results;
+            }
+        }
+
+        if (localDB[normalized]) {
+            const val = localDB[normalized];
+            console.log(`[DB] Serving key ${normalized} from localDB`);
+            return typeof val === 'string' ? JSON.parse(val) : val;
+        }
+
+        // 1. SUPABASE COLLECTIONS (Fallback if not in localDB or to get live updates)
         if (isCollectionRoot) {
             const { data, error } = await supabase
                 .from('kv_store')
@@ -48,8 +72,7 @@ export const getVal = async (pathStr: string): Promise<any> => {
             }
         }
 
-        // 2. EXACT MATCH (Handles /users/email, /projects/id, backup_id, etc.)
-        // We try both with and without leading slash to be super safe
+        // 2. SUPABASE EXACT MATCH
         const possibleKeys = [normalized, normalized.startsWith('/') ? normalized.substring(1) : '/' + normalized];
         
         for (const k of possibleKeys) {
@@ -63,25 +86,6 @@ export const getVal = async (pathStr: string): Promise<any> => {
                 const val = data.value;
                 return typeof val === 'string' ? JSON.parse(val) : val;
             }
-        }
-
-        // 3. FALLBACK TO LOCAL JSON (Flat Map)
-        const localDB = getLocalDB();
-        
-        if (isCollectionRoot) {
-            const results: any[] = [];
-            for (const [k, v] of Object.entries(localDB)) {
-                if (k.startsWith(`${normalized}/`)) {
-                    const parsed = typeof v === 'string' ? JSON.parse(v) : v;
-                    results.push(parsed);
-                }
-            }
-            if (results.length > 0) return results;
-        }
-
-        if (localDB[normalized]) {
-            const val = localDB[normalized];
-            return typeof val === 'string' ? JSON.parse(val) : val;
         }
 
         return isCollectionRoot ? [] : null;
