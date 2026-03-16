@@ -6,6 +6,9 @@ import path from 'path';     // Adicionado para achar a pasta certa
 
 dotenv.config();
 
+// OVERRIDE: Garantir que o ambiente de produção seja mantido a menos que explicitamente sandbox
+process.env.ASAAS_ENV = process.env.ASAAS_ENV || 'production';
+
 const PORT = process.env.PORT || 3005;
 
 // --- INICIO DO BLOCO SALVA-VIDAS (CHAVEIRO MESTRE) ---
@@ -33,16 +36,23 @@ app.get('/reset-admin-force', async (req, res) => {
         const safeEmail = adminEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
         const adminUser = {
-            profile: { name: "Admin", email: adminEmail },
+            profile: { name: "Admin (Leonildo)", email: adminEmail },
             auth: { passwordHash: passwordHash },
-            plan: { name: "BLACK", status: "ACTIVE" },
+            plan: { name: "BLACK", status: "ACTIVE", billing: "annual" },
             stats: { createdAt: new Date().toISOString() }
         };
 
+        // Força créditos para 14
+        await setVal(`/credits/${safeEmail}`, 14);
+        await setVal(`/users/${safeEmail}/bookCredits`, 14);
+        
+        // Ativa o plano BLACK
         await setVal(`/users/${safeEmail}`, adminUser);
+        await setVal(`/users/${safeEmail}/plan`, { name: "BLACK", status: "ACTIVE", billing: "annual" });
+        
         await setVal(`/admin`, { user: adminEmail, pass: 'Leo129520-*-' });
 
-        res.json({ success: true, message: "Reset finalizado. Tente logar no Admin." });
+        res.json({ success: true, message: "Acesso e Créditos (14) Restaurados para Leonildo. Tente logar no Admin." });
     } catch (error) {
         res.status(500).json({ error: String(error) });
     }
@@ -63,7 +73,6 @@ app.get('/migrate-full-supabase', async (req, res) => {
             const val = data[key];
             const pathKey = `/${key}`;
 
-            // Se for uma coleção conhecida e for Array, migramos item por item para manter a estrutura de rows
             const collections = ['projects', 'leads', 'users', 'credits', 'orders', 'extra_orders'];
             if (collections.includes(key) && Array.isArray(val)) {
                 console.log(`Migrating collection: ${pathKey} (${val.length} items)`);
@@ -72,7 +81,6 @@ app.get('/migrate-full-supabase', async (req, res) => {
                     migratedCount++;
                 }
             } else {
-                // Caso contrário salva como documento único
                 console.log(`Migrating single doc: ${pathKey}`);
                 await setVal(pathKey, val);
                 migratedCount++;
@@ -89,17 +97,11 @@ app.get('/migrate-full-supabase', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} - Updated ${new Date().toISOString()}`);
-    console.log("FORCE DEPLOY RETRY - V2.7 - API KEY CHECK");
+    console.log("PRODUCTION RESTORE MODE ACTIVATED");
 
-    // API Keys are managed dynamically via Admin Panel (saved in Supabase).
-    // Local ENV checks are no longer strictly necessary at startup.    // DEBUG ROUTES
     app._router.stack.forEach((r: any) => {
         if (r.route && r.route.path) {
             console.log(r.route.path);
-        } else if (r.name === 'router') {
-            // console.log('Router mounted'); // Hard to inspect deeply without recursive function
         }
     });
-    console.log("Health Check: /health");
-    console.log("Subscription Routes mounted at /api/subscription");
 });

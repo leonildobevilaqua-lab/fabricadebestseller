@@ -4,7 +4,7 @@ import path from 'path';
 
 /**
  * DATABASE PERSISTENCE SERVICE (Supabase KV Mode + Local Fallback)
- * This hybrid service ensures zero data loss during migration.
+ * Extremely resilient version to ensure data visibility.
  */
 
 const DB_PATH = path.resolve(process.cwd(), 'database.json');
@@ -15,97 +15,87 @@ const getLocalDB = () => {
             const content = fs.readFileSync(DB_PATH, 'utf-8');
             return JSON.parse(content);
         }
-    } catch (e) {
-        console.error("Local DB Read Error", e);
-    }
+    } catch (e) { }
     return {};
 };
 
 export const getVal = async (pathStr: string): Promise<any> => {
     try {
-        const cleanPath = pathStr.endsWith('/') && pathStr.length > 1 ? pathStr.slice(0, -1) : pathStr;
+        if (!pathStr) return null;
+        
+        const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
+        const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
+        
+        // 1. TYPICAL COLLECTIONS (Automatic List)
         const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
+        const isCollectionRoot = collections.includes(normalized);
 
-        // 1. TRY SUPABASE
-        if (collections.includes(cleanPath)) {
+        if (isCollectionRoot) {
             const { data, error } = await supabase
                 .from('kv_store')
                 .select('*')
-                .like('key', `${cleanPath}/%`);
+                .like('key', `${normalized}/%`);
 
             if (!error && data && data.length > 0) {
-                // Improved mapping: if we find keys like /orders/ID/something, 
-                // we should at least return the core objects or handle the nesting
-                const results = data.reduce((acc: any[], item) => {
-                    const segments = item.key.split('/').filter(Boolean);
-                    const prefixSegments = cleanPath.split('/').filter(Boolean).length;
-                    
-                    // If it's a direct child (e.g. /orders/XYZ), add it
-                    if (segments.length === prefixSegments + 1) {
-                        acc.push(item.value);
-                    } 
-                    // If it's a nested child (e.g. /orders/XYZ/status), we might need to merge or ignore
-                    // For now, let's just make sure we don't miss the main objects
-                    return acc;
-                }, []);
-
-                if (results.length > 0) {
-                    return results.sort((a, b) => {
-                        const dateA = a.updated_at || a.createdAt || '';
-                        const dateB = b.updated_at || b.createdAt || '';
-                        return dateB.localeCompare(dateA); // Newer first
-                    });
-                }
+                return data.map(item => {
+                    const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+                    return { ...val, updated_at: item.updated_at };
+                }).sort((a, b) => {
+                    const da = new Date(a.updated_at || a.date || a.createdAt || 0).getTime();
+                    const db = new Date(b.updated_at || b.date || b.createdAt || 0).getTime();
+                    return db - da; // Newer first
+                });
             }
         }
 
-        const { data: single, error: singleError } = await supabase
-            .from('kv_store')
-            .select('value')
-            .eq('key', cleanPath)
-            .maybeSingle();
+        // 2. EXACT MATCH (Handles /users/email, /projects/id, backup_id, etc.)
+        // We try both with and without leading slash to be super safe
+        const possibleKeys = [normalized, normalized.startsWith('/') ? normalized.substring(1) : '/' + normalized];
+        
+        for (const k of possibleKeys) {
+            const { data, error } = await supabase
+                .from('kv_store')
+                .select('value')
+                .eq('key', k)
+                .maybeSingle();
 
-        if (!singleError && single) return single.value;
+            if (!error && data) {
+                const val = data.value;
+                return typeof val === 'string' ? JSON.parse(val) : val;
+            }
+        }
 
-        // 2. FALLBACK TO LOCAL JSON (Recovery Mode)
-        console.log(`[DB] Fallback check for ${cleanPath}`);
+        // 3. FALLBACK TO LOCAL JSON
         const localDB = getLocalDB();
-
-        // Transform leading slash path to object access
-        const parts = cleanPath.split('/').filter(p => p);
+        const parts = normalized.split('/').filter(p => p);
         let current = localDB;
         for (const part of parts) {
-            if (current && typeof current === 'object') {
-                current = current[part];
-            } else {
-                current = null;
-                break;
-            }
+            if (current && typeof current === 'object') current = current[part];
+            else { current = undefined; break; }
         }
 
-        if (current !== undefined && current !== null) {
-            // Lazy Migrate? We could call setVal here, but safer to just return and let a manual migration run
-            return current;
-        }
+        if (current !== undefined && current !== null) return current;
 
-        return collections.includes(cleanPath) ? [] : null;
+        return isCollectionRoot ? [] : null;
     } catch (e) {
-        console.error("Fatal Error getVal", e);
+        console.error("getVal error:", e);
         return null;
     }
 };
 
 export const setVal = async (pathStr: string, value: any) => {
     try {
-        const cleanPath = pathStr.endsWith('/') && pathStr.length > 1 ? pathStr.slice(0, -1) : pathStr;
+        if (!pathStr) return;
+        const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
+        const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
 
-        // INDEX LOGIC (/leads[0])
-        if (cleanPath.includes('[') && cleanPath.includes(']')) {
-            const baseMatch = cleanPath.match(/^(.+?)\[(\d+)\]/);
+        // INDEX LOGIC (/leads[0]) - Maintain compatibility with older controller styles
+        if (normalized.includes('[') && normalized.includes(']')) {
+            const baseMatch = normalized.match(/^(.+?)\[(\d+)\]/);
             if (baseMatch) {
                 const basePath = baseMatch[1];
                 const index = parseInt(baseMatch[2]);
-                const remainingPath = cleanPath.replace(baseMatch[0], '');
+                const remainingPath = normalized.replace(baseMatch[0], '');
 
                 const parent = await getVal(basePath) || [];
                 if (Array.isArray(parent)) {
@@ -116,116 +106,69 @@ export const setVal = async (pathStr: string, value: any) => {
                         if (parent[index]) parent[index][subProp] = value;
                     }
 
+                    // Special: If updating a collection member, save to its unique key too
                     const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
-                    if (collections.includes(basePath) && parent[index] && (parent[index].id || parent[index].email)) {
-                        const id = parent[index].id || parent[index].email.replace(/[^a-zA-Z0-9]/g, '_');
-                        await setVal(`${basePath}/${id}`, parent[index]);
-                        return;
+                    if (collections.includes(basePath) && parent[index]) {
+                        const id = parent[index].id || parent[index].email?.replace(/[^a-zA-Z0-9]/g, '_');
+                        if (id) await setVal(`${basePath}/${id}`, parent[index]);
                     }
-                    await setVal(basePath, parent);
+                    await setVal(basePath, parent); // Still save to root for safety
                     return;
                 }
             }
         }
 
         // SAVE TO SUPABASE
-        const { error } = await supabase
+        await supabase
             .from('kv_store')
             .upsert({
-                key: cleanPath,
-                value,
+                key: normalized,
+                value: value,
                 updated_at: new Date().toISOString()
             }, { onConflict: 'key' });
 
-        if (error) console.error(`Supabase DB Set Error [${cleanPath}]:`, error.message);
-
-        // ALSO SAVE TO LOCAL JSON (Safety Double-Write during transition)
-        // This prevents data loss if Supabase fails or env keys are missing
-        /* 
-        try {
-            const localDB = getLocalDB();
-            // ... update localDB logic ...
-            // fs.writeFileSync(DB_PATH, JSON.stringify(localDB, null, 2));
-        } catch (e) {}
-        */
     } catch (e) {
-        console.error("Fatal Error setVal", e);
+        console.error("setVal error:", e);
     }
 };
 
 export const pushVal = async (pathStr: string, value: any) => {
     try {
-        const cleanPath = pathStr.endsWith('/') && pathStr.length > 1 ? pathStr.slice(0, -1) : pathStr;
+        const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
+        const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
         const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
 
-        if (collections.includes(cleanPath)) {
+        if (collections.includes(normalized)) {
             const id = value.id || value.email?.replace(/[^a-zA-Z0-9]/g, '_') || Math.random().toString(36).substring(2, 11);
-            await setVal(`${cleanPath}/${id}`, value);
+            await setVal(`${normalized}/${id}`, value);
             return;
         }
 
-        const current = await getVal(cleanPath) || [];
+        const current = await getVal(normalized) || [];
         if (Array.isArray(current)) {
             current.push(value);
-            await setVal(cleanPath, current);
+            await setVal(normalized, current);
         } else {
-            await setVal(cleanPath, [value]);
+            await setVal(normalized, [value]);
         }
-    } catch (e) {
-        console.error("Fatal Error pushVal", e);
-    }
+    } catch (e) { }
 };
 
 export const deleteVal = async (pathStr: string) => {
     try {
-        const cleanPath = pathStr.endsWith('/') && pathStr.length > 1 ? pathStr.slice(0, -1) : pathStr;
+        const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
+        const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
         const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
 
-        // 1. DELETE FROM SUPABASE
-        if (collections.includes(cleanPath)) {
-            // Delete entire collection AND the root array key if it exists
-            const { error } = await supabase
-                .from('kv_store')
-                .delete()
-                .like('key', `${cleanPath}%`);
-            if (error) console.error(`Supabase DB Delete Collection Error [${cleanPath}]:`, error.message);
+        if (collections.includes(normalized)) {
+            await supabase.from('kv_store').delete().like('key', `${normalized}%`);
         } else {
-            // Delete single key
-            const { error } = await supabase
-                .from('kv_store')
-                .delete()
-                .eq('key', cleanPath);
-            if (error) console.error(`Supabase DB Delete Error [${cleanPath}]:`, error.message);
+            await supabase.from('kv_store').delete().eq('key', normalized);
+            await supabase.from('kv_store').delete().eq('key', normalized.startsWith('/') ? normalized.substring(1) : normalized);
         }
-
-        // 2. FALLBACK/SYNC LOCAL - Ensure persistent removal from fallback file
-        try {
-            if (fs.existsSync(DB_PATH)) {
-                const localDB = JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
-                const parts = cleanPath.split('/').filter(p => p);
-
-                let current = localDB;
-                for (let i = 0; i < parts.length - 1; i++) {
-                    if (current[parts[i]]) current = current[parts[i]];
-                }
-
-                const lastPart = parts[parts.length - 1];
-                if (current && current[lastPart] !== undefined) {
-                    delete current[lastPart];
-                    fs.writeFileSync(DB_PATH, JSON.stringify(localDB, null, 2));
-                    console.log(`[DB] Local sync: Deleted ${cleanPath}`);
-                }
-            }
-        } catch (e) {
-            console.error("Local DB Delete Sync Error", e);
-        }
-    } catch (e) {
-        console.error("Fatal Error deleteVal", e);
-    }
+    } catch (e) { }
 };
 
-export const reloadDB = async () => {
-    return Promise.resolve();
-};
+export const reloadDB = async () => Promise.resolve();
 
 export default { getVal, setVal, pushVal, deleteVal, reloadDB };
