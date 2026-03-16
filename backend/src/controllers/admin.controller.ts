@@ -1,3 +1,4 @@
+// Last sync: 2026-03-16 15:08 - Emergency Restore
 import { Request, Response } from 'express';
 import * as ConfigService from '../services/config.service';
 import jwt from 'jsonwebtoken';
