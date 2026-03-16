@@ -246,12 +246,27 @@ export const UserAuthController = {
             });
 
             // --- 4. CREDITS ---
-            const credits = await getVal(`/credits/${safeEmail}`) || 0;
+            let credits = await getVal(`/credits/${safeEmail}`) || 0;
+            
+            // Check alternative path (bookCredits inside user object)
+            if (!credits && user.bookCredits) {
+                credits = user.bookCredits;
+            }
+
+            // --- 5. MASTER RESTORATION ---
+            if (isMaster) {
+                console.log("💎 FORCE RESTORING 14 CREDITS FOR MASTER LEONILDO");
+                credits = 14; 
+                // We also ensure plan is BLACK
+                if (!user.plan || user.plan.name !== 'BLACK') {
+                    user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'monthly' };
+                }
+            }
 
             res.json({
                 profile: user.profile,
                 plan: user.plan || { name: 'FREE', status: 'INACTIVE' },
-                credits: credits, // ADDED: Now the dashboard will see the real credits
+                credits: credits, 
                 stats: {
                     purchaseCycleCount: cycleIndex,
                     totalBooksGenerated: usageCount,

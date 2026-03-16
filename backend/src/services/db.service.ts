@@ -65,16 +65,24 @@ export const getVal = async (pathStr: string): Promise<any> => {
             }
         }
 
-        // 3. FALLBACK TO LOCAL JSON
+        // 3. FALLBACK TO LOCAL JSON (Flat Map)
         const localDB = getLocalDB();
-        const parts = normalized.split('/').filter(p => p);
-        let current = localDB;
-        for (const part of parts) {
-            if (current && typeof current === 'object') current = current[part];
-            else { current = undefined; break; }
+        
+        if (isCollectionRoot) {
+            const results: any[] = [];
+            for (const [k, v] of Object.entries(localDB)) {
+                if (k.startsWith(`${normalized}/`)) {
+                    const parsed = typeof v === 'string' ? JSON.parse(v) : v;
+                    results.push(parsed);
+                }
+            }
+            if (results.length > 0) return results;
         }
 
-        if (current !== undefined && current !== null) return current;
+        if (localDB[normalized]) {
+            const val = localDB[normalized];
+            return typeof val === 'string' ? JSON.parse(val) : val;
+        }
 
         return isCollectionRoot ? [] : null;
     } catch (e) {

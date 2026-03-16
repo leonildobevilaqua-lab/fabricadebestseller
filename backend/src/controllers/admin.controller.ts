@@ -375,11 +375,24 @@ export const createBackup = async (req: Request, res: Response) => {
 
 export const listBackups = async (req: Request, res: Response) => {
     try {
+        // 1. Check Supabase
         const { data, error } = await supabase.from('kv_store').select('key, updated_at').like('key', 'backup_%');
-        if (error) throw error;
+        const supabaseFiles = (data || []).map((row: any) => ({ name: `${row.key}.json`, time: new Date(row.updated_at).getTime() }));
 
-        const files = (data || []).map((row: any) => ({ name: `${row.key}.json`, time: new Date(row.updated_at).getTime() }));
-        const sorted = files.sort((a: any, b: any) => b.time - a.time).map((f: any) => f.name);
+        // 2. Check Local DB
+        const { getVal, getLocalDB } = require('../services/db.service');
+        const localDB = getLocalDB();
+        const localFiles: any[] = [];
+        for (const [k, v] of Object.entries(localDB)) {
+            if (k.startsWith('backup_')) {
+                localFiles.push({ name: `${k}.json`, time: Date.now() }); // Use now as fallback time
+            }
+        }
+
+        const allFiles = [...supabaseFiles, ...localFiles];
+        // Unique names
+        const unique = Array.from(new Set(allFiles.map(f => f.name))).map(name => allFiles.find(f => f.name === name));
+        const sorted = unique.sort((a: any, b: any) => b.time - a.time).map((f: any) => f.name);
 
         res.json(sorted);
     } catch (e: any) {
@@ -429,30 +442,15 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 export const getOrders = async (req: Request, res: Response) => {
     try {
-        // DIRECT SUPABASE FETCH - Bypass problematic dbService logic for Admin
-        const { data, error } = await supabase
-            .from('kv_store')
-            .select('value, updated_at')
-            .like('key', '/orders/%');
-
-        if (error) throw error;
-
-        if (!data || data.length === 0) {
-            console.log("[ADMIN] No orders found in kv_store");
-            return res.json([]);
-        }
-
-        const orders = data.map((item: any) => {
-            const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-            return {
-                ...val,
-                updated_at: item.updated_at
-            };
-        }).sort((a: any, b: any) => {
-            const dateA = new Date(a.date || a.updated_at || 0).getTime();
-            const dateB = new Date(b.date || b.updated_at || 0).getTime();
+        // Use resilient getVal which includes local fallback
+        const ordersArray = await getVal('/orders') || [];
+        
+        // Ensure it's sorted
+        const orders = Array.isArray(ordersArray) ? ordersArray.sort((a: any, b: any) => {
+            const dateA = new Date(a.date || a.updated_at || a.createdAt || 0).getTime();
+            const dateB = new Date(b.date || b.updated_at || b.createdAt || 0).getTime();
             return dateB - dateA;
-        });
+        }) : [];
 
         res.json(orders);
     } catch (e: any) {
