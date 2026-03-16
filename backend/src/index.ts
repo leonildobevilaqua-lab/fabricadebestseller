@@ -84,7 +84,7 @@ app.get('/migrate-full-supabase', async (req, res) => {
         console.error("Migration Error", e);
         res.status(500).json({ error: e.message });
     }
-})();
+});
 // --- FIM DO BLOCO SALVA-VIDAS ---
 
 app.listen(PORT, () => {
