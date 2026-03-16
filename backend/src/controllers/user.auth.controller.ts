@@ -188,7 +188,7 @@ export const UserAuthController = {
                 const metadata = p.metadata || {};
                 const contact = metadata.contact || p.contact || {};
                 
-                // Track all possible email locations
+                // Track all possible email locations - CASE INSENSITIVE
                 const emails = [
                     contact.email,
                     p.contact?.email,
@@ -197,15 +197,15 @@ export const UserAuthController = {
                     metadata.userEmail,
                     p.userEmail,
                     p.metadata?.userEmail,
-                    p.userId // Adicionado busca por userId literal se houver
+                    p.userId
                 ].filter(Boolean).map(e => String(e).toLowerCase().trim());
 
                 if (emails.includes(cleanUser)) return true;
 
-                // Deep search fallback: if the clean email is found anywhere in the project data (stringified)
+                // Deep search fallback: check for email match in ANY property
                 try {
-                    const projectStr = JSON.stringify(p).toLowerCase();
-                    if (projectStr.includes(cleanUser)) return true;
+                    const pStr = JSON.stringify(p).toLowerCase();
+                    if (pStr.includes(cleanUser)) return true;
                 } catch (err) {}
 
                 return false;
@@ -239,7 +239,11 @@ export const UserAuthController = {
                     // Prioritize KIT download URL, fallback to DOCX or generic API
                     downloadUrl: metadata.kitUrl || metadata.kitLink || metadata.downloadUrl || p.kitUrl || p.downloadUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id}/download`
                 };
-            }).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            }).sort((a: any, b: any) => {
+                const dateA = new Date(a.date || 0).getTime();
+                const dateB = new Date(b.date || 0).getTime();
+                return dateB - dateA;
+            });
 
             // --- 4. CREDITS ---
             const credits = await getVal(`/credits/${safeEmail}`) || 0;

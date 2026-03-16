@@ -428,12 +428,35 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 export const getOrders = async (req: Request, res: Response) => {
     try {
-        await reloadDB();
-        const orders = await getVal('/orders') || [];
+        // DIRECT SUPABASE FETCH - Bypass problematic dbService logic for Admin
+        const { data, error } = await supabase
+            .from('kv_store')
+            .select('value, updated_at')
+            .like('key', '/orders/%');
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            console.log("[ADMIN] No orders found in kv_store");
+            return res.json([]);
+        }
+
+        const orders = data.map((item: any) => {
+            const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+            return {
+                ...val,
+                updated_at: item.updated_at
+            };
+        }).sort((a: any, b: any) => {
+            const dateA = new Date(a.date || a.updated_at || 0).getTime();
+            const dateB = new Date(b.date || b.updated_at || 0).getTime();
+            return dateB - dateA;
+        });
+
         res.json(orders);
     } catch (e: any) {
-        console.error("Error getting orders:", e);
-        res.json([]);
+        console.error("🔥 CRITICAL ADMIN ORDERS ERROR:", e);
+        res.status(500).json({ error: "Erro ao carregar vendas: " + e.message });
     }
 };
 
