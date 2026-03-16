@@ -26,34 +26,11 @@ export const getVal = async (pathStr: string): Promise<any> => {
         const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
         const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
         
-        // 1. COLLECTIONS CONFIG
+        // 0. COLLECTIONS CONFIG
         const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
         const isCollectionRoot = collections.includes(normalized);
 
-        // 0. HYBRID MODE: Check LOCAL DB FIRST (Bypasses Supabase Quota Drops)
-        const localDB = getLocalDB();
-        
-        if (isCollectionRoot) {
-            const results: any[] = [];
-            for (const [k, v] of Object.entries(localDB)) {
-                if (k.startsWith(`${normalized}/`)) {
-                    const parsed = typeof v === 'string' ? JSON.parse(v) : v;
-                    results.push(parsed);
-                }
-            }
-            if (results.length > 0) {
-                console.log(`[DB] Serving collection ${normalized} from localDB (${results.length} items)`);
-                return results;
-            }
-        }
-
-        if (localDB[normalized]) {
-            const val = localDB[normalized];
-            console.log(`[DB] Serving key ${normalized} from localDB`);
-            return typeof val === 'string' ? JSON.parse(val) : val;
-        }
-
-        // 1. SUPABASE COLLECTIONS (Fallback if not in localDB or to get live updates)
+        // 1. SUPABASE PRIMARY: Check Supabase First (Pro Plan Active)
         if (isCollectionRoot) {
             const { data, error } = await supabase
                 .from('kv_store')
@@ -61,6 +38,7 @@ export const getVal = async (pathStr: string): Promise<any> => {
                 .like('key', `${normalized}/%`);
 
             if (!error && data && data.length > 0) {
+                console.log(`[DB] Serving collection ${normalized} from Supabase`);
                 return data.map(item => {
                     const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
                     return { ...val, updated_at: item.updated_at };
@@ -84,8 +62,32 @@ export const getVal = async (pathStr: string): Promise<any> => {
 
             if (!error && data) {
                 const val = data.value;
+                console.log(`[DB] Serving key ${normalized} from Supabase`);
                 return typeof val === 'string' ? JSON.parse(val) : val;
             }
+        }
+
+        // 3. FALLBACK TO LOCAL JSON (Proactive Safety)
+        const localDB = getLocalDB();
+        
+        if (isCollectionRoot) {
+            const results: any[] = [];
+            for (const [k, v] of Object.entries(localDB)) {
+                if (k.startsWith(`${normalized}/`)) {
+                    const parsed = typeof v === 'string' ? JSON.parse(v) : v;
+                    results.push(parsed);
+                }
+            }
+            if (results.length > 0) {
+                console.log(`[DB] Serving collection ${normalized} from localDB (Fallback)`);
+                return results;
+            }
+        }
+
+        if (localDB[normalized]) {
+            const val = localDB[normalized];
+            console.log(`[DB] Serving key ${normalized} from localDB (Fallback)`);
+            return typeof val === 'string' ? JSON.parse(val) : val;
         }
 
         return isCollectionRoot ? [] : null;
