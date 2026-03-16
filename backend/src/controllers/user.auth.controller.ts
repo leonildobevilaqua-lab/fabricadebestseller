@@ -241,9 +241,13 @@ export const UserAuthController = {
                 };
             }).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+            // --- 4. CREDITS ---
+            const credits = await getVal(`/credits/${safeEmail}`) || 0;
+
             res.json({
                 profile: user.profile,
                 plan: user.plan || { name: 'FREE', status: 'INACTIVE' },
+                credits: credits, // ADDED: Now the dashboard will see the real credits
                 stats: {
                     purchaseCycleCount: cycleIndex,
                     totalBooksGenerated: usageCount,

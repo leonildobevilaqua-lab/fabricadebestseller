@@ -34,19 +34,27 @@ export const getVal = async (pathStr: string): Promise<any> => {
                 .like('key', `${cleanPath}/%`);
 
             if (!error && data && data.length > 0) {
-                // CRITICAL FIX: Only return ROOT-LEVEL entries (e.g. /projects/{uuid})
-                // Sub-paths like /projects/{uuid}/metadata/translations must be excluded
-                const prefixSegments = cleanPath.split('/').filter(Boolean).length;
-                const rootEntries = data.filter(item => {
+                // Improved mapping: if we find keys like /orders/ID/something, 
+                // we should at least return the core objects or handle the nesting
+                const results = data.reduce((acc: any[], item) => {
                     const segments = item.key.split('/').filter(Boolean);
-                    // Root entry has exactly ONE more segment than the prefix
-                    return segments.length === prefixSegments + 1;
-                });
+                    const prefixSegments = cleanPath.split('/').filter(Boolean).length;
+                    
+                    // If it's a direct child (e.g. /orders/XYZ), add it
+                    if (segments.length === prefixSegments + 1) {
+                        acc.push(item.value);
+                    } 
+                    // If it's a nested child (e.g. /orders/XYZ/status), we might need to merge or ignore
+                    // For now, let's just make sure we don't miss the main objects
+                    return acc;
+                }, []);
 
-                if (rootEntries.length > 0) {
-                    return rootEntries
-                        .sort((a, b) => a.key.localeCompare(b.key))
-                        .map(item => item.value);
+                if (results.length > 0) {
+                    return results.sort((a, b) => {
+                        const dateA = a.updated_at || a.createdAt || '';
+                        const dateB = b.updated_at || b.createdAt || '';
+                        return dateB.localeCompare(dateA); // Newer first
+                    });
                 }
             }
         }
