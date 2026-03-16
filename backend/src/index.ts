@@ -97,7 +97,7 @@ app.get('/migrate-full-supabase', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} - Updated ${new Date().toISOString()}`);
-    console.log("PRODUCTION RESTORE MODE ACTIVATED");
+    console.log("PRODUCTION RESTORE MODE ACTIVATED - INCIDENT RESOLVED 17:50");
 
     app._router.stack.forEach((r: any) => {
         if (r.route && r.route.path) {
