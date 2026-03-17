@@ -1294,16 +1294,23 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 bg-white">
-                                            {getFilteredOrders().length === 0 && <tr><td colSpan={7} className="p-8 text-center text-slate-400">Nenhuma venda encontrada para o período selecionado.</td></tr>}
+                                            {getFilteredOrders().length === 0 && (
+                                                <tr>
+                                                    <td colSpan={7} className="p-8 text-center text-slate-400">
+                                                        Nenhuma venda encontrada para o período selecionado.
+                                                    </td>
+                                                </tr>
+                                            )}
                                             {getFilteredOrders().map((order: any, idx: number) => {
                                                 const amount = Number(order.paymentInfo?.amount || order.amount || 0);
-                                                const formattedAmt = amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                                                const formattedAmt = amount > 0 ? amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : (order.isProject ? "Incluso" : "R$ 0,00");
                                                 const dt = order.date || order.created_at;
                                                 const formattedDt = dt ? (new Date(dt).toLocaleDateString() + " " + new Date(dt).toLocaleTimeString()) : "N/A";
                                                 const clientEmail = order.customerEmail || order.email || "N/A";
-                                                const prodName = order.paymentInfo?.productName || order.planName || "Serviço Avulso/Assinatura";
+                                                const prodName = order.productName || order.paymentInfo?.productName || order.planName || "Serviço Avulso/Assinatura";
                                                 const status = order.paymentInfo?.status || order.status || "PAGO";
                                                 const projectId = order.projectId || order.details?.projectId || order.leadId;
+                                                const gateway = order.gateway || (order.isProject ? "Geração IA" : 'KIWIFY/ASAAS');
 
                                                 return (
                                                     <tr key={order.id || idx} className="hover:bg-slate-50 transition">
@@ -1313,17 +1320,17 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             <div className="text-xs text-slate-500">{clientEmail}</div>
                                                         </td>
                                                         <td className="p-4 text-slate-600 font-medium">{prodName}</td>
-                                                        <td className="p-4 font-bold text-emerald-600">{formattedAmt}</td>
-                                                        <td className="p-4 text-xs font-bold text-slate-400 uppercase">{order.gateway || 'KIWIFY/ASAAS'}</td>
+                                                        <td className={`p-4 font-bold ${amount > 0 ? 'text-emerald-600' : 'text-slate-400 font-normal'}`}>{formattedAmt}</td>
+                                                        <td className="p-4 text-xs font-bold text-slate-400 uppercase">{gateway}</td>
                                                         <td className="p-4">
-                                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${status.toUpperCase() === 'APPROVED' || status.toUpperCase() === 'PAID' || status.toUpperCase() === 'PAGO' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${['APPROVED', 'PAID', 'PAGO', 'COMPLETED', 'SUCCESS', 'READY'].includes(status.toUpperCase()) ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                                                 {status}
                                                             </span>
                                                         </td>
                                                         <td className="p-4 text-right">
                                                             {projectId && (
                                                                 <a
-                                                                    href={`${getApiBase()}/api/projects/${projectId}/download`}
+                                                                    href={order.downloadUrl || `${getApiBase()}/api/projects/${projectId}/download`}
                                                                     target="_blank"
                                                                     rel="noreferrer"
                                                                     className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 p-2 rounded text-xs font-bold transition"
