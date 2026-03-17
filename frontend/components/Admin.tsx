@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar } from 'lucide-react';
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 const DEFAULT_BASE = (import.meta as any).env.VITE_API_URL || '';
@@ -662,6 +663,25 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
+    const handleDeleteProject = async (projectId: string) => {
+        if (!confirm("Deseja realmente excluir este projeto permanentemente?")) return;
+        try {
+            const res = await fetch(`${getApiBase()}/api/projects/${projectId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) {
+                alert("Projeto excluído com sucesso!");
+                loadOrders(); // Refresh the list
+            } else {
+                alert("Erro ao excluir.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        }
+    };
+
     const handleEdit = async (id: string, updates: any) => {
         try {
             const res = await fetch(`${getApiBase()}/api/payment/leads`, {
@@ -1256,7 +1276,10 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
                                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <h3 className="font-bold text-slate-700">Histórico de Pedidos / Vendas</h3>
+                                    <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                                        <BookOpen className="text-emerald-500" size={24} />
+                                        Histórico de Livros Gerados
+                                    </h3>
 
                                     <div className="flex flex-wrap items-center gap-3 text-sm">
                                         <select
@@ -1280,79 +1303,104 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         )}
                                     </div>
                                 </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left min-w-[800px]">
-                                        <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
-                                            <tr>
-                                                <th className="p-4 w-40">Data</th>
-                                                <th className="p-4">Cliente</th>
-                                                <th className="p-4">Produto</th>
-                                                <th className="p-4 w-32">Valor</th>
-                                                <th className="p-4 w-32">Gateway</th>
-                                                <th className="p-4 w-32">Status</th>
-                                                <th className="p-4 text-right">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 bg-white">
-                                            {getFilteredOrders().length === 0 && (
-                                                <tr>
-                                                    <td colSpan={7} className="p-8 text-center text-slate-400">
-                                                        Nenhuma venda encontrada para o período selecionado.
-                                                    </td>
-                                                </tr>
-                                            )}
-                                            {getFilteredOrders().map((order: any, idx: number) => {
-                                                const amount = Number(order.paymentInfo?.amount || order.amount || 0);
-                                                const formattedAmt = amount > 0 ? amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : (order.isProject ? "Incluso" : "R$ 0,00");
-                                                const dt = order.date || order.created_at;
-                                                const formattedDt = dt ? (new Date(dt).toLocaleDateString() + " " + new Date(dt).toLocaleTimeString()) : "N/A";
-                                                const clientEmail = order.customerEmail || order.email || "N/A";
-                                                const prodName = order.productName || order.paymentInfo?.productName || order.planName || "Serviço Avulso/Assinatura";
-                                                const status = order.paymentInfo?.status || order.status || "PAGO";
-                                                const projectId = order.projectId || order.details?.projectId || order.leadId;
-                                                const gateway = order.gateway || (order.isProject ? "Geração IA" : 'KIWIFY/ASAAS');
+                                <div className="divide-y divide-slate-100 bg-white">
+                                    {getFilteredOrders().length === 0 && (
+                                        <div className="p-12 text-center text-slate-400 font-medium">
+                                            Nenhum livro gerado encontrado para o período selecionado.
+                                        </div>
+                                    )}
+                                    {getFilteredOrders().map((order: any, idx: number) => (
+                                        <div key={order.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6">
+                                            <div className="flex items-center gap-6 w-full lg:flex-1">
+                                                <div className="w-16 h-20 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-slate-200">
+                                                    📚
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex flex-col mb-2">
+                                                        <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest leading-none mb-1">Livro Gerado</span>
+                                                        <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
+                                                            {order.title || "Geração sem Título"}
+                                                        </h4>
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                <User size={12} />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Cliente</span>
+                                                                <span className="text-sm font-bold text-slate-700">{order.customerName || "-"}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                <Mail size={12} />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">E-mail</span>
+                                                                <span className="text-sm text-slate-600">{order.customerEmail}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 bg-emerald-50 text-emerald-600 rounded flex items-center justify-center text-[10px] font-bold">A</div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Autor(a)</span>
+                                                                <span className="text-sm font-bold text-slate-700">{order.authorName || "N/A"}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                <Calendar size={12} />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Data de Geração</span>
+                                                                <span className="text-sm text-slate-600">
+                                                                    {order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                                return (
-                                                    <tr key={order.id || idx} className="hover:bg-slate-50 transition">
-                                                        <td className="p-4 font-mono text-xs">{formattedDt}</td>
-                                                        <td className="p-4">
-                                                            <div className="font-bold text-slate-700">{order.customerName || order.name || "-"}</div>
-                                                            <div className="text-xs text-slate-500">{clientEmail}</div>
-                                                        </td>
-                                                        <td className="p-4 text-slate-600 font-medium">{prodName}</td>
-                                                        <td className={`p-4 font-bold ${amount > 0 ? 'text-emerald-600' : 'text-slate-400 font-normal'}`}>{formattedAmt}</td>
-                                                        <td className="p-4 text-xs font-bold text-slate-400 uppercase">{gateway}</td>
-                                                        <td className="p-4">
-                                                            <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${['APPROVED', 'PAID', 'PAGO', 'COMPLETED', 'SUCCESS', 'READY'].includes(status.toUpperCase()) ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                                {status}
-                                                            </span>
-                                                        </td>
-                                                        <td className="p-4 text-right">
-                                                            {projectId && (
-                                                                <a
-                                                                    href={order.downloadUrl || `${getApiBase()}/api/projects/${projectId}/download`}
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
-                                                                    className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 p-2 rounded text-xs font-bold transition"
-                                                                    title="Baixar Kit Completo"
-                                                                >
-                                                                    📥 Download
-                                                                </a>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
+                                            <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
+                                                <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                                    ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                }`}>
+                                                    {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
+                                                </span>
+                                                
+                                                <div className="flex items-center gap-2">
+                                                    {order.downloadUrl && (
+                                                        <a
+                                                            href={order.downloadUrl.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-black text-xs shadow-lg shadow-indigo-200 uppercase tracking-widest group"
+                                                        >
+                                                            <Download size={16} className="group-hover:translate-y-0.5 transition-transform" /> 
+                                                            <span className="hidden sm:inline">Baixar Kit ZIP</span>
+                                                        </a>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDeleteProject(order.projectId)}
+                                                        className="p-3 text-rose-500 border border-rose-200 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all shadow-sm"
+                                                        title="Excluir Projeto Permanentemente"
+                                                    >
+                                                        <Trash2 size={20} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                                 <div className="bg-slate-50 p-4 border-t border-slate-200 text-right">
-                                    <span className="text-slate-600">Total filtrado: </span>
+                                    <span className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">Total de Gerações: </span>
                                     <span className="text-xl font-black text-slate-800 ml-2">
-                                        {getFilteredOrders().reduce((acc, order) => {
-                                            const val = Number(order.paymentInfo?.amount || order.amount || 0);
-                                            return acc + (isNaN(val) ? 0 : val);
-                                        }, 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                        {getFilteredOrders().length} Livros
                                     </span>
                                 </div>
                             </div>

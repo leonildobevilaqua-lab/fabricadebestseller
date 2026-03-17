@@ -442,37 +442,34 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 export const getOrders = async (req: Request, res: Response) => {
     try {
-        // 1. Get explicit financial orders
-        const ordersArray = await getVal('/orders') || [];
-        const baseOrders = Array.isArray(ordersArray) ? ordersArray : [];
-
-        // 2. Get all projects to include "Generated Books" that might not have an explicit /orders entry
-        // (common for subscribers or restored data)
+        // 1. Get all projects (the source of truth for the "Book History" requested)
         const projectsArray = await getVal('/projects') || [];
         const projects = Array.isArray(projectsArray) ? projectsArray : Object.values(projectsArray);
 
-        // 3. Prepare Directory for file checking
+        // 2. Prepare Directory for file checking (optional but good for download validation)
         const outputDir = path.join(__dirname, '../../generated_books');
         const hasFiles = fs.existsSync(outputDir);
         const folderFiles = hasFiles ? fs.readdirSync(outputDir) : [];
 
-        // 4. Transform projects into "order-like" objects for the history view
-        const projectBasedOrders = projects.map((p: any) => {
+        // 3. Transform projects into the enriched format the Admin UI needs
+        const projectHistory = projects.map((p: any) => {
             const metadata = p.metadata || {};
             const projectId = p.id || metadata.id;
             
-            // Check for physical files to provide download link
+            // Replicate info from VIP Area: Title, Author, Date, Status
+            const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || "Geração de IA";
+            const authorName = metadata.contact?.name || metadata.authorName || p.authorName || "Cliente";
+            const customerEmail = metadata.contact?.email || p.email || metadata.userEmail || "N/A";
+            
+            // Physical file check
             let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
-            const matchingFile = folderFiles.find(f => f.includes(projectId));
             
             return {
-                id: `PROJ_${projectId}`,
+                id: projectId,
                 date: p.createdAt || metadata.createdAt || p.date || new Date(),
-                customerName: metadata.contact?.name || metadata.authorName || p.authorName || "Cliente",
-                customerEmail: metadata.contact?.email || p.email || metadata.userEmail || "N/A",
-                productName: `Livro: ${metadata.bookTitle || metadata.title || metadata.topic || "Geração de IA"}`,
-                amount: 0, // Mark as 0 if we don't know the exact price paid at this stage
-                gateway: "Geração Direta",
+                title: bookTitle,
+                authorName: authorName,
+                customerEmail: customerEmail,
                 status: (metadata.status || p.status || "READY").toUpperCase(),
                 projectId: projectId,
                 downloadUrl: downloadLink,
@@ -480,26 +477,17 @@ export const getOrders = async (req: Request, res: Response) => {
             };
         });
 
-        // 5. Merge and Unique (by project ID if available, to avoid duplicates)
-        const merged = [...baseOrders];
-        
-        projectBasedOrders.forEach(po => {
-            // Only add if not already present via a real financial order
-            const exists = merged.find(o => o.projectId === po.projectId || (o.details?.projectId === po.projectId));
-            if (!exists) merged.push(po);
-        });
-
-        // 6. Final Sort - Newer first
-        const sorted = merged.sort((a: any, b: any) => {
-            const dateA = new Date(a.date || a.updated_at || a.createdAt || 0).getTime();
-            const dateB = new Date(b.date || b.updated_at || b.createdAt || 0).getTime();
+        // 4. Final Sort - Newer first
+        const sorted = projectHistory.sort((a: any, b: any) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
             return dateB - dateA;
         });
 
         res.json(sorted);
     } catch (e: any) {
         console.error("🔥 CRITICAL ADMIN ORDERS ERROR:", e);
-        res.status(500).json({ error: "Erro ao carregar vendas: " + e.message });
+        res.status(500).json({ error: "Erro ao carregar histórico: " + e.message });
     }
 };
 
