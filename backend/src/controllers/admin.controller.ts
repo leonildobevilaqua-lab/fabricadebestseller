@@ -440,18 +440,34 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 // getVal moved to top
 
+
 export const getOrders = async (req: Request, res: Response) => {
+    try {
+        // 1. Get real financial orders for the Dashboard
+        const ordersArray = await getVal('/orders') || [];
+        const orders = Array.isArray(ordersArray) ? ordersArray : Object.values(ordersArray);
+
+        // 2. Sort - Newer first
+        const sorted = orders.sort((a: any, b: any) => {
+            const dateA = new Date(a.date || a.createdAt || 0).getTime();
+            const dateB = new Date(b.date || b.createdAt || 0).getTime();
+            return dateB - dateA;
+        });
+
+        res.json(sorted);
+    } catch (e: any) {
+        console.error("🔥 CRITICAL ADMIN ORDERS ERROR:", e);
+        res.status(500).json({ error: "Erro ao carregar vendas: " + e.message });
+    }
+};
+
+export const getProjectHistory = async (req: Request, res: Response) => {
     try {
         // 1. Get all projects (the source of truth for the "Book History" requested)
         const projectsArray = await getVal('/projects') || [];
         const projects = Array.isArray(projectsArray) ? projectsArray : Object.values(projectsArray);
 
-        // 2. Prepare Directory for file checking (optional but good for download validation)
-        const outputDir = path.join(__dirname, '../../generated_books');
-        const hasFiles = fs.existsSync(outputDir);
-        const folderFiles = hasFiles ? fs.readdirSync(outputDir) : [];
-
-        // 3. Transform projects into the enriched format the Admin UI needs
+        // 2. Transform projects into the enriched format the Admin UI needs
         const projectHistory = projects.map((p: any) => {
             const metadata = p.metadata || {};
             const projectId = p.id || metadata.id;
@@ -477,7 +493,7 @@ export const getOrders = async (req: Request, res: Response) => {
             };
         });
 
-        // 4. Final Sort - Newer first
+        // 3. Final Sort - Newer first
         const sorted = projectHistory.sort((a: any, b: any) => {
             const dateA = new Date(a.date).getTime();
             const dateB = new Date(b.date).getTime();
@@ -486,10 +502,11 @@ export const getOrders = async (req: Request, res: Response) => {
 
         res.json(sorted);
     } catch (e: any) {
-        console.error("🔥 CRITICAL ADMIN ORDERS ERROR:", e);
+        console.error("🔥 CRITICAL ADMIN PROJECTS ERROR:", e);
         res.status(500).json({ error: "Erro ao carregar histórico: " + e.message });
     }
 };
+
 
 // ---- ASAAS ENVIRONMENT SWITCH ----
 // Alterna entre sandbox e production. As chaves já estão no Coolify como

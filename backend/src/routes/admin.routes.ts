@@ -16,6 +16,7 @@ router.post('/backups', AdminController.createBackup);
 router.get('/backups', AdminController.listBackups);
 router.post('/backups/restore', AdminController.restoreBackup);
 router.get('/orders', AdminController.getOrders);
+router.get('/projects', AdminController.getProjectHistory);
 
 // Asaas Environment Switch
 router.post('/asaas-env', AdminController.switchAsaasEnv);

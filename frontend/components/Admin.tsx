@@ -614,12 +614,14 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const [leads, setLeads] = useState<any[]>([]);
     const [orders, setOrders] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
 
     useEffect(() => {
         if (token) {
             loadSettings();
             loadLeads();
             loadOrders();
+            loadProjectsHistory();
             // Carrega status do ambiente Asaas
             fetch(`${getAdminUrl()}/asaas-env`, { headers: { Authorization: `Bearer ${token}` } })
                 .then(r => r.ok ? r.json() : null)
@@ -643,6 +645,18 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             }
         } catch (e) {
             console.error("Error loading orders", e);
+        }
+    };
+
+    const loadProjectsHistory = async () => {
+        try {
+            const res = await fetch(`${getAdminUrl()}/projects`, { headers: { Authorization: `Bearer ${token}` } });
+            if (res.ok) {
+                const data = await res.json();
+                setProjects(Array.isArray(data) ? data : []);
+            }
+        } catch (e) {
+            console.error("Error loading projects", e);
         }
     };
 
@@ -672,7 +686,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             });
             if (res.ok) {
                 alert("Projeto excluído com sucesso!");
-                loadOrders(); // Refresh the list
+                loadProjectsHistory(); // Refresh the list
             } else {
                 alert("Erro ao excluir.");
             }
@@ -751,7 +765,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const refreshAll = async () => {
         setIsRefreshing(true);
-        await Promise.all([loadLeads(false), loadOrders()]);
+        await Promise.all([loadLeads(false), loadOrders(), loadProjectsHistory()]);
         setIsRefreshing(false);
     };
 
@@ -886,6 +900,36 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
 
         return filtered.sort((a, b) => new Date(b.date || b.created_at).getTime() - new Date(a.date || a.created_at).getTime());
+    };
+
+    const getFilteredProjects = () => {
+        if (!Array.isArray(projects)) return [];
+        let filtered = [...projects];
+
+        if (salesFilter !== 'all') {
+            const now = new Date();
+            filtered = filtered.filter(p => {
+                const dStr = p.date || p.createdAt;
+                if (!dStr) return false;
+                const d = new Date(dStr);
+                if (isNaN(d.getTime())) return false;
+
+                if (salesFilter === 'today') {
+                    return d.toLocaleDateString() === now.toLocaleDateString();
+                } else if (salesFilter === 'week') {
+                    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    return d >= oneWeekAgo;
+                } else if (salesFilter === 'month') {
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                } else if (salesFilter === 'custom') {
+                    if (salesStartDate && d < new Date(salesStartDate + 'T00:00:00')) return false;
+                    if (salesEndDate && d > new Date(salesEndDate + 'T23:59:59')) return false;
+                }
+                return true;
+            });
+        }
+
+        return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     };
 
     const isLogged = !!token;
@@ -1304,12 +1348,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
                                 </div>
                                 <div className="divide-y divide-slate-100 bg-white">
-                                    {getFilteredOrders().length === 0 && (
+                                    {getFilteredProjects().length === 0 && (
                                         <div className="p-12 text-center text-slate-400 font-medium">
                                             Nenhum livro gerado encontrado para o período selecionado.
                                         </div>
                                     )}
-                                    {getFilteredOrders().map((order: any, idx: number) => (
+                                    {getFilteredProjects().map((order: any, idx: number) => (
                                         <div key={order.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6">
                                             <div className="flex items-center gap-6 w-full lg:flex-1">
                                                 <div className="w-16 h-20 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-slate-200">
@@ -1400,7 +1444,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <div className="bg-slate-50 p-4 border-t border-slate-200 text-right">
                                     <span className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">Total de Gerações: </span>
                                     <span className="text-xl font-black text-slate-800 ml-2">
-                                        {getFilteredOrders().length} Livros
+                                        {getFilteredProjects().length} Livros
                                     </span>
                                 </div>
                             </div>
