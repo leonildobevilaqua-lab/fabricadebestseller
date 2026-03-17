@@ -14,11 +14,8 @@ export class GeminiProvider implements LLMProvider {
         "gemini-2.0-flash",  // Latest stable and efficient
         "gemini-1.5-flash",  // Highly stable fallback
         "gemini-1.5-pro",    // High quality fallback
-        "gemini-2.5-flash",  // User Requested
-        "gemini-2.5-pro",    // User Requested
-        "gemini-3.0-flash",  // User Requested
-        "gemini-3.0-pro"     // User Requested
     ];
+
 
     constructor(apiKey: string) {
         let key = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";

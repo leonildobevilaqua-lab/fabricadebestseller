@@ -25,11 +25,17 @@ export const ResearchService = {
         const isEnglish = lang === 'en';
         console.log(`[RESEARCH] Google Search (${lang}, market: ${isEnglish ? 'US' : 'BR'}): "${query}"`);
         try {
-            const results = await search({
+            const timeout = 60000; // 1 minute
+            const searchPromise = search({
                 query: query,
                 // For English: target US region results (Google.com, United States)
                 ...(isEnglish ? { gl: 'us', hl: 'en' } : {})
             } as any);
+
+            const results = await Promise.race([
+                searchPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Google Search Timeout")), timeout))
+            ]) as any;
 
             if (!results || !Array.isArray(results)) return [];
 
@@ -57,7 +63,12 @@ export const ResearchService = {
             // For English: add "english" to ensure US-market content
             const searchQuery = isEnglish ? `${query} english` : query;
             // youtube-search-api does not support regionCode in the same way, but we adjust the query
-            const data = await YouTubeSearch.GetListByKeyword(searchQuery, false, 10);
+            const timeout = 60000; // 1 minute
+            const searchPromise = YouTubeSearch.GetListByKeyword(searchQuery, false, 10);
+            const data = await Promise.race([
+                searchPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error("YouTube Search Timeout")), timeout))
+            ]) as any;
 
             if (!data || !data.items) return [];
 
@@ -90,11 +101,17 @@ export const ResearchService = {
         console.log(`[RESEARCH] Amazon Search via Google (lang=${lang}, domain=${domain}): "${query}"`);
 
         try {
-            const results = await search({
+            const timeout = 60000; // 1 minute
+            const searchPromise = search({
                 query: query,
                 // For English: use US geolocation to get Amazon.com results
                 ...(isEnglish ? { gl: 'us', hl: 'en' } : {})
             } as any);
+
+            const results = await Promise.race([
+                searchPromise,
+                new Promise((_, reject) => setTimeout(() => reject(new Error("Amazon Search Timeout")), timeout))
+            ]) as any;
 
             if (!results || !Array.isArray(results)) return [];
 

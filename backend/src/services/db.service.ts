@@ -141,9 +141,19 @@ export const setVal = async (pathStr: string, value: any) => {
                 updated_at: new Date().toISOString()
             }, { onConflict: 'key' });
 
+        // 3. PROACTIVE LOCAL BACKUP (Safety for VPS restarts/sync issues)
+        try {
+            const db = getLocalDB();
+            db[normalized] = value;
+            fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
+        } catch (localErr) {
+            // Silently ignore local write errors if any
+        }
+
     } catch (e) {
         console.error("setVal error:", e);
     }
+
 };
 
 export const pushVal = async (pathStr: string, value: any) => {

@@ -1,42 +1,30 @@
 
 import dotenv from 'dotenv';
 import path from 'path';
+import { getVal } from '../services/db.service';
 import { GeminiProvider } from '../services/llm/gemini.provider';
 
-// Load env from backend root
-dotenv.config({ path: path.join(__dirname, '../../.env') });
-
-async function testGemini() {
-    console.log("--- Starting Gemini 2.5 Connectivity Test ---");
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-        console.error("ERROR: GEMINI_API_KEY not found in .env");
-        process.exit(1);
+async function test() {
+    console.log("Fetching config from DB...");
+    const settings = await getVal('/settings');
+    const key = settings?.providers?.gemini;
+    
+    if (!key) {
+        console.error("No Gemini key found in /settings");
+        return;
     }
-    console.log("API Key loaded (length):", apiKey.length);
-
+    
+    console.log("Testing Gemini Key (Starts with):", key.substring(0, 10));
+    
+    const provider = new GeminiProvider(key);
     try {
-        const provider = new GeminiProvider(apiKey);
-        console.log("Provider instantiated. Testing 'generateText'...");
-
-        const start = Date.now();
-        const response = await provider.generateText("Hello! Are you Gemini 2.5? Please confirm your model version if possible or just say hello.");
-        const duration = Date.now() - start;
-
-        console.log("\n--- SUCCESS ---");
-        console.log("Response Received in", duration, "ms");
-        console.log("Response Content:\n", response);
-        console.log("-----------------");
-
-    } catch (error: any) {
-        console.error("\n--- FAILURE ---");
-        console.error("Error Message:", error.message);
-        if (error.response) {
-            console.error("API Response:", JSON.stringify(error.response, null, 2));
-        }
-        console.error("Full Trace:", error);
+        console.log("Sending test prompt...");
+        const response = await provider.generateText("Diga 'Olá Mundo' se você estiver funcionando.");
+        console.log("Response:", response);
+    } catch (e: any) {
+        console.error("GEMINI TEST FAILED:", e.message);
+        if (e.stack) console.error(e.stack);
     }
 }
 
-testGemini();
+test();
