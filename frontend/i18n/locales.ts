@@ -161,7 +161,7 @@ export const pt = {
         reviewChapters: "Revise os 12 capítulos planejados pela IA antes de escrever.",
         approveAndWrite: "Aprovar & Escrever Livro Completo ➜",
         finalTouches: "Toques Finais de Autoria",
-        aiCanWrite: "Nossa I.A. pode escrever textos emocionantes para você. Apenas diga para quem você quer dedicar ou agradecer.",
+        aiCanWrite: "Nossa I.A. pode escrever textos emocionantes para você. Informe para quem você quer dedicar/agradecer ou deixe em branco para uma sugestão automática.",
         dedication: "Dedicatória Final",
         dedicationPlaceholder: "Ex: Meus pais, meu cônjuge...",
         acknowledgments: "Agradecimentos Finais",

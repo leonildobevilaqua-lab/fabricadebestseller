@@ -893,12 +893,29 @@ async function finalizeProjectLogic(id: string, targetLang: string) {
 
 export const finalizeBookContent = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { dedication, acknowledgments, aboutAuthor, language } = req.body;
+    let { dedication, acknowledgments, aboutAuthor, language } = req.body;
 
     const project = await QueueService.getProject(id);
     if (!project) return res.status(404).json({ error: "Not found" });
 
     try {
+        const targetLang = language || project.metadata.language || 'pt';
+
+        // --- BACKWARD COMPATIBILITY / AUTO-FILL ---
+        // If the fields are empty, the user expects the AI to generate them 
+        // using the topic and author name as context.
+        if (!dedication || !acknowledgments || !aboutAuthor) {
+            console.log(`[PROJECT] Partial empty extras for ${id}. Auto-generating missing sections...`);
+            try {
+                const extras = await AIService.generateExtras(project.metadata, "", "", "", targetLang);
+                if (!dedication) dedication = extras.dedication;
+                if (!acknowledgments) acknowledgments = extras.acknowledgments;
+                if (!aboutAuthor) aboutAuthor = extras.aboutAuthor;
+            } catch (e) {
+                console.warn("Finalize Auto-extras failed", e);
+            }
+        }
+
         // 1. Save final details
         await QueueService.updateMetadata(id, {
             dedication,
@@ -908,8 +925,6 @@ export const finalizeBookContent = async (req: Request, res: Response) => {
             progress: 88,
             statusMessage: "Dados de autoria recebidos. Iniciando finalização..."
         });
-
-        const targetLang = language || project.metadata.language || 'pt';
 
         // 2. Response immediate
         res.json({ success: true, message: "Finalização iniciada" });

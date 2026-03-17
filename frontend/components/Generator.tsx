@@ -337,7 +337,6 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   // Define handleGenerateExtras at top level
   const handleGenerateExtras = async () => {
-    if (!dedicationTo && !ackTo) return alert(t.fillAuthInfo);
     setGeneratingExtras(true);
     try {
       const res = await fetch(`${API.getApiBase()}/api/projects/${projectId}/generate-extras`, {
@@ -951,7 +950,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
           <button
             onClick={handleGenerateExtras}
-            disabled={generatingExtras || (!dedicationTo && !ackTo)}
+            disabled={generatingExtras}
             className="w-full mb-8 bg-indigo-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-indigo-700 transition disabled:opacity-50 flex justify-center items-center gap-2"
           >
             {generatingExtras ? <span className="animate-spin">⚙️</span> : "✨"}
