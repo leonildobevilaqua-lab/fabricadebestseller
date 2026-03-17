@@ -4,9 +4,9 @@ import React from 'react';
 
 export const pt = {
     landing: {
-        heroTitle: "LIVRARIA DE RENDAS PASSIVAS",
-        heroSubtitle: "SUA FÁBRICA DE BEST SELLERS",
-        heroDesc: "Apresentamos a tecnologia que pesquisa, estrutura e redige um livro completo, com 12 capítulos e +160 páginas... em apenas 30 minutos.",
+        heroTitle: "O Atalho para o Sucesso Editorial:",
+        heroSubtitle: "Gere seu livro, eleve sua autoridade e fature com royalties e novos clientes.",
+        heroDesc: "Nossa IA avançada minera dados da Amazon, Google e YouTube para criar um manuscrito denso, estruturado e pronto para transformar sua autoridade no mercado.",
         heroButton: "GERAR MEU BEST SELLER AGORA (CRÉDITO ÚNICO)",
         offerTitle: "Escolha a Melhor Opção para Você",
         singleGeneration: "GERAÇÃO ÚNICA DE LIVRO",
@@ -373,9 +373,9 @@ export const pt = {
 
 export const en = {
     landing: {
-        heroTitle: "PASSIVE INCOME BOOKSHELF",
-        heroSubtitle: "YOUR BEST SELLER FACTORY",
-        heroDesc: "Introducing the technology that researches, structures, and writes a complete book, with 12 chapters and +160 pages... in just 30 minutes.",
+        heroTitle: "The Shortcut to Editorial Success:",
+        heroSubtitle: "Generate your book, elevate your authority and profit from royalties and new customers.",
+        heroDesc: "Our advanced AI mines data from Amazon, Google and YouTube to create a dense, structured manuscript ready to transform your authority in the market.",
         heroButton: "ACTIVATE MY FACTORY NOW",
         offerTitle: "Choose the Best Option for You",
         singleGeneration: "ONE-TIME BOOK GENERATION",
@@ -742,9 +742,9 @@ export const en = {
 
 export const es = {
     landing: {
-        heroTitle: "LIBRERÍA DE RENTAS PASIVAS",
-        heroSubtitle: "TU FÁBRICA DE BEST SELLERS",
-        heroDesc: "Presentamos la tecnología que investiga, estructura y redacta un libro completo, con 12 capítulos y +160 páginas... en apenas 30 minutos.",
+        heroTitle: "El Atajo al Éxito Editorial:",
+        heroSubtitle: "Genera tu libro, eleva tu autoridad y gana regalías y nuevos clientes.",
+        heroDesc: "Nuestra IA avanzada extrae datos de Amazon, Google y YouTube para crear un manuscrito denso, estructurado y listo para transformar su autoridad en el mercado.",
         heroButton: "ACTIVAR MI FÁBRICA AHORA",
         offerTitle: "Elige la Mejor Opción para Ti",
         singleGeneration: "GENERACIÓN DE LIBRO ÚNICA",
