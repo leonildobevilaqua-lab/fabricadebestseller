@@ -770,51 +770,50 @@ export const generateBookContent = async (req: Request, res: Response) => {
                 project.structure[0] = introChapter;
             }
             await QueueService.updateProject(id, { structure: project.structure });
-        } else {
-            console.log(`Skipping Introduction for project ${id} (Already generated)`);
         }
 
-        // 2.5. Generate Automatic Extras if missing
-        if (!project.metadata.dedication || !project.metadata.acknowledgments || !project.metadata.aboutAuthor) {
-            console.log("[PROJECT] Generating missing Extras (Dedication/Ack/About) for all plans...");
+        // --- PAUSE POINT: Final Touches (Wait for User) ---
+        // If not auto-generate, we stop here to let the user review and add toppings (Dedication, etc.)
+        if (!project.metadata.autoGenerate) {
+            console.log(`[PROJECT] Pausing for Final Touches (WAITING_DETAILS) for project ${id}`);
             await QueueService.updateMetadata(id, {
-                statusMessage: "🔨 Finalizando os últimos detalhes (Dedicatória, Agradecimentos)..."
+                status: 'WAITING_DETAILS',
+                progress: 86,
+                statusMessage: "🔨 Esboço pronto! Agora dê os toques finais de autoria para concluirmos..."
             });
-
-            try {
-                // FORCE GENERATION FOR ALL PLANS AS REQUESTED - NO MORE STARTER PLACEHOLDERS
-                const extras = await AIService.generateExtras(
-                    project.metadata,
-                    "", // default to family/friends
-                    "", // default to universal
-                    "", // default context
-                    targetLang
-                );
-
-                // Use generated content
-                project.metadata.dedication = extras.dedication;
-                project.metadata.acknowledgments = extras.acknowledgments;
-                project.metadata.aboutAuthor = extras.aboutAuthor;
-
-                // Save to DB
-                await QueueService.updateMetadata(id, {
-                    dedication: project.metadata.dedication,
-                    acknowledgments: project.metadata.acknowledgments,
-                    aboutAuthor: project.metadata.aboutAuthor
-                });
-
-                console.log(`[PROJECT] Extras generated for project ${id}`);
-
-            } catch (e) {
-                console.error("Failed to auto-generate extras:", e);
-                // Last resort fallback if generation fails
-                await QueueService.updateMetadata(id, {
-                    dedication: "[Dedicatória Livre]",
-                    acknowledgments: "[Agradecimentos Livres]",
-                    aboutAuthor: `Sobre o autor: ${project.metadata.authorName}`
-                });
-            }
+            return; // DONE for now.
         }
+
+        // --- AUTO-GEN FLOW (Background/Admin) ---
+        // If auto-generate is TRUE, we generate extras automatically and proceed
+        console.log("[PROJECT] Auto-generating Extras and proceeding...");
+        try {
+            const extras = await AIService.generateExtras(project.metadata, "", "", "", targetLang);
+            await QueueService.updateMetadata(id, {
+                dedication: extras.dedication,
+                acknowledgments: extras.acknowledgments,
+                aboutAuthor: extras.aboutAuthor
+            });
+        } catch (e) {
+            console.warn("Auto-extras failed, using placeholders", e);
+        }
+
+        // Proceed to final steps
+        await finalizeProjectLogic(id, targetLang);
+
+    } catch (error) {
+        console.error(error);
+        await QueueService.updateMetadata(id, { status: 'FAILED', statusMessage: "Erro na geração do conteúdo." });
+    }
+};
+
+/**
+ * Perform final steps: Marketing Assets -> PDF/Docx -> Email
+ */
+async function finalizeProjectLogic(id: string, targetLang: string) {
+    try {
+        const project = await QueueService.getProject(id);
+        if (!project) return;
 
         // 3. Marketing
         await QueueService.updateMetadata(id, {
@@ -823,8 +822,6 @@ export const generateBookContent = async (req: Request, res: Response) => {
             statusMessage: "Criando sinopse, contracapa, orelhas e copy para YouTube..."
         });
 
-        // Pass full book content context implicitly via research context or just metadata.
-        // Ideally we pass a summary of what was written, but researchContext + structure is often enough for marketing.
         try {
             const marketingAssets = await AIService.generateMarketing(
                 project.metadata,
@@ -832,7 +829,6 @@ export const generateBookContent = async (req: Request, res: Response) => {
                 project.structure,
                 targetLang
             );
-
             await QueueService.updateProject(id, { marketing: marketingAssets });
             console.log(`[PROJECT] Marketing assets generated for project ${id}`);
         } catch (e) {
@@ -841,7 +837,7 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
         // 4. Content Finished
         await QueueService.updateMetadata(id, {
-            status: 'GENERATING_MARKETING' as any, // Stay in marketing status for logic flow
+            status: 'GENERATING_MARKETING' as any,
             progress: 96,
             statusMessage: "Conteúdo do livro finalizado, livro encaminhado aos nossos agentes revisores."
         });
@@ -889,12 +885,44 @@ export const generateBookContent = async (req: Request, res: Response) => {
                 }
             }
         }
+    } catch (err: any) {
+        console.error("Finalize Logic Error:", err);
+        await QueueService.updateMetadata(id, { status: 'FAILED', statusMessage: `Erro na finalização: ${err.message}` });
+    }
+}
 
-    } catch (error) {
-        console.error(error);
-        await QueueService.updateMetadata(id, { status: 'FAILED', statusMessage: "Erro na geração do conteúdo." });
+export const finalizeBookContent = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { dedication, acknowledgments, aboutAuthor, language } = req.body;
+
+    const project = await QueueService.getProject(id);
+    if (!project) return res.status(404).json({ error: "Not found" });
+
+    try {
+        // 1. Save final details
+        await QueueService.updateMetadata(id, {
+            dedication,
+            acknowledgments,
+            aboutAuthor,
+            status: 'GENERATING_MARKETING' as any,
+            progress: 88,
+            statusMessage: "Dados de autoria recebidos. Iniciando finalização..."
+        });
+
+        const targetLang = language || project.metadata.language || 'pt';
+
+        // 2. Response immediate
+        res.json({ success: true, message: "Finalização iniciada" });
+
+        // 3. Proceed with background logic
+        finalizeProjectLogic(id, targetLang);
+
+    } catch (error: any) {
+        console.error("Finalize Controller Error:", error);
+        res.status(500).json({ error: error.message });
     }
 };
+
 
 async function notifyUserBookReady(email: string, bookTitle: string, filePath: string) {
     const fs = require('fs');

@@ -16,6 +16,7 @@ router.post('/:id/research', ProjectController.startResearch);
 router.post('/:id/select-title', ProjectController.selectTitle);
 router.post('/:id/generate', ProjectController.generateBookContent);
 router.patch('/:id', ProjectController.update);
+router.post('/:id/finalize', ProjectController.finalizeBookContent);
 router.post('/:id/send-email', upload.single('file'), ProjectController.sendBookEmail);
 router.post('/:id/generate-extras', ProjectController.generateExtras);
 router.post('/upload-existing', upload.single('file'), ProjectController.uploadExistingBook);

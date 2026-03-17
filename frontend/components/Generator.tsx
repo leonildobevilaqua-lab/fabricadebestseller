@@ -373,27 +373,31 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     if (!project) return;
     setSending(true);
 
-    // Construct updated project state
-    const updatedMetadata = {
-      ...project.metadata,
-      dedication,
-      acknowledgments: ack,
-      aboutAuthor,
-      status: 'COMPLETED' as any,
-      progress: 100,
-      statusMessage: "Livro Concluído com Sucesso!"
-    };
-
-    const updatedProject = { ...project, metadata: updatedMetadata };
-
     try {
-      await API.updateProject(project.id, { metadata: updatedMetadata });
+      // Trigger backend to finish the book (Marketing, DOCX, etc.)
+      await API.finalizeProject(project.id, { 
+        dedication, 
+        acknowledgments: ack, 
+        aboutAuthor, 
+        language: bookLanguage || language 
+      });
+      
+      // Update local state to show it's progressing
+      updateMetadata({ 
+        dedication, 
+        acknowledgments: ack, 
+        aboutAuthor,
+        status: 'GENERATING_MARKETING', 
+        progress: 88,
+        statusMessage: "Enviando dados de autoria e gerando materiais de marketing..."
+      });
     } catch (e) {
-      console.error("Failed to sync status to backend", e);
+      console.error("Failed to finalize via backend", e);
+      // Fallback: Just update local status if backend finalize fails (LEGACY MODE)
+      await API.updateProject(project.id, { metadata: { ...project.metadata, dedication, acknowledgments: ack, aboutAuthor, status: 'COMPLETED' as any, progress: 100 } });
+      setProject(p => p ? { ...p, metadata: { ...p.metadata, status: 'COMPLETED' as any, progress: 100 } } : p);
     }
 
-    updateMetadata({ dedication, acknowledgments: ack, status: 'COMPLETED', progress: 100 });
-    setProject(updatedProject);
     setSending(false);
   };
 

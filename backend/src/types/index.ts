@@ -18,6 +18,7 @@ export interface BookMetadata {
     };
     acknowledgments?: string;
     aboutAuthor?: string;
+    autoGenerate?: boolean;
     translations?: any;
     contentStyle?: string;
     writingTone?: string;

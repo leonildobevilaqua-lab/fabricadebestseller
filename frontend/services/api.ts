@@ -101,3 +101,14 @@ export const createLead = async (data: any): Promise<any> => {
     });
     return res.json();
 };
+
+export const finalizeProject = async (id: string, data: any): Promise<void> => {
+    const res = await fetch(`${API_URL}/${id}/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+        throw new Error("Erro ao finalizar livro.");
+    }
+};
