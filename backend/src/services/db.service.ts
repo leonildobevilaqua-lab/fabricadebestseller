@@ -5,6 +5,7 @@ import path from 'path';
 /**
  * DATABASE PERSISTENCE SERVICE (Supabase KV Mode + Local Fallback)
  * Extremely resilient version to ensure data visibility.
+ * Last updated: 2026-03-17 16:14 (Trigger for Coolify redeploy)
  */
 
 const DB_PATH = path.resolve(process.cwd(), 'database.json');
