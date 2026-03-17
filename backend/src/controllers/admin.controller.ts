@@ -615,3 +615,42 @@ export const wipeAllHistory = async (req: Request, res: Response) => {
         res.status(500).json({ error: e.message });
     }
 };
+
+/**
+ * ADMIN: Get credits for a specific email
+ */
+export const getCredits = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.params;
+        if (!email) return res.status(400).json({ error: "Email requerido" });
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        const credits = Number(await getVal(`/credits/${safeEmail}`) || 0);
+        res.json({ email, credits });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+};
+
+/**
+ * ADMIN: Add or Remove credits manually
+ */
+export const manageCredits = async (req: Request, res: Response) => {
+    try {
+        const { email, amount } = req.body;
+        if (!email) return res.status(400).json({ error: "Email requerido" });
+        if (amount === undefined) return res.status(400).json({ error: "Quantidade requerida" });
+
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        const currentCredits = Number(await getVal(`/credits/${safeEmail}`) || 0);
+        const newTotal = Math.max(0, currentCredits + Number(amount));
+
+        await setVal(`/credits/${safeEmail}`, newTotal);
+        
+        console.log(`[ADMIN] Manual Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
+        
+        res.json({ success: true, email, previousTotal: currentCredits, newTotal });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+};
+

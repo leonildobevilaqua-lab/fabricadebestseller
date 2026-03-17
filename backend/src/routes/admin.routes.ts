@@ -25,4 +25,7 @@ router.get('/asaas-env', AdminController.getAsaasStatus);
 router.delete('/wipe-user/:email', AdminController.wipeUserHistory);
 router.delete('/wipe-all', AdminController.wipeAllHistory);
 
+router.get('/credits/:email', AdminController.getCredits);
+router.post('/manage-credits', AdminController.manageCredits);
+
 export default router;

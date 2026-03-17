@@ -19,13 +19,17 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
     const [status, setStatus] = useState(lead.status || 'PENDING');
     const [prodStatus, setProdStatus] = useState(lead.productionStatus);
     const [loading, setLoading] = useState(false);
+    const [credits, setCredits] = useState(lead.credits || 0);
+
 
     // Update if props change
     useEffect(() => {
         setLiberado((lead.credits || 0) > 0);
         setStatus(lead.status || 'PENDING');
         setProdStatus(lead.productionStatus);
+        setCredits(lead.credits || 0);
     }, [lead]);
+
 
     const displayStatus = (status === 'SUBSCRIBER' && prodStatus) ? prodStatus : status;
 
@@ -92,6 +96,33 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
         if (newEmail === null) return;
         await onEdit(lead.id, { name: newName, email: newEmail });
     };
+
+    const handleManageCredits = async (amount: number) => {
+        if (loading) return;
+        setLoading(true);
+        try {
+            const res = await fetch(`${getApiBase()}/api/admin/manage-credits`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}` 
+                },
+                body: JSON.stringify({ email: lead.email, amount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                setCredits(data.newTotal);
+                setLiberado(data.newTotal > 0);
+            } else {
+                alert("Erro ao gerenciar créditos: " + data.error);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão");
+        }
+        setLoading(false);
+    };
+
 
     // --- RENDER HELPERS ---
     const formatMoney = (val: number) => `R$ ${val?.toFixed(2).replace('.', ',')}`;
@@ -265,6 +296,32 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                                     🔓 LIBERAR GERAÇÃO
                                 </button>
                             )}
+
+                            {/* Credits Control */}
+                            <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 mt-1">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider tabular-nums">Créditos: {credits}</span>
+                                    <div className="flex gap-1">
+                                        <button 
+                                            onClick={() => handleManageCredits(-1)} 
+                                            disabled={loading || credits <= 0}
+                                            className="w-5 h-5 flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:text-red-500 hover:border-red-200 rounded text-xs transition disabled:opacity-30"
+                                            title="Remover 1 Crédito"
+                                        >
+                                            -
+                                        </button>
+                                        <button 
+                                            onClick={() => handleManageCredits(1)} 
+                                            disabled={loading}
+                                            className="w-5 h-5 flex items-center justify-center bg-white border border-slate-200 text-slate-400 hover:text-emerald-500 hover:border-emerald-200 rounded text-xs transition disabled:opacity-30"
+                                            title="Adicionar 1 Crédito"
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
 
                             {/* Diagram (IA) - ONLY IF APPROVED. NO AUTO-STATE JUMPS. */}
                             {status === 'APPROVED' && !prodStatus && (
