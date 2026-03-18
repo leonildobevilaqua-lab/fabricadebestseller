@@ -8,7 +8,6 @@ const Promocao: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isValid, setIsValid] = useState(false);
 
-    // KIWIFY CHECKOUT LINK
     const CHECKOUT_URL = 'https://pay.kiwify.com.br/ZMGu0vr';
 
     useEffect(() => {
@@ -24,11 +23,9 @@ const Promocao: React.FC = () => {
         setIsLoading(true);
         try {
             await registerPromoLead(name, email, phone);
-            // Redireciona para o checkout após salvar o lead
             window.location.href = CHECKOUT_URL;
         } catch (error) {
-            console.error('Erro ao registrar lead:', error);
-            // Mesmo com erro no lead, vamos tentar redirecionar para não perder a venda
+            console.error('Lead log error:', error);
             window.location.href = CHECKOUT_URL;
         } finally {
             setIsLoading(false);
@@ -36,152 +33,137 @@ const Promocao: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-indigo-100 selection:text-indigo-900">
-            {/* Background Decor */}
-            <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-                <div className="absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-indigo-50/50 rounded-full blur-3xl opacity-60 animate-pulse" />
-                <div className="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-blue-50/50 rounded-full blur-3xl opacity-60" />
-            </div>
-
-            <main className="relative z-10 max-w-lg mx-auto px-6 pt-12 pb-24 md:pt-20">
-                {/* Hero Section */}
-                <div className="text-center mb-10">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 border border-red-200 text-red-700 text-xs font-bold uppercase tracking-wider mb-6 animate-bounce">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                        </span>
-                        Oferta Relâmpago
+        <div className="min-h-screen bg-slate-50 text-slate-800 font-sans md:h-screen md:overflow-hidden flex flex-col items-center">
+            {/* Main Content Area - Full Fold */}
+            <div className="w-full max-w-7xl mx-auto px-4 py-8 md:py-4 flex flex-col h-full justify-between">
+                
+                {/* Header */}
+                <header className="text-center md:mb-2 pt-2">
+                    <div className="inline-block bg-red-100 text-red-600 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-red-200">
+                        ● Oferta Relâmpago
                     </div>
                     
-                    <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 mb-6 leading-[1.15]">
+                    <h1 className="text-3xl md:text-5xl font-[900] text-slate-900 leading-[1.1] mb-2">
                         OFERTA RELÂMPAGO: <br/> 
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-blue-500">
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600">
                             Seu Primeiro Livro Profissional
-                        </span> Gerado por apenas R$ 5,99
+                        </span> Gerado por <br/> apenas R$ 5,99
                     </h1>
 
-                    <p className="text-lg text-slate-600 mb-8 max-w-sm mx-auto">
-                        Crie o seu livro profissional de forma instantânea com a nossa inteligência artificial de elite.
+                    <p className="text-lg md:text-xl text-slate-500 font-medium max-w-3xl mx-auto leading-relaxed px-4">
+                        Crie o seu livro profissional de forma instantânea com a nossa inteligência artificial de elite
                     </p>
+                </header>
 
-                    {/* Image Placeholder */}
-                    <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden shadow-2xl shadow-indigo-200/50 mb-10 border border-slate-100 bg-slate-50 flex items-center justify-center group">
-                        <div className="absolute inset-0 bg-gradient-to-tr from-indigo-600/5 to-transparent z-10" />
-                        <div className="text-center p-8 z-20">
-                            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center mb-4 mx-auto border border-slate-100 transform group-hover:scale-110 transition-transform duration-300">
-                                <span className="text-3xl">📚</span>
-                            </div>
-                            <p className="text-sm font-semibold text-slate-400 italic">Arte da Oferta sendo preparada...</p>
+                {/* Main Action Section (Form + Image) */}
+                <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 flex-grow mt-6 mb-6">
+                    
+                    {/* Form Component */}
+                    <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-slate-200/60 border border-slate-100 flex flex-col justify-center relative transform transition-transform duration-300 hover:scale-[1.01]">
+                        {/* Secure Badge */}
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 px-4 py-1.5 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg z-20">
+                            <span className="text-yellow-400">🔒</span> CHECKOUT SEGURO
                         </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="space-y-1.5">
+                                <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">
+                                    Nome Completo
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="Seu nome"
+                                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">
+                                    Melhor E-mail
+                                </label>
+                                <input
+                                    type="email"
+                                    placeholder="seu@email.com"
+                                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="block text-[11px] font-extrabold text-slate-400 uppercase tracking-widest ml-1">
+                                    WhatsApp
+                                </label>
+                                <input
+                                    type="tel"
+                                    placeholder="(00) 00000-0000"
+                                    className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm font-medium"
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={!isValid || isLoading}
+                                className={`w-full py-5 rounded-[1.8rem] font-black text-lg transition-all duration-300 shadow-xl tracking-wide ${
+                                    isValid && !isLoading
+                                        ? 'bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-800 text-white hover:shadow-blue-500/40 hover:-translate-y-1 active:scale-95'
+                                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                                }`}
+                            >
+                                {isLoading ? 'PROCESSANDO...' : 'IR PARA O CHECKOUT'}
+                            </button>
+                            
+                            <p className="text-[10px] text-center text-slate-400 font-medium px-4 leading-relaxed">
+                                Ao clicar você concorda que poderemos entrar em contato para enviar o acesso ao seu livro e outras ofertas.
+                            </p>
+                        </form>
+                    </div>
+
+                    {/* Artwork Container */}
+                    <div className="w-full h-full max-w-2xl flex items-center justify-center p-4">
+                        <img 
+                            src="/assets/promocao-arte.png" 
+                            alt="Oferta Relâmpago Arte"
+                            className="w-full h-auto object-contain rounded-3xl shadow-2xl shadow-indigo-200/40 transform -rotate-1 hover:rotate-0 transition-transform duration-500 border border-slate-100"
+                            onError={(e) => {
+                                // Fallback if image not uploaded yet
+                                e.currentTarget.src = "https://placehold.co/800x600/f8fafc/6366f1?text=Arte+da+Oferta";
+                            }}
+                        />
                     </div>
                 </div>
 
-                {/* Benefits Section */}
-                <div className="grid grid-cols-1 gap-4 mb-12">
+                {/* Benefits Footer row - Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-8 md:pb-4">
                     {[
                         { icon: '⚡', text: 'Geração em 30 minutos' },
                         { icon: '📄', text: 'Mais de 170 páginas de conteúdo' },
                         { icon: '📊', text: 'Pesquisa real de mercado integrada' },
                         { icon: '✍️', text: 'Sem precisar escrever uma única linha' }
                     ].map((benefit, idx) => (
-                        <div key={idx} className="flex items-center gap-4 p-4 rounded-xl bg-slate-50 border border-slate-100 hover:border-indigo-200 hover:bg-white transition-all duration-200">
-                            <span className="text-xl">{benefit.icon}</span>
-                            <span className="font-semibold text-slate-700">{benefit.text}</span>
+                        <div key={idx} className="flex items-center gap-3 p-4 rounded-[1.2rem] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
+                            <span className="text-xl bg-slate-50 w-10 h-10 flex items-center justify-center rounded-full shrink-0">
+                                {benefit.icon}
+                            </span>
+                            <span className="text-sm font-bold text-slate-700 leading-tight">
+                                {benefit.text}
+                            </span>
                         </div>
                     ))}
                 </div>
+            </div>
 
-                {/* Form Section */}
-                <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-xl shadow-slate-200/40 relative">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-full whitespace-nowrap">
-                        🔒 Checkout Seguro
-                    </div>
-
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label htmlFor="name" className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                Nome Completo
-                            </label>
-                            <input
-                                id="name"
-                                type="text"
-                                placeholder="Seu nome"
-                                className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="email" className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                Melhor E-mail
-                            </label>
-                            <input
-                                id="email"
-                                type="email"
-                                placeholder="seu@email.com"
-                                className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label htmlFor="phone" className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">
-                                WhatsApp
-                            </label>
-                            <input
-                                id="phone"
-                                type="tel"
-                                placeholder="(00) 00000-0000"
-                                className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                required
-                            />
-                        </div>
-
-                        <div className="pt-2">
-                            <button
-                                type="submit"
-                                disabled={!isValid || isLoading}
-                                className={`w-full py-5 rounded-2xl font-bold text-lg shadow-lg transition-all duration-300 transform ${
-                                    isValid && !isLoading
-                                        ? 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white hover:shadow-indigo-500/40 hover:-translate-y-1 active:scale-95'
-                                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                }`}
-                            >
-                                {isLoading ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                        </svg>
-                                        Processando...
-                                    </span>
-                                ) : 'IR PARA O CHECKOUT'}
-                            </button>
-                            <p className="text-[10px] text-center text-slate-400 mt-4 leading-relaxed">
-                                Ao clicar você concorda que poderemos entrar em contato para enviar o acesso ao seu livro e outras ofertas.
-                            </p>
-                        </div>
-                    </form>
-                </div>
-
-                {/* Footer Section */}
-                <footer className="mt-16 pt-8 border-t border-slate-100 text-center">
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-2">
-                        Editora 360 Express
-                    </p>
-                    <p className="text-[10px] text-slate-400 leading-relaxed max-w-xs mx-auto">
-                        Todos os direitos reservados. CNPJ 38.081.569/0001-38 <br/> 
-                        Fabricação instantânea de Bestsellers sob demanda.
-                    </p>
-                </footer>
-            </main>
+            {/* Absolute Bottom Footer (Legal) */}
+            <div className="hidden md:block absolute bottom-1 right-4 opacity-50">
+               <p className="text-[9px] font-bold text-slate-400 uppercase">Editora 360 Express • CNPJ 38.081.569/0001-38</p>
+            </div>
         </div>
     );
 };
