@@ -102,6 +102,15 @@ export const createLead = async (data: any): Promise<any> => {
     return res.json();
 };
 
+export const registerPromoLead = async (name: string, email: string, phone: string): Promise<any> => {
+    const res = await fetch(`${getApiBase()}/api/user/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, source: 'promocao_599' })
+    });
+    return res.json();
+};
+
 export const finalizeProject = async (id: string, data: any): Promise<void> => {
     const res = await fetch(`${API_URL}/${id}/finalize`, {
         method: 'POST',

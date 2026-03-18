@@ -1,6 +1,7 @@
 
 import { Router } from 'express';
 import { UserAuthController } from '../controllers/user.auth.controller';
+import { LeadController } from '../controllers/lead.controller';
 import jwt from 'jsonwebtoken';
 
 const router = Router();
@@ -26,5 +27,8 @@ router.post('/register', UserAuthController.register);
 router.post('/forgot-password', UserAuthController.forgotPassword);
 router.post('/reset-password', UserAuthController.resetPassword);
 router.get('/me', authMiddleware, UserAuthController.me);
+
+// LEAD SYSTEM
+router.post('/leads', LeadController.registerLeads);
 
 export default router;

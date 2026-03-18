@@ -19,6 +19,7 @@ import { RegistrationUpsell } from './components/RegistrationUpsell';
 import { AffiliationUpsell } from './components/AffiliationUpsell';
 import LandingPageEnglish from './components/LandingPageEnglish';
 import LandingPageSpanish from './components/LandingPageSpanish';
+import Promocao from './components/Promocao';
 
 
 
@@ -173,6 +174,8 @@ const App: React.FC = () => {
     if (path === '/terms' || path === '/termos-uso' || path === '/terms-of-use') return <TermsOfUse />;
     if (path === '/registro') return <RegistrationUpsell />;
     if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
+
+    if (path === '/promocao') return <Promocao />;
 
     // NEW LANDING CATCHES
     if (path === '/english' || path === '/en' || path === '/us') {
