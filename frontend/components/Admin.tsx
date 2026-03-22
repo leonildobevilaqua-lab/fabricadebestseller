@@ -1459,7 +1459,11 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 </span>
                                                             </div>
                                                         </div>
-                                                                    <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
                                                 <div className="flex flex-col items-end gap-2">
                                                     <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
                                                         ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
@@ -1469,7 +1473,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
                                                     </span>
                                                     
-                                                    {/* Credit Management Inline */}
                                                     <div className="flex items-center gap-2 bg-slate-50 p-1 px-2 rounded-lg border border-slate-200">
                                                         <span className="text-[9px] font-black text-slate-400 uppercase">Créditos:</span>
                                                         <button 
