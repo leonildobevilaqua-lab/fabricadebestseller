@@ -398,5 +398,40 @@ export const UserAuthController = {
             console.error("User Reset Pass Error", e);
             res.status(500).json({ error: "Erro ao resetar senha." });
         }
+    },
+
+    // 6. Alterar Senha Logada (Usuário)
+    async updatePassword(req: Request, res: Response) {
+        const { currentPassword, newPassword } = req.body;
+        // @ts-ignore
+        const email = req.user?.email;
+
+        if (!email || !currentPassword || !newPassword) return res.status(400).json({ error: "Dados incompletos." });
+
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+
+        try {
+            await reloadDB();
+            const user = await getVal(`/users/${safeEmail}`);
+            if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
+
+            // Verify current
+            if (user.auth?.passwordHash) {
+                const match = await bcrypt.compare(currentPassword, user.auth.passwordHash);
+                if (!match) return res.status(401).json({ error: "Senha atual incorreta." });
+            } else {
+                return res.status(400).json({ error: "Senha não configurada. Use Esqueci Senha primeiro." });
+            }
+
+            // Hash new
+            const passwordHash = await bcrypt.hash(newPassword, 10);
+            user.auth = { ...user.auth, passwordHash };
+            await setVal(`/users/${safeEmail}`, user);
+
+            res.json({ success: true, message: "Senha atualizada com sucesso." });
+        } catch (e) {
+            console.error("Update Password Error", e);
+            res.status(500).json({ error: "Erro ao atualizar senha." });
+        }
     }
 };

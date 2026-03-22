@@ -28,6 +28,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const [pendingInvoice, setPendingInvoice] = useState(false);
     const [invoiceUrl, setInvoiceUrl] = useState<string | null>(null);
     const [products, setProducts] = useState<any>({});
+    
+    // Password Change States
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+    const [currentPass, setCurrentPass] = useState('');
+    const [newPass, setNewPass] = useState('');
+    const [confirmPass, setConfirmPass] = useState('');
+    const [passLoading, setPassLoading] = useState(false);
+    const [passMsg, setPassMsg] = useState({ type: '', text: '' });
 
     // FUNÇÃO 1: REDIRECIONA PARA CHECKOUT KIWIFY
     const handleBuyCredit = async (price: number) => {
@@ -93,6 +101,50 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             alert(lang === 'en' ? "Error verifying status." : "Erro ao verificar status.");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleUpdatePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setPassMsg({ type: '', text: '' });
+
+        if (newPass !== confirmPass) {
+            return setPassMsg({ type: 'error', text: lang === 'en' ? "Passwords do not match." : "As senhas não coincidem." });
+        }
+        if (newPass.length < 6) {
+            return setPassMsg({ type: 'error', text: lang === 'en' ? "New password must be at least 6 characters." : "A nova senha deve ter pelo menos 6 caracteres." });
+        }
+
+        setPassLoading(true);
+        try {
+            const token = localStorage.getItem('bsf_token');
+            const res = await fetch(`${getApiBase()}/api/user/update-password`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ currentPassword: currentPass, newPassword: newPass })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                setPassMsg({ type: 'success', text: lang === 'en' ? "Password changed successfully!" : "Senha alterada com sucesso!" });
+                setTimeout(() => {
+                    setShowPasswordModal(false);
+                    setCurrentPass('');
+                    setNewPass('');
+                    setConfirmPass('');
+                    setPassMsg({ type: '', text: '' });
+                }, 2000);
+            } else {
+                setPassMsg({ type: 'error', text: data.error || (lang === 'en' ? "Error updating password." : "Erro ao atualizar senha.") });
+            }
+        } catch (e) {
+            console.error("Update Pass Error", e);
+            setPassMsg({ type: 'error', text: lang === 'en' ? "Connection error." : "Erro de conexão." });
+        } finally {
+            setPassLoading(false);
         }
     };
 
@@ -244,6 +296,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             {planName}
                             {planStatus !== 'ACTIVE' && planName !== 'FREE' && <span className="ml-1 opacity-60">{(t as any).dashboard.statusInactive}</span>}
                         </div>
+                        <button
+                            onClick={() => setShowPasswordModal(true)}
+                            className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition"
+                            title={lang === 'en' ? "Change Password" : "Alterar Senha"}
+                        >
+                            <span className="text-xl">⚙️</span>
+                        </button>
                         <button
                             onClick={onLogout}
                             className="text-xs font-bold text-red-400 hover:text-red-500 uppercase tracking-widest border border-red-200 hover:border-red-400 px-3 py-1 rounded-full transition"
@@ -540,6 +599,66 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 </div>
 
             </main>
+
+            {/* Password Modal */}
+            {showPasswordModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-slate-900 uppercase">{(lang === 'en' ? "Security Settings" : "Segurança")}</h3>
+                            <button onClick={() => setShowPasswordModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
+                        </div>
+
+                        <form onSubmit={handleUpdatePassword} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{lang === 'en' ? "Current Password" : "Senha Atual"}</label>
+                                <input 
+                                    type="password" 
+                                    value={currentPass}
+                                    onChange={e => setCurrentPass(e.target.value)}
+                                    required
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{lang === 'en' ? "New Password" : "Nova Senha"}</label>
+                                <input 
+                                    type="password" 
+                                    value={newPass}
+                                    onChange={e => setNewPass(e.target.value)}
+                                    required
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{lang === 'en' ? "Confirm New Password" : "Confirmar Nova Senha"}</label>
+                                <input 
+                                    type="password" 
+                                    value={confirmPass}
+                                    onChange={e => setConfirmPass(e.target.value)}
+                                    required
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
+                                />
+                            </div>
+
+                            {passMsg.text && (
+                                <div className={`p-4 rounded-xl text-sm font-bold ${passMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                                    {passMsg.text}
+                                </div>
+                            )}
+
+                            <button 
+                                type="submit" 
+                                disabled={passLoading}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl transition shadow-lg shadow-indigo-100 disabled:opacity-50"
+                            >
+                                {passLoading ? (lang === 'en' ? "Updating..." : "Atualizando...") : (lang === 'en' ? "Update Password" : "Alterar Senha")}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

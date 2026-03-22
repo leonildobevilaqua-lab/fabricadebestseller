@@ -123,6 +123,39 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
         setLoading(false);
     };
 
+    const handleAdminChangePassword = async () => {
+        const email = lead.email;
+        const newPassword = prompt(`Definir nova senha para ${email}:`);
+        if (!newPassword || newPassword.length < 4) {
+            if (newPassword) alert("Senha muito curta (mínimo 4 caracteres)");
+            return;
+        }
+
+        if (!confirm(`Confirmar alteração de senha para ${email}?`)) return;
+
+        setLoading(true);
+        try {
+            const res = await fetch(`${getApiBase()}/api/admin/update-user-password`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}` 
+                },
+                body: JSON.stringify({ email, newPassword })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert("Senha alterada com sucesso!");
+            } else {
+                alert("Erro: " + data.error);
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão");
+        }
+        setLoading(false);
+    };
+
 
     // --- RENDER HELPERS ---
     const formatMoney = (val: number) => `R$ ${val?.toFixed(2).replace('.', ',')}`;
@@ -366,6 +399,9 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                         <div className="flex gap-1">
                             <button onClick={handleEditFields} className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded" title="Editar">
                                 ✏️
+                            </button>
+                            <button onClick={handleAdminChangePassword} className="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded" title="Alterar Senha do Cliente">
+                                🔐
                             </button>
                             <button onClick={() => onDelete(lead.id)} className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded" title="ExcluirRegistro">
                                 🗑️

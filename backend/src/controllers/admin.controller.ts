@@ -654,3 +654,32 @@ export const manageCredits = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * ADMIN: Overwrite User Password
+ */
+export const adminUpdateUserPassword = async (req: Request, res: Response) => {
+    try {
+        const { email, newPassword } = req.body;
+        if (!email || !newPassword) return res.status(400).json({ error: "Email e nova senha são obrigatórios." });
+
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        await reloadDB();
+        const user = await getVal(`/users/${safeEmail}`);
+
+        if (!user) {
+            return res.status(404).json({ error: "Usuário não encontrado na base /users." });
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 10);
+        user.auth = { ...(user.auth || {}), passwordHash };
+        
+        await setVal(`/users/${safeEmail}`, user);
+
+        console.log(`[ADMIN] Manual Password Reset for ${email}`);
+        res.json({ success: true, message: `Senha de ${email} alterada com sucesso.` });
+    } catch (e: any) {
+        console.error("adminUpdateUserPassword Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
