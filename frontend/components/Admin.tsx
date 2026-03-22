@@ -871,6 +871,61 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             return false;
         }
     };
+
+    const handleManageCredits = async (email: string, amount: number) => {
+        try {
+            const res = await fetch(`${getApiBase()}/api/admin/manage-credits`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ email, amount })
+            });
+            if (res.ok) {
+                alert(amount > 0 ? "Crédito adicionado!" : "Crédito removido!");
+                refreshAll();
+            } else {
+                const data = await res.json();
+                alert(data.error || "Erro ao gerenciar créditos.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        }
+    };
+
+    const handleAdminChangePassword = async (email: string) => {
+        const newPass = prompt("Digite a nova senha para este cliente:");
+        if (!newPass || newPass.length < 6) {
+            if (newPass) alert("Senha muito curta (mínimo 6 caracteres).");
+            return;
+        }
+
+        if (!window.confirm(`Confirmar alteração de senha para ${email}?`)) return;
+
+        try {
+            const res = await fetch(`${getApiBase()}/api/admin/update-user-password`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ email, newPassword: newPass })
+            });
+
+            if (res.ok) {
+                alert("Senha atualizada com sucesso!");
+            } else {
+                const data = await res.json();
+                alert(data.error || "Erro ao atualizar senha.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Erro de conexão.");
+        }
+    };
+
     // Filtering Orders logic
     const getFilteredOrders = () => {
         if (!Array.isArray(orders)) return [];
@@ -1404,18 +1459,35 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                                 </span>
                                                             </div>
                                                         </div>
+                                                                    <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
+                                                <div className="flex flex-col items-end gap-2">
+                                                    <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                                        ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                    }`}>
+                                                        {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
+                                                    </span>
+                                                    
+                                                    {/* Credit Management Inline */}
+                                                    <div className="flex items-center gap-2 bg-slate-50 p-1 px-2 rounded-lg border border-slate-200">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase">Créditos:</span>
+                                                        <button 
+                                                            onClick={() => handleManageCredits(order.customerEmail, -1)}
+                                                            className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition shadow-sm font-bold"
+                                                            title="Remover 1 Crédito"
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => handleManageCredits(order.customerEmail, 1)}
+                                                            className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition shadow-sm font-bold"
+                                                            title="Adicionar 1 Crédito"
+                                                        >
+                                                            +
+                                                        </button>
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
-                                                <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                                    ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                                    : 'bg-amber-50 text-amber-700 border-amber-200'
-                                                }`}>
-                                                    {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
-                                                </span>
                                                 
                                                 <div className="flex items-center gap-2">
                                                     {order.downloadUrl && (
@@ -1429,6 +1501,15 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             <span className="hidden sm:inline">Baixar Kit ZIP</span>
                                                         </a>
                                                     )}
+                                                    
+                                                    <button 
+                                                        onClick={() => handleAdminChangePassword(order.customerEmail)}
+                                                        className="p-3 text-slate-400 border border-slate-200 rounded-xl hover:bg-amber-50 hover:border-amber-300 hover:text-amber-500 transition-all shadow-sm"
+                                                        title="Alterar Senha do Cliente"
+                                                    >
+                                                        <User size={20} />
+                                                    </button>
+
                                                     <button
                                                         onClick={() => handleDeleteProject(order.projectId)}
                                                         className="p-3 text-rose-500 border border-rose-200 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all shadow-sm"
