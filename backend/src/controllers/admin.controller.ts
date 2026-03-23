@@ -641,15 +641,42 @@ export const manageCredits = async (req: Request, res: Response) => {
         if (amount === undefined) return res.status(400).json({ error: "Quantidade requerida" });
 
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        
+        // 1. Update /credits/ (Primary Source of truth for Generator)
+        await reloadDB();
         const currentCredits = Number(await getVal(`/credits/${safeEmail}`) || 0);
-        const newTotal = Math.max(0, currentCredits + Number(amount));
+        // Safety: If current is negative (due to double-deduction bug), treat as 0 for the math
+        const base = Math.max(0, currentCredits);
+        const newTotal = Math.max(0, base + Number(amount));
 
         await setVal(`/credits/${safeEmail}`, newTotal);
+
+        // 2. Mirror to /users/ (For User Profile/Dashboard visibility)
+        const user = await getVal(`/users/${safeEmail}`);
+        if (user) {
+            user.bookCredits = newTotal;
+            await setVal(`/users/${safeEmail}`, user);
+        }
+
+        // 3. Mirror to LATEST LEAD (For Admin Panel visibility)
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        let leadIndex = -1;
+        for (let i = leads.length - 1; i >= 0; i--) {
+            if ((leads[i] as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                leadIndex = i;
+                break;
+            }
+        }
+        if (leadIndex !== -1) {
+            await setVal(`/leads[${leadIndex}]/credits`, newTotal);
+        }
         
         console.log(`[ADMIN] Manual Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
         
         res.json({ success: true, email, previousTotal: currentCredits, newTotal });
     } catch (e: any) {
+        console.error("manageCredits Error", e);
         res.status(500).json({ error: e.message });
     }
 };

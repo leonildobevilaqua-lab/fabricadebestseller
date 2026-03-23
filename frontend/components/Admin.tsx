@@ -1482,6 +1482,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         >
                                                             -
                                                         </button>
+                                                        <span className="text-xs font-bold text-slate-700 min-w-[12px] text-center">
+                                                            {order.credits ?? 0}
+                                                        </span>
                                                         <button 
                                                             onClick={() => handleManageCredits(order.customerEmail, 1)}
                                                             className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition shadow-sm font-bold"

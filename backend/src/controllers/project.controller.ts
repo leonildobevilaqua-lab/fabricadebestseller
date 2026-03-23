@@ -133,9 +133,18 @@ export const create = async (req: Request, res: Response) => {
                 return res.status(402).json({ error: "Payment Required", code: "PAYMENT_REQUIRED" });
             }
 
-            // Deduct Credit
-            await setVal(`/credits/${safeEmail}`, credits - 1);
-            console.log(`[PROJECT] Deducted 1 credit from ${contact.email}. Remaining: ${credits - 1}`);
+            // Deduct Credit (Ensure we never go negative)
+            const newTotal = Math.max(0, credits - 1);
+            await setVal(`/credits/${safeEmail}`, newTotal);
+            
+            // Mirror to user profile for dashboard visibility
+            const userProfile = await getVal(`/users/${safeEmail}`);
+            if (userProfile) {
+                userProfile.bookCredits = newTotal;
+                await setVal(`/users/${safeEmail}`, userProfile);
+            }
+
+            console.log(`[PROJECT] Deducted 1 credit from ${contact.email}. Remaining: ${newTotal}`);
         }
         // ---------------------------
 
@@ -349,9 +358,8 @@ export const startResearch = async (req: Request, res: Response) => {
 
             if (ledgerCredits > 0) {
                 hasAccess = true;
-                const updatedCredits = ledgerCredits - 1;
-                console.log(`[startResearch] Granted Access via Ledger Credits. Deduced 1: ${ledgerCredits} -> ${updatedCredits}`);
-                await setVal(`/credits/${safeEmail}`, updatedCredits);
+                // [FIX] Removed double deduction here. Credit is consumed only at project creation or manual administrative release.
+                console.log(`[startResearch] Access Granted via Ledger Credits (${ledgerCredits} available).`);
             }
 
             // 2. Check Legacy Leads Status
