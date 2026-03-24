@@ -1805,12 +1805,12 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             }
 
             {/* --- HERO SECTION --- (CENTERED & COMPACT) */}
-            <main className="relative pt-12 pb-16 px-6 overflow-hidden min-h-[95vh] flex flex-col justify-center">
+            <main className="relative pt-4 md:pt-12 pb-8 md:pb-16 px-6 overflow-hidden min-h-[90vh] md:min-h-[95vh] flex flex-col justify-center">
                 {/* Background Decor */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[400px] bg-yellow-500/5 blur-[120px] rounded-full pointer-events-none"></div>
 
                 <div className="max-w-6xl mx-auto text-center relative z-10 w-full">
-                    <div className="flex flex-col items-center space-y-6 animate-fade-in-up">
+                    <div className="flex flex-col items-center space-y-3 md:space-y-6 animate-fade-in-up">
 
                         {/* 1. Persuasive Text Content */}
                         <div className="max-w-4xl space-y-3">
@@ -1819,7 +1819,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <span>{lang === 'pt' ? 'Escala & Liberdade Financeira' : lang === 'en' ? 'Scale & Financial Freedom' : 'Escala y Libertad Financiera'}</span>
                             </div>
 
-                            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white leading-[1.15] tracking-tighter">
+                            <h1 className="text-xl md:text-5xl lg:text-6xl font-black text-white leading-[1.15] tracking-tighter">
                                 <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">
                                     {translations[lang].heroTitle}
                                 </span>
@@ -1843,7 +1843,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <div className="aspect-video w-full rounded-xl overflow-hidden bg-slate-900 border border-white/5">
                                     <iframe
                                         className="w-full h-full"
-                                        src="https://www.youtube.com/embed/6i_teiiQVsg?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=6i_teiiQVsg"
+                                        src="https://www.youtube.com/embed/6i_teiiQVsg?autoplay=1&mute=0&controls=1&modestbranding=1&rel=0&showinfo=0&loop=1&playlist=6i_teiiQVsg"
                                         title="Fábrica de Best Sellers"
                                         frameBorder="0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
