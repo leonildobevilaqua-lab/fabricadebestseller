@@ -4,8 +4,8 @@ import React from 'react';
 
 export const pt = {
     landing: {
-        heroTitle: "O Atalho para o Sucesso Editorial:",
-        heroSubtitle: "Gere seu livro, eleve sua autoridade e fature com royalties e novos clientes.",
+        heroTitle: "Gere Seu LIVRO com 12 Capítulos com 170+ Páginas, já Formatado e Diagramado em Apenas 30 Minutos!",
+        heroSubtitle: "E GANHE uma Tradução para o Inglês de Graça!",
         heroDesc: "Nossa IA avançada minera dados da Amazon, Google e YouTube para criar um manuscrito denso, estruturado e pronto para transformar sua autoridade no mercado.",
         heroButton: "GERAR MEU BEST SELLER AGORA (CRÉDITO ÚNICO)",
         offerTitle: "Escolha a Melhor Opção para Você",
