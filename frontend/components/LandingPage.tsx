@@ -1805,7 +1805,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
             }
 
             {/* --- HERO SECTION --- (CENTERED & COMPACT) */}
-            <main className="relative pt-4 md:pt-12 pb-8 md:pb-16 px-6 overflow-hidden min-h-[90vh] md:min-h-[95vh] flex flex-col justify-center">
+            <main className="relative pt-8 md:pt-12 pb-8 md:pb-16 px-6 overflow-hidden min-h-[90vh] md:min-h-[95vh] flex flex-col justify-center">
                 {/* Background Decor */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[400px] bg-yellow-500/5 blur-[120px] rounded-full pointer-events-none"></div>
 
@@ -1819,16 +1819,16 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
                                 <span>{lang === 'pt' ? 'Escala & Liberdade Financeira' : lang === 'en' ? 'Scale & Financial Freedom' : 'Escala y Libertad Financiera'}</span>
                             </div>
 
-                            <h1 className="text-xl md:text-5xl lg:text-6xl font-black text-white leading-[1.15] tracking-tighter">
-                                <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">
+                            <h1 className="text-xl md:text-5xl lg:text-6xl font-black text-white leading-tight md:leading-[1.15] tracking-tighter">
+                                <span className="md:block text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400">
                                     {translations[lang].heroTitle}
                                 </span>
-                                <span className="block text-yellow-400 text-glow">
+                                <span className="block text-yellow-400 text-glow mt-1">
                                     {translations[lang].heroSubtitle}
                                 </span>
                             </h1>
 
-                            <p className="text-base md:text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
+                            <p className="text-[13px] md:text-lg text-slate-400 leading-tight md:leading-relaxed max-w-2xl mx-auto">
                                 {translations[lang].heroDesc}
                             </p>
                         </div>
