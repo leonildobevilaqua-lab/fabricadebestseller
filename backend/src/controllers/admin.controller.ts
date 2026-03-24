@@ -467,7 +467,8 @@ export const getProjectHistory = async (req: Request, res: Response) => {
         const projectsArray = await getVal('/projects') || [];
         const projects = Array.isArray(projectsArray) ? projectsArray : Object.values(projectsArray);
 
-        // 2. Transform projects into the enriched format the Admin UI needs
+        // 2. Enhance projects with latest credits and metadata
+        const allCredits = await getVal('/credits') || {};
         const projectHistory = projects.map((p: any) => {
             const metadata = p.metadata || {};
             const projectId = p.id || metadata.id;
@@ -477,6 +478,10 @@ export const getProjectHistory = async (req: Request, res: Response) => {
             const authorName = metadata.contact?.name || metadata.authorName || p.authorName || "Cliente";
             const customerEmail = metadata.contact?.email || p.email || metadata.userEmail || "N/A";
             
+            // Fetch credits from allCredits
+            const safeEmail = customerEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+            const credits = Number(allCredits[safeEmail] || 0);
+
             // Physical file check
             let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
             
@@ -489,6 +494,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                 status: (metadata.status || p.status || "READY").toUpperCase(),
                 projectId: projectId,
                 downloadUrl: downloadLink,
+                credits: credits, // ATTENTION: Credits now included
                 isProject: true
             };
         });

@@ -1351,6 +1351,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                             <tr>
                                                 <th className="p-4 w-32">Data</th>
                                                 <th className="p-4">Cliente</th>
+                                                <th className="p-4 w-28 text-center">Créditos</th>
                                                 <th className="p-4 w-40">Status</th>
                                                 <th className="p-4 text-right">Ações</th>
                                             </tr>

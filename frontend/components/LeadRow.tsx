@@ -285,6 +285,16 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                 </div>
             </td>
 
+            {/* CREDITS DISPLAY */}
+            <td className="p-4 align-top text-center">
+                <div className="flex flex-col items-center justify-center h-full pt-2">
+                    <div className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Saldo</div>
+                    <div className={`text-xl font-black ${credits > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>
+                        {credits}
+                    </div>
+                </div>
+            </td>
+
             {/* STATUS BADGE */}
             <td className="p-4 align-top">
                 <div className={`text-xs font-bold px-3 py-1 rounded-full w-fit flex items-center gap-1 ${status === 'COMPLETED' || status === 'LIVRO ENTREGUE' ? 'bg-green-100 text-green-700' :
@@ -333,7 +343,7 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                             {/* Credits Control */}
                             <div className="bg-slate-50 p-2 rounded-lg border border-slate-100 mt-1">
                                 <div className="flex items-center justify-between gap-2 mb-1">
-                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider tabular-nums">Créditos: {credits}</span>
+                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider tabular-nums">Ajustar Saldo:</span>
                                     <div className="flex gap-1">
                                         <button 
                                             onClick={() => handleManageCredits(-1)} 
