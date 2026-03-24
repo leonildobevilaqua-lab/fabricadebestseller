@@ -469,35 +469,38 @@ export const getProjectHistory = async (req: Request, res: Response) => {
 
         // 2. Enhance projects with latest credits and metadata
         const allCredits = await getVal('/credits') || {};
-        const projectHistory = projects.map((p: any) => {
-            const metadata = p.metadata || {};
-            const projectId = p.id || metadata.id;
-            
-            // Replicate info from VIP Area: Title, Author, Date, Status
-            const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || "Geração de IA";
-            const authorName = metadata.contact?.name || metadata.authorName || p.authorName || "Cliente";
-            const customerEmail = metadata.contact?.email || p.email || metadata.userEmail || "N/A";
-            
-            // Fetch credits from allCredits
-            const safeEmail = customerEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-            const credits = Number(allCredits[safeEmail] || 0);
+        const projectHistory = projects
+            .filter((p: any) => p && (p.id || (p.metadata && p.metadata.id))) // SAFETY: Filter out ghost/empty entries
+            .map((p: any) => {
+                const metadata = p.metadata || {};
+                const projectId = p.id || metadata.id;
+                
+                // Replicate info from VIP Area: Title, Author, Date, Status
+                const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || "Geração de IA";
+                const authorName = metadata.contact?.name || metadata.authorName || p.authorName || "Cliente";
+                const customerEmail = metadata.contact?.email || p.email || metadata.userEmail || "N/A";
+                
+                // Fetch credits from allCredits
+                const safeEmail = customerEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                const credits = Number(allCredits[safeEmail] || 0);
 
-            // Physical file check
-            let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
-            
-            return {
-                id: projectId,
-                date: p.createdAt || metadata.createdAt || p.date || new Date(),
-                title: bookTitle,
-                authorName: authorName,
-                customerEmail: customerEmail,
-                status: (metadata.status || p.status || "READY").toUpperCase(),
-                projectId: projectId,
-                downloadUrl: downloadLink,
-                credits: credits, // ATTENTION: Credits now included
-                isProject: true
-            };
-        });
+                // Physical file check
+                let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
+                
+                return {
+                    id: projectId,
+                    date: p.createdAt || metadata.createdAt || p.date || null, // No fallback to new Date() for the list
+                    title: bookTitle,
+                    authorName: authorName,
+                    customerEmail: customerEmail,
+                    status: (metadata.status || p.status || "READY").toUpperCase(),
+                    projectId: projectId,
+                    downloadUrl: downloadLink,
+                    credits: credits,
+                    isProject: true
+                };
+            })
+            .filter((p: any) => p.date !== null); // Only show projects with a real date
 
         // 3. Final Sort - Newer first
         const sorted = projectHistory.sort((a: any, b: any) => {
