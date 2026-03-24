@@ -505,23 +505,23 @@ export const startResearch = async (req: Request, res: Response) => {
     res.json({ message: "Research started" });
 
     // Background Process (Fire-and-Forget)
-    // This allows the main request handler to complete instantly (exit code 200)
-    // while the generation continues in the background.
     (async () => {
         try {
             const topic = project.metadata.topic;
             const targetLang = language || project.metadata.language || 'pt';
+            const currentProgress = Number(project.metadata.progress || 0);
 
-            /* [BACKGROUND TASK START] */
+            // RESUME LOGIC: If it was already researching and failed, resume from last stable checkpoint
+            console.log(`[startResearch] Background process starting (Progress: ${currentProgress}%)`);
 
             if (titleInstruction) {
                 // SKIP FULL RESEARCH: Just regenerate titles
                 await QueueService.updateMetadata(id, {
                     progress: 28,
-                    statusMessage: "🏗️ Moldando novas estruturas de títulos..."
+                    statusMessage: "🏗️ Refinando agora a estrutura de títulos..."
                 });
 
-                const fullContext = project.researchContext || `TEMA: ${topic}`; // Fallback if missing
+                const fullContext = project.researchContext || `TEMA: ${topic}`; 
                 const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang, titleInstruction);
                 await QueueService.updateProject(id, { titleOptions: titles });
 
@@ -533,82 +533,100 @@ export const startResearch = async (req: Request, res: Response) => {
                 return;
             }
 
-            // Step 1: YouTube
-            await QueueService.updateMetadata(id, {
-                progress: 5,
-                statusMessage: `📡 Calibrando sensores para varredura no YouTube: "${topic}"...`
-            });
+            // Step 1: YouTube (Checkpoint: progress < 5)
             let ytResearch = "";
-            try {
-                ytResearch = await AIService.researchYoutube(topic, targetLang);
-            } catch (ytError: any) {
-                console.error("YouTube Research Failed (Continuing anyway):", ytError);
-                ytResearch = "Pesquisa YouTube indisponível no momento. Seguindo com Google Search.";
+            if (currentProgress < 12) {
+                await QueueService.updateMetadata(id, {
+                    progress: 1,
+                    statusMessage: `📡 Iniciando varredura no YouTube: "${topic}"...`
+                });
+
+                await QueueService.updateMetadata(id, {
+                    progress: 5,
+                    statusMessage: `🔍 Coletando insights virais no YouTube...`
+                });
+
+                try {
+                    ytResearch = await AIService.researchYoutube(topic, targetLang);
+                } catch (ytError: any) {
+                    console.error("YouTube Research Failed (Continuing anyway):", ytError);
+                    ytResearch = "Pesquisa YouTube indisponível. Seguindo com Google Search.";
+                }
+            } else {
+                ytResearch = project.researchContext?.split('### PESQUISA GOOGLE')[0] || "Dados de YouTube já processados.";
+                console.log("[startResearch] Skipping YouTube (Progress: already > 12%)");
             }
 
-            await QueueService.updateMetadata(id, {
-                progress: 12,
-                statusMessage: `⚙️ Processando dados brutos de vídeo e extraindo insights virais...`
-            });
-
-            // Step 2: Google
-            await QueueService.updateMetadata(id, {
-                progress: 15,
-                statusMessage: `🔍 Iniciando mineração profunda no Google Search...`
-            });
-
+            // Step 2: Google (Checkpoint: progress < 15)
             let googleResearch = "";
-            try {
-                googleResearch = await AIService.researchGoogle(topic, ytResearch, targetLang);
-            } catch (googleError: any) {
-                console.error("Google Research Failed (Timeout/Block) - Proceeding with AI Fallback:", googleError);
-                googleResearch = "Google Search Data Unavailable - Using AI Knowledge Base";
+            if (currentProgress < 22) {
+                await QueueService.updateMetadata(id, {
+                    progress: 15,
+                    statusMessage: `🔎 Pesquisando tendências no Google Search...`
+                });
+
+                try {
+                    googleResearch = await AIService.researchGoogle(topic, ytResearch, targetLang);
+                } catch (googleError: any) {
+                    console.error("Google Research Failed:", googleError);
+                    googleResearch = "Google Search indisponível. Seguindo para análise competitiva.";
+                }
+            } else {
+                googleResearch = "Dados de Google já processados.";
+                console.log("[startResearch] Skipping Google (Progress: already > 22%)");
             }
 
-
-            await QueueService.updateMetadata(id, {
-                progress: 22,
-                statusMessage: `📊 Refinando minério de dados e identificando padrões de busca...`
-            });
-
-            // Step 3: Competitors
-            await QueueService.updateMetadata(id, {
-                progress: 25,
-                statusMessage: `🏆 Desconstruindo engenharia reversa dos Best-Sellers atuais...`
-            });
-
+            // Step 3: Competitors (Checkpoint: progress < 25)
             let compResearch = "";
-            try {
-                compResearch = await AIService.analyzeCompetitors(topic, ytResearch + "\n" + googleResearch, targetLang);
-            } catch (compError: any) {
-                console.error("Competitor Analysis Failed - Proceeding with AI Fallback:", compError);
-                compResearch = "Competitor Analysis Unavailable - Using AI Knowledge Base";
+            if (currentProgress < 28) {
+                await QueueService.updateMetadata(id, {
+                    progress: 25,
+                    statusMessage: `🏆 Analisando Best-Sellers da Amazon e concorrência...`
+                });
+
+                try {
+                    compResearch = await AIService.analyzeCompetitors(topic, ytResearch + "\n" + googleResearch, targetLang);
+                } catch (compError: any) {
+                    console.error("Competitor Analysis Failed:", compError);
+                    compResearch = "Análise de concorrentes indisponível. Usando base de conhecimento da IA.";
+                }
+
+                // Only update context if we reached this far
+                const fullContext = `### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch} `;
+                await QueueService.updateProject(id, { researchContext: fullContext });
+            } else {
+                console.log("[startResearch] Skipping Research steps (Progress: already > 28%)");
             }
 
-            const fullContext = `### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch} `;
-            await QueueService.updateProject(id, { researchContext: fullContext });
-
-            // Auto-proceed to Titles
+            // FINAL STEP: Titles (Must run if we reached this point and don't have titles yet)
             await QueueService.updateMetadata(id, {
                 progress: 28,
                 statusMessage: "🏗️ Moldando estruturas de títulos de alta conversão..."
             });
 
-            const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang);
+            // Get context for Title generation
+            const finalFullContext = project.researchContext || `TEMA: ${topic} \n\n### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch}`;
+
+            const titles = await AIService.generateTitleOptions(topic, finalFullContext, targetLang);
             await QueueService.updateProject(id, { titleOptions: titles });
 
             await QueueService.updateMetadata(id, {
                 status: 'WAITING_TITLE',
                 progress: 30,
-                statusMessage: "✅ Pesquisa industrial concluída. Matéria-prima pronta para seleção."
+                statusMessage: "✅ Pesquisa de mercado concluída! Selecione o título do seu Best-Seller abaixo."
             });
 
         } catch (error: any) {
             console.error("Research Error:", error);
             const errorMessage = error?.message || "Erro desconhecido";
+            // Check for quota errors to be more specific
+            const isQuota = errorMessage.includes('429') || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('rate limit');
+            
             await QueueService.updateMetadata(id, {
                 status: 'FAILED',
-                statusMessage: `⚠️ Falha na linha de produção: ${errorMessage} `
+                statusMessage: isQuota 
+                    ? `⚠️ Limite excedido na API de Inteligência Artificial. Aguarde um minuto e o sistema tentará automaticamente (Erro 429).`
+                    : `⚠️ Falha na linha de produção: ${errorMessage.substring(0, 100)}... Redigitalizando...`
             });
         }
     })();

@@ -11,9 +11,9 @@ export class GeminiProvider implements LLMProvider {
     // UPDATED: Prioritizing STABLE models for Production
     // Removed 2.5 as it was causing instability/hallucinations
     private models = [
-        "gemini-2.0-flash",  // Latest stable and efficient
-        "gemini-1.5-flash",  // Highly stable fallback
+        "gemini-1.5-flash",  // Highly stable and fast (Primary for production)
         "gemini-1.5-pro",    // High quality fallback
+        "gemini-2.0-flash",  // Experimental/Next-gen fallback
     ];
 
 
