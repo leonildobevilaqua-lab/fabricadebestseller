@@ -71,8 +71,11 @@ export class GeminiProvider implements LLMProvider {
                     ]
                 });
 
-                const result = await generativeModel.generateContent(prompt);
-                let text = result.response.text();
+                const resultFn = generativeModel.generateContent(prompt);
+                const timeoutPromise = new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 120000));
+                const result = await Promise.race([resultFn, timeoutPromise]) as any;
+                const response = await result.response;
+                let text = response.text();
 
                 // Robust JSON extraction for experimental models (like 2.5/3.0)
                 // They might add conversational chatter even with responseMimeType

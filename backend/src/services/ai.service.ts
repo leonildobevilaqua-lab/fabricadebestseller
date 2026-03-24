@@ -234,8 +234,24 @@ RETORNE APENAS JSON LIMPO: [{ "title": "...", "subtitle": "..." }]
     return enriched;
 
   } catch (error: any) {
-    console.error("[IA] Error generating titles:", error.message);
-    throw new Error(`Falha na análise de títulos (${error.message}). Verifique sua chave ou cota.`);
+    console.error("[IA] Titles Deep Analysis Failed. Attempting Minimal Fallback...", error);
+    try {
+      // LAST RESORT: Try generation without any research context to unblock the user
+      const minimalPrompt = `TEMA: ${topic}. Crie 8 títulos virais e subtítulos em ${langName}. Retorne apenas JSON: [{ "title": "...", "subtitle": "..." }]`;
+      const fallbackTitles = await llm.generateJSON<any[]>(minimalPrompt);
+      if (Array.isArray(fallbackTitles)) {
+        return fallbackTitles.map((t, idx) => ({
+          ...t,
+          reason: "IA Sugestão Rápida",
+          score: 80 - idx,
+          isTopChoice: idx === 0
+        }));
+      }
+    } catch (fallbackError) {
+      console.error("[IA] Final Titles Fallback also failed.", fallbackError);
+    }
+    
+    throw new Error(`Falha na análise de títulos (${error.message}). Tente retomar o processo ou mude o nicho.`);
   }
 };
 ;

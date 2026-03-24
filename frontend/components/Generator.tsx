@@ -1368,7 +1368,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           </div>
 
           <h3 className="text-xl font-bold text-slate-800 mb-2 font-serif flex items-center justify-center min-h-[3.5rem] px-4">
-            {status === 'FAILED' ? t.processInterrupted : (statusMessage || t.startingIntelligence)}
+            {status === 'FAILED' ? (
+              <div className="flex flex-col items-center">
+                <span>{t.processInterrupted}</span>
+                <span className="text-xs font-normal text-rose-500 mt-1 max-w-xs">{statusMessage}</span>
+              </div>
+            ) : (statusMessage || t.startingIntelligence)}
           </h3>
 
           <div className="h-12 flex items-center justify-center">
