@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar } from 'lucide-react';
+import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar, Zap } from 'lucide-react';
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 const DEFAULT_BASE = (import.meta as any).env.VITE_API_URL || '';
@@ -405,11 +405,72 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [newPass, setNewPass] = useState('');
 
     // UI Navigation State
-    const [activeSection, setActiveSection] = useState<'dashboard' | 'setup' | 'integrations' | 'backups' | 'simulator' | 'profile'>('dashboard');
+    const [activeSection, setActiveSection] = useState<'dashboard' | 'setup' | 'integrations' | 'backups' | 'simulator' | 'profile' | 'credits'>('dashboard');
 
     // Profile State
     const [profileOldPass, setProfileOldPass] = useState('');
     const [profileNewPass, setProfileNewPass] = useState('');
+
+    // --- Credits Management State ---
+    const [creditSearchEmail, setCreditSearchEmail] = useState('');
+    const [foundCredits, setFoundCredits] = useState<number | null>(null);
+    const [creditAmount, setCreditAmount] = useState(1);
+    const [creditsOpLoading, setCreditsOpLoading] = useState(false);
+    const [creditsMsg, setCreditsMsg] = useState('');
+
+    const handleSearchCredits = async () => {
+        if (!creditSearchEmail) return;
+        setCreditsOpLoading(true);
+        setCreditsMsg('');
+        try {
+            const res = await fetch(`${getAdminUrl()}/credits/${encodeURIComponent(creditSearchEmail.trim())}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setFoundCredits(data.credits);
+                if (data.credits === 0 && !creditsMsg) setCreditsMsg('ℹ️ Usuário encontrado, mas sem créditos no momento.');
+            } else {
+                setCreditsMsg(`❌ ${data.error || 'Usuário não encontrado ou erro na busca.'}`);
+                setFoundCredits(null);
+            }
+        } catch (e: any) {
+            setCreditsMsg(`❌ Erro de conexão: ${e.message}`);
+        } finally {
+            setCreditsOpLoading(false);
+        }
+    };
+
+    const handleManageCreditsOp = async (amount: number) => {
+        if (!creditSearchEmail) return;
+        const actionLabel = amount > 0 ? 'adicionar' : 'remover';
+        if (!confirm(`Deseja realmente ${actionLabel} ${Math.abs(amount)} crédito(s) para ${creditSearchEmail}?`)) return;
+
+        setCreditsOpLoading(true);
+        setCreditsMsg('');
+        try {
+            const res = await fetch(`${getAdminUrl()}/manage-credits`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ email: creditSearchEmail.trim(), amount })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setFoundCredits(data.newTotal);
+                setCreditsMsg(`✅ Sucesso! Novo saldo de ${creditSearchEmail}: ${data.newTotal} créditos.`);
+                refreshAll(); // Reload leads to sync UI
+            } else {
+                setCreditsMsg(`❌ ${data.error || 'Erro ao processar alteração.'}`);
+            }
+        } catch (e: any) {
+            setCreditsMsg(`❌ Erro: ${e.message}`);
+        } finally {
+            setCreditsOpLoading(false);
+        }
+    };
 
     const [loadingError, setLoadingError] = useState(false);
 
@@ -1229,7 +1290,14 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                             onClick={() => setActiveSection('integrations')}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'integrations' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                         >
-                            <span>🔗</span> Integrações
+                            <span>🔗</span> Integrações & Webhooks
+                        </button>
+                        <button
+                            onClick={() => setActiveSection('credits')}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg transition-colors ${activeSection === 'credits' ? 'bg-amber-600 text-white shadow-lg shadow-amber-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+                        >
+                            <Zap size={18} className={activeSection === 'credits' ? 'text-white' : 'text-amber-500'} /> 
+                            ADICIONAR / EXCLUIR CRÉDITOS
                         </button>
                         <button
                             onClick={() => setActiveSection('backups')}
@@ -1892,6 +1960,126 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <div className="font-bold text-lg text-slate-700 group-hover:text-emerald-700 mb-1">3. Processo de Criação (Generator)</div>
                                         <p className="text-sm text-slate-500">Pula todo o cadastro. Vai direto para a tela de geração com tópico preenchido.</p>
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* CREDITS MANAGEMENT SECTION */}
+                    {activeSection === 'credits' && (
+                        <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
+                            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl overflow-hidden relative">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                                
+                                <div className="flex items-center gap-3 mb-8">
+                                    <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
+                                        <Zap size={24} fill="currentColor" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-black text-2xl text-slate-800 uppercase tracking-tight">Gestão Manual de Créditos</h3>
+                                        <p className="text-slate-500 text-sm">Adicione ou remova créditos ativos para qualquer cliente usando o e-mail.</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6 bg-slate-50 p-6 rounded-xl border border-slate-100">
+                                    <div>
+                                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">E-mail do Cliente</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="email"
+                                                value={creditSearchEmail}
+                                                onChange={e => setCreditSearchEmail(e.target.value)}
+                                                onKeyDown={e => e.key === 'Enter' && handleSearchCredits()}
+                                                placeholder="exemplo@email.com"
+                                                className="flex-1 p-4 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all shadow-sm font-bold text-slate-700"
+                                            />
+                                            <button 
+                                                onClick={handleSearchCredits}
+                                                disabled={creditsOpLoading || !creditSearchEmail}
+                                                className="px-6 py-4 bg-slate-800 text-white font-black rounded-xl hover:bg-slate-700 disabled:opacity-50 transition-all flex items-center gap-2"
+                                            >
+                                                {creditsOpLoading ? '⌛' : '🔍'} <span className="hidden sm:inline">BUSCAR</span>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {foundCredits !== null && (
+                                        <div className="p-4 bg-white rounded-xl border border-amber-100 shadow-sm animate-fade-in flex items-center justify-between">
+                                            <div>
+                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Saldo Atual</span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-3xl font-black text-slate-800">{foundCredits}</span>
+                                                    <span className="text-sm font-bold text-slate-500">Créditos ativos</span>
+                                                </div>
+                                            </div>
+                                            <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 text-2xl">
+                                                🪙
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {creditsMsg && (
+                                        <div className={`p-4 rounded-xl text-sm font-bold border animate-one-time-fade-in ${creditsMsg.includes('✅') ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'}`}>
+                                            {creditsMsg}
+                                        </div>
+                                    )}
+
+                                    {foundCredits !== null && (
+                                        <div className="pt-4 border-t border-slate-200 space-y-4">
+                                            <div>
+                                                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3 text-center">Alterar Quantidade</label>
+                                                <div className="flex items-center justify-center gap-6">
+                                                    <button 
+                                                        onClick={() => handleManageCreditsOp(-1)}
+                                                        disabled={creditsOpLoading || foundCredits <= 0}
+                                                        className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-200 transition-colors disabled:opacity-30 shadow-sm border border-rose-200"
+                                                        title="Remover 1 Crédito"
+                                                    >
+                                                        <Trash2 size={24} />
+                                                    </button>
+                                                    
+                                                    <div className="text-center group">
+                                                        <div className="text-xs font-bold text-slate-400 mb-1 uppercase">Ação Rápida</div>
+                                                        <div className="text-3xl font-black text-slate-800 bg-white px-8 py-2 rounded-2xl border border-slate-200 shadow-inner">
+                                                            ±1
+                                                        </div>
+                                                    </div>
+
+                                                    <button 
+                                                        onClick={() => handleManageCreditsOp(1)}
+                                                        disabled={creditsOpLoading}
+                                                        className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 transition-colors shadow-sm border border-emerald-200"
+                                                        title="Adicionar 1 Crédito"
+                                                    >
+                                                        <Zap size={24} fill="currentColor" />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-3 mt-4">
+                                                <button 
+                                                    onClick={() => handleManageCreditsOp(5)}
+                                                    className="py-3 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-50 transition shadow-sm uppercase"
+                                                >
+                                                    +5 Créditos
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleManageCreditsOp(-foundCredits!)}
+                                                    className="py-3 bg-white border border-rose-100 rounded-xl text-xs font-black text-rose-500 hover:bg-rose-50 transition shadow-sm uppercase"
+                                                >
+                                                    Zerar Saldo
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-8 p-4 bg-slate-900 rounded-xl text-white/70 text-[11px] leading-relaxed">
+                                    <p className="flex items-center gap-2 mb-1">
+                                        <span className="text-amber-400 font-bold">⚠️ NOTA:</span>
+                                        Alterar créditos aqui atualizará o saldo instantaneamente para o cliente na Área de Membros e no Gerador de Livros.
+                                    </p>
+                                    <p>Os registros de vendas (Orders) não são alterados por esta ferramenta, apenas o saldo disponível para uso.</p>
                                 </div>
                             </div>
                         </div>
