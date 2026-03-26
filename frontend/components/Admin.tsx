@@ -1565,16 +1565,41 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                 </div>
                                                 
                                                 <div className="flex items-center gap-2">
-                                                    {order.downloadUrl && (
-                                                        <a
-                                                            href={order.downloadUrl.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl}`}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-black text-xs shadow-lg shadow-indigo-200 uppercase tracking-widest group"
+                                                    {order.status === 'IDLE' ? (
+                                                        <button 
+                                                            onClick={async () => {
+                                                                if (!confirm(`Deseja forçar o início da produção para ${order.customerEmail}?`)) return;
+                                                                try {
+                                                                    const res = await fetch(`${getApiBase()}/api/projects/${order.projectId}/research`, {
+                                                                        method: 'POST',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ email: order.customerEmail })
+                                                                    });
+                                                                    if (res.ok) {
+                                                                        alert("Produção iniciada com sucesso! O livro começará a ser gerado em segundo plano.");
+                                                                        refreshAll();
+                                                                    } else {
+                                                                        const d = await res.json();
+                                                                        alert("Erro ao iniciar: " + (d.error || "Erro desconhecido"));
+                                                                    }
+                                                                } catch (e) { alert("Erro de conexão"); }
+                                                            }}
+                                                            className="flex items-center gap-2 px-5 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all font-black text-xs shadow-lg shadow-amber-200 uppercase tracking-widest"
                                                         >
-                                                            <Download size={16} className="group-hover:translate-y-0.5 transition-transform" /> 
-                                                            <span className="hidden sm:inline">Baixar Kit ZIP</span>
-                                                        </a>
+                                                            <Zap size={16} /> PRODUZIR LIVRO
+                                                        </button>
+                                                    ) : (
+                                                        (order.downloadUrl || order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && (
+                                                            <a
+                                                                href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/${order.projectId}/download`}`}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-black text-xs shadow-lg shadow-indigo-200 uppercase tracking-widest group"
+                                                            >
+                                                                <Download size={16} className="group-hover:translate-y-0.5 transition-transform" /> 
+                                                                <span className="hidden sm:inline">Baixar Kit ZIP</span>
+                                                            </a>
+                                                        )
                                                     )}
                                                     
                                                     <button 

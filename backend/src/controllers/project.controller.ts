@@ -352,6 +352,15 @@ export const startResearch = async (req: Request, res: Response) => {
         }
 
         if (!hasAccess) {
+            // [FIX] PROJECT-BASED ACCESS: If the project exists and is in IDLE state, 
+            // the user ALREADY spent their credit to create it. We must let it start.
+            if (project.metadata.status === 'IDLE' || project.metadata.status === 'WAITING_TITLE') {
+                hasAccess = true;
+                console.log(`[startResearch] Access Granted: Project ${id} is in ${project.metadata.status} state (Credit already spent).`);
+            }
+        }
+
+        if (!hasAccess) {
             // 1. Check Unified Ledger Credits (Source of Truth)
             const safeEmail = (userEmail as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             const ledgerCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
