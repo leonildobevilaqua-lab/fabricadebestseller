@@ -773,11 +773,13 @@ export const checkAccess = async (req: Request, res: Response) => {
         try {
             const project = await getProjectByEmail((email as string).toLowerCase().trim());
             if (project && project.metadata.status !== 'COMPLETED' && project.metadata.status !== 'FAILED') {
-                if (credits > 0 || (project.metadata.status !== 'IDLE' && project.metadata.status !== 'WAITING_TITLE')) hasActiveProject = true;
+                // BUG FIX: Consider IDLE and WAITING_TITLE as active projects so they can be resumed
+                hasActiveProject = true;
             }
         } catch (e) { }
 
         const portalAccess = !!((userPlan && userPlan.status === 'ACTIVE') || hasActiveProject || credits > 0);
+        // BUG FIX: hasAccess should be true if there's an active project OR credits OR active plan
         const hasAccess = (credits > 0) || (hasActiveProject) || (userPlan?.status === 'ACTIVE' && latestInvoiceStatus !== 'OVERDUE');
 
         res.json({

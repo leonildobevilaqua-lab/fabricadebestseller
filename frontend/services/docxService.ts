@@ -277,22 +277,9 @@ export const generateDocx = async (metadata: BookMetadata, content: BookContent)
     footers: { default: new Footer({ children: [] }) },
   });
 
-  // 6. Blank Page after Agradecimentos (Página 6 - Par)
+  // 6. Dedication (Página 7 - Ímpar)
   sections.push({
-    properties: { type: SectionType.NEXT_PAGE, page: basePageConfig },
-    children: [
-      new Paragraph({
-        children: [new TextRun({ text: "[PÁGINA EM BRANCO - VERSO AGRADECIMENTO]", color: "FFFFFF", size: 20 })],
-        alignment: AlignmentType.CENTER,
-      })
-    ],
-    headers: { default: new Header({ children: [] }) },
-    footers: { default: new Footer({ children: [] }) },
-  });
-
-  // 7. Dedication (Página 7 - Ímpar)
-  sections.push({
-    properties: { type: SectionType.NEXT_PAGE, page: basePageConfig }, // Explicitly Next (After Blank)
+    properties: { type: SectionType.ODD_PAGE, page: basePageConfig }, // Inicia sempre em página Ímpar (evita branca se já estiver em par)
     children: [ // Start Dedication
 
       createTitle("DEDICATÓRIA"),
@@ -352,7 +339,7 @@ export const generateDocx = async (metadata: BookMetadata, content: BookContent)
   // 7. Introduction (Página 11 - Ímpar)
   sections.push({
     properties: {
-      page: { ...basePageConfig, pageNumbers: { start: 11, formatType: NumberFormat.DECIMAL } },
+      page: { ...basePageConfig, pageNumbers: { formatType: NumberFormat.DECIMAL } },
       type: SectionType.ODD_PAGE,
       titlePage: true,
     },

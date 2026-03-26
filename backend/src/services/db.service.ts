@@ -13,10 +13,16 @@ const DB_PATH = path.resolve(process.cwd(), 'database.json');
 const getLocalDB = () => {
     try {
         if (fs.existsSync(DB_PATH)) {
+            const stats = fs.statSync(DB_PATH);
+            if (stats.size > 1024 * 1024 * 50) {
+                console.warn(`[DB] Local DB is large: ${Math.round(stats.size / 1024 / 1024)}MB. Optimization active.`);
+            }
             const content = fs.readFileSync(DB_PATH, 'utf-8');
             return JSON.parse(content);
         }
-    } catch (e) { }
+    } catch (e) { 
+        console.error("[DB] getLocalDB error:", e);
+    }
     return {};
 };
 
@@ -143,13 +149,19 @@ export const setVal = async (pathStr: string, value: any) => {
             }, { onConflict: 'key' });
 
         // 3. PROACTIVE LOCAL BACKUP (Safety for VPS restarts/sync issues)
-        try {
-            const db = getLocalDB();
-            db[normalized] = value;
-            fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2));
-        } catch (localErr) {
-            // Silently ignore local write errors if any
-        }
+        // [OPTIMIZATION] Non-blocking async write + removed indentation to save memory/cpu
+        setTimeout(async () => {
+            try {
+                const db = getLocalDB();
+                db[normalized] = value;
+                const json = JSON.stringify(db); // No indentation (null, 2)
+                fs.writeFile(DB_PATH, json, (err) => {
+                    if (err) console.error("[DB] Proactive Backup Error:", err);
+                });
+            } catch (localErr) {
+                console.error("[DB] Proactive Backup Serialization Error:", localErr);
+            }
+        }, 0);
 
     } catch (e) {
         console.error("setVal error:", e);
