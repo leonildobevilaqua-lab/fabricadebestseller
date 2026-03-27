@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar, Zap } from 'lucide-react';
+import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar, Zap, MessageCircle } from 'lucide-react';
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 const DEFAULT_BASE = (import.meta as any).env.VITE_API_URL || '';
@@ -1508,6 +1508,28 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             <div className="flex flex-col">
                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">E-mail</span>
                                                                 <span className="text-sm text-slate-600">{order.customerEmail}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                                                                <MessageCircle size={12} />
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">WhatsApp</span>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="text-sm text-slate-700 font-bold">{order.customerPhone || "N/A"}</span>
+                                                                    {order.customerPhone && order.customerPhone !== 'N/A' && (
+                                                                        <a
+                                                                            href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition shadow-sm"
+                                                                            title="Falar no WhatsApp"
+                                                                        >
+                                                                            <MessageCircle size={10} />
+                                                                        </a>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">

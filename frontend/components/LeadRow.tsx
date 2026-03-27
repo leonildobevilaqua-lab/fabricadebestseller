@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getApiBase } from '../services/api';
+import { MessageCircle } from 'lucide-react';
 
 // Icons (mock, assuming they were used inline or I can use emoji)
 const Edit = ({ className }: { className?: string }) => <span>✏️</span>;
@@ -229,9 +230,22 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
                     {/* User */}
                     <div>
                         <div className="font-bold text-slate-800 text-base">{lead.name}</div>
-                        <div className="text-sm text-slate-500 flex items-center gap-2">
+                        <div className="text-sm text-slate-500 flex items-center gap-3">
                             <span>📧 {lead.email}</span>
-                            <span>📱 {lead.fullPhone || lead.phone || '-'}</span>
+                            <div className="flex items-center gap-2">
+                                <span>📱 {lead.fullPhone || lead.phone || '-'}</span>
+                                {(lead.fullPhone || lead.phone) && (
+                                    <a
+                                        href={`https://wa.me/${(lead.fullPhone || lead.phone).replace(/\D/g, '')}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="p-1 bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center justify-center shadow-sm"
+                                        title="Abrir no WhatsApp"
+                                    >
+                                        <MessageCircle size={10} />
+                                    </a>
+                                )}
+                            </div>
                         </div>
                     </div>
 

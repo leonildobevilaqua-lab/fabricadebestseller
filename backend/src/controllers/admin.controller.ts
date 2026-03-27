@@ -469,6 +469,18 @@ export const getProjectHistory = async (req: Request, res: Response) => {
 
         // 2. Enhance projects with latest credits and metadata
         const allCredits = await getVal('/credits') || {};
+        
+        // Robust Phone Lookup: Map email -> phone from leads
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        const phoneMap: Record<string, string> = {};
+        leads.forEach((l: any) => {
+            if (l.email && (l.fullPhone || l.phone)) {
+                const cleanE = l.email.toLowerCase().trim();
+                phoneMap[cleanE] = l.fullPhone || l.phone;
+            }
+        });
+
         const projectHistory = projects
             .filter((p: any) => p && (p.id || (p.metadata && p.metadata.id))) // SAFETY: Filter out ghost/empty entries
             .map((p: any) => {
@@ -482,7 +494,11 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                 
                 // Fetch credits from allCredits
                 const safeEmail = customerEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                const cleanEmail = customerEmail.toLowerCase().trim();
                 const credits = Number(allCredits[safeEmail] || 0);
+
+                // Phone Lookup
+                const customerPhone = metadata.contact?.phone || metadata.contact?.fullPhone || p.phone || p.fullPhone || phoneMap[cleanEmail] || "N/A";
 
                 // Physical file check
                 let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
@@ -493,6 +509,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                     title: bookTitle,
                     authorName: authorName,
                     customerEmail: customerEmail,
+                    customerPhone: customerPhone,
                     status: (metadata.status || p.status || "READY").toUpperCase(),
                     projectId: projectId,
                     downloadUrl: downloadLink,
