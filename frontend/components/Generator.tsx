@@ -598,6 +598,18 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     }
   }, [status, retryCount]);
 
+  // CONFETTI TRIGGER ON COMPLETE (Automatically show celebration when finished)
+  useEffect(() => {
+    if (status === 'COMPLETED' && !showUpsell) {
+      setUpsellOffer((prev: any) => ({
+        ...prev,
+        isCompleted: true,
+        bookTitle: project?.metadata?.bookTitle || "Seu Novo Best Seller"
+      }));
+      setShowUpsell(true);
+    }
+  }, [status]);
+
   // Polling
   useEffect(() => {
     if (!projectId) return;
@@ -1056,43 +1068,24 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           </div>
         </div>
 
-        <div className="flex gap-4 justify-center">
-          <button onClick={onReset} className="px-6 py-4 rounded-xl text-slate-500 hover:bg-slate-100 transition font-medium">
-            {t.resetSystem}
-          </button>
+        <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mt-12 bg-blue-50/50 p-8 rounded-3xl border border-blue-100 max-w-3xl mx-auto shadow-sm">
           <button
             onClick={() => {
-              // Trigger Download
-              if (project) {
-                // Logic to download file (usually done via link or separate func)
-                // Wait, the button says "Baixar Pacote".
-                // The original code passed 'handleFinalize' here?
-                // If handleFinalize was missing in previous view, I assume it triggers download.
-                // I will check if I can trigger download AND show modal.
-
-                // Assuming download happens via window.open or similar in a real app,
-                // but here effectively it just downloads.
-
-                // We open the Admin URL for the book for download
-                if (project && project.id) {
-                  window.open(`${API.getApiBase()}/api/admin/books/${project.id}`, '_blank');
-                }
-
-                setUpsellOffer((prev: any) => ({
-                  ...prev,
-                  isCompleted: true,
-                  bookTitle: project?.metadata?.bookTitle || "Seu Novo Best Seller"
-                }));
-                setShowUpsell(true); // Restored Confetti/Reward Modal Logic
-              }
+              const kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(userContact?.email || '')}`;
+              window.open(kiwifyUrl, '_blank');
             }}
-            className="bg-[#0284c7] text-white px-10 py-4 rounded-xl font-bold shadow-xl shadow-[#0ea5e9]/20 hover:bg-[#0369a1] hover:-translate-y-1 transition-all flex items-center gap-2"
+            className="w-full sm:w-auto bg-[#0ea5e9] text-white px-12 py-5 rounded-2xl font-black shadow-2xl shadow-[#0ea5e9]/40 hover:bg-[#0284c7] hover:scale-105 transition-all text-xl uppercase tracking-tighter"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            <div className="text-left">
-              <div className="text-xs font-normal opacity-80">{t.downloadPackage}</div>
-              <div className="text-lg leading-none">{t.downloadDocx}</div>
-            </div>
+            🚀 GERAR OUTRO LIVRO AGORA!
+          </button>
+
+          <button
+            onClick={() => {
+              window.location.href = '/login';
+            }}
+            className="w-full sm:w-auto bg-slate-900 text-white px-12 py-5 rounded-2xl font-black shadow-2xl shadow-slate-900/20 hover:bg-black hover:scale-105 transition-all text-xl uppercase tracking-tighter"
+          >
+            📥 BAIXAR LIVRO E KIT COMPLETO!
           </button>
         </div>
 
