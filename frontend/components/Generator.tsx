@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import confetti from 'canvas-confetti';
 import { BookMetadata, BookProject, TitleOption, Chapter, MarketingAssets } from '../types';
 import * as API from '../services/api';
 import { generateDocx } from '../services/docxService';
@@ -598,15 +599,23 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     }
   }, [status, retryCount]);
 
-  // CONFETTI TRIGGER ON COMPLETE (Automatically show celebration when finished)
+  // CONFETTI TRIGGER ON COMPLETE (Celebrate without blocking info)
   useEffect(() => {
-    if (status === 'COMPLETED' && !showUpsell) {
-      setUpsellOffer((prev: any) => ({
-        ...prev,
-        isCompleted: true,
-        bookTitle: project?.metadata?.bookTitle || "Seu Novo Best Seller"
-      }));
-      setShowUpsell(true);
+    if (status === 'COMPLETED') {
+      const duration = 5 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+      const interval: any = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+        if (timeLeft <= 0) return clearInterval(interval);
+        const particleCount = 50 * (timeLeft / duration);
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } });
+        confetti({ ...defaults, particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } });
+      }, 250);
+      return () => clearInterval(interval);
     }
   }, [status]);
 
@@ -1070,22 +1079,21 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mt-12 bg-blue-50/50 p-8 rounded-3xl border border-blue-100 max-w-3xl mx-auto shadow-sm">
           <button
-            onClick={() => {
-              const kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(userContact?.email || '')}`;
-              window.open(kiwifyUrl, '_blank');
-            }}
-            className="w-full sm:w-auto bg-[#0ea5e9] text-white px-12 py-5 rounded-2xl font-black shadow-2xl shadow-[#0ea5e9]/40 hover:bg-[#0284c7] hover:scale-105 transition-all text-xl uppercase tracking-tighter"
+            onClick={handleFinalize}
+            disabled={sending}
+            className="w-full sm:w-auto bg-slate-900 text-white px-10 py-5 rounded-2xl font-black shadow-2xl shadow-slate-900/20 hover:bg-black hover:scale-105 transition-all text-lg uppercase tracking-tighter disabled:opacity-50"
           >
-            🚀 GERAR OUTRO LIVRO AGORA!
+            {sending ? '📥 BAIXANDO...' : '📥 BAIXAR LIVRO COMPLETO!'}
           </button>
 
           <button
             onClick={() => {
-              window.location.href = '/login';
+              const kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(userContact?.email || '')}`;
+              window.open(kiwifyUrl, '_blank');
             }}
-            className="w-full sm:w-auto bg-slate-900 text-white px-12 py-5 rounded-2xl font-black shadow-2xl shadow-slate-900/20 hover:bg-black hover:scale-105 transition-all text-xl uppercase tracking-tighter"
+            className="w-full sm:w-auto bg-[#0ea5e9] text-white px-10 py-5 rounded-2xl font-black shadow-2xl shadow-[#0ea5e9]/40 hover:bg-[#0284c7] hover:scale-105 transition-all text-lg uppercase tracking-tighter"
           >
-            📥 BAIXAR LIVRO E KIT COMPLETO!
+            🚀 COMPRAR NOVO CRÉDITO!
           </button>
         </div>
 
