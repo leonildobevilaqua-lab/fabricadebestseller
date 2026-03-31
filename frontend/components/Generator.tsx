@@ -311,7 +311,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${project.metadata.bookTitle || 'livro'}_viral.docx`;
+    a.download = `${project.metadata.bookTitle || 'LIVRO_E_KIT'}_KIT_COMPLETO.docx`;
     a.click();
 
     // Email
@@ -1083,7 +1083,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             disabled={sending}
             className="w-full sm:w-auto bg-slate-900 text-white px-10 py-5 rounded-2xl font-black shadow-2xl shadow-slate-900/20 hover:bg-black hover:scale-105 transition-all text-lg uppercase tracking-tighter disabled:opacity-50"
           >
-            {sending ? '📥 BAIXANDO...' : '📥 BAIXAR LIVRO COMPLETO!'}
+            {sending ? '📥 BAIXANDO...' : '📥 BAIXAR KIT COMPLETO!'}
           </button>
 
           <button
@@ -1094,6 +1094,14 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             className="w-full sm:w-auto bg-[#0ea5e9] text-white px-10 py-5 rounded-2xl font-black shadow-2xl shadow-[#0ea5e9]/40 hover:bg-[#0284c7] hover:scale-105 transition-all text-lg uppercase tracking-tighter"
           >
             🚀 COMPRAR NOVO CRÉDITO!
+          </button>
+        </div>
+        <div className="mt-12 text-center animate-fade-in-up">
+          <button
+            onClick={() => window.open('/login', '_blank')}
+            className="text-slate-400 hover:text-slate-700 transition-all font-bold uppercase tracking-widest text-xs underline underline-offset-8 decoration-slate-200 hover:decoration-slate-400"
+          >
+            VOLTAR PARA ÁREA VIP DE MEMBRO
           </button>
         </div>
 
