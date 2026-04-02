@@ -1200,62 +1200,53 @@ export const createExtraServiceCharge = async (req: Request, res: Response) => {
 export const handleTictoWebhook = async (req: Request, res: Response) => {
     try {
         const payload = req.body;
-        console.log("Ticto Webhook Received:", JSON.stringify(payload));
-
         // Ticto Token Validation (User provided)
         const TICTO_TOKEN = 'amedGWJ2idnDxqiP8KMS65f7ZpGFepUerSvXk5WsOsGoAasl4ZSlDOaCcu8x5mw40PY2Q6kSjdTCoAhWWIpr31ReZuMH77DNb4en';
         const incomingToken = payload.token || req.headers['x-ticto-token'] || req.query.token;
 
         if (incomingToken !== TICTO_TOKEN) {
-            console.error("[TICTO WEBHOOK] Token Mismatch! Payload token:", incomingToken);
+            console.error("[TICTO WEBHOOK] Token Mismatch!");
             return res.status(403).json({ error: "Invalid token" });
         }
 
-        // --- IMMEDIATE RESPONSE TO PREVENT TIMEOUTS ---
-        res.status(200).json({ received: true });
+        // --- PREVENT HEADERS ALREADY SENT ---
+        // We will send the response at the END or if we detect an early exit.
+        // But for Ticto, a quick 200 is good. We'll use a flag.
+        let responseSent = false;
 
         await reloadDB();
 
-        let status = '';
-        let email = '';
-        let productName = '';
-        let amount = 0;
-        let payerName = '';
-
-        // Ticto "Venda Realizada" Event
-        // Payload typically has transaction or data object
         const tx = payload.transaction || payload.data?.transaction || {};
+        const email = (payload.customer?.email || tx.customer?.email || payload.email || tx.email || '').toLowerCase().trim();
+        const rawStatus = (payload.status || tx.status || tx.order_status || '').toLowerCase();
         
-        // Ticto status approved/paid mapping
-        status = (payload.status || tx.status || tx.order_status || '').toLowerCase();
-        if (status === 'approved' || status === 'paid' || status === 'completed' || payload.event === 'transaction_approved' || status === 'confirmed') {
+        let status = rawStatus;
+        // Ticto status mapping (Expanded for robustness)
+        if (['approved', 'paid', 'completed', 'confirmed', 'paid_out', 'payed', 'complete'].includes(rawStatus) || payload.event === 'transaction_approved') {
             status = 'paid';
         }
 
-        email = payload.customer?.email || tx.customer?.email || payload.email || tx.email;
-        productName = payload.item?.product_name || tx.product?.name || tx.product_name || "Geração de Livro (Ticto)";
-        
-        // Amount mapping (Ticto often sends in cents in order.paid_amount)
+        const productName = payload.item?.product_name || tx.product?.name || tx.product_name || "Geração de Livro (Ticto)";
         const rawAmount = payload.order?.paid_amount || tx.amount || tx.value || 0;
-        amount = payload.order?.paid_amount ? (Number(rawAmount) / 100) : Number(rawAmount);
+        const amount = payload.order?.paid_amount ? (Number(rawAmount) / 100) : Number(rawAmount);
+        const payerName = payload.customer?.name || tx.customer?.name || tx.customer?.full_name || "Cliente Ticto";
 
-        payerName = payload.customer?.name || tx.customer?.name || tx.customer?.full_name || "Cliente Ticto";
+        console.log(`[TICTO] Webhook Received | Email: ${email} | Raw Status: ${rawStatus} | Mapped: ${status}`);
 
         if (!email) {
-            console.error("[TICTO WEBHOOK] Missing Email in payload");
-            return res.status(200).json({ received: true, error: "No email" }); // Still return 200 to Ticto
+            console.error("[TICTO WEBHOOK] Missing Email");
+            return res.status(200).json({ received: true, warning: "missing email" });
         }
 
-        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        const safeEmail = email.replace(/[^a-zA-Z0-9]/g, '_');
 
-        // --- EMERGENCY LOGGING ---
         const paymentInfo = {
             payer: payerName,
             payerEmail: email,
             amount: amount,
             product: productName,
             provider: 'TICTO',
-            transactionId: tx.id || uuidv4(),
+            transactionId: tx.id || payload.order?.hash || uuidv4(),
             env: 'production'
         };
 
@@ -1267,12 +1258,10 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
         };
 
         await pushVal('/orders', orderRecord);
-        console.log(`[TICTO WEBHOOK] Order logged for ${email} (${status})`);
 
         if (status === 'paid') {
-            console.log(`[TICTO WEBHOOK] PAYMENT CONFIRMED! | Email: ${email} | Product: ${productName}`);
+            console.log(`[TICTO WEBHOOK] LIBERATING CREDITS for ${email}`);
 
-            // Logic to grant credits (Assume Book Generation for now as per prompt)
             const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
             const newCredits = currentCredits + 1;
 
@@ -1280,12 +1269,12 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
             await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
             await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
 
-            // Update Lead
+            // Update/Create Lead
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
             let leadIndex = -1;
             for (let i = leads.length - 1; i >= 0; i--) {
-                if ((leads[i] as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                if ((leads[i] as any).email?.toLowerCase().trim() === email) {
                     leadIndex = i;
                     break;
                 }
@@ -1295,8 +1284,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
                 await setVal(`/leads[${leadIndex}]/status`, 'APPROVED');
             } else {
-                // Create Lead if missing
-                const newLead = {
+                await pushVal('/leads', {
                     id: uuidv4(),
                     date: new Date(),
                     email,
@@ -1304,15 +1292,20 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     type: 'BOOK',
                     status: 'APPROVED',
                     paymentInfo,
-                    tag: 'TICTO_PURCHASE'
-                };
-                await pushVal('/leads', newLead);
+                    tag: 'TICTO_AUTO_PURCHASE'
+                });
             }
-
-            console.log(`[TICTO WEBHOOK] SUCCESS: Credits updated ${currentCredits} -> ${newCredits} for ${email}`);
+            console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCredits} credits.`);
         }
 
-    } catch (error) {
-        console.error("Ticto Webhook Error", error);
+        if (!res.headersSent) {
+            return res.status(200).json({ received: true, processed: true });
+        }
+
+    } catch (error: any) {
+        console.error("[TICTO WEBHOOK ERROR]", error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: error.message });
+        }
     }
 };
