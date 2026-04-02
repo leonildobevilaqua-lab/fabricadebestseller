@@ -1224,23 +1224,26 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
 
         // Ticto "Venda Realizada" Event
         // Payload typically has transaction or data object
-        const tx = payload.transaction || payload.data?.transaction || payload;
-        
-        status = (tx.status || tx.order_status || '').toLowerCase();
+        const tx = payload.transaction || payload.data?.transaction || {};
         
         // Ticto status approved/paid mapping
-        if (status === 'approved' || status === 'paid' || status === 'completed' || payload.event === 'transaction_approved') {
+        status = (payload.status || tx.status || tx.order_status || '').toLowerCase();
+        if (status === 'approved' || status === 'paid' || status === 'completed' || payload.event === 'transaction_approved' || status === 'confirmed') {
             status = 'paid';
         }
 
-        email = tx.customer?.email || tx.email;
-        productName = tx.product?.name || tx.product_name || "Geração de Livro (Ticto)";
-        amount = Number(tx.amount || tx.value || 0);
-        payerName = tx.customer?.name || tx.customer?.full_name || "Cliente Ticto";
+        email = payload.customer?.email || tx.customer?.email || payload.email || tx.email;
+        productName = payload.item?.product_name || tx.product?.name || tx.product_name || "Geração de Livro (Ticto)";
+        
+        // Amount mapping (Ticto often sends in cents in order.paid_amount)
+        const rawAmount = payload.order?.paid_amount || tx.amount || tx.value || 0;
+        amount = payload.order?.paid_amount ? (Number(rawAmount) / 100) : Number(rawAmount);
+
+        payerName = payload.customer?.name || tx.customer?.name || tx.customer?.full_name || "Cliente Ticto";
 
         if (!email) {
             console.error("[TICTO WEBHOOK] Missing Email in payload");
-            return;
+            return res.status(200).json({ received: true, error: "No email" }); // Still return 200 to Ticto
         }
 
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
