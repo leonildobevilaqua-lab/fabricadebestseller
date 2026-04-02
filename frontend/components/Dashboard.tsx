@@ -37,20 +37,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const [passLoading, setPassLoading] = useState(false);
     const [passMsg, setPassMsg] = useState({ type: '', text: '' });
 
-    // FUNÇÃO 1: REDIRECIONA PARA CHECKOUT KIWIFY
+    // FUNÇÃO 1: REDIRECIONA PARA CHECKOUT TICTO
     const handleBuyCredit = async (price: number) => {
         try {
             setLoading(true);
             setIsPurchasing(true); // Manter UI em "Waiting"
 
-            let kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(user.email)}`;
+            let checkoutUrl = `https://payment.ticto.app/O6CE296D4?email=${encodeURIComponent(user.email)}`;
             
             // International checkout link provided in prompt
             if (lang === 'en' && Math.abs(price - 39.90) < 0.1) {
-                kiwifyUrl = `https://pay.kiwify.com/DdposAY?email=${encodeURIComponent(user.email)}`;
+                checkoutUrl = `https://pay.kiwify.com/DdposAY?email=${encodeURIComponent(user.email)}`;
             }
 
-            const win = window.open(kiwifyUrl, '_blank');
+            const win = window.open(checkoutUrl, '_blank');
 
             if (!win) alert(lang === 'en' ? "Please allow popups to open the payment page." : "Por favor, permita popups para abrir o pagamento.");
         } catch (error) {

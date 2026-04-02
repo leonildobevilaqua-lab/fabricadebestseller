@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 import paymentRoutes from './routes/payment.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import purchaseRoutes from './routes/purchase.routes';
-import { handleKiwifyWebhook } from './controllers/payment.controller'; // Direct link for speed
+import { handleKiwifyWebhook, handleTictoWebhook } from './controllers/payment.controller'; // Direct link for speed
 import { SubscriptionController } from './controllers/subscription.controller';
 import jwt from 'jsonwebtoken'; // Added for Golden Route
 import userRoutes from './routes/user.routes';
@@ -78,6 +78,8 @@ app.get('/api/ping', (req, res) => res.status(200).json({ pong: true, time: new 
 // We use app.all to capture POST but also avoid 405 Method Not Allowed errors on probers.
 app.all('/api/payment/webhook', handleKiwifyWebhook);
 app.all('/api/payment/webhook/', handleKiwifyWebhook);
+app.all('/api/payment/ticto-webhook', handleTictoWebhook);
+app.all('/api/payment/ticto-webhook/', handleTictoWebhook);
 app.all('/api/subscription/webhook', SubscriptionController.webhook);
 app.all('/api/subscription/webhook/', SubscriptionController.webhook);
 app.all('/webhook/asaas', SubscriptionController.webhook);

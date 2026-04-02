@@ -649,8 +649,8 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onAdmin, lang, setLang, 
         setStartPolling(true);
         setPaymentConfirmed(false);
 
-        const kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(formData.email)}&name=${encodeURIComponent(formData.name)}&phone=${encodeURIComponent(formData.phone)}`;
-        window.open(kiwifyUrl, '_blank');
+        const checkoutUrl = `https://payment.ticto.app/O6CE296D4?email=${encodeURIComponent(formData.email)}&name=${encodeURIComponent(formData.name)}&phone=${encodeURIComponent(formData.phone)}`;
+        window.open(checkoutUrl, '_blank');
     };
 
     // --- AUTOMATION: AUTO-START IF CONFIRMED ---

@@ -1086,8 +1086,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
           <button
             onClick={() => {
-              const kiwifyUrl = `https://pay.kiwify.com.br/QPTslcx?email=${encodeURIComponent(userContact?.email || '')}`;
-              window.open(kiwifyUrl, '_blank');
+              const checkoutUrl = `https://payment.ticto.app/O6CE296D4?email=${encodeURIComponent(userContact?.email || '')}`;
+              window.open(checkoutUrl, '_blank');
             }}
             className="w-full sm:w-auto bg-[#0ea5e9] text-white px-10 py-5 rounded-2xl font-black shadow-2xl shadow-[#0ea5e9]/40 hover:bg-[#0284c7] hover:scale-105 transition-all text-lg uppercase tracking-tighter"
           >

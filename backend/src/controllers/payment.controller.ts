@@ -796,7 +796,8 @@ export const checkAccess = async (req: Request, res: Response) => {
             activeProjectId: hasActiveProject ? (await getProjectByEmail((email as string).toLowerCase().trim()))?.id : null,
             subscriptionPrice: (userPlan && SUBSCRIPTION_PRICES[planName]?.[(userPlan.billing || 'monthly').toLowerCase()]?.price) || (pendingPlan && pendingPlan.price) || 79.90,
             planLabel,
-            totalBooksGenerated: usageCount
+            totalBooksGenerated: usageCount,
+            checkoutUrl: `https://payment.ticto.app/O6CE296D4?email=${encodeURIComponent(email as string)}`
         });
     } catch (error) {
         console.error("Critical CheckAccess Error", error);
@@ -1193,5 +1194,122 @@ export const createExtraServiceCharge = async (req: Request, res: Response) => {
     } catch (e: any) {
         console.error('[EXTRA SERVICE]', e.message);
         return res.status(500).json({ error: e.message || 'Erro ao gerar fatura.' });
+    }
+};
+
+export const handleTictoWebhook = async (req: Request, res: Response) => {
+    try {
+        const payload = req.body;
+        console.log("Ticto Webhook Received:", JSON.stringify(payload));
+
+        // Ticto Token Validation (User provided)
+        const TICTO_TOKEN = 'amedGWJ2idnDxqiP8KMS65f7ZpGFepUerSvXk5WsOsGoAasl4ZSlDOaCcu8x5mw40PY2Q6kSjdTCoAhWWIpr31ReZuMH77DNb4en';
+        const incomingToken = payload.token || req.headers['x-ticto-token'] || req.query.token;
+
+        if (incomingToken !== TICTO_TOKEN) {
+            console.error("[TICTO WEBHOOK] Token Mismatch! Payload token:", incomingToken);
+            return res.status(403).json({ error: "Invalid token" });
+        }
+
+        // --- IMMEDIATE RESPONSE TO PREVENT TIMEOUTS ---
+        res.status(200).json({ received: true });
+
+        await reloadDB();
+
+        let status = '';
+        let email = '';
+        let productName = '';
+        let amount = 0;
+        let payerName = '';
+
+        // Ticto "Venda Realizada" Event
+        // Payload typically has transaction or data object
+        const tx = payload.transaction || payload.data?.transaction || payload;
+        
+        status = (tx.status || tx.order_status || '').toLowerCase();
+        
+        // Ticto status approved/paid mapping
+        if (status === 'approved' || status === 'paid' || status === 'completed' || payload.event === 'transaction_approved') {
+            status = 'paid';
+        }
+
+        email = tx.customer?.email || tx.email;
+        productName = tx.product?.name || tx.product_name || "Geração de Livro (Ticto)";
+        amount = Number(tx.amount || tx.value || 0);
+        payerName = tx.customer?.name || tx.customer?.full_name || "Cliente Ticto";
+
+        if (!email) {
+            console.error("[TICTO WEBHOOK] Missing Email in payload");
+            return;
+        }
+
+        const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+
+        // --- EMERGENCY LOGGING ---
+        const paymentInfo = {
+            payer: payerName,
+            payerEmail: email,
+            amount: amount,
+            product: productName,
+            provider: 'TICTO',
+            transactionId: tx.id || uuidv4(),
+            env: 'production'
+        };
+
+        const orderRecord = {
+            ...payload,
+            date: new Date(),
+            status: status === 'paid' ? 'paid' : status,
+            paymentInfo: paymentInfo
+        };
+
+        await pushVal('/orders', orderRecord);
+        console.log(`[TICTO WEBHOOK] Order logged for ${email} (${status})`);
+
+        if (status === 'paid') {
+            console.log(`[TICTO WEBHOOK] PAYMENT CONFIRMED! | Email: ${email} | Product: ${productName}`);
+
+            // Logic to grant credits (Assume Book Generation for now as per prompt)
+            const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            const newCredits = currentCredits + 1;
+
+            await setVal(`/credits/${safeEmail}`, newCredits);
+            await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
+            await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
+
+            // Update Lead
+            const rawLeads = await getVal('/leads') || [];
+            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+            let leadIndex = -1;
+            for (let i = leads.length - 1; i >= 0; i--) {
+                if ((leads[i] as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                    leadIndex = i;
+                    break;
+                }
+            }
+
+            if (leadIndex !== -1) {
+                await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
+                await setVal(`/leads[${leadIndex}]/status`, 'APPROVED');
+            } else {
+                // Create Lead if missing
+                const newLead = {
+                    id: uuidv4(),
+                    date: new Date(),
+                    email,
+                    name: payerName,
+                    type: 'BOOK',
+                    status: 'APPROVED',
+                    paymentInfo,
+                    tag: 'TICTO_PURCHASE'
+                };
+                await pushVal('/leads', newLead);
+            }
+
+            console.log(`[TICTO WEBHOOK] SUCCESS: Credits updated ${currentCredits} -> ${newCredits} for ${email}`);
+        }
+
+    } catch (error) {
+        console.error("Ticto Webhook Error", error);
     }
 };
