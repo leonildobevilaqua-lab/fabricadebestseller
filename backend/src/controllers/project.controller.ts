@@ -607,14 +607,40 @@ export const startResearch = async (req: Request, res: Response) => {
                 console.log("[startResearch] Skipping Research steps (Progress: already > 28%)");
             }
 
-            // FINAL STEP: Titles (Must run if we reached this point and don't have titles yet)
+            // FINAL STEP: Titles (Skip if already has one)
+            const finalFullContext = project.researchContext || `TEMA: ${topic} \n\n### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch}`;
+
+            if (project.metadata.bookTitle) {
+                console.log(`[startResearch] Manual title detected: ${project.metadata.bookTitle}. Skipping AI title selection.`);
+                
+                // Proceed to structure generation immediately
+                await QueueService.updateMetadata(id, {
+                    status: 'GENERATING_STRUCTURE',
+                    progress: 35,
+                    statusMessage: "🏗️ Título manual detectado. Construindo estrutura personalizada..."
+                });
+
+                const structure = await AIService.generateStructure(
+                    project.metadata.bookTitle, 
+                    project.metadata.subTitle || "", 
+                    finalFullContext, 
+                    targetLang, 
+                    project.metadata.contentStyle
+                );
+
+                await QueueService.updateProject(id, { structure });
+                await QueueService.updateMetadata(id, {
+                    status: 'REVIEW_STRUCTURE',
+                    progress: 40,
+                    statusMessage: "Estrutura pronta para aprovação."
+                });
+                return;
+            }
+
             await QueueService.updateMetadata(id, {
                 progress: 28,
                 statusMessage: "🏗️ Moldando estruturas de títulos de alta conversão..."
             });
-
-            // Get context for Title generation
-            const finalFullContext = project.researchContext || `TEMA: ${topic} \n\n### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch}`;
 
             const titles = await AIService.generateTitleOptions(topic, finalFullContext, targetLang);
             await QueueService.updateProject(id, { titleOptions: titles });

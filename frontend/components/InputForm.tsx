@@ -37,12 +37,14 @@ const BOOK_LANGUAGES = [
 ];
 
 export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onNext, language = 'pt' }) => {
+  const [titleMode, setTitleMode] = React.useState<'ai' | 'manual'>('ai');
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setMetadata(prev => ({ ...prev, [name]: value }));
   };
 
-  const isFormValid = metadata.authorName && metadata.topic && (metadata as any).bookLanguage;
+  const isFormValid = metadata.authorName && metadata.topic && (metadata as any).bookLanguage && (titleMode === 'ai' || metadata.bookTitle);
 
   // Selected book language (separate from UI language)
   const selectedBookLang = (metadata as any).bookLanguage || '';
@@ -70,7 +72,13 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
       startBtn: 'Iniciar Pesquisa de Mercado (IA) →',
       selectLangFirst: 'Selecione o idioma do livro primeiro ↑',
       styleOptions: ['Espiritual', 'Técnico', 'Autoajuda', 'Religioso', 'Emocional', 'Infantil', 'Acadêmico', 'Teológico'],
-      toneOptions: ['Técnica e Acadêmica', 'Leve e Acolhedora', 'Inspiradora', 'Conversacional']
+      toneOptions: ['Técnica e Acadêmica', 'Leve e Acolhedora', 'Inspiradora', 'Conversacional'],
+      titleModeLabel: '4. Título da Obra',
+      titleModeQuestion: 'Você deseja informar o nome do Titulo do Livro ou prefere que a nossa Ferramenta sugira os melhores títulos extremamente otimizados de acordo com a pesquisa que você fizer?',
+      btnManual: 'INFORMAR TÍTULO MANUALMENTE',
+      btnAI: 'DEIXAR A FBS GERAR OS TÍTULOS',
+      manualTitleLabel: 'Digite o Título do seu Livro',
+      manualTitlePlaceholder: 'Ex: O Poder Oculto da IA no Seu Bolso'
     },
     en: {
       welcome: 'WELCOME TO THE BEST SELLER FACTORY',
@@ -89,7 +97,13 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
       startBtn: 'Start Market Research (AI) →',
       selectLangFirst: 'Select the book language first ↑',
       styleOptions: ['Spiritual', 'Technical', 'Self-Help', 'Religious', 'Emotional', 'Children', 'Academic', 'Theological'],
-      toneOptions: ['Technical & Academic', 'Light & Welcoming', 'Inspiring', 'Conversational']
+      toneOptions: ['Technical & Academic', 'Light & Welcoming', 'Inspiring', 'Conversational'],
+      titleModeLabel: '4. Book Title',
+      titleModeQuestion: 'Do you want to provide the book title yourself or would you prefer our tool to suggest the best optimized titles based on your research?',
+      btnManual: 'PROVIDE TITLE MANUALLY',
+      btnAI: 'LET FBS GENERATE TITLES',
+      manualTitleLabel: 'Type your Book Title',
+      manualTitlePlaceholder: 'Ex: The Hidden Power of AI in Your Pocket'
     },
     es: {
       welcome: '¡BIENVENIDO(A) A LA FÁBRICA DE BEST SELLER!',
@@ -108,7 +122,13 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
       startBtn: 'Iniciar Investigación de Mercado (IA) →',
       selectLangFirst: 'Selecciona el idioma del libro primero ↑',
       styleOptions: ['Espiritual', 'Técnico', 'Autoayuda', 'Religioso', 'Emocional', 'Infantil', 'Académico', 'Teológico'],
-      toneOptions: ['Técnica y Académica', 'Ligera y Acogedora', 'Inspiradora', 'Conversacional']
+      toneOptions: ['Técnica y Académica', 'Ligera y Acogedora', 'Inspiradora', 'Conversacional'],
+      titleModeLabel: '4. Título de la Obra',
+      titleModeQuestion: '¿Desea informar el nombre del Título del Libro o prefiere que nuestra Herramienta sugiera los mejores títulos extremadamente optimizados según su investigación?',
+      btnManual: 'INFORMAR TÍTULO MANUALMENTE',
+      btnAI: 'DEJAR QUE FBS GENERE LOS TÍTULOS',
+      manualTitleLabel: 'Escribe el Título de tu Libro',
+      manualTitlePlaceholder: 'Ej: El Poder Oculto de la IA en tu Bolsillo'
     }
   };
 
@@ -215,6 +235,58 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
                   ))}
                 </div>
               </div>
+
+              {/* SECTION 3: TITLE MODE (NEW) */}
+              <div className="pt-4 border-t border-slate-100">
+                <label className="block text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">{(L as any).titleModeLabel}</label>
+                <p className="text-sm text-slate-600 mb-6 leading-relaxed italic">
+                  {(L as any).titleModeQuestion}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => {
+                      setTitleMode('manual');
+                      setMetadata(prev => ({ ...prev, bookTitle: '' }));
+                    }}
+                    className={`py-4 px-6 rounded-xl text-xs font-black transition-all border-2 flex flex-col items-center justify-center gap-2 text-center ${titleMode === 'manual'
+                      ? 'bg-amber-50 border-amber-500 text-amber-700 shadow-lg ring-2 ring-amber-200'
+                      : 'bg-white border-slate-200 text-slate-500 hover:border-amber-300 hover:bg-amber-50/30'
+                      }`}
+                  >
+                    <span className="text-xl">✍️</span>
+                    {(L as any).btnManual}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTitleMode('ai');
+                      setMetadata(prev => ({ ...prev, bookTitle: undefined }));
+                    }}
+                    className={`py-4 px-6 rounded-xl text-xs font-black transition-all border-2 flex flex-col items-center justify-center gap-2 text-center ${titleMode === 'ai'
+                      ? 'bg-blue-50 border-blue-500 text-blue-700 shadow-lg ring-2 ring-blue-200'
+                      : 'bg-white border-slate-200 text-slate-500 hover:border-blue-300 hover:bg-blue-50/30'
+                      }`}
+                  >
+                    <span className="text-xl">🤖</span>
+                    {(L as any).btnAI}
+                  </button>
+                </div>
+              </div>
+
+              {titleMode === 'manual' && (
+                <div className="animate-in slide-in-from-top-2 duration-300">
+                  <label className="block text-sm font-medium text-slate-700 mb-2">{(L as any).manualTitleLabel}</label>
+                  <input
+                    name="bookTitle"
+                    value={metadata.bookTitle || ''}
+                    onChange={handleChange}
+                    placeholder={(L as any).manualTitlePlaceholder}
+                    className="w-full px-5 py-4 rounded-xl border-2 border-amber-200 bg-white focus:ring-4 focus:ring-amber-100 focus:border-amber-400 outline-none transition-all text-lg font-bold text-slate-800 shadow-inner"
+                  />
+                  <p className="text-[10px] text-amber-600 mt-2 font-medium">
+                    ⚠️ Atenção: Usando o título manual, a IA passará diretamente para a criação da estrutura.
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-6">
