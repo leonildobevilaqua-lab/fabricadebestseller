@@ -1222,7 +1222,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
         
         let status = rawStatus;
         // Ticto status mapping (Expanded for robustness)
-        if (['approved', 'paid', 'completed', 'confirmed', 'paid_out', 'payed', 'complete'].includes(rawStatus) || payload.event === 'transaction_approved') {
+        if (['approved', 'paid', 'completed', 'confirmed', 'paid_out', 'payed', 'complete', 'authorized'].includes(rawStatus) || payload.event === 'transaction_approved') {
             status = 'paid';
         }
 
