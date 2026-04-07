@@ -15,7 +15,7 @@ import { AsaasProvider } from '../services/asaas.provider';
 const upload = multer();
 
 export const create = async (req: Request, res: Response) => {
-    const { authorName, topic, language, contact, contentStyle, writingTone } = req.body;
+    const { authorName, topic, language, contact, contentStyle, writingTone, bookTitle, subTitle } = req.body;
     try {
         const safeEmail = contact?.email ? contact.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : null;
         let isResuming = false;
@@ -34,7 +34,7 @@ export const create = async (req: Request, res: Response) => {
                     console.log(`Resuming existing project ${existing.id} for ${contact.email}`);
                     // If IDLE, update metadata with new inputs?
                     if (existing.metadata.status === 'IDLE') {
-                        await QueueService.updateMetadata(existing.id, { authorName, topic, language, contentStyle, writingTone });
+                        await QueueService.updateMetadata(existing.id, { authorName, topic, language, contentStyle, writingTone, bookTitle, subTitle });
                         existing.metadata.authorName = authorName;
                         existing.metadata.topic = topic;
                     }
@@ -148,7 +148,7 @@ export const create = async (req: Request, res: Response) => {
         }
         // ---------------------------
 
-        const project = await QueueService.createProject({ authorName, topic, language, contact, contentStyle, writingTone });
+        const project = await QueueService.createProject({ authorName, topic, language, contact, contentStyle, writingTone, bookTitle, subTitle });
 
         // --- CRITICAL FIX: Ensure Lead Exists for Admin Panel Visibility & Separate Sub/Book ---
         if (contact && contact.email) {

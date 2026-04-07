@@ -414,7 +414,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         bookLanguage || language,
         userContact,
         true,
-        { contentStyle: metadata.contentStyle, writingTone: metadata.writingTone }
+        { 
+          contentStyle: metadata.contentStyle, 
+          writingTone: metadata.writingTone,
+          bookTitle: metadata.bookTitle,
+          subTitle: metadata.subTitle
+        }
       );
 
       if ((p as any).error || !p.id) {

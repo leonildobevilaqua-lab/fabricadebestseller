@@ -22,7 +22,7 @@ if (BASE_URL.endsWith('/')) BASE_URL = BASE_URL.slice(0, -1);
 const API_URL = `${BASE_URL}/api/projects`;
 const PAYMENT_URL = `${BASE_URL}/api/payment`;
 
-export const createProject = async (authorName: string, topic: string, language?: string, contact?: any, forceNew?: boolean, extra?: { contentStyle?: string, writingTone?: string }): Promise<BookProject> => {
+export const createProject = async (authorName: string, topic: string, language?: string, contact?: any, forceNew?: boolean, extra?: { contentStyle?: string, writingTone?: string, bookTitle?: string, subTitle?: string }): Promise<BookProject> => {
     const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
