@@ -1233,6 +1233,14 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
 
         console.log(`[TICTO] Webhook Received | Email: ${email} | Raw Status: ${rawStatus} | Mapped: ${status}`);
 
+        // --- EMERGENCY DEBUG CAPTURE ---
+        try {
+            await setVal('/ticto_debug/last_payload', payload);
+            await setVal('/ticto_debug/last_email', email);
+            await setVal('/ticto_debug/last_status', rawStatus);
+            await setVal('/ticto_debug/last_ts', new Date());
+        } catch (_) {}
+
         if (!email) {
             console.error("[TICTO WEBHOOK] Missing Email");
             return res.status(200).json({ received: true, warning: "missing email" });
