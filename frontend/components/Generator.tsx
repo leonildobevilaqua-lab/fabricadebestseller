@@ -305,33 +305,10 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       marketing: safeMarketing
     };
 
-    const blob = await generateDocx(project.metadata, content);
-
-    // Download
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${project.metadata.bookTitle || 'LIVRO_E_KIT'}_KIT_COMPLETO.docx`;
-    a.click();
-
-    // Email
-    if (userContact?.email) {
-      setSending(true);
-      const formData = new FormData();
-      formData.append('file', blob, `${project.metadata.bookTitle || 'livro'}.docx`);
-      formData.append('email', userContact.email);
-
-      try {
-        await fetch(`${API.getApiBase()}/api/projects/${projectId}/send-email`, {
-          method: 'POST',
-          body: formData
-        });
-        setEmailSent(true);
-      } catch (e) {
-        console.error(e);
-      }
-      setSending(false);
-    }
+    // Download Kit from Backend (New Logic)
+    const baseUrl = API.getApiBase();
+    const downloadUrl = `${baseUrl}/api/projects/${project.id}/download-zip`;
+    window.open(downloadUrl, '_blank');
   };
 
   // Define handleGenerateExtras at top level
