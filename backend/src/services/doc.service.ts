@@ -633,9 +633,9 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
     if (content.introduction) {
         sections.push({
             properties: {
-                page: { ...basePageConfig, pageNumbers: { formatType: NumberFormat.DECIMAL } }, // DYNAMIC START (REMOVED start: 11)
+                page: { ...basePageConfig, pageNumbers: { formatType: NumberFormat.DECIMAL, start: 11 } }, // FORCE START AT 11
                 mirrorMargins: true,
-                type: SectionType.ODD_PAGE, // Ensure it falls on odd page (usually right side)
+                type: SectionType.ODD_PAGE, // Ensure it falls on odd page (Exactly Page 11 if Summary is 9-10)
                 titlePage: true,
                 differentOddAndEvenPages: true,
             },

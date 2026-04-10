@@ -696,7 +696,7 @@ export const generateExtras = async (
 
     2. ACKNOWLEDGMENTS
     Target: ${ackTo || "Everyone who helped"}
-    Style: Gratitude, standard book format, detailed and warm (approx 300 words). NOT ITALIC. Plain text.
+    Style: Gratitude, standard book format, detailed and warm (MAX 200 words). NOT ITALIC. Plain text.
 
     3. ABOUT THE AUTHOR
     Context: ${aboutAuthorContext || "Experienced professional in the field of " + metadata.topic}
