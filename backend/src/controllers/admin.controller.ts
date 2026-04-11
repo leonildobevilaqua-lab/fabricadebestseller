@@ -736,3 +736,42 @@ export const adminUpdateUserPassword = async (req: Request, res: Response) => {
     }
 };
 
+/**
+ * ADMIN: Impersonate a user (Generate a valid User JWT)
+ */
+export const impersonateUser = async (req: Request, res: Response) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: "Email requerido" });
+
+        const cleanEmail = email.toLowerCase().trim();
+        const safeEmail = cleanEmail.replace(/[^a-zA-Z0-9]/g, '_');
+
+        await reloadDB();
+        const user = await getVal(`/users/${safeEmail}`);
+
+        if (!user) {
+            return res.status(404).json({ error: "Usuário não encontrado na base /users." });
+        }
+
+        // Generate a token compatible with UserAuthController
+        const USER_SECRET = process.env.JWT_SECRET || "USER_SECRET_KEY_123";
+        const token = jwt.sign({ email: cleanEmail }, USER_SECRET, { expiresIn: '1h' });
+
+        console.log(`[ADMIN] Impersonate Session created for ${cleanEmail} by Admin`);
+
+        res.json({
+            success: true,
+            token,
+            user: {
+                name: user.profile?.name || "Cliente",
+                email: cleanEmail,
+                plan: user.plan?.name || 'FREE'
+            }
+        });
+    } catch (e: any) {
+        console.error("impersonateUser Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+

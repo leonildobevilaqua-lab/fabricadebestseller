@@ -6,13 +6,14 @@ import { MessageCircle } from 'lucide-react';
 const Edit = ({ className }: { className?: string }) => <span>✏️</span>;
 const Trash = ({ className }: { className?: string }) => <span>🗑️</span>;
 
-export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }: {
+export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe, onImpersonate }: {
     lead: any,
     onApprove: (email: string, type?: string) => Promise<boolean>,
     onDelete: (id: string) => Promise<void>,
     onEdit: (id: string, updates: any) => Promise<void>,
     onDiagram: (id: string) => Promise<boolean>,
-    onWipe: (email: string) => Promise<void>
+    onWipe: (email: string) => Promise<void>,
+    onImpersonate?: (email: string) => Promise<void>
 }) => {
     // Initial state based on passed props
     const hasCredits = (lead.credits || 0) > 0;
@@ -417,9 +418,16 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe }
 
                     {/* Common CRUD */}
                     <div className="flex justify-between items-center gap-1 border-t border-slate-100 pt-2 mt-1">
-                        <button onClick={() => onWipe(lead.email)} className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white px-2 py-1 text-[10px] uppercase font-bold rounded shadow-sm border border-red-200 transition" title="Zerar Histórico de E-mail">
-                            ⚠️ ZERAR
-                        </button>
+                        <div className="flex gap-1">
+                            <button onClick={() => onWipe(lead.email)} className="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white px-2 py-1 text-[10px] uppercase font-bold rounded shadow-sm border border-red-200 transition" title="Zerar Histórico de E-mail">
+                                ⚠️ ZERAR
+                            </button>
+                            {onImpersonate && (
+                                <button onClick={() => onImpersonate(lead.email)} className="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white px-2 py-1 text-[10px] uppercase font-bold rounded shadow-sm border border-indigo-200 transition" title="Acessar Área VIP">
+                                    👁️ ACESSAR
+                                </button>
+                            )}
+                        </div>
                         <div className="flex gap-1">
                             <button onClick={handleEditFields} className="p-1.5 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded" title="Editar">
                                 ✏️

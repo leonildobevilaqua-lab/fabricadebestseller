@@ -28,5 +28,6 @@ router.delete('/wipe-all', AdminController.wipeAllHistory);
 router.get('/credits/:email', AdminController.getCredits);
 router.post('/manage-credits', AdminController.manageCredits);
 router.post('/update-user-password', AdminController.adminUpdateUserPassword);
+router.post('/impersonate', AdminController.impersonateUser);
 
 export default router;

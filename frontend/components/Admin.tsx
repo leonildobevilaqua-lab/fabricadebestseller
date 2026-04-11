@@ -799,6 +799,41 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
+    const handleImpersonate = async (email: string) => {
+        if (!confirm(`Entrar na Área VIP do cliente ${email}?\n\nIsso redirecionará você para a visão do cliente.`)) return;
+        
+        try {
+            const res = await fetch(`${getAdminUrl()}/impersonate`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${token}` 
+                },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                // Configura a sessão do usuário
+                localStorage.setItem('bsf_token', data.token);
+                localStorage.setItem('bsf_userContact', JSON.stringify({
+                    name: data.user.name,
+                    email: data.user.email,
+                    phone: ''
+                }));
+                localStorage.setItem('bsf_hasAccess', 'true');
+                localStorage.setItem('bsf_view', 'dashboard');
+                
+                // Redireciona para a raiz (limpa o cache do app)
+                window.location.href = '/?new_session=true';
+            } else {
+                alert("Erro ao gerar acesso: " + (data.error || "Usuário não encontrado em /users"));
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Falha na comunicação com o servidor.");
+        }
+    };
+
     const handleWipeAll = async () => {
         const secret = prompt("ATENÇÃO! Você está prestes a ZERAR TODOS OS REGISTROS DO SISTEMA (Pedidos, Leads, Usuários, etc).\n\nPara confirmar, digite: DESTRUIR");
         if (secret !== "DESTRUIR") {
@@ -1435,6 +1470,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     onEdit={handleEdit}
                                                     onDiagram={handleDiagram}
                                                     onWipe={handleWipe}
+                                                    onImpersonate={handleImpersonate}
                                                 />
                                             ))}
                                         </tbody>
@@ -1623,6 +1659,13 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             </a>
                                                         )
                                                     )}
+                                                    <button 
+                                                        onClick={() => handleImpersonate(order.customerEmail)}
+                                                        className="p-3 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
+                                                        title="Acessar Área VIP como este Cliente"
+                                                    >
+                                                        👁️
+                                                    </button>
                                                     
                                                     <button 
                                                         onClick={() => handleAdminChangePassword(order.customerEmail)}
