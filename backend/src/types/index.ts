@@ -22,11 +22,15 @@ export interface BookMetadata {
     translations?: any;
     contentStyle?: string;
     writingTone?: string;
+    // FICTION FIELDS
+    isFiction?: boolean;
+    genre?: string;
+    characters?: { name: string; info: string }[];
 }
 
-export type JobStatus = 'IDLE' | 'RESEARCHING' | 'WAITING_TITLE' | 'GENERATING_STRUCTURE' | 'WAITING_STRUCTURE' | 'WRITING' | 'WAITING_DETAILS' | 'COMPLETED' | 'FAILED' | 'REVIEW_STRUCTURE' | 'WRITING_CHAPTERS' | 'GENERATING_MARKETING' | 'LIVRO ENTREGUE';
+export type JobStatus = 'IDLE' | 'RESEARCHING' | 'WAITING_TITLE' | 'GENERATING_STRUCTURE' | 'WAITING_STRUCTURE' | 'WRITING' | 'WAITING_DETAILS' | 'COMPLETED' | 'FAILED' | 'REVIEW_STRUCTURE' | 'WRITING_CHAPTERS' | 'GENERATING_MARKETING' | 'LIVRO ENTREGUE' | 'MODELING_FICTION';
 
-export type ProjectStep = 'START' | 'RESEARCH' | 'TITLE' | 'STRUCTURE' | 'REVIEW_STRUCTURE' | 'WRITING' | 'DETAILS' | 'DONE';
+export type ProjectStep = 'START' | 'RESEARCH' | 'TITLE' | 'STRUCTURE' | 'REVIEW_STRUCTURE' | 'WRITING' | 'DETAILS' | 'DONE' | 'GENRE_SELECT';
 
 export interface TitleOption {
     title: string;
@@ -45,6 +49,7 @@ export interface Chapter {
     isCompleted: boolean;
     intro?: string;
     isGenerated?: boolean;
+    subSections?: string[];
 }
 
 export interface MarketingAssets {

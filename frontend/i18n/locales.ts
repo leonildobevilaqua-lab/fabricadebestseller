@@ -194,6 +194,15 @@ export const pt = {
             "Ajustando o tom de voz para conexão emocional...",
             "Formatando parágrafos para leitura fluida..."
         ],
+        rotatingMessagesFiction: [
+            "Analisando padrões narrativos de sucessos mundiais...",
+            "Refinando a voz dos personagens para máxima profundidade...",
+            "Injetando ganchos emocionais em cada capítulo...",
+            "Calibrando sistema Anti-IA para prosa humana indetectável...",
+            "Mapeando a Arquitetura de Ferro da trama...",
+            "Esculpindo diálogos e tensões narrativas...",
+            "Expandindo densidade de blocos para 190+ páginas..."
+        ],
         processInterrupted: "Processo Interrompido",
         startingIntelligence: "Iniciando inteligência...",
         resumeProcess: "Retomar Processo",
@@ -366,8 +375,32 @@ export const pt = {
             title: "A Chave do Cofre:",
             subtitle: "Copie e Cole meus Criativos que Vendem!",
             desc: "Acesso imediato a todo o material de marketing validado que me fizeram lucrar mais de R$ 1.000,00 por dia.",
-            button: "💳 QUERO ACESSO À PASTA SECRETA — R$ 99,90"
         }
+    },
+    fiction: {
+        selectMode: 'O que deseja fabricar hoje?',
+        nonFiction: 'FÁBRICA DE NÃO-FICÇÃO',
+        nonFictionDesc: 'Protocolo Viral de 12 Passos (Autoajuda, Negócios, Saúde)',
+        fiction: 'MOTOR DE FICÇÃO',
+        fictionDesc: 'Alta Performance - Arquitetura de Ferro (Romance, Thriller, Mistério)',
+        chooseGenre: 'Escolha o Gênero Literário',
+        genreFocus: {
+            romance: 'Foco: Conexão emocional. Gatilho: Tensão e Desejo.',
+            thriller: 'Foco: Adrenalina. Gatilho: Curiosidade e Ganchos.',
+            fantasy: 'Foco: Worldbuilding. Gatilho: Escapsimo e Novidade.',
+            drama: 'Foco: Humanidade. Gatilho: Empatia e Catarse.'
+        },
+        genres: {
+            romance: 'Romance / Romantasy',
+            thriller: 'Thriller / Suspense / Mistério',
+            fantasy: 'Fantasia / Sci-Fi / Aventura',
+            drama: 'Drama / Biografia / Histórico'
+        },
+        characterHeading: 'Personagens Principais',
+        characterName: 'Nome do Personagem',
+        characterInfo: 'Breve descrição (Personalidade, Motivação)',
+        addCharacter: '+ Adicionar Personagem',
+        antiAiNote: '🛡️ Sistema Anti-IA Ativado: Gerando prosas imersivas com padrões de escrita humana.'
     }
 };
 
@@ -563,6 +596,15 @@ export const en = {
             "Adjusting tone of voice for emotional connection...",
             "Formatting paragraphs for fluid reading..."
         ],
+        rotatingMessagesFiction: [
+            "Analyzing narrative patterns of global hits...",
+            "Refining character voices for maximum depth...",
+            "Injecting emotional hooks into every chapter...",
+            "Calibrating Anti-AI system for undetectable human prose...",
+            "Mapping the Iron Architecture of the plot...",
+            "Sculpting dialogues and narrative tensions...",
+            "Expanding block density for 190+ pages..."
+        ],
         processInterrupted: "Process Interrupted",
         startingIntelligence: "Starting intelligence...",
         resumeProcess: "Resume Process",
@@ -737,6 +779,31 @@ export const en = {
             desc: "Immediate access to all validated marketing materials that made me profit over $ 200.00 per day.",
             button: "💳 I WANT ACCESS TO THE SECRET FOLDER — $ 19.90"
         }
+    },
+    fiction: {
+        selectMode: 'What would you like to manufacture today?',
+        nonFiction: 'NON-FICTION FACTORY',
+        nonFictionDesc: '12-Step Viral Protocol (Self-Help, Business, Health)',
+        fiction: 'FICTION ENGINE',
+        fictionDesc: 'High Performance - Iron Architecture (Romance, Thriller, Mystery)',
+        chooseGenre: 'Choose the Literary Genre',
+        genreFocus: {
+            romance: 'Focus: Emotional Connection. Trigger: Tension and Desire.',
+            thriller: 'Focus: Adrenaline. Trigger: Curiosity and Hooks.',
+            fantasy: 'Focus: Worldbuilding. Trigger: Escapism and Novelty.',
+            drama: 'Focus: Humanity. Trigger: Empathy and Catharsis.'
+        },
+        genres: {
+            romance: 'Romance / Romantasy',
+            thriller: 'Thriller / Suspense / Mystery',
+            fantasy: 'Fantasy / Sci-Fi / Adventure',
+            drama: 'Drama / Biography / Historical'
+        },
+        characterHeading: 'Main Characters',
+        characterName: 'Character Name',
+        characterInfo: 'Short description (Personality, Motivation)',
+        addCharacter: '+ Add Character',
+        antiAiNote: '🛡️ Anti-AI System Activated: Generating immersive prose with human writing patterns.'
     }
 };
 
@@ -932,6 +999,15 @@ export const es = {
             "Ajustando el tono de voz para conexión emocional...",
             "Formateando párrafos para lectura fluida..."
         ],
+        rotatingMessagesFiction: [
+            "Analizando patrones narrativos de éxitos mundiales...",
+            "Refinando la voz de los personajes para máxima profundidad...",
+            "Inyectando ganchos emocionais en cada capítulo...",
+            "Calibrando sistema Anti-IA para prosa humana indetectable...",
+            "Mapeando la Arquitectura de Hierro de la trama...",
+            "Esculpiendo diálogos y tensiones narrativas...",
+            "Expandiendo la densidad de bloques para 190+ páginas..."
+        ],
         processInterrupted: "Proceso Interrumpido",
         startingIntelligence: "Iniciando inteligencia...",
         resumeProcess: "Reanudar Proceso",
@@ -1106,5 +1182,30 @@ export const es = {
             desc: "Acceso inmediato a todo el material de marketing validado que me hizo ganar más de $ 20.00 por día.",
             button: "💳 QUIERO ACCESO A LA CARPETA SECRETA — $ 19.90"
         }
+    },
+    fiction: {
+        selectMode: '¿Qué desea fabricar hoy?',
+        nonFiction: 'FÁBRICA DE NO FICCIÓN',
+        nonFictionDesc: 'Protocolo Viral de 12 Pasos (Autoayuda, Negocios, Salud)',
+        fiction: 'MOTOR DE FICCIÓN',
+        fictionDesc: 'Alta Performance - Arquitectura de Hierro (Romance, Thriller, Misterio)',
+        chooseGenre: 'Elija el Género Literario',
+        genreFocus: {
+            romance: 'Foco: Conexión emocional. Gatillo: Tensión y Deseo.',
+            thriller: 'Foco: Adrenalina. Gatillo: Curiosidad y Ganchos.',
+            fantasy: 'Foco: Worldbuilding. Gatillo: Escapismo y Novedad.',
+            drama: 'Foco: Humanidad. Gatillo: Empatía y Catarsis.',
+        },
+        genres: {
+            romance: 'Romance / Romantasy',
+            thriller: 'Thriller / Suspenso / Misterio',
+            fantasy: 'Fantasía / Sci-Fi / Aventura',
+            drama: 'Drama / Biografía / Histórico'
+        },
+        characterHeading: 'Personajes Principales',
+        characterName: 'Nombre del Personaje',
+        characterInfo: 'Breve descripción (Personalidad, Motivación)',
+        addCharacter: '+ Añadir Personaje',
+        antiAiNote: '🛡️ Sistema Anti-IA Activado: Generando prosa inmersiva con patrones de escritura humana.'
     }
 };

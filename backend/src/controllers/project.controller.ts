@@ -15,7 +15,7 @@ import { AsaasProvider } from '../services/asaas.provider';
 const upload = multer();
 
 export const create = async (req: Request, res: Response) => {
-    const { authorName, topic, language, contact, contentStyle, writingTone, bookTitle, subTitle } = req.body;
+    const { authorName, topic, language, contact, contentStyle, writingTone, bookTitle, subTitle, isFiction, genre, characters } = req.body;
     try {
         const safeEmail = contact?.email ? contact.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_') : null;
         let isResuming = false;
@@ -148,7 +148,7 @@ export const create = async (req: Request, res: Response) => {
         }
         // ---------------------------
 
-        const project = await QueueService.createProject({ authorName, topic, language, contact, contentStyle, writingTone, bookTitle, subTitle });
+        const project = await QueueService.createProject({ authorName, topic, language, contact, contentStyle: genre || contentStyle, writingTone, bookTitle, subTitle, isFiction, genre, characters });
 
         // --- CRITICAL FIX: Ensure Lead Exists for Admin Panel Visibility & Separate Sub/Book ---
         if (contact && contact.email) {
@@ -527,7 +527,9 @@ export const startResearch = async (req: Request, res: Response) => {
                 // SKIP FULL RESEARCH: Just regenerate titles
                 await QueueService.updateMetadata(id, {
                     progress: 28,
-                    statusMessage: "🏗️ Refinando agora a estrutura de títulos..."
+                    statusMessage: project.metadata.isFiction 
+                        ? "🏗️ Refinando agora a estrutura narrativa e ganchos..." 
+                        : "🏗️ Refinando agora a estrutura de títulos..."
                 });
 
                 const fullContext = project.researchContext || `TEMA: ${topic}`; 
@@ -547,7 +549,9 @@ export const startResearch = async (req: Request, res: Response) => {
             if (currentProgress < 12) {
                 await QueueService.updateMetadata(id, {
                     progress: 1,
-                    statusMessage: `📡 Iniciando varredura no YouTube: "${topic}"...`
+                    statusMessage: project.metadata.isFiction 
+                        ? `📡 Benchmarking: Pesquisando obras de sucesso no gênero ${project.metadata.genre || 'Ficção'}...`
+                        : `📡 Iniciando varredura no YouTube: "${topic}"...`
                 });
 
                 await QueueService.updateMetadata(id, {
@@ -723,7 +727,7 @@ export const selectTitle = async (req: Request, res: Response) => {
 
     try {
         const lang = project.metadata.language || 'pt'; // Fallback
-        const structure = await AIService.generateStructure(title, subtitle, project.researchContext, lang, project.metadata.contentStyle);
+        const structure = await AIService.generateStructure(title, subtitle, project.researchContext, lang, project.metadata.genre || project.metadata.contentStyle, project.metadata.isFiction);
         await QueueService.updateProject(id, { structure });
         await QueueService.updateMetadata(id, {
             status: 'REVIEW_STRUCTURE', // New status for manual approval

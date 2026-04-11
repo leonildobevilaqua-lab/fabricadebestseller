@@ -1,50 +1,55 @@
 export interface BookMetadata {
-  id?: string;
-  authorName: string;
-  topic: string;
-  bookTitle?: string;
-  subTitle?: string;
-  dedication?: string;
-  status?: JobStatus;
-  progress?: number;
-  statusMessage?: string;
-  currentStep?: ProjectStep;
-  language?: string;
-  contact?: {
-    name: string;
-    email: string;
-    phone: string;
-  };
-  acknowledgments?: string;
-  aboutAuthor?: string;
-  discountUsed?: number;
-  autoGenerate?: boolean;
-  contentStyle?: string;
-  writingTone?: string;
-  translations?: Record<string, any>;
+    id?: string;
+    authorName: string;
+    topic: string;
+    title?: string;
+    bookTitle?: string;
+    subTitle?: string;
+    dedication?: string;
+    status?: JobStatus;
+    progress?: number;
+    statusMessage?: string;
+    currentStep?: ProjectStep;
+    language?: string;
+    contact?: {
+        name: string;
+        email: string;
+        phone: string;
+    };
+    acknowledgments?: string;
+    aboutAuthor?: string;
+    autoGenerate?: boolean;
+    translations?: any;
+    contentStyle?: string;
+    writingTone?: string;
+    // FICTION FIELDS
+    isFiction?: boolean;
+    genre?: string;
+    characters?: { name: string; info: string }[];
 }
 
-export type JobStatus = 'IDLE' | 'RESEARCHING' | 'WAITING_TITLE' | 'GENERATING_STRUCTURE' | 'WAITING_STRUCTURE' | 'WRITING' | 'WAITING_DETAILS' | 'COMPLETED' | 'FAILED' | 'REVIEW_STRUCTURE' | 'WRITING_CHAPTERS' | 'GENERATING_MARKETING';
+export type JobStatus = 'IDLE' | 'RESEARCHING' | 'WAITING_TITLE' | 'GENERATING_STRUCTURE' | 'WAITING_STRUCTURE' | 'WRITING' | 'WAITING_DETAILS' | 'COMPLETED' | 'FAILED' | 'REVIEW_STRUCTURE' | 'WRITING_CHAPTERS' | 'GENERATING_MARKETING' | 'LIVRO ENTREGUE' | 'MODELING_FICTION';
 
-export type ProjectStep = 'START' | 'RESEARCH' | 'TITLE' | 'STRUCTURE' | 'WRITING' | 'DETAILS' | 'DONE';
+export type ProjectStep = 'START' | 'RESEARCH' | 'TITLE' | 'STRUCTURE' | 'REVIEW_STRUCTURE' | 'WRITING' | 'DETAILS' | 'DONE' | 'GENRE_SELECT';
 
 export interface TitleOption {
-  title: string;
-  subtitle: string;
-  marketingHook: string;
-  score: number;
-  isTopChoice?: boolean;
-  reason?: string;
+    title: string;
+    subtitle: string;
+    marketingHook: string;
+    score: number;
+    isTopChoice?: boolean;
+    reason?: string;
 }
 
 export interface Chapter {
-  id: number;
-  title: string;
-  summary: string;
-  content: string;
-  isCompleted: boolean;
-  intro?: string;
-  isGenerated?: boolean;
+    id: number;
+    title: string;
+    summary: string;
+    content: string;
+    isCompleted: boolean;
+    intro?: string;
+    isGenerated?: boolean;
+    subSections?: string[];
 }
 
 export interface MarketingAssets {

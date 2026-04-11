@@ -22,6 +22,31 @@ Sua missão é criar livros baseados EXCLUSIVAMENTE em dados reais de mercado.
 NUNCA invente dores ou desejos. Use os dados das pesquisas fornecidas.
 `;
 
+const ANTI_AI_INSTRUCTIONS = `
+REGRAS CRÍTICAS PARA ESCRITA HUMANA (ANTI-DETECÇÃO DE IA):
+1. VARIABILIDADE (Burstiness): Alterne frases curtas e impactantes com frases longas e rítmicas. Evite o ritmo monótono de frases de tamanho igual.
+2. SHOW, DON'T TELL: NUNCA diga como um personagem se sente. Mostre através de ações, reações viscerais e detalhes sensoriais.
+3. RIQUEZA VOCABULAR: Use sinônimos precisos e evite repetições óbvias.
+4. DIÁLOGOS VIVOS: Diálogos devem soar como pessoas reais falando, com interrupções, gírias sutis e subtexto.
+5. PROIBIDO: Evite conectores robóticos como "Além disso", "Consequentemente", "Em conclusão", "Portanto".
+6. NARRATIVA IMERSIVA: Use metáforas únicas e evite clichês literários.
+`;
+
+const FICTION_BLOCKS = [
+    { id: 1, title: "Mundo Comum", goal: "A rotina e a carência do herói." },
+    { id: 2, title: "Incidente Incitante", goal: "O evento que quebra a normalidade." },
+    { id: 3, title: "Travessia", goal: "A decisão irreversível de seguir adiante." },
+    { id: 4, title: "Testes e Aliados", goal: "Introdução do elenco secundário e regras do mundo." },
+    { id: 5, title: "Subtrama", goal: "O arco emocional ou romântico ganha profundidade." },
+    { id: 6, title: "Ponto Central", goal: "Uma reviravolta que muda a perspectiva do herói." },
+    { id: 7, title: "Pressão", goal: "O antagonista/problema se torna muito mais perigoso." },
+    { id: 8, title: "Crise Profunda", goal: "O momento de perda total e reflexão (Noite Escura)." },
+    { id: 9, title: "A Epifania", goal: "A descoberta da peça chave para vencer." },
+    { id: 10, title: "Clímax", goal: "O confronto final épico de alta intensidade." },
+    { id: 11, title: "Ressurreição", goal: "A prova final da transformação do herói." },
+    { id: 12, title: "O Elixir", goal: "A nova vida após a jornada e fechamento de arcos." }
+];
+
 // Granular Research Functions
 export const researchYoutube = async (topic: string, lang: string = 'pt'): Promise<string> => {
   const llm = await getLLMProvider();
@@ -256,9 +281,35 @@ RETORNE APENAS JSON LIMPO: [{ "title": "...", "subtitle": "..." }]
 };
 ;
 
-export const generateStructure = async (title: string, subtitle: string, researchContext: string, lang: string = 'pt', contentStyle?: string): Promise<Chapter[]> => {
+export const generateStructure = async (title: string, subtitle: string, researchContext: string, lang: string = 'pt', contentStyle?: string, isFiction: boolean = false): Promise<Chapter[]> => {
   const llm = await getLLMProvider();
   const langName = getLangName(lang);
+
+  if (isFiction) {
+    const fictionPrompt = `
+      Context (Market Research): ${researchContext}
+      Book Title: ${title} - ${subtitle}
+      TASK: Map the "Iron Architecture" (12 blocks) for this fiction story.
+      
+      GENRE TARGET: ${contentStyle || 'Fiction Best-Seller'}
+      
+      STRICT STRUCTURE TO FOLLOW:
+      ${JSON.stringify(FICTION_BLOCKS)}
+      
+      For each block, create a compelling Chapter Title and a detailed "intro" (narrative objective).
+      IMPORTANT: ALL CONTENT MUST BE IN ${langName}.
+      
+      Return JSON: [{ "id": 1, "title": "...", "intro": "Detailed narrative goal and key events..." }]
+    `;
+    try {
+      const raw = await llm.generateJSON<any[]>(fictionPrompt);
+      return raw.map((c: any) => ({ ...c, content: "", isGenerated: false }));
+    } catch (e) {
+      console.error("Fiction structure generation failed, using internal blocks", e);
+      return FICTION_BLOCKS.map(b => ({ ...b, summary: b.goal, content: "", isGenerated: false, isCompleted: false, intro: b.goal }));
+    }
+  }
+
   const prompt = `
     Context: ${researchContext}
     Book: ${title} - ${subtitle}
@@ -315,8 +366,9 @@ const cleanText = (text: string): string => {
     .trim();
 };
 
-const getHumanizationInstructions = (lang: string, style: string = 'Profissional', tone: string = 'Natural') => `
+const getHumanizationInstructions = (lang: string, style: string = 'Profissional', tone: string = 'Natural', isFiction: boolean = false) => `
     CRITICAL WRITING GUIDELINES (ANTI-AI STRICT MODE):
+    ${isFiction ? ANTI_AI_INSTRUCTIONS : `
     1. **HUMAN SOUL**: Write with imperfection, nuance, and emotion. Use rhetorical questions, vivid metaphors, and sensory details.
     2. **STYLE & TONE**:
        - **Content Style**: ${style}
@@ -327,6 +379,7 @@ const getHumanizationInstructions = (lang: string, style: string = 'Profissional
        - NO separators like "___", "---", "***", "###".
        - NO placeholders like "[Insert text]".
        - NO robotic lists or bullet points unless absolutely necessary for the format.
+    `}
     4. **FORMATTING**: Return CLEAN PARAGRAPHS. Do not use Markdown headers (#) inside the text. Use natural transitions between ideas instead of headers.
     5. **LANGUAGE**: ${getLangName(lang)} (Native & Natural). Do NOT use literal translations or stiff formal language. Use contractions and colloquialisms where appropriate for the genre.
     6. **SHOW, DON'T TELL**: Don't say "it was exciting", describe the heart racing.
@@ -345,11 +398,12 @@ export const writeIntroduction = async (
   const tone = metadata.writingTone || 'Autoridade e Confiança';
 
   const prompt = `
-      ${getHumanizationInstructions(lang, style, tone)}
+      ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
       
       Author: ${metadata.authorName}
       Book: ${metadata.bookTitle}
       Subtitle: ${metadata.subTitle}
+      ${metadata.isFiction ? `GENRE: ${metadata.genre}\nCHARACTERS: ${JSON.stringify(metadata.characters)}` : ''}
       
       Structure:
       ${structureList}
@@ -357,14 +411,15 @@ export const writeIntroduction = async (
       Research Context:
       ${researchContext}
       
-      TASK: Write the INTRODUCTION for this book.
+      TASK: Write the INTRODUCTION ${metadata.isFiction ? '(or PROLOGUE)' : ''} for this book.
       Objective: Hook the reader IMMEDIATELY. Start with a controversial statement, a personal story, or a surprising fact.
+      ${metadata.isFiction ? 'Objective: Estabelecer o clima da história, apresentar o conflito latente ou um momento marcante do passado que ecoa no presente.' : ''}
       
       Requirements:
       - Length: Approx 1200 words. (CRITICAL: Develop the narrative deeply to reach this target word count and ensure the book's total word volume)
       - Tone: Best-seller authority, confident, yet intimate.
       - Flow: Continuous, absorbing text. NO section headers within the introduction.
-      - Content: Tell a powerful personal story or case study that illustrates the problem. Dive deep into the pain points.
+      - Content: ${metadata.isFiction ? 'Use deep immersive prose.' : 'Tell a powerful personal story or case study that illustrates the problem. Dive deep into the pain points.'}
       - LANGUAGE: ${langName} ONLY.
     `;
 
@@ -439,10 +494,12 @@ export const writeChapter = async (
     // 2.2 Sections
     for (const subtopic of subtopics) {
       const sectionPrompt = `
-            ${getHumanizationInstructions(lang, style, tone)}
+            ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
             
+            ${metadata.isFiction ? `GENRE: ${metadata.genre}\nCHARACTERS: ${JSON.stringify(metadata.characters)}` : `
             CONTEXTO DE PESQUISA (Use isso como base, não invente):
             ${researchContext.substring(0, 3000)}
+            `}
             
             Book: ${metadata.bookTitle}
             Chapter: ${chapter.title}
@@ -453,6 +510,7 @@ export const writeChapter = async (
             REGRAS:
             - Use tom conversacional e prático.
             - Foco total em resolver as dores listadas acima.
+            ${metadata.isFiction ? '- Use prosa imersiva, foco em diálogos e ação.' : ''}
             - TAMANHO: Escreva rigorosamente entre 450 e 500 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos para atingir o volume total de páginas exigido do livro (mínimo 170 páginas).
             
             Previous Context:

@@ -395,7 +395,10 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           contentStyle: metadata.contentStyle, 
           writingTone: metadata.writingTone,
           bookTitle: metadata.bookTitle,
-          subTitle: metadata.subTitle
+          subTitle: metadata.subTitle,
+          isFiction: metadata.isFiction,
+          genre: metadata.genre,
+          characters: metadata.characters
         }
       );
 
@@ -656,12 +659,19 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   // RENDER CUSTOM FACTORY INTRO
   if (isManufacturing) {
-    const messages = [
-      "Verificando os dados informados...",
-      "Validando o Tema/Assunto do livro...",
-      "Preparando as máquinas para começar a produzir seu futuro Best Seller...",
-      "Tudo pronto para começar..."
-    ];
+    const messages = metadata.isFiction 
+      ? [
+          "Analisando o DNA narrativo do gênero " + (metadata.genre || "") + "...",
+          "Calibrando o sistema Anti-IA para prosa humana indetectável...",
+          "Injetando Arquitetura de Ferro nos blocos estruturais...",
+          "Motor de Ficção Aquecido. Iniciando produção..."
+        ]
+      : [
+          "Verificando os dados informados...",
+          "Validando o Tema/Assunto do livro...",
+          "Preparando as máquinas para começar a produzir seu futuro Best Seller...",
+          "Tudo pronto para começar..."
+        ];
 
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8">
@@ -1401,6 +1411,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               </button>
             ) : (
               <RotatingMessage messages={(() => {
+                if (metadata.isFiction) return (t as any).rotatingMessagesFiction || t.rotatingMessages;
                 if (progress < 40) return [
                   "Pesquisando os vídeos mais visualizados sobre o assunto...",
                   "Verificando os comentários nos vídeos sobre o tema...",
