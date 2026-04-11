@@ -1,0 +1,18 @@
+node_modules
+.git
+.gitignore
+.dockerignore
+dist
+build
+backups
+*.log
+.DS_Store
+.env*
+! .env.example
+frontend/node_modules
+backend/node_modules
+tmp
+artifacts
+*.docx
+*.zip
+*.pdf

@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+*.log
+.env*
+! .env.example
+backups
+tmp
+artifacts
+*.docx
+*.zip
+*.pdf

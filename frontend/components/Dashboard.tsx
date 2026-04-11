@@ -496,12 +496,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     ) : (
                         <div className="divide-y divide-slate-100">
                             {displayOrders.map((order: any, idx: number) => (
-                                <div key={idx} className="p-4 hover:bg-slate-50 transition flex flex-col md:flex-row items-center justify-between gap-4">
+                                <div key={order.id || `book-${idx}`} className="p-4 hover:bg-slate-50 transition flex flex-col md:flex-row items-center justify-between gap-4">
                                     <div className="flex items-center gap-4 w-full md:w-auto">
                                         <div className="w-12 h-16 bg-slate-200 rounded flex-shrink-0 flex items-center justify-center text-2xl shadow-sm">
                                             📚
                                         </div>
-                                        <div>
+                                        <div translate="no">
                                             <h4 className="font-bold text-slate-800">
                                                 <span className="text-xs text-slate-500 font-normal block mb-1">{(t as any).dashboard.bookTitleLabel}</span>
                                                 {order.title || (t as any).dashboard.bookTitleFallback}
