@@ -211,23 +211,42 @@ export const analyzeCompetitors = async (topic: string, priorContext: string, la
   }
 };
 
-export const generateTitleOptions = async (topic: string, researchContext: string = "", lang: string = 'pt', titleInstruction?: string): Promise<TitleOption[]> => {
+export const generateTitleOptions = async (topic: string, researchContext: string = "", lang: string = 'pt', titleInstruction?: string, isFiction: boolean = false): Promise<TitleOption[]> => {
   console.log(`[IA] Iniciando geração de títulos para: ${topic.substring(0, 50)}...`);
   const llm = await getLLMProvider();
   const langName = getLangName(lang);
 
   const SYSTEM_PROMPT = `
-ATUE COMO UM EDITOR DE BEST-SELLERS.
+ATUE COMO O MAIOR EXPERT DO MUNDO EM TÍTULOS DE BEST-SELLERS (AMAZON, NEW YORK TIMES) E FILMES DE HOLLYWOOD.
 TAREFA: Crie 8 títulos virais e subtítulos comerciais baseados no tema do usuário.
 IDIOMA: ${langName}
-REGRAS:
-1. NÃO comece com "Guia Completo de". Seja criativo.
-2. Use gatilhos mentais fortes.
-${titleInstruction ? `\nINSTRUÇÕES ESPECÍFICAS DO CLIENTE PARA MELHORAR OS TÍTULOS:\n"${titleInstruction}"\nSiga essas instruções RIGOROSAMENTE.\n` : ''}
-3. Se baseie neste CONTEXTO DE PESQUISA:
+
+REGRAS DE OURO PARA TÍTULOS (ESTILO EXPERT):
+1. CURTOS E IMPACTANTES: O título principal deve ter de 1 a 4 palavras no máximo. Seja punchy. (Ex: "Engenharia Arcana", "O Código do Herói", "Sussurro das Muralhas").
+2. CURIOSIDADE E DESEJO: Deve instigar o leitor a querer saber mais imediatamente. Use nomes fortes, metáforas ou conceitos únicos.
+3. SEM CLICHÊS: Evite "Guia Completo", "Tudo sobre", "Manual de", "Como fazer". 
+4. PADRÃO AMAZON/HOLLYWOOD: Pense em títulos que ficariam bem em uma capa de livro físico de luxo ou em um pôster de cinema.
+5. SEPARAÇÃO ESTRITA: O campo "title" deve conter APENAS o título curto. NÃO coloque o subtítulo ou explicações após dois pontos no campo "title".
+
+REGRAS PARA SUBTÍTULOS:
+1. MESTRIA: O subtítulo deve complementar o título com elegância, explicando o benefício real (não ficção) ou o coração da trama (ficção) de forma irresistível.
+2. EXTENSÃO MODERADA: Seja preciso e direto ao ponto.
+
+${isFiction ? `
+FOCO EM FICÇÃO:
+- Use elementos da atmosfera da história (mistério, tensão, nomes de lugares, objetos mágicos).
+- Padrão: "Título Curto: O grande conflito ou segredo".
+` : `
+FOCO EM NÃO FICÇÃO:
+- Use benefícios claros, promessas de transformação ou métodos únicos.
+`}
+
+${titleInstruction ? `\nINSTRUÇÕES ESPECÍFICAS DO CLIENTE (SIGA RIGOROSAMENTE):\n"${titleInstruction}"\n` : ''}
+
+CONTEXTO DE PESQUISA:
 ${researchContext.substring(0, 5000)}
 
-RETORNE APENAS JSON LIMPO: [{ "title": "...", "subtitle": "..." }]
+RETORNE APENAS JSON LIMPO: [{ "title": "Título Curto", "subtitle": "Subtítulo Master" }]
 `;
 
   const userPrompt = `TEMA: ${topic}`;

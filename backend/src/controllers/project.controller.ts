@@ -533,7 +533,7 @@ export const startResearch = async (req: Request, res: Response) => {
                 });
 
                 const fullContext = project.researchContext || `TEMA: ${topic}`; 
-                const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang, titleInstruction);
+                const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang, titleInstruction, project.metadata.isFiction);
                 await QueueService.updateProject(id, { titleOptions: titles });
 
                 await QueueService.updateMetadata(id, {
@@ -1593,7 +1593,7 @@ const performResearch = async (projectId: string, language: string) => {
             statusMessage: "🏗️ Moldando estruturas de títulos..."
         });
 
-        const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang);
+        const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang, undefined, project.metadata.isFiction);
         await QueueService.updateProject(id, { titleOptions: titles });
 
         await QueueService.updateMetadata(id, {
