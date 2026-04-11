@@ -23,13 +23,13 @@ NUNCA invente dores ou desejos. Use os dados das pesquisas fornecidas.
 `;
 
 const ANTI_AI_INSTRUCTIONS = `
-REGRAS CRÍTICAS PARA ESCRITA HUMANA (ANTI-DETECÇÃO DE IA):
-1. VARIABILIDADE (Burstiness): Alterne frases curtas e impactantes com frases longas e rítmicas. Evite o ritmo monótono de frases de tamanho igual.
-2. SHOW, DON'T TELL: NUNCA diga como um personagem se sente. Mostre através de ações, reações viscerais e detalhes sensoriais.
-3. RIQUEZA VOCABULAR: Use sinônimos precisos e evite repetições óbvias.
-4. DIÁLOGOS VIVOS: Diálogos devem soar como pessoas reais falando, com interrupções, gírias sutis e subtexto.
-5. PROIBIDO: Evite conectores robóticos como "Além disso", "Consequentemente", "Em conclusão", "Portanto".
-6. NARRATIVA IMERSIVA: Use metáforas únicas e evite clichês literários.
+REGRAS CRÍTICAS PARA ESCRITA HUMANA (AUTOR DE ELITE - 0% IA):
+1. VARIABILIDADE RADICAL (Burstiness): Alterne frases curtas e impactantes com frases longas e rítmicas. Use fragmentos de frases para ênfase emocional. NUNCA tenha dois parágrafos com o mesmo número de frases.
+2. PERPLEXIDADE ALTA: Use vocabulário dinâmico, metáforas raras e analogias específicas do nicho. Evite a repetição previsível de palavras-chave.
+3. CONEXÃO HUMANA: Use a primeira pessoa (Eu ou Nós) para criar autoridade. Insere "Gatilhos de Conversa": perguntas retóricas, interjeições e expressões naturais de fala.
+4. "RUÍDO HUMANO": Introduza imperfeições controladas e assinaturas de autor. Evite a "perfeição" sintética e monótona.
+5. PROIBIDO - IDENTIFICADORES DE IA: NUNCA use "Em conclusão", "Além disso", "É fundamental notar", "Consequentemente", "Portanto". Substitua por transições naturais como "Mas aqui está o detalhe...", "Honestamente,", "O que isso significa na prática?".
+6. SHOW, DON'T TELL: Mostre através de ações, reações viscerais e detalhes sensoriais.
 `;
 
 const FICTION_BLOCKS = [
@@ -233,12 +233,15 @@ REGRAS PARA SUBTÍTULOS:
 2. EXTENSÃO MODERADA: Seja preciso e direto ao ponto.
 
 ${isFiction ? `
-FOCO EM FICÇÃO:
-- Use elementos da atmosfera da história (mistério, tensão, nomes de lugares, objetos mágicos).
-- Padrão: "Título Curto: O grande conflito ou segredo".
+FOCO EM FICÇÃO (PADRÃO BEST-SELLER):
+- Use elementos de ALTA TENSÃO, mistério e CURIOSIDADE.
+- Títulos magnéticos que sugerem ADRENALINA ou um segredo obscuro.
+- Evite nomes comuns; busque algo cinematográfico.
 ` : `
-FOCO EM NÃO FICÇÃO:
-- Use benefícios claros, promessas de transformação ou métodos únicos.
+FOCO EM NÃO FICÇÃO (PADRÃO BEST-SELLER):
+- Foco total em SOLUÇÃO DE DOR e transformação.
+- Subtítulos que complementam com uma promessa inegável de resultado.
+- Use gatilhos mentais de autoridade e escassez.
 `}
 
 ${titleInstruction ? `\nINSTRUÇÕES ESPECÍFICAS DO CLIENTE (SIGA RIGOROSAMENTE):\n"${titleInstruction}"\n` : ''}
@@ -381,27 +384,26 @@ const cleanText = (text: string): string => {
     // .replace(/\*{2,}/g, '') // RESTORED: Keep ** for doc.service.ts bold detection
     .replace(/\s{2,}/g, ' ') // Remove double spaces
     .replace(/\[.*?\]/g, '') // Remove placeholders like [Insert name]
-    .replace(/In conclusion,|Em conclusão,|Por fim,|Concluindo,/gi, '') // Remove typical AI transitions
+    .replace(/In conclusion,|Em conclusão,|Por fim,|Concluindo,|Além disso,|Além do mais,|Em resumo,|É fundamental notar,|É importante destacar,/gi, '') // Remove typical AI markers
     .trim();
 };
 
 const getHumanizationInstructions = (lang: string, style: string = 'Profissional', tone: string = 'Natural', isFiction: boolean = false) => `
-    CRITICAL WRITING GUIDELINES (ANTI-AI STRICT MODE):
+    DIRETRIZES DE ESCRITA DE ELITE (MODO INDETECTÁVEL):
     ${isFiction ? ANTI_AI_INSTRUCTIONS : `
-    1. **HUMAN SOUL**: Write with imperfection, nuance, and emotion. Use rhetorical questions, vivid metaphors, and sensory details.
-    2. **STYLE & TONE**:
-       - **Content Style**: ${style}
-       - **Writing Tone**: ${tone}
-       - ADAPT THE WRITING ACCORDINGLY.
-    3. **STRICTLY FORBIDDEN**: 
-       - NO "In conclusion", "It is important to note", "In summary", or "Ultimately".
-       - NO separators like "___", "---", "***", "###".
-       - NO placeholders like "[Insert text]".
-       - NO robotic lists or bullet points unless absolutely necessary for the format.
+    1. **ALMA HUMANA**: Escreva com imperfeição controlada, nuances e emoção. Use "Burstiness" (variação rítmica radical) e "Perplexidade" (vocabulário rico e inesperado).
+    2. **ESTILO E CONEXÃO**:
+       - Use a PRIMEIRA PESSOA (Eu ou Nós) para gerar proximidade.
+       - Use gatilhos de conversa: perguntas retóricas e interjeições naturais.
+       - **Estilo**: ${style} | **Tom**: ${tone}
+    3. **BANIMENTO DE MARCADORES IA**: 
+       - EXTREMAMENTE PROIBIDO: "Em conclusão", "É importante notar", "Em resumo", "Além disso", "Consequentemente".
+       - SUBSTITUA POR: "Sendo sincero,", "O detalhe é que...", "Na real,", "Onde isso nos leva?".
+       - SEM separadores robóticos (___, ---, ###).
     `}
-    4. **FORMATTING**: Return CLEAN PARAGRAPHS. Do not use Markdown headers (#) inside the text. Use natural transitions between ideas instead of headers.
-    5. **LANGUAGE**: ${getLangName(lang)} (Native & Natural). Do NOT use literal translations or stiff formal language. Use contractions and colloquialisms where appropriate for the genre.
-    6. **SHOW, DON'T TELL**: Don't say "it was exciting", describe the heart racing.
+    4. **FORMATAÇÃO**: Retorne PARÁGRAFOS LIMPOS e fluidos. Use transições naturais em vez de headers excessivos.
+    5. **SHOW, DON'T TELL**: Não diga que algo é emocionante, faça o coração do leitor disparar com a descrição.
+    6. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "robótico", reescreva instantaneamente para injetar caos e humanidade.
 `;
 
 export const writeIntroduction = async (
@@ -434,8 +436,12 @@ export const writeIntroduction = async (
       Objective: Hook the reader IMMEDIATELY. Start with a controversial statement, a personal story, or a surprising fact.
       ${metadata.isFiction ? 'Objective: Estabelecer o clima da história, apresentar o conflito latente ou um momento marcante do passado que ecoa no presente.' : ''}
       
+      FINAL PHASE (REVISÃO DOUBLE-BLIND): 
+      Após redigir, revise o texto. Mude ritmos monótonos. Injete "Ruído Humano" (metáforas únicas, variações de frases). 
+      O resultado final deve atingir 0% de detecção em ferramentas de IA.
+      
       Requirements:
-      - Length: Approx 1200 words. (CRITICAL: Develop the narrative deeply to reach this target word count and ensure the book's total word volume)
+      - Length: Approx 1200 words.
       - Tone: Best-seller authority, confident, yet intimate.
       - Flow: Continuous, absorbing text. NO section headers within the introduction.
       - Content: ${metadata.isFiction ? 'Use deep immersive prose.' : 'Tell a powerful personal story or case study that illustrates the problem. Dive deep into the pain points.'}
@@ -526,6 +532,12 @@ export const writeChapter = async (
             Current Section: "${subtopic}"
             
             TAREFA: Escreva o conteúdo desta seção.
+            
+            FASE DE EXECUÇÃO HUMANIZADA:
+            1. Aplique VARIABILIDADE RADICAL (Burstiness) nas frases.
+            2. Injete PERPLEXIDADE com vocabulário rico e analogias raras.
+            3. Use o filtro REVISÃO DOUBLE-BLIND: se o parágrafo parecer robótico, desconstrua-o e reescreva com "Alma Humana".
+            
             REGRAS:
             - Use tom conversacional e prático.
             - Foco total em resolver as dores listadas acima.
@@ -606,6 +618,8 @@ export const generateMarketing = async (metadata: BookMetadata, researchContext:
     CRITICAL INSTRUCTIONS:
     - Tone: WORLD-CLASS BEST-SELLER COPYWRITING. Exciting, Emotional, High-Ticket, Urgent.
     - Avoid generic AI text. Use power words.
+    - APPLY HUMANIZATION: Use "Burstiness" in the copy. NUNCA use "Além disso" ou "Em conclusão".
+    - REVISÃO DOUBLE-BLIND: O texto deve soar como se tivesse sido escrito por um mestre do marketing humano, não por um algoritmo.
     
     TASK 1: YouTube Video Description
     REQUIREMENT: YOU MUST LIST ALL CHAPTERS from the provided Structure list in the body under "ESTRUTURA DOS CAPÍTULOS".
