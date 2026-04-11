@@ -1,8 +1,0 @@
-node_modules
-dist
-database.json
-.env*
-*.docx
-*.zip
-*.png
-*.xlsx
