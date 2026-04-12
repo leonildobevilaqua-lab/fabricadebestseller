@@ -16,6 +16,8 @@
         "recreate_user.ts",
         "internal_api_files",
         "dist",
-        "node_modules"
+        "node_modules",
+        "generated_books",
+        "generated_books/**/*"
     ]
 }

@@ -1,12 +1,7 @@
-node_modules
-dist
-build
-*.log
-.env*
-! .env.example
-backups
-tmp
-artifacts
-*.docx
+node_modules/
+generated_books/
+dist/
+database.json
+.env
 *.zip
-*.pdf
+*.log
