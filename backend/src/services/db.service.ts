@@ -39,37 +39,43 @@ export const getVal = async (pathStr: string): Promise<any> => {
 
         // 1. SUPABASE PRIMARY: Check Supabase First (Pro Plan Active)
         if (isCollectionRoot) {
+            let allItems: any[] = [];
             console.log(`[DB] Fetching collection: ${normalized}`);
-            const { data, error } = await supabase
+
+            const { data: individualItems, error: fetchErr } = await supabase
                 .from('kv_store')
-                .select('*')
+                .select('key, value')
                 .or(`key.like.${normalized}/%,key.eq.${normalized}`);
 
-            if (error) {
-                console.error(`[DB] Supabase error fetching collection ${normalized}:`, error.message);
+            if (fetchErr) {
+                console.error(`[DB] Supabase Fetch Error (${normalized}):`, fetchErr);
             }
 
-            if (!error && data && data.length > 0) {
-                console.log(`[DB] Serving collection ${normalized} from Supabase (${data.length} items)`);
-                
-                let allItems: any[] = [];
-                data.forEach(item => {
-                    const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-                    if (item.key === normalized && Array.isArray(val)) {
-                        // It's a root array
-                        allItems = [...allItems, ...val];
-                    } else if (item.key.startsWith(`${normalized}/`)) {
-                        // It's an individual item
-                        allItems.push({ ...val, updated_at: item.updated_at });
-                    }
+            if (individualItems && individualItems.length > 0) {
+                console.log(`[DB] Found ${individualItems.length} items for ${normalized}`);
+                allItems = individualItems.map(item => {
+                    try {
+                        const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+                        // Ensure it's an object before spreading
+                        if (val && typeof val === 'object' && !Array.isArray(val)) {
+                            return {
+                                id: val.id || item.key.split('/').pop(),
+                                key: item.key,
+                                ...val
+                            };
+                        }
+                        return val;
+                    } catch (e) { return item.value; }
                 });
-
-                return allItems.sort((a, b) => {
-                    const da = new Date(a.updated_at || a.date || a.createdAt || 0).getTime();
-                    const db = new Date(b.updated_at || b.date || b.createdAt || 0).getTime();
-                    return db - da; // Newer first
-                });
+            } else {
+                console.warn(`[DB] Supabase returned 0 items for ${normalized}`);
             }
+
+            return allItems.sort((a, b) => {
+                const da = new Date(a.updated_at || a.date || a.createdAt || 0).getTime();
+                const db = new Date(b.updated_at || b.date || b.createdAt || 0).getTime();
+                return db - da; // Newer first
+            });
         }
 
         // 2. SUPABASE EXACT MATCH

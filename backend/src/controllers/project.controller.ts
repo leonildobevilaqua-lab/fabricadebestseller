@@ -615,14 +615,19 @@ export const startResearch = async (req: Request, res: Response) => {
             const finalFullContext = project.researchContext || `TEMA: ${topic} \n\n### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch}`;
 
             // Robust check: Only skip if bookTitle is present AND has length > 1 (avoiding empty strings or noise)
-            if (project.metadata.bookTitle && project.metadata.bookTitle.trim().length > 1) {
+            const isManualTitle = project.metadata.bookTitle && 
+                               project.metadata.bookTitle.trim().length > 1 && 
+                               !project.metadata.bookTitle.includes('Livro Gerado') &&
+                               !project.metadata.bookTitle.includes('Título Provisório');
+
+            if (isManualTitle && project.metadata.status !== 'WAITING_TITLE') {
                 console.log(`[startResearch] Manual title detected: "${project.metadata.bookTitle}". Skipping AI title selection phase.`);
                 
                 // Proceed to structure generation immediately
                 await QueueService.updateMetadata(id, {
                     status: 'GENERATING_STRUCTURE',
                     progress: 35,
-                    statusMessage: "🏗️ Título manual detectado. Construindo estrutura personalizada..."
+                    statusMessage: "🏗️ Título definido detectado. Construindo estrutura personalizada..."
                 });
 
                 const structure = await AIService.generateStructure(
@@ -630,7 +635,7 @@ export const startResearch = async (req: Request, res: Response) => {
                     project.metadata.subTitle || "", 
                     finalFullContext, 
                     targetLang, 
-                    project.metadata.contentStyle
+                    project.metadata.contentStyle || 'Profissional'
                 );
 
                 await QueueService.updateProject(id, { structure });

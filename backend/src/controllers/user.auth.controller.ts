@@ -185,10 +185,13 @@ export const UserAuthController = {
 
             const userProjects = projectList.filter((p: any) => {
                 if (!p) return false;
+                
+                // Track all possible email locations - CASE INSENSITIVE
+                const strUser = String(cleanUser).toLowerCase().trim();
+                
                 const metadata = p.metadata || {};
                 const contact = metadata.contact || p.contact || {};
                 
-                // Track all possible email locations - CASE INSENSITIVE
                 const emails = [
                     contact.email,
                     p.contact?.email,
@@ -200,16 +203,18 @@ export const UserAuthController = {
                     p.userId
                 ].filter(Boolean).map(e => String(e).toLowerCase().trim());
 
-                if (emails.includes(cleanUser)) return true;
+                if (emails.includes(strUser)) return true;
 
                 // Deep search fallback: check for email match in ANY property
                 try {
                     const pStr = JSON.stringify(p).toLowerCase();
-                    if (pStr.includes(cleanUser)) return true;
+                    if (pStr.includes(strUser)) return true;
                 } catch (err) {}
 
                 return false;
             });
+
+            console.log(`[ME] Found ${userProjects.length} projects for ${cleanUser}`);
 
             // Usage count based on actual projects
             const usageCount = userProjects.filter((p: any) =>
