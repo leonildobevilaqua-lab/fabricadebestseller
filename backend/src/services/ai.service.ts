@@ -217,36 +217,40 @@ export const generateTitleOptions = async (topic: string, researchContext: strin
   const langName = getLangName(lang);
 
   const SYSTEM_PROMPT = `
-ATUE COMO O MAIOR EXPERT DO MUNDO EM TÍTULOS DE BEST-SELLERS (AMAZON, NEW YORK TIMES) E FILMES DE HOLLYWOOD.
-TAREFA: Crie 8 títulos virais e subtítulos comerciais baseados no tema do usuário.
+ATUE COMO O MAIOR EXPERT DO MUNDO EM TÍTULOS DE BEST-SELLERS (PULITZER, NYT LIST) E FILMES DE HOLLYWOOD.
+Sua missão é criar 8 títulos e subtítulos que não pareçam manuais ou guias, mas sim PROPRIEDADES INTELECTUAIS DE ELITE.
+
 IDIOMA: ${langName}
 
-REGRAS DE OURO PARA TÍTULOS (ESTILO EXPERT):
-1. CURTOS E IMPACTANTES: O título principal deve ter de 1 a 4 palavras no máximo. Seja punchy. (Ex: "Engenharia Arcana", "O Código do Herói", "Sussurro das Muralhas").
-2. CURIOSIDADE E DESEJO: Deve instigar o leitor a querer saber mais imediatamente. Use nomes fortes, metáforas ou conceitos únicos.
-3. SEM CLICHÊS: Evite "Guia Completo", "Tudo sobre", "Manual de", "Como fazer". 
-4. PADRÃO AMAZON/HOLLYWOOD: Pense em títulos que ficariam bem em uma capa de livro físico de luxo ou em um pôster de cinema.
-5. SEPARAÇÃO ESTRITA: O campo "title" deve conter APENAS o título curto. NÃO coloque o subtítulo ou explicações após dois pontos no campo "title".
+REGRAS MASTER PARA TÍTULOS:
+1. CURTOS E MAGNÉTICOS: O título deve ter entre 1 e 3 palavras. Seja direto, amigável ou profundamente evocativo. (Ex: "Magnólia", "Um Amor em Paris", "Sombras de Ontem").
+2. NADA DE MANUAIS: Proibido usar "Guia", "Manual", "Tudo sobre", "Como", "Segredos de", "Desvendando".
+3. PADRÃO CINEMATOGRÁFICO: Imagine o título em um pôster de cinema ou em uma vitrine da livraria mais cara de Nova York.
+4. SONORIDADE: O título deve ser fácil de lembrar e "gostoso" de falar.
 
-REGRAS PARA SUBTÍTULOS:
-1. MESTRIA: O subtítulo deve complementar o título com elegância, explicando o benefício real (não ficção) ou o coração da trama (ficção) de forma irresistível.
-2. EXTENSÃO MODERADA: Seja preciso e direto ao ponto.
+REGRAS MASTER PARA SUBTÍTULOS:
+1. MESTRIA LITERÁRIA: O subtítulo não é um slogan de vendas barato. Ele deve ser uma frase poderosa que dá profundidade e contexto à obra com maestria.
+2. BANIMENTO DE VERBOS IA: É TERMINANTEMENTE PROIBIDO começar o subtítulo com verbos como: "Desvende", "Conecte-se", "Explore", "Descubra", "Aprenda", "Entenda".
+3. SUBSTITUIÇÃO: Use afirmações poéticas ou promessas de transformação implícitas. 
+   - Ruim: "Desvende a Paris dos amantes..."
+   - Master: "Uma jornada inesquecível pelo coração da cidade que nunca esquece um grande amor."
 
 ${isFiction ? `
 FOCO EM FICÇÃO (PADRÃO BEST-SELLER):
-- Use elementos de ALTA TENSÃO, mistério e CURIOSIDADE.
-- Títulos magnéticos que sugerem ADRENALINA ou um segredo obscuro.
-- Evite nomes comuns; busque algo cinematográfico.
+- Adapte-se ao GÊNERO (Romance, Drama, Thriller, etc.). 
+- Para ROMANCES: Títulos doces, diretos e humanos. Subtítulos que evocam o sentimento central.
+- Para DRAMAS: Títulos fortes e nomes próprios.
+- Para THRILLERS: Títulos secos e impactantes.
 ` : `
 FOCO EM NÃO FICÇÃO (PADRÃO BEST-SELLER):
-- Foco total em SOLUÇÃO DE DOR e transformação.
-- Subtítulos que complementam com uma promessa inegável de resultado.
-- Use gatilhos mentais de autoridade e escassez.
+- Foco em AUTORIDADE e TRANSFORMAÇÃO.
+- Títulos de impacto (Ex: "Inabalável", "Essencialismo").
+- Subtítulos que entregam a solução sem parecer um curso de internet.
 `}
 
-${titleInstruction ? `\nINSTRUÇÕES ESPECÍFICAS DO CLIENTE (SIGA RIGOROSAMENTE):\n"${titleInstruction}"\n` : ''}
+${titleInstruction ? `\nINSTRUÇÕES ADICIONAIS DO CLIENTE:\n"${titleInstruction}"\n` : ''}
 
-CONTEXTO DE PESQUISA:
+CONTEXTO DE PESQUISA (Use para entender o que o público deste nicho REALMENTE consome):
 ${researchContext.substring(0, 5000)}
 
 RETORNE APENAS JSON LIMPO: [{ "title": "Título Curto", "subtitle": "Subtítulo Master" }]
