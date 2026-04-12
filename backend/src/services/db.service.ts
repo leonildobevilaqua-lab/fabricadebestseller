@@ -62,7 +62,8 @@ export const getVal = async (pathStr: string): Promise<any> => {
             const { data: rawItems, error: fetchErr } = await supabase
                 .from('kv_store')
                 .select('key, value, updated_at')
-                .like('key', `${normalized}/%`);
+                .like('key', `${normalized}/%`)
+                .limit(5000); // FIX: Ensure we don't hit the default 100 limit as collection grows
 
             if (fetchErr) {
                 console.error(`[DB] Supabase Fetch Error (${normalized}):`, fetchErr);

@@ -1444,210 +1444,189 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                             <DashboardCharts leads={leads} orders={orders} />
 
-                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-                                    <h3 className="font-bold text-slate-700">Solicitações Recentes</h3>
-                                </div>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full text-sm text-left min-w-[800px]">
-                                        <thead className="bg-slate-50 text-slate-500 font-medium border-b border-slate-200">
-                                            <tr>
-                                                <th className="p-4 w-32">Data</th>
-                                                <th className="p-4">Cliente</th>
-                                                <th className="p-4 w-28 text-center">Créditos</th>
-                                                <th className="p-4 w-40">Status</th>
-                                                <th className="p-4 text-right">Ações</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 bg-white">
-                                            {leads.length === 0 && <tr><td colSpan={4} className="p-8 text-center text-slate-400">Nenhuma solicitação pendente.</td></tr>}
-                                            {leads.map((lead: any) => (
-                                                <LeadRow
-                                                    key={lead.id}
-                                                    lead={lead}
-                                                    onApprove={handleApproveLead}
-                                                    onDelete={handleDelete}
-                                                    onEdit={handleEdit}
-                                                    onDiagram={handleDiagram}
-                                                    onWipe={handleWipe}
-                                                    onImpersonate={handleImpersonate}
-                                                />
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                             {/* UI REMOVED: Tables are too messy for the user. We now use a unified card layout below. */}
 
-                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
-                                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                    <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                                        <BookOpen className="text-emerald-500" size={24} />
-                                        Histórico de Livros Gerados
-                                    </h3>
+                             <DashboardCharts leads={leads} orders={orders} />
 
-                                    <div className="flex flex-wrap items-center gap-3 text-sm">
-                                        <select
-                                            value={salesFilter}
-                                            onChange={e => setSalesFilter(e.target.value as any)}
-                                            className="p-2 border rounded-md text-slate-700 font-medium"
-                                        >
-                                            <option value="all">Todo o Período</option>
-                                            <option value="today">Hoje</option>
-                                            <option value="week">Últimos 7 dias</option>
-                                            <option value="month">Este Mês</option>
-                                            <option value="custom">Data Personalizada</option>
-                                        </select>
+                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+                                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                     <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                                         <BookOpen className="text-emerald-500" size={24} />
+                                         Solicitações e Histórico de Geração
+                                     </h3>
 
-                                        {salesFilter === 'custom' && (
-                                            <div className="flex items-center gap-2">
-                                                <input type="date" value={salesStartDate} onChange={e => setSalesStartDate(e.target.value)} className="p-2 border rounded-md" />
-                                                <span className="text-slate-500">até</span>
-                                                <input type="date" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)} className="p-2 border rounded-md" />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="divide-y divide-slate-100 bg-white">
-                                    {getFilteredProjects().length === 0 && (
-                                        <div className="p-12 text-center text-slate-400 font-medium">
-                                            Nenhum livro gerado encontrado para o período selecionado.
-                                        </div>
-                                    )}
-                                    {getFilteredProjects().map((order: any, idx: number) => (
-                                        <div key={order.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6">
-                                            <div className="flex items-center gap-6 w-full lg:flex-1">
-                                                <div className="w-16 h-20 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-slate-200">
-                                                    📚
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="flex flex-col mb-2">
-                                                        <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest leading-none mb-1">Livro Gerado</span>
-                                                        <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
-                                                            {order.title || "Geração sem Título"}
-                                                        </h4>
-                                                    </div>
-                                                    
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                <User size={12} />
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Cliente</span>
-                                                                <span className="text-sm font-bold text-slate-700">{order.customerName || "-"}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                <Mail size={12} />
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">E-mail</span>
-                                                                <span className="text-sm text-slate-600">{order.customerEmail}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                                                                <MessageCircle size={12} />
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">WhatsApp</span>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="text-sm text-slate-700 font-bold">{order.customerPhone || "N/A"}</span>
-                                                                    {order.customerPhone && order.customerPhone !== 'N/A' && (
-                                                                        <a
-                                                                            href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition shadow-sm"
-                                                                            title="Falar no WhatsApp"
-                                                                        >
-                                                                            <MessageCircle size={10} />
-                                                                        </a>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 bg-emerald-50 text-emerald-600 rounded flex items-center justify-center text-[10px] font-bold">A</div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Autor(a)</span>
-                                                                <span className="text-sm font-bold text-slate-700">{order.authorName || "N/A"}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                <Calendar size={12} />
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Data de Geração</span>
-                                                                <span className="text-sm text-slate-600">
-                                                                    {order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
-                                                <div className="flex flex-col items-end gap-2">
-                                                    <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                                        ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                                        : 'bg-amber-50 text-amber-700 border-amber-200'
-                                                    }`}>
-                                                        {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
-                                                    </span>
-                                                    
-                                                    <div className="flex items-center gap-2 bg-slate-50 p-1 px-2 rounded-lg border border-slate-200">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase">Créditos:</span>
-                                                        <button 
-                                                            onClick={() => handleManageCredits(order.customerEmail, -1)}
-                                                            className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition shadow-sm font-bold"
-                                                            title="Remover 1 Crédito"
-                                                        >
-                                                            -
-                                                        </button>
-                                                        <span className="text-xs font-bold text-slate-700 min-w-[12px] text-center">
-                                                            {order.credits ?? 0}
-                                                        </span>
-                                                        <button 
-                                                            onClick={() => handleManageCredits(order.customerEmail, 1)}
-                                                            className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition shadow-sm font-bold"
-                                                            title="Adicionar 1 Crédito"
-                                                        >
-                                                            +
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="flex items-center gap-2">
-                                                    {order.status === 'IDLE' ? (
-                                                        <button 
-                                                            onClick={async () => {
-                                                                if (!confirm(`Deseja forçar o início da produção para ${order.customerEmail}?`)) return;
-                                                                try {
-                                                                    const res = await fetch(`${getApiBase()}/api/projects/${order.projectId}/research`, {
-                                                                        method: 'POST',
-                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                        body: JSON.stringify({ email: order.customerEmail })
-                                                                    });
-                                                                    if (res.ok) {
-                                                                        alert("Produção iniciada com sucesso! O livro começará a ser gerado em segundo plano.");
-                                                                        refreshAll();
-                                                                    } else {
-                                                                        const d = await res.json();
-                                                                        alert("Erro ao iniciar: " + (d.error || "Erro desconhecido"));
-                                                                    }
-                                                                } catch (e) { alert("Erro de conexão"); }
-                                                            }}
-                                                            className="flex items-center gap-2 px-5 py-3 bg-amber-500 text-white rounded-xl hover:bg-amber-600 transition-all font-black text-xs shadow-lg shadow-amber-200 uppercase tracking-widest"
-                                                        >
-                                                            <Zap size={16} /> PRODUZIR LIVRO
-                                                        </button>
-                                                    ) : (
-                                                        (order.downloadUrl || order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && (
+                                     <div className="flex flex-wrap items-center gap-3 text-sm">
+                                         <select
+                                             value={salesFilter}
+                                             onChange={e => setSalesFilter(e.target.value as any)}
+                                             className="p-2 border rounded-md text-slate-700 font-medium"
+                                         >
+                                             <option value="all">Todo o Período</option>
+                                             <option value="today">Hoje</option>
+                                             <option value="week">Últimos 7 dias</option>
+                                             <option value="month">Este Mês</option>
+                                             <option value="custom">Data Personalizada</option>
+                                         </select>
+
+                                         {salesFilter === 'custom' && (
+                                             <div className="flex items-center gap-2">
+                                                 <input type="date" value={salesStartDate} onChange={e => setSalesStartDate(e.target.value)} className="p-2 border rounded-md" />
+                                                 <span className="text-slate-500">até</span>
+                                                 <input type="date" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)} className="p-2 border rounded-md" />
+                                             </div>
+                                         )}
+                                     </div>
+                                 </div>
+                                 <div className="divide-y divide-slate-100 bg-white">
+                                     {getFilteredProjects().length === 0 && (
+                                         <div className="p-12 text-center text-slate-400 font-medium">
+                                             Nenhum registro encontrado para o período selecionado.
+                                         </div>
+                                     )}
+                                     {getFilteredProjects().map((order: any, idx: number) => (
+                                         <div key={order.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6">
+                                             <div className="flex items-center gap-6 w-full lg:flex-1">
+                                                 <div className="w-16 h-20 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-slate-200">
+                                                     📚
+                                                 </div>
+                                                 <div className="flex-1">
+                                                     <div className="flex flex-col mb-2">
+                                                         <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest leading-none mb-1">Registro de Geração</span>
+                                                         <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
+                                                             {order.title || "Geração sem Título"}
+                                                         </h4>
+                                                     </div>
+                                                     
+                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                                                         <div className="flex items-center gap-2">
+                                                             <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                 <User size={12} />
+                                                             </div>
+                                                             <div className="flex flex-col">
+                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Cliente</span>
+                                                                 <span className="text-sm font-bold text-slate-700">{order.customerName || "-"}</span>
+                                                             </div>
+                                                         </div>
+                                                         <div className="flex items-center gap-2">
+                                                             <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                 <Mail size={12} />
+                                                             </div>
+                                                             <div className="flex flex-col">
+                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">E-mail</span>
+                                                                 <span className="text-sm text-slate-600">{order.customerEmail}</span>
+                                                             </div>
+                                                         </div>
+                                                         <div className="flex items-center gap-2">
+                                                             <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                                                                 <MessageCircle size={12} />
+                                                             </div>
+                                                             <div className="flex flex-col">
+                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">WhatsApp</span>
+                                                                 <div className="flex items-center gap-2">
+                                                                     <span className="text-sm text-slate-700 font-bold">{order.customerPhone || "N/A"}</span>
+                                                                     {order.customerPhone && order.customerPhone !== 'N/A' && (
+                                                                         <a
+                                                                             href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`}
+                                                                             target="_blank"
+                                                                             rel="noreferrer"
+                                                                             className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition shadow-sm"
+                                                                             title="Falar no WhatsApp"
+                                                                         >
+                                                                             <MessageCircle size={10} />
+                                                                         </a>
+                                                                     )}
+                                                                 </div>
+                                                             </div>
+                                                         </div>
+                                                         <div className="flex items-center gap-2">
+                                                             <div className="w-6 h-6 bg-emerald-50 text-emerald-600 rounded flex items-center justify-center text-[10px] font-bold">A</div>
+                                                             <div className="flex flex-col">
+                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Autor(a)</span>
+                                                                 <span className="text-sm font-bold text-slate-700">{order.authorName || "N/A"}</span>
+                                                             </div>
+                                                         </div>
+                                                         <div className="flex items-center gap-2">
+                                                             <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                 <Calendar size={12} />
+                                                             </div>
+                                                             <div className="flex flex-col">
+                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Data</span>
+                                                                 <span className="text-sm text-slate-600">
+                                                                     {order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}
+                                                                 </span>
+                                                             </div>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                             
+                                             <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
+                                                 <div className="flex flex-col items-end gap-2">
+                                                     <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                                         ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
+                                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                                         : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                     }`}>
+                                                         {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
+                                                     </span>
+                                                     
+                                                     <div className="flex items-center gap-2 bg-slate-50 p-1 px-2 rounded-lg border border-slate-200">
+                                                         <span className="text-[9px] font-black text-slate-400 uppercase">Créditos:</span>
+                                                         <button 
+                                                             onClick={() => handleManageCredits(order.customerEmail, -1)}
+                                                             className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition shadow-sm font-bold"
+                                                             title="Remover 1 Crédito"
+                                                         >
+                                                             -
+                                                         </button>
+                                                         <span className="text-xs font-bold text-slate-700 min-w-[12px] text-center">
+                                                             {order.credits ?? 0}
+                                                         </span>
+                                                         <button 
+                                                             onClick={() => handleManageCredits(order.customerEmail, 1)}
+                                                             className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition shadow-sm font-bold"
+                                                             title="Adicionar 1 Crédito"
+                                                         >
+                                                             +
+                                                         </button>
+                                                     </div>
+                                                 </div>
+                                                 
+                                                 <div className="flex items-center gap-2">
+                                                     <button 
+                                                         onClick={() => handleWipe(order.customerEmail)} 
+                                                         className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg hover:bg-red-600 hover:text-white transition-all font-bold text-[10px] uppercase shadow-sm"
+                                                         title="REMOVER DE TUDO: Apaga créditos, projetos e registros deste e-mail"
+                                                     >
+                                                         <span>🗑️</span> REMOVER TUDO
+                                                     </button>
+
+                                                     {order.status === 'IDLE' ? (
+                                                         <button 
+                                                             onClick={async () => {
+                                                                 if (!confirm(`Deseja forçar o início da produção para ${order.customerEmail}?`)) return;
+                                                                 try {
+                                                                     const res = await fetch(`${getApiBase()}/api/projects/${order.projectId}/research`, {
+                                                                         method: 'POST',
+                                                                         headers: { 'Content-Type': 'application/json' },
+                                                                         body: JSON.stringify({ email: order.customerEmail })
+                                                                     });
+                                                                     if (res.ok) {
+                                                                         alert("Produção iniciada com sucesso! O livro começará a ser gerado em segundo plano.");
+                                                                         refreshAll();
+                                                                     } else {
+                                                                         const d = await res.json();
+                                                                         alert("Erro ao iniciar: " + (d.error || "Erro desconhecido"));
+                                                                     }
+                                                                 } catch (e) { alert("Erro de conexão"); }
+                                                             }}
+                                                             className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all font-black text-[10px] shadow-sm uppercase tracking-widest"
+                                                         >
+                                                             <Zap size={14} /> PRODUZIR
+                                                         </button>
+                                                     ) : (
+                                                         (order.downloadUrl || order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && (
+
                                                             <a
                                                                 href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/${order.projectId}/download`}`}
                                                                 target="_blank"

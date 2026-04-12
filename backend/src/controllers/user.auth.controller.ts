@@ -186,7 +186,7 @@ export const UserAuthController = {
             const userProjects = projectList.filter((p: any) => {
                 if (!p) return false;
                 
-                const strUser = String(cleanUser).toLowerCase().trim();
+                const strUser = String(email || '').toLowerCase().trim(); // FIX: Use original email, not sanitized cleanUser
                 const metadata = p.metadata || {};
                 const contact = metadata.contact || p.contact || {};
                 
