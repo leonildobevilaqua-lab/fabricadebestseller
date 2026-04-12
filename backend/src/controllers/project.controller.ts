@@ -631,7 +631,7 @@ export const startResearch = async (req: Request, res: Response) => {
                 });
 
                 const structure = await AIService.generateStructure(
-                    project.metadata.bookTitle, 
+                    project.metadata.bookTitle || 'Livro', 
                     project.metadata.subTitle || "", 
                     finalFullContext, 
                     targetLang, 
