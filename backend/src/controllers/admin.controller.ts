@@ -488,8 +488,9 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                 const projectId = p.id || metadata.id;
                 
                 // Replicate info from VIP Area: Title, Author, Date, Status
-                const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || "Geração de IA";
-                const authorName = metadata.contact?.name || metadata.authorName || p.authorName || "Cliente";
+                const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || p.title || "Geração de IA";
+                const authorName = metadata.authorName || metadata.contact?.name || p.authorName || "Cliente";
+                const customerName = metadata.contact?.name || metadata.customerName || p.customerName || authorName || "Cliente";
                 
                 const customerEmail = 
                     (p.customerEmail || p.email || p.userEmail || 
@@ -505,7 +506,6 @@ export const getProjectHistory = async (req: Request, res: Response) => {
 
                 // Phone Lookup
                 const customerPhone = metadata.contact?.phone || metadata.contact?.fullPhone || p.phone || p.fullPhone || phoneMap[cleanEmail] || "N/A";
-                const customerName = metadata.contact?.name || metadata.customerName || p.customerName || authorName;
 
                 // Physical file check
                 let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
