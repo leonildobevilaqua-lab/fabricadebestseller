@@ -1084,7 +1084,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
 
     const getCombinedTimeline = () => {
-        const pList = getFilteredProjects();
+        const pList = getFilteredProjects().map(p => ({ ...p, isProject: true }));
         const lList = leads.map(l => ({ ...l, isLead: true, date: l.date || l.createdAt }));
         const combined = [...pList, ...lList];
         return combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -1481,7 +1481,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                      </div>
                                  </div>
                                  <div className="divide-y divide-slate-100 bg-white">
-                                     {getFilteredProjects().length === 0 && (
+                                     {getCombinedTimeline().length === 0 && (
                                          <div className="p-12 text-center text-slate-400 font-medium">
                                              Nenhum registro encontrado para o período selecionado.
                                          </div>
@@ -1490,140 +1490,101 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                           if (item.isProject) {
                                               const order = item;
                                               return (
-                                                  <div key={order.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6">
+                                                  <div key={order.projectId || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6 border-l-4 border-indigo-500 bg-white">
+                                                      {/* INFO LEFT */}
                                                       <div className="flex items-center gap-6 w-full lg:flex-1">
-                                                          <div className="w-16 h-20 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-slate-200">
-                                                              📚
+                                                          {/* Book Icon */}
+                                                          <div className="w-16 h-20 bg-indigo-50 text-indigo-600 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-indigo-200">
+                                                              📖
                                                           </div>
-                                                          <div className="flex-1">
-                                                              <div className="flex flex-col mb-2">
-                                                                  <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest leading-none mb-1">Registro de Geração</span>
+                                                          
+                                                          <div className="flex-1 min-w-0">
+                                                              <div className="flex flex-col mb-3">
+                                                                  <span className="text-[10px] text-indigo-500 font-black uppercase tracking-widest leading-none mb-1">
+                                                                      Obra Gerada
+                                                                  </span>
                                                                   <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
-                                                                      {order.title || "Geração sem Título"}
+                                                                      {order.title || "Untitled Project"}
                                                                   </h4>
+                                                                  <div className="flex items-center gap-2 mt-1">
+                                                                      <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Autor:</span>
+                                                                      <span className="text-xs font-black text-slate-600 uppercase underline decoration-indigo-200 decoration-2 underline-offset-2">
+                                                                          {order.authorName || "Unknown Author"}
+                                                                      </span>
+                                                                  </div>
                                                               </div>
-                                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                                                              
+                                                              <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
                                                                   <div className="flex items-center gap-2">
-                                                                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                          <User size={12} />
-                                                                      </div>
-                                                                      <div className="flex flex-col">
-                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Cliente</span>
-                                                                          <span className="text-sm font-bold text-slate-700">{order.customerName || "-"}</span>
-                                                                      </div>
+                                                                      <User size={14} className="text-slate-400" />
+                                                                      <span className="text-xs font-bold text-slate-600 truncate max-w-[150px]">{order.customerName || "N/A"}</span>
                                                                   </div>
                                                                   <div className="flex items-center gap-2">
-                                                                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                          <Mail size={12} />
-                                                                      </div>
-                                                                      <div className="flex flex-col">
-                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">E-mail</span>
-                                                                          <span className="text-sm text-slate-600">{order.customerEmail}</span>
-                                                                      </div>
+                                                                      <Mail size={14} className="text-slate-400" />
+                                                                      <span className="text-xs font-bold text-slate-600 truncate max-w-[150px] font-mono">{order.customerEmail || "N/A"}</span>
                                                                   </div>
                                                                   <div className="flex items-center gap-2">
-                                                                      <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                                                                          <MessageCircle size={12} />
-                                                                      </div>
-                                                                      <div className="flex flex-col">
-                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">WhatsApp</span>
-                                                                          <div className="flex items-center gap-2">
-                                                                              <span className="text-sm text-slate-700 font-bold">{order.customerPhone || "N/A"}</span>
-                                                                              {order.customerPhone && order.customerPhone !== 'N/A' && (
-                                                                                  <a
-                                                                                      href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`}
-                                                                                      target="_blank"
-                                                                                      rel="noreferrer"
-                                                                                      className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition shadow-sm"
-                                                                                      title="Falar no WhatsApp"
-                                                                                  >
-                                                                                      <MessageCircle size={10} />
-                                                                                  </a>
-                                                                              )}
-                                                                          </div>
-                                                                      </div>
+                                                                      <MessageCircle size={14} className="text-slate-400" />
+                                                                      <span className="text-xs font-bold text-slate-600 italic">
+                                                                          {order.customerPhone || "N/A"}
+                                                                      </span>
                                                                   </div>
                                                                   <div className="flex items-center gap-2">
-                                                                      <div className="w-6 h-6 bg-emerald-50 text-emerald-600 rounded flex items-center justify-center text-[10px] font-bold">A</div>
-                                                                      <div className="flex flex-col">
-                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Autor(a)</span>
-                                                                          <span className="text-sm font-bold text-slate-700">{order.authorName || "N/A"}</span>
-                                                                      </div>
-                                                                  </div>
-                                                                  <div className="flex items-center gap-2">
-                                                                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                          <Calendar size={12} />
-                                                                      </div>
-                                                                      <div className="flex flex-col">
-                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Data</span>
-                                                                          <span className="text-sm text-slate-600">
-                                                                              {order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}
-                                                                          </span>
-                                                                      </div>
+                                                                      <Calendar size={14} className="text-slate-400" />
+                                                                      <span className="text-xs font-medium text-slate-400">
+                                                                          {new Date(order.date).toLocaleString('pt-BR')}
+                                                                      </span>
                                                                   </div>
                                                               </div>
                                                           </div>
                                                       </div>
-                                                      
-                                                      <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
-                                                          <div className="flex flex-col items-end gap-2">
-                                                              <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                                                  ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
-                                                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                                                  : 'bg-amber-50 text-amber-700 border-amber-200'
-                                                              }`}>
-                                                                  {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
-                                                              </span>
+
+                                                      {/* ACTIONS RIGHT */}
+                                                      <div className="flex items-center gap-4 w-full lg:w-auto">
+                                                          {/* Status and Date */}
+                                                          <div className="flex flex-col items-end mr-4 min-w-[120px]">
+                                                              <div className="flex items-center gap-2 mb-2">
+                                                                  <div className={`w-2 h-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`}></div>
+                                                                  <span className={`text-[10px] font-black uppercase tracking-widest ${order.status === 'COMPLETED' ? 'text-emerald-600' : 'text-blue-600'}`}>
+                                                                      {order.status === 'COMPLETED' ? 'Kit Pronto' : 'Em Produção'}
+                                                                  </span>
+                                                              </div>
                                                               
-                                                              <div className="flex items-center gap-2 bg-slate-50 p-1 px-2 rounded-lg border border-slate-200">
-                                                                  <span className="text-[9px] font-black text-slate-400 uppercase">Créditos:</span>
-                                                                  <button onClick={() => handleManageCredits(order.customerEmail, -1)} className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition shadow-sm font-bold">-</button>
-                                                                  <span className="text-xs font-bold text-slate-700 min-w-[12px] text-center">{order.credits ?? 0}</span>
-                                                                  <button onClick={() => handleManageCredits(order.customerEmail, 1)} className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition shadow-sm font-bold">+</button>
+                                                              <div className="flex flex-col items-end">
+                                                                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-tighter mb-1">ID do Projeto</span>
+                                                                  <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                                                      {order.projectId?.substring(0, 8)}...
+                                                                  </span>
                                                               </div>
                                                           </div>
-                                                          
-                                                          <div className="flex items-center gap-2">
-                                                              <button onClick={() => handleWipe(order.customerEmail)} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg hover:bg-red-600 hover:text-white transition-all font-bold text-[10px] uppercase shadow-sm">
-                                                                  <span>🗑️</span> REMOVER TUDO
-                                                              </button>
 
-                                                              {order.status === 'IDLE' ? (
-                                                                  <button 
-                                                                      onClick={async () => {
-                                                                          if (!confirm(`Deseja forçar o início da produção para ${order.customerEmail}?`)) return;
-                                                                          try {
-                                                                              const res = await fetch(`${getApiBase()}/api/projects/${order.projectId}/research`, {
-                                                                                  method: 'POST',
-                                                                                  headers: { 'Content-Type': 'application/json' },
-                                                                                  body: JSON.stringify({ email: order.customerEmail })
-                                                                              });
-                                                                              if (res.ok) {
-                                                                                  alert("Produção iniciada com sucesso!");
-                                                                                  refreshAll();
-                                                                              }
-                                                                          } catch (e) { alert("Erro de conexão"); }
-                                                                      }}
-                                                                      className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all font-black text-[10px] shadow-sm uppercase tracking-widest"
+                                                          {/* Action Buttons */}
+                                                          <div className="flex items-center gap-2">
+                                                              {order.status === 'COMPLETED' && (
+                                                                  <button
+                                                                      onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
+                                                                      className="p-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 flex items-center justify-center group"
+                                                                      title="Baixar Kit Completo"
                                                                   >
-                                                                      <Zap size={14} /> PRODUZIR
+                                                                      <Download size={20} className="group-hover:scale-110 transition-transform" />
                                                                   </button>
-                                                              ) : (
-                                                                  (order.downloadUrl || order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && (
-                                                                     <a
-                                                                         href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/${order.projectId}/download`}`}
-                                                                         target="_blank"
-                                                                         rel="noreferrer"
-                                                                         className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-black text-xs shadow-lg shadow-indigo-200 uppercase tracking-widest group"
-                                                                     >
-                                                                         <Download size={16} /> 
-                                                                         <span className="hidden sm:inline">Baixar Kit ZIP</span>
-                                                                     </a>
-                                                                  )
                                                               )}
-                                                              <button onClick={() => handleImpersonate(order.customerEmail)} className="p-3 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-all shadow-sm">👁️</button>
-                                                              <button onClick={() => handleAdminChangePassword(order.customerEmail)} className="p-3 text-slate-400 border border-slate-200 rounded-xl hover:bg-amber-50 transition-all shadow-sm"><User size={20} /></button>
-                                                              <button onClick={() => handleDeleteProject(order.projectId)} className="p-3 text-rose-500 border border-rose-200 rounded-xl hover:bg-rose-50 transition-all shadow-sm"><Trash2 size={20} /></button>
+                                                              
+                                                              <button
+                                                                  onClick={() => handleImpersonate(order.customerEmail)}
+                                                                  className="p-4 text-indigo-600 border border-indigo-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm bg-white"
+                                                                  title="Acessar Área VIP"
+                                                              >
+                                                                  <User size={20} />
+                                                              </button>
+                                                              
+                                                              <button
+                                                                  onClick={() => handleDeleteProject(order.projectId)}
+                                                                  className="p-4 text-rose-400 border border-slate-200 rounded-2xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all shadow-sm bg-white"
+                                                                  title="Excluir"
+                                                              >
+                                                                  <Trash2 size={20} />
+                                                              </button>
                                                           </div>
                                                       </div>
                                                   </div>
@@ -1668,14 +1629,14 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                               );
                                           }
                                       })}
-                                </div>
-                                <div className="bg-slate-50 p-4 border-t border-slate-200 text-right">
-                                    <span className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">Total de Gerações: </span>
-                                    <span className="text-xl font-black text-slate-800 ml-2">
-                                        {getCombinedTimeline().length} Registros
-                                    </span>
-                                </div>
-                            </div>
+                                 </div>
+                                 <div className="bg-slate-50 p-4 border-t border-slate-200 text-right">
+                                     <span className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">Total de Gerações: </span>
+                                     <span className="text-xl font-black text-slate-800 ml-2">
+                                         {getCombinedTimeline().length} Registros
+                                     </span>
+                                 </div>
+                             </div>
                         </div>
                     )}
 

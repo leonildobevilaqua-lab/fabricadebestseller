@@ -186,10 +186,11 @@ export const UserAuthController = {
             const userProjects = projectList.filter((p: any) => {
                 if (!p) return false;
                 
-                const strUser = String(email || '').toLowerCase().trim(); // FIX: Use original email, not sanitized cleanUser
+                const strUser = String(email || '').toLowerCase().trim();
                 const metadata = p.metadata || {};
                 const contact = metadata.contact || p.contact || {};
                 
+                // --- 1. SEARCH IN DIRECT FIELDS ---
                 const emails = [
                     contact.email,
                     contact.userEmail,
@@ -197,42 +198,45 @@ export const UserAuthController = {
                     p.email,
                     metadata.email,
                     metadata.userEmail,
+                    metadata.authorEmail, // ADDED: Critical for many projects
                     p.userEmail,
                     p.metadata?.userEmail,
+                    p.metadata?.authorEmail, // ADDED
                     p.userId
                 ].filter(Boolean).map(e => String(e).toLowerCase().trim());
 
                 if (emails.includes(strUser)) return true;
 
-                // Deep checks in metadata
+                // --- 2. DEEP METADATA PROBE ---
                 try {
                     if (p.metadata) {
-                        // Standard metadata fields
-                        const mEmail = (p.metadata.email || p.metadata.userEmail || '').trim().toLowerCase();
+                        const mEmail = (p.metadata.email || p.metadata.userEmail || p.metadata.authorEmail || '').trim().toLowerCase();
                         if (mEmail === strUser) return true;
 
-                        // Nested contact field (Crucial for many recent projects)
                         if (p.metadata.contact && p.metadata.contact.email) {
                             const cEmail = (p.metadata.contact.email || '').trim().toLowerCase();
                             if (cEmail === strUser) return true;
                         }
-
-                        // Deep nested search in full object text as last resort
-                        const pString = JSON.stringify(p).toLowerCase();
-                        if (pString.includes(`"${strUser}"`) || pString.includes(`:${strUser}`)) {
-                            return true;
-                        }
                     }
                 } catch (err) {}
+
+                // --- 3. MASTER/LEONILDO BYPASS ---
+                // If it's Leonildo, he should see projects where his name is mentioned or he is the author
+                if (strUser.includes('leonildo') || strUser === 'contato@leonildobevilaqua.com.br') {
+                    const pString = JSON.stringify(p).toLowerCase();
+                    if (pString.includes('leonildo') || pString.includes(strUser)) return true;
+                }
+
+                // --- 4. STRING SEARCH (FALLBACK) ---
+                const pStringFull = JSON.stringify(p).toLowerCase();
+                if (pStringFull.includes(`"${strUser}"`) || pStringFull.includes(`:${strUser}`)) {
+                    return true;
+                }
 
                 return false;
             });
 
-            if (userProjects.length === 0 && (isMaster || cleanUser.includes('leonildo'))) {
-                console.warn(`[AUTH_ME] ⚠️ No projects found for known user ${cleanUser}. Checking raw keys...`);
-            }
-
-            console.log(`[ME] Found ${userProjects.length} projects for ${cleanUser} (Total in list: ${projectList.length})`);
+            console.log(`[ME] Filtered ${userProjects.length} projects for ${cleanUser} out of ${projectList.length} total.`);
 
             // Usage count based on actual projects
             const usageCount = userProjects.filter((p: any) =>
