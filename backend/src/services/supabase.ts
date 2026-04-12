@@ -8,4 +8,12 @@ const supabaseUrl = rawUrl.includes('.') ? rawUrl : `https://${rawUrl.replace('h
 // Use Service Role if available, otherwise fallback to Anon Key
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1bGN4YnFiaXFsYWdvY3BqZnZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NDE4ODAsImV4cCI6MjA4MzMxNzg4MH0.ooJbWU70OZBMkatrvx-XkkNq9JPZ878UCow7cXeJzAs';
 
+console.log(`[SUPABASE] Initializing with URL: ${supabaseUrl}`);
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY && !process.env.SUPABASE_KEY) {
+    console.warn(`[SUPABASE] WARNING: Using hardcoded fallback key. Check your environment variables!`);
+} else {
+    const keySource = process.env.SUPABASE_SERVICE_ROLE_KEY ? "Service Role" : "Anon Key";
+    console.log(`[SUPABASE] Using ${keySource} from environment: ${supabaseKey.substring(0, 10)}...`);
+}
+
 export const supabase = createClient(supabaseUrl, supabaseKey);

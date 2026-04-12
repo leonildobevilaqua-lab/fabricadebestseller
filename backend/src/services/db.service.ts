@@ -39,17 +39,32 @@ export const getVal = async (pathStr: string): Promise<any> => {
 
         // 1. SUPABASE PRIMARY: Check Supabase First (Pro Plan Active)
         if (isCollectionRoot) {
+            console.log(`[DB] Fetching collection: ${normalized}`);
             const { data, error } = await supabase
                 .from('kv_store')
                 .select('*')
-                .like('key', `${normalized}/%`);
+                .or(`key.like.${normalized}/%,key.eq.${normalized}`);
+
+            if (error) {
+                console.error(`[DB] Supabase error fetching collection ${normalized}:`, error.message);
+            }
 
             if (!error && data && data.length > 0) {
-                console.log(`[DB] Serving collection ${normalized} from Supabase`);
-                return data.map(item => {
+                console.log(`[DB] Serving collection ${normalized} from Supabase (${data.length} items)`);
+                
+                let allItems: any[] = [];
+                data.forEach(item => {
                     const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-                    return { ...val, updated_at: item.updated_at };
-                }).sort((a, b) => {
+                    if (item.key === normalized && Array.isArray(val)) {
+                        // It's a root array
+                        allItems = [...allItems, ...val];
+                    } else if (item.key.startsWith(`${normalized}/`)) {
+                        // It's an individual item
+                        allItems.push({ ...val, updated_at: item.updated_at });
+                    }
+                });
+
+                return allItems.sort((a, b) => {
                     const da = new Date(a.updated_at || a.date || a.createdAt || 0).getTime();
                     const db = new Date(b.updated_at || b.date || b.createdAt || 0).getTime();
                     return db - da; // Newer first
@@ -66,6 +81,10 @@ export const getVal = async (pathStr: string): Promise<any> => {
                 .select('value')
                 .eq('key', k)
                 .maybeSingle();
+
+            if (error) {
+                console.error(`[DB] Supabase error fetching exact key ${k}:`, error.message);
+            }
 
             if (!error && data) {
                 const val = data.value;
