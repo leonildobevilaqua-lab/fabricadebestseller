@@ -282,7 +282,12 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe, 
                             {(lead.bookTitle || lead.topic || lead.details?.originalName) && (
                                 <div className="p-2 bg-slate-100 rounded border border-slate-200 text-sm border-l-4 border-l-emerald-400">
                                     <span className="text-slate-500 font-bold block text-[10px] uppercase">Tema / Assunto</span>
-                                    <span className="text-slate-800 font-medium">{lead.bookTitle || lead.topic || lead.details?.originalName}</span>
+                                    <span className="text-slate-800 font-medium">
+                                        {(() => {
+                                            const raw = lead.bookTitle || lead.topic || lead.details?.originalName || "";
+                                            return raw.length > 200 ? raw.substring(0, 200) + "..." : raw;
+                                        })()}
+                                    </span>
                                 </div>
                             )}
 

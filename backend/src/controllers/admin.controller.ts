@@ -490,7 +490,13 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                 // Replicate info from VIP Area: Title, Author, Date, Status
                 const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || "Geração de IA";
                 const authorName = metadata.contact?.name || metadata.authorName || p.authorName || "Cliente";
-                const customerEmail = metadata.contact?.email || p.email || metadata.userEmail || "N/A";
+                
+                const customerEmail = 
+                    (p.customerEmail || p.email || p.userEmail || 
+                     p.metadata?.contact?.email || 
+                     p.metadata?.email || 
+                     p.metadata?.userEmail || 
+                     "N/A").trim().toLowerCase();
                 
                 // Fetch credits from allCredits
                 const safeEmail = customerEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');

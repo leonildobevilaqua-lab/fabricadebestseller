@@ -204,10 +204,25 @@ export const UserAuthController = {
 
                 if (emails.includes(strUser)) return true;
 
-                // Check for partial matches or inside the whole object (very robust fallback)
+                // Deep checks in metadata
                 try {
-                    const pStr = JSON.stringify(p).toLowerCase();
-                    if (pStr.includes(strUser)) return true;
+                    if (p.metadata) {
+                        // Standard metadata fields
+                        const mEmail = (p.metadata.email || p.metadata.userEmail || '').trim().toLowerCase();
+                        if (mEmail === strUser) return true;
+
+                        // Nested contact field (Crucial for many recent projects)
+                        if (p.metadata.contact && p.metadata.contact.email) {
+                            const cEmail = (p.metadata.contact.email || '').trim().toLowerCase();
+                            if (cEmail === strUser) return true;
+                        }
+
+                        // Deep nested search in full object text as last resort
+                        const pString = JSON.stringify(p).toLowerCase();
+                        if (pString.includes(`"${strUser}"`) || pString.includes(`:${strUser}`)) {
+                            return true;
+                        }
+                    }
                 } catch (err) {}
 
                 return false;
