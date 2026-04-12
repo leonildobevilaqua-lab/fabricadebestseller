@@ -499,15 +499,20 @@ export const getProjectHistory = async (req: Request, res: Response) => {
 
                 // Phone Lookup
                 const customerPhone = metadata.contact?.phone || metadata.contact?.fullPhone || p.phone || p.fullPhone || phoneMap[cleanEmail] || "N/A";
+                const customerName = metadata.contact?.name || metadata.customerName || p.customerName || authorName;
 
                 // Physical file check
                 let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
                 
+                // Truncate title if it's too long (safety against "bagunça")
+                const safeTitle = (bookTitle.length > 150) ? bookTitle.substring(0, 150) + "..." : bookTitle;
+
                 return {
                     id: projectId,
                     date: p.createdAt || metadata.createdAt || p.date || null, // No fallback to new Date() for the list
-                    title: bookTitle,
+                    title: safeTitle,
                     authorName: authorName,
+                    customerName: customerName,
                     customerEmail: customerEmail,
                     customerPhone: customerPhone,
                     status: (metadata.status || p.status || "READY").toUpperCase(),

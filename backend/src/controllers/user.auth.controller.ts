@@ -186,14 +186,13 @@ export const UserAuthController = {
             const userProjects = projectList.filter((p: any) => {
                 if (!p) return false;
                 
-                // Track all possible email locations - CASE INSENSITIVE
                 const strUser = String(cleanUser).toLowerCase().trim();
-                
                 const metadata = p.metadata || {};
                 const contact = metadata.contact || p.contact || {};
                 
                 const emails = [
                     contact.email,
+                    contact.userEmail,
                     p.contact?.email,
                     p.email,
                     metadata.email,
@@ -205,7 +204,7 @@ export const UserAuthController = {
 
                 if (emails.includes(strUser)) return true;
 
-                // Deep search fallback: check for email match in ANY property
+                // Check for partial matches or inside the whole object (very robust fallback)
                 try {
                     const pStr = JSON.stringify(p).toLowerCase();
                     if (pStr.includes(strUser)) return true;
@@ -214,7 +213,11 @@ export const UserAuthController = {
                 return false;
             });
 
-            console.log(`[ME] Found ${userProjects.length} projects for ${cleanUser}`);
+            if (userProjects.length === 0 && (isMaster || cleanUser.includes('leonildo'))) {
+                console.warn(`[AUTH_ME] ⚠️ No projects found for known user ${cleanUser}. Checking raw keys...`);
+            }
+
+            console.log(`[ME] Found ${userProjects.length} projects for ${cleanUser} (Total in list: ${projectList.length})`);
 
             // Usage count based on actual projects
             const usageCount = userProjects.filter((p: any) =>
