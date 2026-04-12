@@ -1083,6 +1083,13 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     };
 
+    const getCombinedTimeline = () => {
+        const pList = getFilteredProjects();
+        const lList = leads.map(l => ({ ...l, isLead: true, date: l.date || l.createdAt }));
+        const combined = [...pList, ...lList];
+        return combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    };
+
     const isLogged = !!token;
 
     const handleChangePassword = async (e: React.FormEvent) => {
@@ -1444,10 +1451,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                             <DashboardCharts leads={leads} orders={orders} />
 
-                             {/* UI REMOVED: Tables are too messy for the user. We now use a unified card layout below. */}
-
-                             <DashboardCharts leads={leads} orders={orders} />
-
                              <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
                                  <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                      <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight flex items-center gap-2">
@@ -1483,193 +1486,193 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                              Nenhum registro encontrado para o período selecionado.
                                          </div>
                                      )}
-                                     {getFilteredProjects().map((order: any, idx: number) => (
-                                         <div key={order.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6">
-                                             <div className="flex items-center gap-6 w-full lg:flex-1">
-                                                 <div className="w-16 h-20 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-slate-200">
-                                                     📚
-                                                 </div>
-                                                 <div className="flex-1">
-                                                     <div className="flex flex-col mb-2">
-                                                         <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest leading-none mb-1">Registro de Geração</span>
-                                                         <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
-                                                             {order.title || "Geração sem Título"}
-                                                         </h4>
-                                                     </div>
-                                                     
-                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
-                                                         <div className="flex items-center gap-2">
-                                                             <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                 <User size={12} />
-                                                             </div>
-                                                             <div className="flex flex-col">
-                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Cliente</span>
-                                                                 <span className="text-sm font-bold text-slate-700">{order.customerName || "-"}</span>
-                                                             </div>
-                                                         </div>
-                                                         <div className="flex items-center gap-2">
-                                                             <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                 <Mail size={12} />
-                                                             </div>
-                                                             <div className="flex flex-col">
-                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">E-mail</span>
-                                                                 <span className="text-sm text-slate-600">{order.customerEmail}</span>
-                                                             </div>
-                                                         </div>
-                                                         <div className="flex items-center gap-2">
-                                                             <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
-                                                                 <MessageCircle size={12} />
-                                                             </div>
-                                                             <div className="flex flex-col">
-                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">WhatsApp</span>
-                                                                 <div className="flex items-center gap-2">
-                                                                     <span className="text-sm text-slate-700 font-bold">{order.customerPhone || "N/A"}</span>
-                                                                     {order.customerPhone && order.customerPhone !== 'N/A' && (
-                                                                         <a
-                                                                             href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`}
-                                                                             target="_blank"
-                                                                             rel="noreferrer"
-                                                                             className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition shadow-sm"
-                                                                             title="Falar no WhatsApp"
-                                                                         >
-                                                                             <MessageCircle size={10} />
-                                                                         </a>
-                                                                     )}
-                                                                 </div>
-                                                             </div>
-                                                         </div>
-                                                         <div className="flex items-center gap-2">
-                                                             <div className="w-6 h-6 bg-emerald-50 text-emerald-600 rounded flex items-center justify-center text-[10px] font-bold">A</div>
-                                                             <div className="flex flex-col">
-                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Autor(a)</span>
-                                                                 <span className="text-sm font-bold text-slate-700">{order.authorName || "N/A"}</span>
-                                                             </div>
-                                                         </div>
-                                                         <div className="flex items-center gap-2">
-                                                             <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
-                                                                 <Calendar size={12} />
-                                                             </div>
-                                                             <div className="flex flex-col">
-                                                                 <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Data</span>
-                                                                 <span className="text-sm text-slate-600">
-                                                                     {order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}
-                                                                 </span>
-                                                             </div>
-                                                         </div>
-                                                     </div>
-                                                 </div>
-                                             </div>
-                                             
-                                             <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
-                                                 <div className="flex flex-col items-end gap-2">
-                                                     <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                                         ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
-                                                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                                                         : 'bg-amber-50 text-amber-700 border-amber-200'
-                                                     }`}>
-                                                         {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
-                                                     </span>
-                                                     
-                                                     <div className="flex items-center gap-2 bg-slate-50 p-1 px-2 rounded-lg border border-slate-200">
-                                                         <span className="text-[9px] font-black text-slate-400 uppercase">Créditos:</span>
-                                                         <button 
-                                                             onClick={() => handleManageCredits(order.customerEmail, -1)}
-                                                             className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition shadow-sm font-bold"
-                                                             title="Remover 1 Crédito"
-                                                         >
-                                                             -
-                                                         </button>
-                                                         <span className="text-xs font-bold text-slate-700 min-w-[12px] text-center">
-                                                             {order.credits ?? 0}
-                                                         </span>
-                                                         <button 
-                                                             onClick={() => handleManageCredits(order.customerEmail, 1)}
-                                                             className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition shadow-sm font-bold"
-                                                             title="Adicionar 1 Crédito"
-                                                         >
-                                                             +
-                                                         </button>
-                                                     </div>
-                                                 </div>
-                                                 
-                                                 <div className="flex items-center gap-2">
-                                                     <button 
-                                                         onClick={() => handleWipe(order.customerEmail)} 
-                                                         className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg hover:bg-red-600 hover:text-white transition-all font-bold text-[10px] uppercase shadow-sm"
-                                                         title="REMOVER DE TUDO: Apaga créditos, projetos e registros deste e-mail"
-                                                     >
-                                                         <span>🗑️</span> REMOVER TUDO
-                                                     </button>
+                                      {getCombinedTimeline().map((item: any, idx: number) => {
+                                          if (item.isProject) {
+                                              const order = item;
+                                              return (
+                                                  <div key={order.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6">
+                                                      <div className="flex items-center gap-6 w-full lg:flex-1">
+                                                          <div className="w-16 h-20 bg-slate-100 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-slate-200">
+                                                              📚
+                                                          </div>
+                                                          <div className="flex-1">
+                                                              <div className="flex flex-col mb-2">
+                                                                  <span className="text-[10px] text-emerald-600 font-black uppercase tracking-widest leading-none mb-1">Registro de Geração</span>
+                                                                  <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
+                                                                      {order.title || "Geração sem Título"}
+                                                                  </h4>
+                                                              </div>
+                                                              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2 mt-4 bg-slate-50/50 p-3 rounded-xl border border-slate-100">
+                                                                  <div className="flex items-center gap-2">
+                                                                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                          <User size={12} />
+                                                                      </div>
+                                                                      <div className="flex flex-col">
+                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Cliente</span>
+                                                                          <span className="text-sm font-bold text-slate-700">{order.customerName || "-"}</span>
+                                                                      </div>
+                                                                  </div>
+                                                                  <div className="flex items-center gap-2">
+                                                                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                          <Mail size={12} />
+                                                                      </div>
+                                                                      <div className="flex flex-col">
+                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">E-mail</span>
+                                                                          <span className="text-sm text-slate-600">{order.customerEmail}</span>
+                                                                      </div>
+                                                                  </div>
+                                                                  <div className="flex items-center gap-2">
+                                                                      <div className="w-6 h-6 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                                                                          <MessageCircle size={12} />
+                                                                      </div>
+                                                                      <div className="flex flex-col">
+                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">WhatsApp</span>
+                                                                          <div className="flex items-center gap-2">
+                                                                              <span className="text-sm text-slate-700 font-bold">{order.customerPhone || "N/A"}</span>
+                                                                              {order.customerPhone && order.customerPhone !== 'N/A' && (
+                                                                                  <a
+                                                                                      href={`https://wa.me/${order.customerPhone.replace(/\D/g, '')}`}
+                                                                                      target="_blank"
+                                                                                      rel="noreferrer"
+                                                                                      className="p-1 bg-emerald-500 text-white rounded hover:bg-emerald-600 transition shadow-sm"
+                                                                                      title="Falar no WhatsApp"
+                                                                                  >
+                                                                                      <MessageCircle size={10} />
+                                                                                  </a>
+                                                                              )}
+                                                                          </div>
+                                                                      </div>
+                                                                  </div>
+                                                                  <div className="flex items-center gap-2">
+                                                                      <div className="w-6 h-6 bg-emerald-50 text-emerald-600 rounded flex items-center justify-center text-[10px] font-bold">A</div>
+                                                                      <div className="flex flex-col">
+                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Autor(a)</span>
+                                                                          <span className="text-sm font-bold text-slate-700">{order.authorName || "N/A"}</span>
+                                                                      </div>
+                                                                  </div>
+                                                                  <div className="flex items-center gap-2">
+                                                                      <div className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400">
+                                                                          <Calendar size={12} />
+                                                                      </div>
+                                                                      <div className="flex flex-col">
+                                                                          <span className="text-[9px] text-slate-400 font-black uppercase leading-none mb-0.5">Data</span>
+                                                                          <span className="text-sm text-slate-600">
+                                                                              {order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}
+                                                                          </span>
+                                                                      </div>
+                                                                  </div>
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                      
+                                                      <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-4 w-full lg:w-auto h-full border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
+                                                          <div className="flex flex-col items-end gap-2">
+                                                              <span className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border ${
+                                                                  ['PAID', 'SUCCESS', 'READY', 'COMPLETED', 'LIVRO ENTREGUE'].includes(order.status.toUpperCase()) 
+                                                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                                                  : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                              }`}>
+                                                                  {order.status === 'READY' || order.status === 'COMPLETED' ? 'Livro Gerado' : order.status}
+                                                              </span>
+                                                              
+                                                              <div className="flex items-center gap-2 bg-slate-50 p-1 px-2 rounded-lg border border-slate-200">
+                                                                  <span className="text-[9px] font-black text-slate-400 uppercase">Créditos:</span>
+                                                                  <button onClick={() => handleManageCredits(order.customerEmail, -1)} className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-red-50 hover:text-red-500 transition shadow-sm font-bold">-</button>
+                                                                  <span className="text-xs font-bold text-slate-700 min-w-[12px] text-center">{order.credits ?? 0}</span>
+                                                                  <button onClick={() => handleManageCredits(order.customerEmail, 1)} className="w-6 h-6 flex items-center justify-center bg-white border border-slate-200 rounded text-slate-400 hover:bg-emerald-50 hover:text-emerald-500 transition shadow-sm font-bold">+</button>
+                                                              </div>
+                                                          </div>
+                                                          
+                                                          <div className="flex items-center gap-2">
+                                                              <button onClick={() => handleWipe(order.customerEmail)} className="flex items-center gap-2 px-3 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg hover:bg-red-600 hover:text-white transition-all font-bold text-[10px] uppercase shadow-sm">
+                                                                  <span>🗑️</span> REMOVER TUDO
+                                                              </button>
 
-                                                     {order.status === 'IDLE' ? (
-                                                         <button 
-                                                             onClick={async () => {
-                                                                 if (!confirm(`Deseja forçar o início da produção para ${order.customerEmail}?`)) return;
-                                                                 try {
-                                                                     const res = await fetch(`${getApiBase()}/api/projects/${order.projectId}/research`, {
-                                                                         method: 'POST',
-                                                                         headers: { 'Content-Type': 'application/json' },
-                                                                         body: JSON.stringify({ email: order.customerEmail })
-                                                                     });
-                                                                     if (res.ok) {
-                                                                         alert("Produção iniciada com sucesso! O livro começará a ser gerado em segundo plano.");
-                                                                         refreshAll();
-                                                                     } else {
-                                                                         const d = await res.json();
-                                                                         alert("Erro ao iniciar: " + (d.error || "Erro desconhecido"));
-                                                                     }
-                                                                 } catch (e) { alert("Erro de conexão"); }
-                                                             }}
-                                                             className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all font-black text-[10px] shadow-sm uppercase tracking-widest"
-                                                         >
-                                                             <Zap size={14} /> PRODUZIR
-                                                         </button>
-                                                     ) : (
-                                                         (order.downloadUrl || order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && (
-
-                                                            <a
-                                                                href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/${order.projectId}/download`}`}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-black text-xs shadow-lg shadow-indigo-200 uppercase tracking-widest group"
-                                                            >
-                                                                <Download size={16} className="group-hover:translate-y-0.5 transition-transform" /> 
-                                                                <span className="hidden sm:inline">Baixar Kit ZIP</span>
-                                                            </a>
-                                                        )
-                                                    )}
-                                                    <button 
-                                                        onClick={() => handleImpersonate(order.customerEmail)}
-                                                        className="p-3 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm"
-                                                        title="Acessar Área VIP como este Cliente"
-                                                    >
-                                                        👁️
-                                                    </button>
-                                                    
-                                                    <button 
-                                                        onClick={() => handleAdminChangePassword(order.customerEmail)}
-                                                        className="p-3 text-slate-400 border border-slate-200 rounded-xl hover:bg-amber-50 hover:border-amber-300 hover:text-amber-500 transition-all shadow-sm"
-                                                        title="Alterar Senha do Cliente"
-                                                    >
-                                                        <User size={20} />
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => handleDeleteProject(order.projectId)}
-                                                        className="p-3 text-rose-500 border border-rose-200 rounded-xl hover:bg-rose-50 hover:border-rose-300 transition-all shadow-sm"
-                                                        title="Excluir Projeto Permanentemente"
-                                                    >
-                                                        <Trash2 size={20} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                                              {order.status === 'IDLE' ? (
+                                                                  <button 
+                                                                      onClick={async () => {
+                                                                          if (!confirm(`Deseja forçar o início da produção para ${order.customerEmail}?`)) return;
+                                                                          try {
+                                                                              const res = await fetch(`${getApiBase()}/api/projects/${order.projectId}/research`, {
+                                                                                  method: 'POST',
+                                                                                  headers: { 'Content-Type': 'application/json' },
+                                                                                  body: JSON.stringify({ email: order.customerEmail })
+                                                                              });
+                                                                              if (res.ok) {
+                                                                                  alert("Produção iniciada com sucesso!");
+                                                                                  refreshAll();
+                                                                              }
+                                                                          } catch (e) { alert("Erro de conexão"); }
+                                                                      }}
+                                                                      className="flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-all font-black text-[10px] shadow-sm uppercase tracking-widest"
+                                                                  >
+                                                                      <Zap size={14} /> PRODUZIR
+                                                                  </button>
+                                                              ) : (
+                                                                  (order.downloadUrl || order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE') && (
+                                                                     <a
+                                                                         href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/${order.projectId}/download`}`}
+                                                                         target="_blank"
+                                                                         rel="noreferrer"
+                                                                         className="flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all font-black text-xs shadow-lg shadow-indigo-200 uppercase tracking-widest group"
+                                                                     >
+                                                                         <Download size={16} /> 
+                                                                         <span className="hidden sm:inline">Baixar Kit ZIP</span>
+                                                                     </a>
+                                                                  )
+                                                              )}
+                                                              <button onClick={() => handleImpersonate(order.customerEmail)} className="p-3 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-all shadow-sm">👁️</button>
+                                                              <button onClick={() => handleAdminChangePassword(order.customerEmail)} className="p-3 text-slate-400 border border-slate-200 rounded-xl hover:bg-amber-50 transition-all shadow-sm"><User size={20} /></button>
+                                                              <button onClick={() => handleDeleteProject(order.projectId)} className="p-3 text-rose-500 border border-rose-200 rounded-xl hover:bg-rose-50 transition-all shadow-sm"><Trash2 size={20} /></button>
+                                                          </div>
+                                                      </div>
+                                                  </div>
+                                              );
+                                          } else {
+                                              const lead = item;
+                                              const isPaid = ['PAID', 'APPROVED', 'RECEIVED', 'CONFIRMED'].includes((lead.status || '').toUpperCase());
+                                              return (
+                                                  <div key={lead.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6 border-l-4 border-slate-200">
+                                                      <div className="flex items-center gap-6 w-full lg:flex-1">
+                                                          <div className={`w-16 h-20 ${isPaid ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'} rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border`}>
+                                                              {isPaid ? '💰' : '📋'}
+                                                          </div>
+                                                          <div className="flex-1">
+                                                              <div className="flex flex-col mb-2">
+                                                                  <span className={`text-[10px] ${isPaid ? 'text-emerald-600' : 'text-slate-400'} font-black uppercase tracking-widest leading-none mb-1`}>
+                                                                      {isPaid ? 'Solicitação de Compra' : 'Lead / Orçamento'}
+                                                                  </span>
+                                                                  <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
+                                                                      {lead.name || "Interessado sem Nome"}
+                                                                  </h4>
+                                                              </div>
+                                                              <div className="flex items-center gap-4 mt-2">
+                                                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                                      {lead.status || 'PENDENTE'}
+                                                                  </span>
+                                                                  <span className="text-xs text-slate-400 font-medium">{new Date(lead.date).toLocaleString()}</span>
+                                                              </div>
+                                                          </div>
+                                                      </div>
+                                                      <div className="flex items-center gap-3 w-full lg:w-auto">
+                                                          <div className="flex flex-col items-end mr-4">
+                                                              <span className="text-[9px] text-slate-400 font-black uppercase mb-1">E-mail de Contato</span>
+                                                              <span className="text-sm font-bold text-slate-700">{lead.email}</span>
+                                                          </div>
+                                                          <div className="flex items-center gap-2">
+                                                              <button onClick={() => handleImpersonate(lead.email)} className="p-3 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-all shadow-sm">👁️</button>
+                                                              <button onClick={() => handleDelete(lead.id)} className="p-3 border border-red-100 text-red-500 rounded-xl hover:bg-red-50 transition-all shadow-sm"><Trash2 size={20} /></button>
+                                                          </div>
+                                                      </div>
+                                                  </div>
+                                              );
+                                          }
+                                      })}
                                 </div>
                                 <div className="bg-slate-50 p-4 border-t border-slate-200 text-right">
                                     <span className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">Total de Gerações: </span>
                                     <span className="text-xl font-black text-slate-800 ml-2">
-                                        {getFilteredProjects().length} Livros
+                                        {getCombinedTimeline().length} Registros
                                     </span>
                                 </div>
                             </div>

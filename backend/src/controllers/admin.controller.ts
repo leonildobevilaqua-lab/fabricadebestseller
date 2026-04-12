@@ -482,14 +482,14 @@ export const getProjectHistory = async (req: Request, res: Response) => {
         });
 
         const projectHistory = projects
-            .filter((p: any) => p && (p.id || (p.metadata && p.metadata.id))) // SAFETY: Filter out ghost/empty entries
+            .filter((p: any) => p && (p.projectId || p.id || (p.metadata && p.metadata.id))) // SAFETY: Filter out ghost/empty entries
             .map((p: any) => {
                 const metadata = p.metadata || {};
-                const projectId = p.id || metadata.id;
+                const projectId = p.projectId || p.id || metadata.id || `unknown_${Math.random().toString(36).substring(7)}`;
                 
                 // Replicate info from VIP Area: Title, Author, Date, Status
                 const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || p.title || "Geração de IA";
-                const authorName = metadata.authorName || metadata.contact?.name || p.authorName || "Cliente";
+                const authorName = metadata.authorName || metadata.contact?.name || p.authorName || "Autor";
                 const customerName = metadata.contact?.name || metadata.customerName || p.customerName || authorName || "Cliente";
                 
                 const customerEmail = 
@@ -515,7 +515,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
 
                 return {
                     id: projectId,
-                    date: p.createdAt || metadata.createdAt || p.date || null, // No fallback to new Date() for the list
+                    date: p.createdAt || metadata.createdAt || p.date || p.updated_at || new Date().toISOString(), 
                     title: safeTitle,
                     authorName: authorName,
                     customerName: customerName,
@@ -527,8 +527,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                     credits: credits,
                     isProject: true
                 };
-            })
-            .filter((p: any) => p.date !== null); // Only show projects with a real date
+            });
 
         // 3. Final Sort - Newer first
         const sorted = projectHistory.sort((a: any, b: any) => {
