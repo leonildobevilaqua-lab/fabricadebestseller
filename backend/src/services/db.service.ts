@@ -37,43 +37,56 @@ export const getVal = async (pathStr: string): Promise<any> => {
         const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
         const isCollectionRoot = collections.includes(normalized);
 
-        // 1. SUPABASE PRIMARY: Check Supabase First (Pro Plan Active)
+        // 1. SUPABASE PRIMARY: Check Supabase First
         if (isCollectionRoot) {
             let allItems: any[] = [];
             console.log(`[DB] Fetching collection: ${normalized}`);
 
-            const { data: individualItems, error: fetchErr } = await supabase
+            const { data: rawItems, error: fetchErr } = await supabase
                 .from('kv_store')
-                .select('key, value')
-                .or(`key.like.${normalized}/%,key.eq.${normalized}`);
+                .select('key, value, updated_at')
+                .like('key', `${normalized}/%`);
 
             if (fetchErr) {
                 console.error(`[DB] Supabase Fetch Error (${normalized}):`, fetchErr);
             }
 
-            if (individualItems && individualItems.length > 0) {
-                console.log(`[DB] Found ${individualItems.length} items for ${normalized}`);
-                allItems = individualItems.map(item => {
+            if (rawItems && rawItems.length > 0) {
+                // IMPORTANT: Filter out sub-keys (e.g., skip /projects/ID/metadata/translations if fetching /projects)
+                // We only want items that are DIRECT children of the collection root.
+                const filteredItems = rawItems.filter(item => {
+                    const suffix = item.key.substring(normalized.length + 1);
+                    return !suffix.includes('/'); 
+                });
+
+                console.log(`[DB] Found ${filteredItems.length} valid items for ${normalized} (Filtered ${rawItems.length - filteredItems.length} sub-keys)`);
+                
+                allItems = filteredItems.map(item => {
                     try {
                         const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-                        // Ensure it's an object before spreading
                         if (val && typeof val === 'object' && !Array.isArray(val)) {
                             return {
+                                ...val,
                                 id: val.id || item.key.split('/').pop(),
                                 key: item.key,
-                                ...val
+                                updated_at: item.updated_at
                             };
                         }
                         return val;
                     } catch (e) { return item.value; }
                 });
-            } else {
-                console.warn(`[DB] Supabase returned 0 items for ${normalized}`);
+            }
+
+            // [CRITICAL] 3. Sync with legacy Root Array if exists (e.g. data still in database.json or root key)
+            const rootVal = await this.getIndividualKey(normalized);
+            if (rootVal && Array.isArray(rootVal)) {
+                 console.log(`[DB] Merging ${rootVal.length} legacy items from root key ${normalized}`);
+                 allItems = [...allItems, ...rootVal];
             }
 
             return allItems.sort((a, b) => {
-                const da = new Date(a.updated_at || a.date || a.createdAt || 0).getTime();
-                const db = new Date(b.updated_at || b.date || b.createdAt || 0).getTime();
+                const da = new Date(a?.updated_at || a?.date || a?.createdAt || 0).getTime();
+                const db = new Date(b?.updated_at || b?.date || b?.createdAt || 0).getTime();
                 return db - da; // Newer first
             });
         }
