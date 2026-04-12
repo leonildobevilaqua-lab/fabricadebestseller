@@ -26,6 +26,23 @@ const getLocalDB = () => {
     return {};
 };
 
+const getIndividualKey = async (normalizedPath: string): Promise<any> => {
+    const possibleKeys = [normalizedPath, normalizedPath.startsWith('/') ? normalizedPath.substring(1) : '/' + normalizedPath];
+    for (const k of possibleKeys) {
+        const { data, error } = await supabase
+            .from('kv_store')
+            .select('value')
+            .eq('key', k)
+            .maybeSingle();
+
+        if (!error && data) {
+            const val = data.value;
+            return typeof val === 'string' ? JSON.parse(val) : val;
+        }
+    }
+    return null;
+};
+
 export const getVal = async (pathStr: string): Promise<any> => {
     try {
         if (!pathStr) return null;
@@ -78,7 +95,7 @@ export const getVal = async (pathStr: string): Promise<any> => {
             }
 
             // [CRITICAL] 3. Sync with legacy Root Array if exists (e.g. data still in database.json or root key)
-            const rootVal = await this.getIndividualKey(normalized);
+            const rootVal = await getIndividualKey(normalized);
             if (rootVal && Array.isArray(rootVal)) {
                  console.log(`[DB] Merging ${rootVal.length} legacy items from root key ${normalized}`);
                  allItems = [...allItems, ...rootVal];
