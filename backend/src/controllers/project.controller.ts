@@ -614,8 +614,9 @@ export const startResearch = async (req: Request, res: Response) => {
             // FINAL STEP: Titles (Skip if already has one)
             const finalFullContext = project.researchContext || `TEMA: ${topic} \n\n### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch}`;
 
-            if (project.metadata.bookTitle) {
-                console.log(`[startResearch] Manual title detected: ${project.metadata.bookTitle}. Skipping AI title selection.`);
+            // Robust check: Only skip if bookTitle is present AND has length > 1 (avoiding empty strings or noise)
+            if (project.metadata.bookTitle && project.metadata.bookTitle.trim().length > 1) {
+                console.log(`[startResearch] Manual title detected: "${project.metadata.bookTitle}". Skipping AI title selection phase.`);
                 
                 // Proceed to structure generation immediately
                 await QueueService.updateMetadata(id, {

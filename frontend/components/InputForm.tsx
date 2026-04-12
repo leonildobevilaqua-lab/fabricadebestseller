@@ -377,7 +377,7 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
                   <button
                     onClick={() => {
                       setTitleMode('ai');
-                      setMetadata(prev => ({ ...prev, bookTitle: undefined }));
+                      setMetadata(prev => ({ ...prev, bookTitle: '' }));
                     }}
                     className={`py-4 px-6 rounded-xl text-xs font-black transition-all border-2 flex flex-col items-center justify-center gap-2 text-center ${titleMode === 'ai'
                       ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-md ring-4 ring-blue-100'

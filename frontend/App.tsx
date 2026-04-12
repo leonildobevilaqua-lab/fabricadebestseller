@@ -225,18 +225,36 @@ const App: React.FC = () => {
         return null;
       }
       return (
-        <ErrorBoundary>
-          <Dashboard
-            user={userContact}
-            onLogout={resetApp}
-            onNewBook={() => {
-              setStep(1);
-              setCurrentView('generator');
-              window.history.pushState({}, '', '/factory');
-              window.scrollTo(0, 0);
-            }}
-          />
-        </ErrorBoundary>
+        <div className="flex-1 overflow-y-auto bg-slate-50/50" translate="no">
+          <ErrorBoundary>
+            <Dashboard
+              user={userContact}
+              onLogout={resetApp}
+              onNewBook={() => {
+                // RESET METADATA FOR NEW PROJECT TO PREVENT STATE LEAK (e.g. Manual Title from previous book)
+                setMetadata({
+                  authorName: userContact?.name || '',
+                  topic: '',
+                  bookTitle: '',
+                  subTitle: '',
+                  title: '',
+                  dedication: '',
+                  acknowledgments: '',
+                  aboutAuthor: '',
+                  status: 'IDLE',
+                  progress: 0,
+                  isFiction: false,
+                  genre: '',
+                  characters: []
+                } as any);
+                setStep(1);
+                setCurrentView('generator');
+                window.history.pushState({}, '', '/factory');
+                window.scrollTo(0, 0);
+              }}
+            />
+          </ErrorBoundary>
+        </div>
       );
     }
 
@@ -277,6 +295,21 @@ const App: React.FC = () => {
                   metadata={metadata}
                   updateMetadata={updateMetadata}
                   onReset={() => {
+                    setMetadata({ 
+                      authorName: '', 
+                      topic: '', 
+                      bookTitle: '', 
+                      subTitle: '', 
+                      dedication: '', 
+                      acknowledgments: '', 
+                      aboutAuthor: '', 
+                      status: 'IDLE', 
+                      progress: 0,
+                      isFiction: false,
+                      genre: '',
+                      characters: []
+                    });
+                    setStep(1);
                     setCurrentView('dashboard');
                     window.history.pushState({}, '', '/');
                     window.scrollTo(0, 0);
