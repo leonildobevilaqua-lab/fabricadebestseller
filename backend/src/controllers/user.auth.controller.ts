@@ -114,7 +114,7 @@ export const UserAuthController = {
                 // Pesquisa de trás para frente para pegar o lead mais recente
                 let leadFn: any;
                 for (let i = leadsArray.length - 1; i >= 0; i--) {
-                    if ((leadsArray[i] as any).email?.toLowerCase().trim() === cleanUser) {
+                    if (leadsArray[i] && (leadsArray[i] as any).email?.toLowerCase().trim() === cleanUser) {
                         leadFn = leadsArray[i];
                         break;
                     }

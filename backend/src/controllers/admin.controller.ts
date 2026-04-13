@@ -475,7 +475,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
         const phoneMap: Record<string, string> = {};
         leads.forEach((l: any) => {
-            if (l.email && (l.fullPhone || l.phone)) {
+            if (l && l.email && (l.fullPhone || l.phone)) {
                 const cleanE = l.email.toLowerCase().trim();
                 phoneMap[cleanE] = l.fullPhone || l.phone;
             }
