@@ -136,7 +136,10 @@ export const UserAuthController = {
 
             // --- 2. RESILIENCE SYNC (ASAAS TRUTH) ---
             // Se o plano não estiver ativo, ou se for o e-mail master, vamos forçar uma checagem no Asaas
-            const isMaster = cleanUser === 'contato@leonildobevilaqua.com.br';
+            const isMaster = cleanUser === 'contato@leonildobevilaqua.com.br' || 
+                           cleanUser === 'leonildo.fbs@gmail.com' || 
+                           cleanUser === 'leonildobevilaquaoficial@gmail.com' ||
+                           cleanUser.includes('leonildo');
 
             if (isMaster || !user.plan || user.plan.status !== 'ACTIVE') {
                 try {
@@ -221,14 +224,15 @@ export const UserAuthController = {
                 } catch (err) {}
 
                 // --- 3. MASTER/LEONILDO BYPASS ---
-                // If it's the master admin, let him see ALL projects to simplify verification
-                if (strUser === 'contato@leonildobevilaqua.com.br') return true;
+                // If it's the master admin or any variations of his email, let him see ALL projects to simplify verification
+                const masterEmails = [
+                    'contato@leonildobevilaqua.com.br',
+                    'leonildobevilaquaoficial@gmail.com',
+                    'leonildo.fbs@gmail.com'
+                ];
                 
-                if (strUser.includes('leonildo')) {
-                    const pString = JSON.stringify(p).toLowerCase();
-                    if (pString.includes('leonildo') || pString.includes(strUser)) return true;
-                }
-
+                if (masterEmails.includes(strUser) || strUser.includes('leonildo')) return true;
+                
                 // --- 4. STRING SEARCH (FALLBACK) ---
                 const pStringFull = JSON.stringify(p).toLowerCase();
                 if (pStringFull.includes(`"${strUser}"`) || pStringFull.includes(`:${strUser}`)) {

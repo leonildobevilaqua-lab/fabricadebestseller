@@ -959,10 +959,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
 
     const getCombinedTimeline = () => {
-        const pList = getFilteredProjects().map(p => ({ ...p, isProject: true }));
-        const lList = leads.map(l => ({ ...l, isLead: true, date: l.date || l.createdAt }));
-        const combined = [...pList, ...lList];
-        return combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // [RULE 2025] SOURCE OF TRUTH: ONLY SHOW PROJECTS (COMPLETED BOOKS) IN THIS LIST
+        // Leads are filtered out to avoid "bagunça" in the main history view.
+        return getFilteredProjects().map(p => ({ ...p, isProject: true }));
     };
 
     const isLogged = !!token;
@@ -1335,156 +1334,97 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                 <div className="divide-y divide-slate-100">
                                     {getCombinedTimeline().map((item: any, idx: number) => {
-                                        if (item.isProject) {
-                                            const order = item;
-                                            return (
-                                                <div key={order.projectId || idx} className="p-8 hover:bg-slate-50/80 transition flex flex-col lg:flex-row items-center justify-between gap-8 bg-white group">
-                                                    {/* INFO LEFT */}
-                                                    <div className="flex items-center gap-8 w-full lg:flex-1">
-                                                        <div className="w-24 h-32 bg-slate-50 rounded-3xl flex-shrink-0 flex items-center justify-center text-4xl shadow-inner border border-slate-100 group-hover:scale-105 transition-transform duration-500">
-                                                            📚
+                                        const order = item;
+                                        return (
+                                            <div key={order.projectId || idx} className="p-10 hover:bg-slate-50/50 transition flex flex-col lg:flex-row items-center justify-between gap-10 bg-white group border-b border-slate-100 last:border-0 relative overflow-hidden">
+                                                {/* PREMIUM LIGHT GLOW PERMITIDA */}
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                                {/* INFO LEFT */}
+                                                <div className="flex items-center gap-10 w-full lg:flex-1">
+                                                    {/* BOOK ICON MATCHING IMAGE */}
+                                                    <div className="w-24 h-24 bg-white border-2 border-slate-100 rounded-3xl flex-shrink-0 flex items-center justify-center text-5xl shadow-xl group-hover:rotate-3 transition-transform duration-500">
+                                                        📚
+                                                    </div>
+                                                    
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-col mb-6">
+                                                            <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.4em] leading-none mb-3 px-1">
+                                                                LIVRO GERADO
+                                                            </span>
+                                                            <h4 className="font-black text-slate-900 text-2xl lg:text-3xl leading-none uppercase tracking-tighter break-words italic group-hover:text-indigo-600 transition-colors">
+                                                                {order.title || "Untitled Project"}
+                                                            </h4>
                                                         </div>
                                                         
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="flex flex-col mb-5">
-                                                                <span className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.3em] leading-none mb-2 px-1">
-                                                                    Livro Gerado
+                                                        {/* TEXT GRID - NO ICONS PER USER IMAGE */}
+                                                        <div className="bg-slate-50/50 p-10 rounded-[40px] border border-slate-100/50 shadow-inner grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">Nome do Cliente</span>
+                                                                <span className="text-[15px] font-black text-slate-800 tracking-tight">{order.customerName || "-"}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">E-MAIL</span>
+                                                                <span className="text-[15px] font-black text-slate-500 truncate lowercase">{order.customerEmail || "N/A"}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">Nº DO WHATSAPP</span>
+                                                                <span className="text-[15px] font-black text-indigo-500 underline decoration-indigo-100 decoration-8 underline-offset-[-2px] tracking-tight">{order.customerPhone || "N/A"}</span>
+                                                            </div>
+                                                            <div className="flex flex-col">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">NOME DO AUTOR</span>
+                                                                <span className="text-[15px] font-black text-slate-900 tracking-tight">{order.authorName || "-"}</span>
+                                                            </div>
+                                                            <div className="flex flex-col md:col-span-2 pt-6 border-t border-slate-200/50 mt-2">
+                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">DATA DA GERAÇÃO (DIA E HORÁRIO DE BRASÍLIA)</span>
+                                                                <span className="text-[16px] font-black text-slate-600">
+                                                                    {order.date ? new Date(order.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "N/A"}
                                                                 </span>
-                                                                <h4 className="font-black text-slate-900 text-2xl lg:text-3xl leading-none uppercase tracking-tighter break-words italic">
-                                                                    {order.title || "Untitled Project"}
-                                                                </h4>
                                                             </div>
-                                                            
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 bg-slate-50/30 p-8 rounded-[28px] border border-slate-100 shadow-inner">
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><User size={18} className="text-slate-400" /></div>
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Cliente</span>
-                                                                        <span className="text-[15px] font-black text-slate-700">{order.customerName || "-"}</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><Mail size={18} className="text-slate-400" /></div>
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">E-Mail</span>
-                                                                        <span className="text-[15px] font-black text-slate-700 truncate">{order.customerEmail || "N/A"}</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><MessageCircle size={18} className="text-slate-400" /></div>
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">WhatsApp</span>
-                                                                        <span className="text-[15px] font-black text-slate-700 underline decoration-indigo-200 decoration-4 underline-offset-4">{order.customerPhone || "N/A"}</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-4">
-                                                                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm"><span className="text-xs font-black text-indigo-600">A</span></div>
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Autor(a)</span>
-                                                                        <span className="text-[15px] font-black text-slate-900">{order.authorName || "Rogério Olavo Cunha Leite"}</span>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="flex items-center gap-4 md:col-span-2 border-t border-slate-100 pt-4 mt-1">
-                                                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><Calendar size={18} className="text-slate-400" /></div>
-                                                                    <div className="flex flex-col">
-                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Data de Geração (Brasília)</span>
-                                                                        <span className="text-[15px] font-black text-slate-500">{order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}</span>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* ACTIONS RIGHT */}
-                                                    <div className="flex flex-col items-center lg:items-end gap-8 w-full lg:w-auto">
-                                                        <div className="flex items-center gap-3">
-                                                           <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-6 py-2.5 rounded-full border border-emerald-200 uppercase tracking-[0.2em] shadow-sm">
-                                                               LIVRO GERADO
-                                                           </span>
-                                                        </div>
-
-                                                        {/* Credits Display */}
-                                                        <div className="flex items-center gap-4 bg-slate-900 p-2.5 rounded-[22px] border border-slate-800 shadow-2xl">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase px-3 tracking-widest">Créditos:</span>
-                                                            <div className="flex items-center bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-lg">
-                                                                <button onClick={() => handleManageCreditsOp(-1)} className="px-5 py-2.5 hover:bg-slate-50 text-xl font-black text-slate-300 hover:text-slate-800 transition-colors">-</button>
-                                                                <div className="px-5 py-2.5 text-lg font-black bg-slate-50 text-slate-900 border-x border-slate-100 min-w-[50px] text-center">{order.credits || foundCredits || 0}</div>
-                                                                <button onClick={() => handleManageCreditsOp(1)} className="px-5 py-2.5 hover:bg-slate-50 text-xl font-black text-slate-300 hover:text-slate-800 transition-colors">+</button>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="flex items-center gap-4">
-                                                            {order.status === 'COMPLETED' && (
-                                                                <button
-                                                                    onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
-                                                                    className="flex items-center gap-4 bg-[#6366f1] hover:bg-indigo-700 text-white px-10 py-6 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-200 transition-all hover:scale-105 active:scale-95 group"
-                                                                >
-                                                                    <Download size={24} className="group-hover:animate-bounce" />
-                                                                    <span>Baixar Kit ZIP</span>
-                                                                </button>
-                                                            )}
-                                                            
-                                                            <button
-                                                                onClick={() => handleImpersonate(order.customerEmail)}
-                                                                className="p-6 bg-white border border-slate-200 rounded-3xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-100 transition-all shadow-xl shadow-slate-100"
-                                                                title="Ver Área do Cliente"
-                                                            >
-                                                                <User size={28} />
-                                                            </button>
-                                                            
-                                                            <button
-                                                                onClick={() => handleDeleteProject(order.projectId)}
-                                                                className="p-6 bg-white border border-slate-200 rounded-3xl text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-xl shadow-slate-100"
-                                                                title="Excluir"
-                                                            >
-                                                                <Trash2 size={28} />
-                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            );
-                                        } else {
-                                            const lead = item;
-                                            const isPaid = ['PAID', 'APPROVED', 'RECEIVED', 'CONFIRMED'].includes((lead.status || '').toUpperCase());
-                                            return (
-                                                <div key={lead.id || idx} className="p-8 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6 border-l-8 border-slate-100 bg-white/50">
-                                                    <div className="flex items-center gap-8 w-full lg:flex-1">
-                                                        <div className={`w-20 h-24 ${isPaid ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-300 border-slate-200'} rounded-[32px] flex-shrink-0 flex items-center justify-center text-4xl shadow-inner border`}>
-                                                            {isPaid ? '💰' : '📋'}
-                                                        </div>
-                                                        <div className="flex-1">
-                                                            <div className="flex flex-col mb-3">
-                                                                <span className={`text-[11px] ${isPaid ? 'text-emerald-600' : 'text-slate-400'} font-black uppercase tracking-widest leading-none mb-1`}>
-                                                                    {isPaid ? 'Solicitação de Compra' : 'Lead Ativo'}
-                                                                </span>
-                                                                <h4 className="font-black text-slate-900 text-2xl leading-tight uppercase tracking-tighter italic">
-                                                                    {lead.name || "Interessado sem Nome"}
-                                                                </h4>
-                                                            </div>
-                                                            <div className="flex items-center gap-6 mt-3">
-                                                                <span className={`text-[10px] px-4 py-1.5 rounded-full font-black uppercase tracking-widest ${isPaid ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-slate-200 text-slate-600'}`}>
-                                                                    {lead.status || 'PENDENTE'}
-                                                                </span>
-                                                                <div className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest">
-                                                                    <Calendar size={14} />
-                                                                    {new Date(lead.date).toLocaleDateString()} {new Date(lead.date).toLocaleTimeString()}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex items-center gap-6 w-full lg:w-auto">
-                                                        <div className="flex flex-col items-end mr-6">
-                                                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Contato Direto</span>
-                                                            <span className="text-lg font-black text-slate-800 font-mono underline decoration-indigo-200 decoration-4 shadow-indigo-50">{lead.email}</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-3">
-                                                            <button onClick={() => handleImpersonate(lead.email)} className="p-5 text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-3xl hover:bg-indigo-600 hover:text-white transition-all shadow-lg shadow-indigo-50" title="Ver Área VIP">👁️</button>
-                                                            <button onClick={() => handleDelete(lead.id)} className="p-5 border border-red-100 text-red-400 rounded-3xl hover:bg-red-500 hover:text-white hover:border-red-600 transition-all shadow-lg shadow-red-50"><Trash2 size={24} /></button>
+
+                                                {/* ACTIONS RIGHT - AS REQUESTED IN IMAGE */}
+                                                <div className="flex flex-col lg:flex-row items-center gap-6 w-full lg:w-auto">
+                                                    
+                                                    {/* PRIMARY CTA */}
+                                                    <button
+                                                        onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
+                                                        className="flex items-center gap-5 bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-6 rounded-[30px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-300/50 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                                                    >
+                                                        <Download size={24} className="group-hover:animate-bounce" />
+                                                        <span>BAIXAR KIT ZIP</span>
+                                                    </button>
+                                                    
+                                                    <button
+                                                        onClick={() => handleImpersonate(order.customerEmail)}
+                                                        className="p-6 bg-white border border-slate-200 rounded-[28px] text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-xl shadow-slate-100"
+                                                        title="Ver Área do Cliente"
+                                                    >
+                                                        <User size={28} />
+                                                    </button>
+
+                                                    {/* Credits Widget Integrated Row */}
+                                                    <div className="flex items-center gap-4 bg-white p-2 px-5 rounded-[28px] border border-slate-200 shadow-lg">
+                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">CRÉDITOS:</span>
+                                                        <div className="flex items-center bg-slate-50 rounded-xl border border-slate-100 overflow-hidden shadow-sm">
+                                                            <button onClick={() => handleManageCreditsOp(-1)} className="px-4 py-2 hover:bg-white text-lg font-black text-slate-300 hover:text-red-500 transition-all">-</button>
+                                                            <div className="px-5 py-2 text-sm font-black text-slate-900 min-w-[50px] text-center border-x border-slate-100">{order.credits || foundCredits || 0}</div>
+                                                            <button onClick={() => handleManageCreditsOp(1)} className="px-4 py-2 hover:bg-white text-lg font-black text-slate-300 hover:text-emerald-500 transition-all">+</button>
                                                         </div>
                                                     </div>
+                                                    
+                                                    <button
+                                                        onClick={() => handleDeleteProject(order.projectId)}
+                                                        className="p-6 bg-white border border-slate-200 rounded-[28px] text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-xl shadow-slate-100"
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 size={28} />
+                                                    </button>
                                                 </div>
-                                            );
-                                        }
+                                            </div>
+                                        );
                                     })}
                                 </div>
                             </div>

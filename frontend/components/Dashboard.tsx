@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { PenTool, Download, Star, CheckCircle, Clock, MessageCircle, ExternalLink, User, Mail, Calendar } from 'lucide-react';
+import { PenTool, Download, Star, CheckCircle, Clock, MessageCircle, ExternalLink, User, Mail, Calendar, Trash2 } from 'lucide-react';
 import { SocialShare } from './SocialShare';
 import { getApiBase } from '../services/api';
 import { ExtraServiceCard, ExtraServiceBuyButton } from './ExtraServices';
@@ -148,55 +148,37 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         }
     };
 
-    useEffect(() => {
-        // Fetch User Stats AND Payment Status on mount
-        const fetchMe = async () => {
-            try {
+    const refreshStats = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('bsf_token');
+            const headers: any = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
 
-                const token = localStorage.getItem('bsf_token');
-                const headers: any = { 'Content-Type': 'application/json' };
-                if (token) headers['Authorization'] = `Bearer ${token}`;
+            const [meRes, resPayment] = await Promise.all([
+                fetch(`${getApiBase()}/api/user/me?email=${user.email}`, { headers }),
+                fetch(`${getApiBase()}/api/payment/access?email=${user.email}`)
+            ]);
 
-                // Parallel fetch
-                const [meRes, resPayment] = await Promise.all([
-                    fetch(`${getApiBase()}/api/user/me?email=${user.email}`, { headers }),
-                    fetch(`${getApiBase()}/api/payment/access?email=${user.email}`)
-                ]);
-
-                if (meRes.ok) {
-                    const meData = await meRes.json();
-                    if (meData.profile || meData.orders) {
-                        setStats(meData);
-                    }
-                }
-
-                // --- FETCH PUBLIC CONFIG (Kiwify Links) ---
-                const configRes = await fetch(`${getApiBase()}/api/payment/public-config`);
-                const configData = await configRes.json();
-                if (configData.productLinks) {
-                    setProducts(configData.productLinks);
-                }
-
-                if (resPayment.ok) {
-                    const payData = await resPayment.json();
-                    if (payData.credits > 0) setHasCredits(true);
-                    else setHasCredits(false);
-
-                    if (payData.latestInvoiceStatus === 'PENDING' || payData.latestInvoiceStatus === 'OVERDUE') {
-                        setPendingInvoice(true);
-                        setInvoiceUrl(payData.invoiceUrl);
-                    } else {
-                        setPendingInvoice(false);
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to fetch dashboard stats", e);
-            } finally {
-                setLoading(false);
+            if (meRes.ok) {
+                const meData = await meRes.json();
+                console.log("VIP DASHBOARD FETCH:", meData);
+                setStats(meData);
             }
-        };
 
-        fetchMe();
+            if (resPayment.ok) {
+                const payData = await resPayment.json();
+                setHasCredits(payData.credits > 0);
+            }
+        } catch (e) {
+            console.error("Refresh error", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        refreshStats();
     }, [user.email]);
 
     // Auto-Polling DISABLED for strict manual validation
@@ -480,11 +462,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                 {/* History (Meus Livros) */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className="font-bold text-slate-800 text-lg">{(t as any).dashboard.myBooks}</h3>
-                        <span className="text-xs font-bold text-slate-400 uppercase bg-slate-100 px-2 py-1 rounded">
-                            {displayOrders.length} {(t as any).dashboard.projectsCount}
-                        </span>
+                    <div className="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                        <div className="flex items-center gap-3">
+                            <h3 className="font-black text-slate-800 text-xl uppercase tracking-tighter">{(t as any).dashboard.myBooks}</h3>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={refreshStats}
+                                className="px-4 py-2 bg-white border border-slate-200 rounded-full text-[10px] font-black text-slate-500 hover:text-indigo-600 hover:border-indigo-200 transition-all uppercase tracking-widest shadow-sm"
+                            >
+                                🔄 ATUALIZAR LISTA
+                            </button>
+                            <span className="text-[10px] font-black text-slate-400 uppercase bg-white border border-slate-200 px-4 py-2 rounded-full shadow-sm">
+                                {displayOrders.length} {(t as any).dashboard.projectsCount}
+                            </span>
+                        </div>
                     </div>
 
                     {displayOrders.length === 0 ? (
@@ -508,50 +500,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                             </div>
                                             
                                             <div className="flex-1 min-w-0">
-                                                <div className="flex flex-col mb-5">
-                                                    <span className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.3em] leading-none mb-2 px-1">
-                                                        {(t as any).dashboard.bookTitleLabel || 'Livro Gerado'}
+                                                <div className="flex flex-col mb-6">
+                                                    <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.4em] leading-none mb-3 px-1">
+                                                        LIVRO GERADO
                                                     </span>
-                                                    <h4 className="font-black text-slate-900 text-2xl lg:text-3xl leading-none uppercase tracking-tighter break-words italic" translate="no">
+                                                    <h4 className="font-black text-slate-900 text-2xl lg:text-3xl leading-none uppercase tracking-tighter break-words italic group-hover:text-indigo-600 transition-colors" translate="no">
                                                         {order.title || (t as any).dashboard.bookTitleFallback}
                                                     </h4>
                                                 </div>
                                                 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 bg-slate-50/30 p-8 rounded-[28px] border border-slate-100 shadow-inner">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><User size={18} className="text-slate-400" /></div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{(t as any).dashboard.customerLabel || 'Cliente'}</span>
-                                                            <span className="text-[15px] font-black text-slate-700">{order.customerName || "-"}</span>
-                                                        </div>
+                                                {/* TEXT GRID - NO ICONS PER USER IMAGE */}
+                                                <div className="bg-slate-50/50 p-10 rounded-[40px] border border-slate-100/50 shadow-inner grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">Nome do Cliente</span>
+                                                        <span className="text-[15px] font-black text-slate-800 tracking-tight">{order.customerName || "-"}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><Mail size={18} className="text-slate-400" /></div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">E-Mail</span>
-                                                            <span className="text-[15px] font-black text-slate-700 truncate">{order.customerEmail || "-"}</span>
-                                                        </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">E-MAIL</span>
+                                                        <span className="text-[15px] font-black text-slate-500 truncate lowercase">{order.customerEmail || "-"}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><MessageCircle size={18} className="text-slate-400" /></div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">WhatsApp</span>
-                                                            <span className="text-[15px] font-black text-slate-700 underline decoration-indigo-200 decoration-4 underline-offset-4">{order.customerPhone || "-"}</span>
-                                                        </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">Nº DO WHATSAPP</span>
+                                                        <span className="text-[15px] font-black text-indigo-500 underline decoration-indigo-100 decoration-8 underline-offset-[-2px] tracking-tight">{order.customerPhone || "-"}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm"><span className="text-xs font-black text-indigo-600">A</span></div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{(t as any).dashboard.authorLabel || 'Autor(a)'}</span>
-                                                            <span className="text-[15px] font-black text-slate-900">{order.authorName || "Rogério Olavo Cunha Leite"}</span>
-                                                        </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">NOME DO AUTOR</span>
+                                                        <span className="text-[15px] font-black text-slate-900 tracking-tight">{order.authorName || "-"}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-4 md:col-span-2 border-t border-slate-100 pt-4 mt-1">
-                                                        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><Calendar size={18} className="text-slate-400" /></div>
-                                                        <div className="flex flex-col">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">{(t as any).dashboard.creationDate || 'Data de Geração (Brasília)'}</span>
-                                                            <span className="text-[15px] font-black text-slate-500">{order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}</span>
-                                                        </div>
+                                                    <div className="flex flex-col md:col-span-2 pt-6 border-t border-slate-200/50 mt-2">
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">DATA DA GERAÇÃO (DIA E HORÁRIO DE BRASÍLIA)</span>
+                                                        <span className="text-[16px] font-black text-slate-600">
+                                                            {order.date ? new Date(order.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "N/A"}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -572,19 +552,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                                 {isCompleted && (
                                                     <button
                                                         onClick={() => window.open(order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/download-zip/${order.id || order.projectId}`}`, '_blank')}
-                                                        className="flex items-center gap-4 bg-[#6366f1] hover:bg-indigo-700 text-white px-8 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-200 transition-all hover:scale-105 active:scale-95 group"
+                                                        className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-6 rounded-[30px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-300/50 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
                                                     >
-                                                        <Download size={20} className="group-hover:animate-bounce" />
+                                                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:translate-x-full transition-transform duration-700 -skew-x-12" />
+                                                        <Download size={22} className="group-hover:animate-bounce" />
                                                         <span>{(t as any).dashboard.downloadKit || 'Baixar Kit ZIP'}</span>
                                                     </button>
                                                 )}
                                                 
                                                 <button
                                                     onClick={() => handleDeleteProject(order.id || order.projectId)}
-                                                    className="p-5 bg-white border border-slate-200 rounded-3xl text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-xl shadow-slate-100"
+                                                    className="p-6 bg-white border border-slate-200 rounded-[28px] text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-xl shadow-slate-100"
                                                     title={(t as any).dashboard.deleteProject}
                                                 >
-                                                    <IconTrash />
+                                                    <Trash2 size={24} />
                                                 </button>
                                             </div>
                                         </div>
