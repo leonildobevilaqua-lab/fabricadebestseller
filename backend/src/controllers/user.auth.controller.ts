@@ -221,8 +221,10 @@ export const UserAuthController = {
                 } catch (err) {}
 
                 // --- 3. MASTER/LEONILDO BYPASS ---
-                // If it's Leonildo, he should see projects where his name is mentioned or he is the author
-                if (strUser.includes('leonildo') || strUser === 'contato@leonildobevilaqua.com.br') {
+                // If it's the master admin, let him see ALL projects to simplify verification
+                if (strUser === 'contato@leonildobevilaqua.com.br') return true;
+                
+                if (strUser.includes('leonildo')) {
                     const pString = JSON.stringify(p).toLowerCase();
                     if (pString.includes('leonildo') || pString.includes(strUser)) return true;
                 }
@@ -257,10 +259,15 @@ export const UserAuthController = {
 
             const mappedOrders = userProjects.map((p: any) => {
                 const metadata = p.metadata || {};
+                const contact = metadata.contact || p.contact || {};
                 return {
                     id: p.id || metadata.id,
+                    projectId: p.id || metadata.id, // For Admin.tsx compatibility
                     title: metadata.bookTitle || metadata.title || metadata.topic || p.title || 'Livro Gerado',
-                    authorName: metadata.authorName || metadata.contact?.name || p.authorName || 'Autor',
+                    authorName: metadata.authorName || contact?.name || p.authorName || 'Autor',
+                    customerName: contact.name || p.name || 'Cliente',
+                    customerEmail: contact.email || p.email || p.userEmail || '-',
+                    customerPhone: contact.phone || p.phone || '-',
                     date: p.createdAt || metadata.createdAt || p.date || new Date(),
                     status: (metadata.status || p.status || 'PROCESSING').toUpperCase(),
                     // Prioritize KIT download URL, fallback to DOCX or generic API

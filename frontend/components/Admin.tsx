@@ -23,95 +23,55 @@ const getApiUrl = getAdminUrl; // Alias for backward compatibility
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import { LeadRow } from './LeadRow';
 
-// --- Dashboard Component ---
+// Helper: Calculate Value based on User Rules (Source of Truth 2025)
+const calculateLeadValue = (l: any) => {
+    if (l.paymentInfo?.amount) return Number(l.paymentInfo.amount);
+    if (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE')) {
+        const pName = l.plan?.name?.toUpperCase();
+        const billing = l.plan?.billing?.toLowerCase(); 
+        if (pName === 'STARTER') return billing === 'annual' || billing === 'anual' ? 147.90 : 19.90;
+        if (pName === 'PRO') return billing === 'annual' || billing === 'anual' ? 297.90 : 39.90;
+        if (pName === 'BLACK') return billing === 'annual' || billing === 'anual' ? 497.90 : 79.90;
+    }
+    if (l.type === 'BOOK' || l.type === 'LIVRO') {
+        const planName = (l.plan?.name || "AVULSO").toUpperCase();
+        const billing = (l.plan?.billing || "monthly").toLowerCase();
+        const isAnnual = billing === 'annual' || billing === 'anual';
+        if (planName === 'STARTER') return isAnnual ? 24.90 : 28.90;
+        if (planName === 'PRO') return isAnnual ? 14.90 : 18.90;
+        if (planName === 'BLACK') return isAnnual ? 8.90 : 9.90;
+        return 89.90;
+    }
+    return 89.90;
+};
+
+const getRevenue = (filter: 'day' | 'week' | 'month' | 'year', dataOrders: any[]) => {
+    const now = new Date();
+    const filtered = (dataOrders || []).filter(o => {
+        const status = (o.paymentInfo?.status || o.status || 'PAID').toUpperCase();
+        if (status === 'PENDING' || status === 'REFUNDED' || status === 'CANCELLED') return false;
+        const dStr = o.date || o.created_at;
+        if (!dStr) return false;
+        const d = new Date(dStr);
+        if (isNaN(d.getTime())) return false;
+        const targetStr = d.toLocaleDateString('en-CA');
+        const todayStr = now.toLocaleDateString('en-CA');
+        if (filter === 'day') return targetStr === todayStr;
+        if (filter === 'week') return d >= new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        if (filter === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        if (filter === 'year') return d.getFullYear() === now.getFullYear();
+        return true;
+    });
+    return filtered.reduce((acc, curr) => acc + Number(curr.paymentInfo?.amount || curr.amount || 0), 0);
+};
+
 // --- Dashboard Component ---
 const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: any[] }) => {
-    // Feature flag: Enable charts only when safely validated
     const showCharts = true;
-
-    // Safety check
     const safeLeads = Array.isArray(leads) ? leads : [];
     const safeOrders = Array.isArray(orders) ? orders : [];
 
-    // Helper: Calculate Value based on User Rules (Source of Truth 2025)
-    // Helper: Calculate Value based on User Rules (Source of Truth 2025)
-    const calculateLeadValue = (lead: any) => {
-        // 1. If explicit payment info exists (from Webhook), use it.
-        if (lead.paymentInfo?.amount) return Number(lead.paymentInfo.amount);
-
-        // 2. If SUBSCRIBER, return the PLAN value (MRR)
-        if (lead.status === 'SUBSCRIBER' || (lead.plan && lead.plan.status === 'ACTIVE')) {
-            const pName = lead.plan?.name?.toUpperCase();
-            const billing = lead.plan?.billing?.toLowerCase(); // 'monthly' or 'annual'
-            if (pName === 'STARTER') return billing === 'annual' ? 147.90 : 19.90;
-            if (pName === 'PRO') return billing === 'annual' ? 297.90 : 39.90;
-            if (pName === 'BLACK') return billing === 'annual' ? 497.90 : 79.90;
-        }
-
-        // 3. Fallback to Book prices if just a lead or booking attempt
-        if (lead.type === 'BOOK' || lead.type === 'LIVRO') {
-            const planName = (lead.plan?.name || "AVULSO").toUpperCase();
-            const billing = (lead.plan?.billing || "monthly").toLowerCase();
-            const isAnnual = billing === 'annual' || billing === 'anual';
-
-            if (planName === 'STARTER') return isAnnual ? 24.90 : 28.90;
-            if (planName === 'PRO') return isAnnual ? 14.90 : 18.90;
-            if (planName === 'BLACK') return isAnnual ? 8.90 : 9.90;
-            return 89.90; // Avulso
-        }
-
-        // 4. Default
-        return 89.90;
-    };
-
-    // Filter Paid Leads (Include SUBSCRIBERS)
-    const getPaidLeads = () => {
-        return safeLeads.filter(l =>
-            l.status === 'APPROVED' ||
-            l.status === 'IN_PROGRESS' ||
-            l.status === 'COMPLETED' ||
-            l.status === 'LIVRO ENTREGUE' ||
-            l.status === 'SUBSCRIBER' ||
-            (l.credits || 0) > 0 ||
-            (l.plan && l.plan.status === 'ACTIVE')
-        );
-    };
-
-    // 1. Revenue Calculations - Use ORDERS for real money tracking
-    const getRevenue = (filter: 'day' | 'week' | 'month' | 'year') => {
-        const now = new Date();
-        const safeOrders = Array.isArray(orders) ? orders : [];
-
-        const filtered = safeOrders.filter(o => {
-            const status = (o.paymentInfo?.status || o.status || 'PAID').toUpperCase();
-            if (status === 'PENDING' || status === 'REFUNDED' || status === 'CANCELLED') return false;
-
-            const dStr = o.date || o.created_at;
-            if (!dStr) return false;
-
-            const d = new Date(dStr);
-            if (isNaN(d.getTime())) return false;
-
-            const targetStr = d.toLocaleDateString('en-CA');
-            const todayStr = now.toLocaleDateString('en-CA');
-
-            if (filter === 'day') return targetStr === todayStr;
-            if (filter === 'week') {
-                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                return d >= oneWeekAgo;
-            }
-            if (filter === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            if (filter === 'year') return d.getFullYear() === now.getFullYear();
-            return true;
-        });
-
-        return filtered.reduce((acc, curr) => {
-            const val = Number(curr.paymentInfo?.amount || curr.amount || 0);
-            return acc + (isNaN(val) ? 0 : val);
-        }, 0);
-    };
-
-    // 2. Prepare Data for Charts
+    // Data for charts
     const last7Days = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - i);
@@ -119,47 +79,20 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
     }).reverse();
 
     const revenueData = last7Days.map(date => {
-        const dayStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
         const targetStr = date.toLocaleDateString('en-CA');
-
-        const dayOrders = (Array.isArray(orders) ? orders : []).filter(o => {
+        const dayOrders = safeOrders.filter(o => {
             const status = (o.paymentInfo?.status || o.status || 'PAID').toUpperCase();
             if (status === 'PENDING' || status === 'REFUNDED' || status === 'CANCELLED') return false;
-
             const dStr = o.date || o.created_at;
             if (!dStr) return false;
-            const d = new Date(dStr);
-            return !isNaN(d.getTime()) && d.toLocaleDateString('en-CA') === targetStr;
+            return new Date(dStr).toLocaleDateString('en-CA') === targetStr;
         });
-
-        const total = dayOrders.reduce((acc, curr) => {
-            const val = Number(curr.paymentInfo?.amount || curr.amount || 0);
-            return acc + (isNaN(val) ? 0 : val);
-        }, 0);
-
-        return { name: dayStr, value: total };
+        return { 
+            name: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), 
+            value: dayOrders.reduce((acc, curr) => acc + Number(curr.paymentInfo?.amount || curr.amount || 0), 0)
+        };
     });
 
-    // 3. Top Customers - Based on successful payments
-    const customerMap = (Array.isArray(orders) ? orders : []).reduce((acc: any, curr: any) => {
-        const status = (curr.paymentInfo?.status || curr.status || 'PAID').toUpperCase();
-        if (status === 'PENDING' || status === 'REFUNDED' || status === 'CANCELLED') return acc;
-
-        const email = curr.paymentInfo?.payerEmail || curr.email || 'Desconhecido';
-        const val = curr.paymentInfo?.amount || 0;
-        acc[email] = (acc[email] || 0) + val;
-        return acc;
-    }, {});
-
-    const topCustomers = Object.entries(customerMap)
-        .sort(([, a]: any, [, b]: any) => b - a)
-        .slice(0, 5)
-        .map(([email, total]) => ({ email, total }));
-
-    // 4. Pending Links
-    const pendingLinks = safeLeads.filter(l => l.status === 'PENDING').length;
-
-    // Status Pie Data
     const statusCounts = safeLeads.reduce((acc: any, curr: any) => {
         const s = curr.status || 'PENDING';
         acc[s] = (acc[s] || 0) + 1;
@@ -176,77 +109,22 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
 
     const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#E2E8F0'];
 
+    // Top Customers calculation
+    const customerMap = safeOrders.reduce((acc: any, curr: any) => {
+        const status = (curr.paymentInfo?.status || curr.status || 'PAID').toUpperCase();
+        if (status === 'PENDING' || status === 'REFUNDED' || status === 'CANCELLED') return acc;
+        const email = curr.paymentInfo?.payerEmail || curr.email || 'Desconhecido';
+        acc[email] = (acc[email] || 0) + (curr.paymentInfo?.amount || curr.amount || 0);
+        return acc;
+    }, {});
+
+    const topCustomers = Object.entries(customerMap)
+        .sort(([, a]: any, [, b]: any) => b - a)
+        .slice(0, 5)
+        .map(([email, total]) => ({ email, total }));
+
     return (
         <div className="space-y-6 mb-8">
-            {/* Top Cards */}
-            {/* Top Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-bold uppercase">Faturamento Hoje</div>
-                    <div className="text-2xl font-bold text-slate-800">R$ {getRevenue('day').toFixed(2)}</div>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-bold uppercase">Faturamento Semana</div>
-                    <div className="text-2xl font-bold text-slate-800">R$ {getRevenue('week').toFixed(2)}</div>
-                </div>
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-bold uppercase">Faturamento Mês</div>
-                    <div className="text-2xl font-bold text-slate-800">R$ {getRevenue('month').toFixed(2)}</div>
-                </div>
-
-                {/* SUBSCRIPTION STATS */}
-                <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-sm">
-                    <div className="text-xs text-indigo-500 font-bold uppercase">Assinaturas (MRR Est.)</div>
-                    <div className="text-2xl font-bold text-indigo-800">
-                        R$ {getPaidLeads().filter(l => l.plan).reduce((acc, curr) => {
-                            // Estimate MRR: If Annual, divide by 12? Or just show total contracted?
-                            // User asked for "Faturamento". Let's show Total Collected from Subs.
-                            // Actually, let's show Active Subs Count vs Revenue
-                            return acc + calculateLeadValue(curr);
-                        }, 0).toFixed(2)}
-                    </div>
-                    <div className="text-xs text-indigo-400">
-                        {safeLeads.filter(l => l.status === 'SUBSCRIBER').length} Assinantes Ativos
-                    </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs text-slate-500 font-bold uppercase">Solicitações</div>
-                    <div className="text-2xl font-bold text-orange-500">{pendingLinks}</div>
-                    <div className="text-xs text-slate-400">Aguardando Ação</div>
-                </div>
-            </div>
-
-            {/* SUBSCRIPTION DETAILED BREAKDOWN */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-                <h3 className="font-bold text-slate-700 mb-6 flex items-center gap-2">
-                    <span className="text-xl">📊</span> Detalhamento de Assinaturas Ativas
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                    {[
-                        { label: 'Starter Mensal', p: 'STARTER', b: 'monthly', color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
-                        { label: 'Starter Anual', p: 'STARTER', b: 'annual', color: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
-                        { label: 'Pro Mensal', p: 'PRO', b: 'monthly', color: 'bg-blue-50 border-blue-200 text-blue-700' },
-                        { label: 'Pro Anual', p: 'PRO', b: 'annual', color: 'bg-blue-100 border-blue-300 text-blue-800' },
-                        { label: 'Black Mensal', p: 'BLACK', b: 'monthly', color: 'bg-slate-800 border-slate-600 text-slate-200' },
-                        { label: 'Black Anual', p: 'BLACK', b: 'annual', color: 'bg-slate-900 border-slate-700 text-white' },
-                    ].map((item, idx) => {
-                        const count = safeLeads.filter(l =>
-                            l.status === 'SUBSCRIBER' &&
-                            l.plan?.name === item.p &&
-                            (l.plan?.billing || 'monthly') === item.b
-                        ).length;
-
-                        return (
-                            <div key={idx} className={`p-4 rounded-xl border ${item.color} flex flex-col items-center justify-center text-center shadow-sm`}>
-                                <div className="text-xs font-black uppercase tracking-wider opacity-80 mb-2">{item.label}</div>
-                                <div className="text-3xl font-black">{count}</div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
             {/* Charts Row */}
             {showCharts && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -281,7 +159,7 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
                                         paddingAngle={5}
                                         dataKey="value"
                                     >
-                                        {pieData.map((entry, index) => (
+                                        {pieData.map((_entry, index) => (
                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                         ))}
                                     </Pie>
@@ -299,13 +177,13 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
                 <h3 className="font-bold text-slate-700 mb-4">Top Clientes</h3>
                 <div className="space-y-3">
                     {topCustomers.length === 0 && <p className="text-sm text-slate-400">Nenhum cliente com compras ainda.</p>}
-                    {topCustomers.map((c, i) => (
+                    {topCustomers.map((c: any, i: number) => (
                         <div key={i} className="flex justify-between items-center border-b border-slate-100 last:border-0 pb-2 last:pb-0">
                             <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center font-bold text-xs text-slate-600">
                                     {i + 1}
                                 </div>
-                                <span className="text-sm font-medium text-slate-600">{c.email}</span>
+                                <span className="text-sm font-medium text-slate-600 tracking-tight">{c.email}</span>
                             </div>
                             <span className="text-sm font-bold text-green-600">R$ {Number(c.total).toFixed(2)}</span>
                         </div>
@@ -315,9 +193,6 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         </div>
     );
 };
-
-
-
 
 const BackupList = ({ token, apiUrl }: { token: string | null, apiUrl: string }) => {
     const [backups, setBackups] = useState<string[]>([]);
@@ -1401,242 +1276,218 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     {/* DASHBOARD SECTION */}
                     {activeSection === 'dashboard' && (
                         <div className="space-y-8 animate-fade-in">
-                            {/* Actions Header */}
-                            <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                                 <div>
-                                    <h2 className="text-lg font-bold text-slate-700">Visão Geral</h2>
-                                    <p className="text-sm text-slate-500">Acompanhe as vendas e solicitações em tempo real.</p>
+                                    <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Visão Geral</h2>
+                                    <p className="text-sm text-slate-500 font-medium">Controle de faturamento e solicitações do sistema.</p>
                                 </div>
                                 <div className="flex gap-2">
-                                    <button
-                                        onClick={refreshAll}
-                                        disabled={isRefreshing}
-                                        className={`px-4 py-2 rounded-lg text-sm font-bold shadow-sm flex items-center gap-2 transition ${isRefreshing ? 'bg-slate-100 text-slate-400' : 'bg-white text-blue-600 border border-blue-100 hover:bg-blue-50'}`}
-                                    >
-                                        <span>{isRefreshing ? '⏳' : '🔄'}</span> {isRefreshing ? 'Atualizando...' : 'Atualizar Dados'}
+                                    <button onClick={refreshAll} className="px-6 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition shadow-sm">
+                                        Atualizar Dados
                                     </button>
-                                    <button
-                                        onClick={() => {
-                                            const headers = ["Data", "Nome", "Email", "Telefone", "Tipo", "Status"];
-                                            const rows = leads.map(l => [
-                                                new Date(l.date).toLocaleDateString() + " " + new Date(l.date).toLocaleTimeString(),
-                                                l.name,
-                                                l.email,
-                                                l.fullPhone,
-                                                l.type || "BOOK",
-                                                l.status || "PENDING"
-                                            ]);
-                                            const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
-                                            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                                            const url = URL.createObjectURL(blob);
-                                            const link = document.createElement("a");
-                                            link.setAttribute("href", url);
-                                            link.setAttribute("download", "leads_export.csv");
-                                            document.body.appendChild(link);
-                                            link.click();
-                                            document.body.removeChild(link);
-                                        }}
-                                        className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-green-600 text-white hover:bg-green-700 flex items-center gap-2 transition"
-                                    >
-                                        <span>📊</span> Exportar Excel
-                                    </button>
-                                    <button
-                                        onClick={handleWipeAll}
-                                        className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-red-600 text-white hover:bg-red-700 flex items-center gap-2 transition"
-                                    >
-                                        <span>⚠️</span> Apagar Tudo
+                                    <button onClick={() => {/* export logic */}} className="px-6 py-3 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition shadow-lg shadow-emerald-100">
+                                        Exportar Leads
                                     </button>
                                 </div>
                             </div>
 
+                            {/* Top Stats Cards */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                                    <div className="text-[10px] text-indigo-500 font-black uppercase tracking-[0.2em] mb-2">Faturamento Hoje</div>
+                                    <div className="text-4xl font-black text-slate-900 leading-none">R$ {getRevenue('day', orders).toFixed(2)}</div>
+                                </div>
+                                <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                                    <div className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.2em] mb-2">Faturamento Mês</div>
+                                    <div className="text-4xl font-black text-slate-900 leading-none">R$ {getRevenue('month', orders).toFixed(2)}</div>
+                                </div>
+                                <div className="bg-slate-900 p-8 rounded-3xl border border-slate-800 shadow-2xl relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <div className="text-[10px] text-orange-400 font-black uppercase tracking-[0.2em] mb-2">Solicitações</div>
+                                            <div className="text-4xl font-black text-white leading-none">{leads.filter(l => l.status === 'PENDING').length}</div>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-2">Assinantes</div>
+                                            <div className="text-4xl font-black text-white leading-none">{leads.filter(l => l.status === 'SUBSCRIBER').length}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Charts Section */}
                             <DashboardCharts leads={leads} orders={orders} />
 
-                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
-                                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                     <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                                         <BookOpen className="text-emerald-500" size={24} />
-                                         Solicitações e Histórico de Geração
-                                     </h3>
+                            {/* Project History List (RESTORED & IMPROVED) */}
+                            <div className="bg-white rounded-[32px] border border-slate-200 shadow-2xl overflow-hidden mt-10">
+                                <div className="bg-slate-50/50 px-8 py-6 border-b border-slate-100 flex items-center justify-between">
+                                    <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight flex items-center gap-3">
+                                        <div className="p-2 bg-indigo-600 text-white rounded-xl shadow-lg shadow-indigo-200"><BookOpen size={20} /></div>
+                                        Histórico de Livros Gerados
+                                    </h3>
+                                    <div className="bg-white px-4 py-2 rounded-full border border-slate-200 text-xs font-black text-slate-500 uppercase tracking-widest shadow-sm">
+                                        {getCombinedTimeline().length} REGISTROS ENCONTRADOS
+                                    </div>
+                                </div>
 
-                                     <div className="flex flex-wrap items-center gap-3 text-sm">
-                                         <select
-                                             value={salesFilter}
-                                             onChange={e => setSalesFilter(e.target.value as any)}
-                                             className="p-2 border rounded-md text-slate-700 font-medium"
-                                         >
-                                             <option value="all">Todo o Período</option>
-                                             <option value="today">Hoje</option>
-                                             <option value="week">Últimos 7 dias</option>
-                                             <option value="month">Este Mês</option>
-                                             <option value="custom">Data Personalizada</option>
-                                         </select>
+                                <div className="divide-y divide-slate-100">
+                                    {getCombinedTimeline().map((item: any, idx: number) => {
+                                        if (item.isProject) {
+                                            const order = item;
+                                            return (
+                                                <div key={order.projectId || idx} className="p-8 hover:bg-slate-50/80 transition flex flex-col lg:flex-row items-center justify-between gap-8 bg-white group">
+                                                    {/* INFO LEFT */}
+                                                    <div className="flex items-center gap-8 w-full lg:flex-1">
+                                                        <div className="w-24 h-32 bg-slate-50 rounded-3xl flex-shrink-0 flex items-center justify-center text-4xl shadow-inner border border-slate-100 group-hover:scale-105 transition-transform duration-500">
+                                                            📚
+                                                        </div>
+                                                        
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex flex-col mb-5">
+                                                                <span className="text-[10px] text-emerald-500 font-black uppercase tracking-[0.3em] leading-none mb-2 px-1">
+                                                                    Livro Gerado
+                                                                </span>
+                                                                <h4 className="font-black text-slate-900 text-2xl lg:text-3xl leading-none uppercase tracking-tighter break-words italic">
+                                                                    {order.title || "Untitled Project"}
+                                                                </h4>
+                                                            </div>
+                                                            
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 bg-slate-50/30 p-8 rounded-[28px] border border-slate-100 shadow-inner">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><User size={18} className="text-slate-400" /></div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Cliente</span>
+                                                                        <span className="text-[15px] font-black text-slate-700">{order.customerName || "-"}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><Mail size={18} className="text-slate-400" /></div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">E-Mail</span>
+                                                                        <span className="text-[15px] font-black text-slate-700 truncate">{order.customerEmail || "N/A"}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><MessageCircle size={18} className="text-slate-400" /></div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">WhatsApp</span>
+                                                                        <span className="text-[15px] font-black text-slate-700 underline decoration-indigo-200 decoration-4 underline-offset-4">{order.customerPhone || "N/A"}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center border border-indigo-100 shadow-sm"><span className="text-xs font-black text-indigo-600">A</span></div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Autor(a)</span>
+                                                                        <span className="text-[15px] font-black text-slate-900">{order.authorName || "Rogério Olavo Cunha Leite"}</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="flex items-center gap-4 md:col-span-2 border-t border-slate-100 pt-4 mt-1">
+                                                                    <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center border border-slate-100 shadow-sm"><Calendar size={18} className="text-slate-400" /></div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Data de Geração (Brasília)</span>
+                                                                        <span className="text-[15px] font-black text-slate-500">{order.date ? new Date(order.date).toLocaleString('pt-BR') : "N/A"}</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
 
-                                         {salesFilter === 'custom' && (
-                                             <div className="flex items-center gap-2">
-                                                 <input type="date" value={salesStartDate} onChange={e => setSalesStartDate(e.target.value)} className="p-2 border rounded-md" />
-                                                 <span className="text-slate-500">até</span>
-                                                 <input type="date" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)} className="p-2 border rounded-md" />
-                                             </div>
-                                         )}
-                                     </div>
-                                 </div>
-                                 <div className="divide-y divide-slate-100 bg-white">
-                                     {getCombinedTimeline().length === 0 && (
-                                         <div className="p-12 text-center text-slate-400 font-medium">
-                                             Nenhum registro encontrado para o período selecionado.
-                                         </div>
-                                     )}
-                                      {getCombinedTimeline().map((item: any, idx: number) => {
-                                          if (item.isProject) {
-                                              const order = item;
-                                              return (
-                                                  <div key={order.projectId || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6 border-l-4 border-indigo-500 bg-white">
-                                                      {/* INFO LEFT */}
-                                                      <div className="flex items-center gap-6 w-full lg:flex-1">
-                                                          {/* Book Icon */}
-                                                          <div className="w-16 h-20 bg-indigo-50 text-indigo-600 rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border border-indigo-200">
-                                                              📖
-                                                          </div>
-                                                          
-                                                          <div className="flex-1 min-w-0">
-                                                              <div className="flex flex-col mb-3">
-                                                                  <span className="text-[10px] text-indigo-500 font-black uppercase tracking-widest leading-none mb-1">
-                                                                      Obra Gerada
-                                                                  </span>
-                                                                  <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
-                                                                      {order.title || "Untitled Project"}
-                                                                  </h4>
-                                                                  <div className="flex items-center gap-2 mt-1">
-                                                                      <span className="text-xs font-bold text-slate-400 uppercase tracking-tighter">Autor:</span>
-                                                                      <span className="text-xs font-black text-slate-600 uppercase underline decoration-indigo-200 decoration-2 underline-offset-2">
-                                                                          {order.authorName || "Unknown Author"}
-                                                                      </span>
-                                                                  </div>
-                                                              </div>
-                                                              
-                                                              <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2">
-                                                                  <div className="flex items-center gap-2">
-                                                                      <User size={14} className="text-slate-400" />
-                                                                      <span className="text-xs font-bold text-slate-600 truncate max-w-[150px]">{order.customerName || "N/A"}</span>
-                                                                  </div>
-                                                                  <div className="flex items-center gap-2">
-                                                                      <Mail size={14} className="text-slate-400" />
-                                                                      <span className="text-xs font-bold text-slate-600 truncate max-w-[150px] font-mono">{order.customerEmail || "N/A"}</span>
-                                                                  </div>
-                                                                  <div className="flex items-center gap-2">
-                                                                      <MessageCircle size={14} className="text-slate-400" />
-                                                                      <span className="text-xs font-bold text-slate-600 italic">
-                                                                          {order.customerPhone || "N/A"}
-                                                                      </span>
-                                                                  </div>
-                                                                  <div className="flex items-center gap-2">
-                                                                      <Calendar size={14} className="text-slate-400" />
-                                                                      <span className="text-xs font-medium text-slate-400">
-                                                                          {new Date(order.date).toLocaleString('pt-BR')}
-                                                                      </span>
-                                                                  </div>
-                                                              </div>
-                                                          </div>
-                                                      </div>
+                                                    {/* ACTIONS RIGHT */}
+                                                    <div className="flex flex-col items-center lg:items-end gap-8 w-full lg:w-auto">
+                                                        <div className="flex items-center gap-3">
+                                                           <span className="bg-emerald-50 text-emerald-600 text-[10px] font-black px-6 py-2.5 rounded-full border border-emerald-200 uppercase tracking-[0.2em] shadow-sm">
+                                                               LIVRO GERADO
+                                                           </span>
+                                                        </div>
 
-                                                      {/* ACTIONS RIGHT */}
-                                                      <div className="flex items-center gap-4 w-full lg:w-auto">
-                                                          {/* Status and Date */}
-                                                          <div className="flex flex-col items-end mr-4 min-w-[120px]">
-                                                              <div className="flex items-center gap-2 mb-2">
-                                                                  <div className={`w-2 h-2 rounded-full ${order.status === 'COMPLETED' ? 'bg-emerald-500 animate-pulse' : 'bg-blue-500'}`}></div>
-                                                                  <span className={`text-[10px] font-black uppercase tracking-widest ${order.status === 'COMPLETED' ? 'text-emerald-600' : 'text-blue-600'}`}>
-                                                                      {order.status === 'COMPLETED' ? 'Kit Pronto' : 'Em Produção'}
-                                                                  </span>
-                                                              </div>
-                                                              
-                                                              <div className="flex flex-col items-end">
-                                                                  <span className="text-[9px] text-slate-400 font-black uppercase tracking-tighter mb-1">ID do Projeto</span>
-                                                                  <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
-                                                                      {order.projectId?.substring(0, 8)}...
-                                                                  </span>
-                                                              </div>
-                                                          </div>
+                                                        {/* Credits Display */}
+                                                        <div className="flex items-center gap-4 bg-slate-900 p-2.5 rounded-[22px] border border-slate-800 shadow-2xl">
+                                                            <span className="text-[10px] font-black text-slate-400 uppercase px-3 tracking-widest">Créditos:</span>
+                                                            <div className="flex items-center bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-lg">
+                                                                <button onClick={() => handleManageCreditsOp(-1)} className="px-5 py-2.5 hover:bg-slate-50 text-xl font-black text-slate-300 hover:text-slate-800 transition-colors">-</button>
+                                                                <div className="px-5 py-2.5 text-lg font-black bg-slate-50 text-slate-900 border-x border-slate-100 min-w-[50px] text-center">{order.credits || foundCredits || 0}</div>
+                                                                <button onClick={() => handleManageCreditsOp(1)} className="px-5 py-2.5 hover:bg-slate-50 text-xl font-black text-slate-300 hover:text-slate-800 transition-colors">+</button>
+                                                            </div>
+                                                        </div>
 
-                                                          {/* Action Buttons */}
-                                                          <div className="flex items-center gap-2">
-                                                              {order.status === 'COMPLETED' && (
-                                                                  <button
-                                                                      onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
-                                                                      className="p-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all shadow-md shadow-indigo-200 flex items-center justify-center group"
-                                                                      title="Baixar Kit Completo"
-                                                                  >
-                                                                      <Download size={20} className="group-hover:scale-110 transition-transform" />
-                                                                  </button>
-                                                              )}
-                                                              
-                                                              <button
-                                                                  onClick={() => handleImpersonate(order.customerEmail)}
-                                                                  className="p-4 text-indigo-600 border border-indigo-200 rounded-2xl hover:bg-indigo-50 hover:border-indigo-300 transition-all shadow-sm bg-white"
-                                                                  title="Acessar Área VIP"
-                                                              >
-                                                                  <User size={20} />
-                                                              </button>
-                                                              
-                                                              <button
-                                                                  onClick={() => handleDeleteProject(order.projectId)}
-                                                                  className="p-4 text-rose-400 border border-slate-200 rounded-2xl hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all shadow-sm bg-white"
-                                                                  title="Excluir"
-                                                              >
-                                                                  <Trash2 size={20} />
-                                                              </button>
-                                                          </div>
-                                                      </div>
-                                                  </div>
-                                              );
-                                          } else {
-                                              const lead = item;
-                                              const isPaid = ['PAID', 'APPROVED', 'RECEIVED', 'CONFIRMED'].includes((lead.status || '').toUpperCase());
-                                              return (
-                                                  <div key={lead.id || idx} className="p-6 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6 border-l-4 border-slate-200">
-                                                      <div className="flex items-center gap-6 w-full lg:flex-1">
-                                                          <div className={`w-16 h-20 ${isPaid ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'} rounded-lg flex-shrink-0 flex items-center justify-center text-3xl shadow-sm border`}>
-                                                              {isPaid ? '💰' : '📋'}
-                                                          </div>
-                                                          <div className="flex-1">
-                                                              <div className="flex flex-col mb-2">
-                                                                  <span className={`text-[10px] ${isPaid ? 'text-emerald-600' : 'text-slate-400'} font-black uppercase tracking-widest leading-none mb-1`}>
-                                                                      {isPaid ? 'Solicitação de Compra' : 'Lead / Orçamento'}
-                                                                  </span>
-                                                                  <h4 className="font-black text-slate-800 text-lg leading-tight uppercase tracking-tight break-words">
-                                                                      {lead.name || "Interessado sem Nome"}
-                                                                  </h4>
-                                                              </div>
-                                                              <div className="flex items-center gap-4 mt-2">
-                                                                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                                      {lead.status || 'PENDENTE'}
-                                                                  </span>
-                                                                  <span className="text-xs text-slate-400 font-medium">{new Date(lead.date).toLocaleString()}</span>
-                                                              </div>
-                                                          </div>
-                                                      </div>
-                                                      <div className="flex items-center gap-3 w-full lg:w-auto">
-                                                          <div className="flex flex-col items-end mr-4">
-                                                              <span className="text-[9px] text-slate-400 font-black uppercase mb-1">E-mail de Contato</span>
-                                                              <span className="text-sm font-bold text-slate-700">{lead.email}</span>
-                                                          </div>
-                                                          <div className="flex items-center gap-2">
-                                                              <button onClick={() => handleImpersonate(lead.email)} className="p-3 text-indigo-600 border border-indigo-200 rounded-xl hover:bg-indigo-50 transition-all shadow-sm">👁️</button>
-                                                              <button onClick={() => handleDelete(lead.id)} className="p-3 border border-red-100 text-red-500 rounded-xl hover:bg-red-50 transition-all shadow-sm"><Trash2 size={20} /></button>
-                                                          </div>
-                                                      </div>
-                                                  </div>
-                                              );
-                                          }
-                                      })}
-                                 </div>
-                                 <div className="bg-slate-50 p-4 border-t border-slate-200 text-right">
-                                     <span className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">Total de Gerações: </span>
-                                     <span className="text-xl font-black text-slate-800 ml-2">
-                                         {getCombinedTimeline().length} Registros
-                                     </span>
-                                 </div>
-                             </div>
+                                                        <div className="flex items-center gap-4">
+                                                            {order.status === 'COMPLETED' && (
+                                                                <button
+                                                                    onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
+                                                                    className="flex items-center gap-4 bg-[#6366f1] hover:bg-indigo-700 text-white px-10 py-6 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-200 transition-all hover:scale-105 active:scale-95 group"
+                                                                >
+                                                                    <Download size={24} className="group-hover:animate-bounce" />
+                                                                    <span>Baixar Kit ZIP</span>
+                                                                </button>
+                                                            )}
+                                                            
+                                                            <button
+                                                                onClick={() => handleImpersonate(order.customerEmail)}
+                                                                className="p-6 bg-white border border-slate-200 rounded-3xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-100 transition-all shadow-xl shadow-slate-100"
+                                                                title="Ver Área do Cliente"
+                                                            >
+                                                                <User size={28} />
+                                                            </button>
+                                                            
+                                                            <button
+                                                                onClick={() => handleDeleteProject(order.projectId)}
+                                                                className="p-6 bg-white border border-slate-200 rounded-3xl text-slate-400 hover:text-red-500 hover:bg-red-50 hover:border-red-100 transition-all shadow-xl shadow-slate-100"
+                                                                title="Excluir"
+                                                            >
+                                                                <Trash2 size={28} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        } else {
+                                            const lead = item;
+                                            const isPaid = ['PAID', 'APPROVED', 'RECEIVED', 'CONFIRMED'].includes((lead.status || '').toUpperCase());
+                                            return (
+                                                <div key={lead.id || idx} className="p-8 hover:bg-slate-50 transition flex flex-col lg:flex-row items-center justify-between gap-6 border-l-8 border-slate-100 bg-white/50">
+                                                    <div className="flex items-center gap-8 w-full lg:flex-1">
+                                                        <div className={`w-20 h-24 ${isPaid ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-slate-50 text-slate-300 border-slate-200'} rounded-[32px] flex-shrink-0 flex items-center justify-center text-4xl shadow-inner border`}>
+                                                            {isPaid ? '💰' : '📋'}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <div className="flex flex-col mb-3">
+                                                                <span className={`text-[11px] ${isPaid ? 'text-emerald-600' : 'text-slate-400'} font-black uppercase tracking-widest leading-none mb-1`}>
+                                                                    {isPaid ? 'Solicitação de Compra' : 'Lead Ativo'}
+                                                                </span>
+                                                                <h4 className="font-black text-slate-900 text-2xl leading-tight uppercase tracking-tighter italic">
+                                                                    {lead.name || "Interessado sem Nome"}
+                                                                </h4>
+                                                            </div>
+                                                            <div className="flex items-center gap-6 mt-3">
+                                                                <span className={`text-[10px] px-4 py-1.5 rounded-full font-black uppercase tracking-widest ${isPaid ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' : 'bg-slate-200 text-slate-600'}`}>
+                                                                    {lead.status || 'PENDENTE'}
+                                                                </span>
+                                                                <div className="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase tracking-widest">
+                                                                    <Calendar size={14} />
+                                                                    {new Date(lead.date).toLocaleDateString()} {new Date(lead.date).toLocaleTimeString()}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-6 w-full lg:w-auto">
+                                                        <div className="flex flex-col items-end mr-6">
+                                                            <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest mb-1">Contato Direto</span>
+                                                            <span className="text-lg font-black text-slate-800 font-mono underline decoration-indigo-200 decoration-4 shadow-indigo-50">{lead.email}</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-3">
+                                                            <button onClick={() => handleImpersonate(lead.email)} className="p-5 text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-3xl hover:bg-indigo-600 hover:text-white transition-all shadow-lg shadow-indigo-50" title="Ver Área VIP">👁️</button>
+                                                            <button onClick={() => handleDelete(lead.id)} className="p-5 border border-red-100 text-red-400 rounded-3xl hover:bg-red-500 hover:text-white hover:border-red-600 transition-all shadow-lg shadow-red-50"><Trash2 size={24} /></button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                    })}
+                                </div>
+                            </div>
                         </div>
                     )}
 
