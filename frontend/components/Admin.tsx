@@ -1555,7 +1555,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      </div>
 
                                                      <div className="flex flex-wrap lg:flex-nowrap items-center gap-4 w-full xl:w-auto justify-end">
-                                                         {isProject && (order.status === 'READY_TO_DOWNLOAD' || order.status === 'COMPLETED') && (
+                                                         {isProject && (['READY_TO_DOWNLOAD', 'COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS'].includes((order.status || '').toUpperCase())) && (
                                                              <button
                                                                  onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
                                                                  className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-indigo-200/50 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
