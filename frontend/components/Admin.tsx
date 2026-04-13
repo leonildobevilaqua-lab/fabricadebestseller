@@ -1492,27 +1492,27 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                          const isPaid = !isProject && (item.type === 'CHECKOUT_PAID' || item.type === 'BOOK_PURCHASED');
                                          
                                          return (
-                                             <div key={order.projectId || order.id || idx} className="p-6 md:p-8 hover:bg-slate-50/50 transition bg-white group border-b border-slate-100 last:border-0 relative overflow-hidden">
+                                             <div key={order.projectId || order.id || idx} className="p-4 md:p-6 hover:bg-slate-50/20 transition group border-b border-slate-50 last:border-0 relative">
                                                  <div className={`absolute top-0 left-0 w-1.5 h-full transition-opacity ${isProject ? 'bg-indigo-500 opacity-0 group-hover:opacity-100' : 'bg-emerald-500 opacity-0 group-hover:opacity-100'}`} />
 
-                                                 <div className="flex flex-col xl:flex-row items-start justify-between gap-10">
+                                                 <div className="flex flex-col xl:flex-row items-center justify-between gap-6">
                                                      
                                                      <div className="flex flex-1 items-start gap-8 w-full">
-                                                         <div className={`w-20 h-20 md:w-24 md:h-24 rounded-3xl flex-shrink-0 flex items-center justify-center text-5xl shadow-xl transition-all duration-500 ${isProject ? 'bg-slate-50 border-2 border-slate-100' : 'bg-emerald-50 border-2 border-emerald-100'}`}>
+                                                         <div className={`w-16 h-16 md:w-20 md:h-20 rounded-[28px] flex-shrink-0 flex items-center justify-center text-4xl shadow-sm border ${isProject ? 'bg-white border-slate-100' : 'bg-white border-slate-100'}`}>
                                                              {isProject ? '📚' : '👤'}
                                                          </div>
                                                          
                                                          <div className="flex-1 min-w-0">
                                                              <div className="flex flex-col mb-4">
-                                                                 <span className={`text-[10px] font-black uppercase tracking-[0.4em] leading-none mb-2 w-fit px-3 py-1 rounded-full ${isProject ? 'text-indigo-600 bg-indigo-50' : 'text-emerald-600 bg-emerald-50'}`}>
+                                                                 <span className={`text-[8px] font-black uppercase tracking-[0.2em] leading-none mb-1 w-fit px-2 py-1 rounded-full ${isProject ? 'text-indigo-600 bg-indigo-50 border border-indigo-100' : 'text-slate-500 bg-slate-100 border border-slate-200'}`}>
                                                                      {isProject ? 'LIVRO GERADO' : (isPaid ? 'COMPRA APROVADA' : 'LEAD / ORÇAMENTO')}
                                                                  </span>
-                                                                 <h4 className="font-black text-slate-900 text-xl md:text-2xl leading-tight uppercase tracking-tighter break-words italic group-hover:text-indigo-600 transition-colors" translate="no">
+                                                                 <h4 className="font-black text-slate-900 text-lg md:text-xl leading-snug uppercase tracking-tighter break-words italic" translate="no">
                                                                      {isProject ? (order.title || "Geração sem Título") : (order.name || "Interessado sem Nome")}
                                                                  </h4>
                                                              </div>
                                                              
-                                                             <div className="bg-[#f8fafc] p-6 rounded-[32px] border border-slate-200/50 shadow-inner grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                                             <div className="bg-[#f2f6fa] p-4 md:p-5 rounded-[24px] border border-slate-200/30 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
                                                                  <div className="flex items-center gap-4">
                                                                      <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><User size={18} /></div>
                                                                      <div className="flex flex-col">
@@ -1557,8 +1557,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                      <div className="flex flex-wrap lg:flex-nowrap items-center gap-4 w-full xl:w-auto justify-end">
                                                          {isProject && (['READY_TO_DOWNLOAD', 'COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS'].includes((order.status || '').toUpperCase())) && (
                                                              <button
-                                                                 onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
-                                                                 className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-indigo-200/50 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
+                                                                 onClick={() => window.open(`${getApiBase()}/api/projects/${order.projectId || order.id}/download-zip`, '_blank')}
+                                                                 className="flex items-center gap-3 bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95 whitespace-nowrap"
                                                              >
                                                                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:translate-x-full transition-transform duration-700 -skew-x-12" />
                                                                  <Download size={20} className="group-hover:animate-bounce" />

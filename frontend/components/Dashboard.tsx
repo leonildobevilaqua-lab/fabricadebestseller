@@ -479,7 +479,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
 
                 {/* History (Meus Livros) */}
-                <div className="bg-white rounded-[32px] border border-slate-200 shadow-xl overflow-hidden mt-12 mb-12">
+                <div className="bg-white rounded-[24px] border border-slate-200 shadow-xl overflow-hidden mt-12 mb-12">
                     <div className="bg-slate-50 px-8 py-6 border-b border-slate-200 flex justify-between items-center">
                         <h3 className="font-black text-slate-900 text-xl uppercase tracking-tighter">{(t as any).dashboard.myBooks}</h3>
                         <span className="text-xs font-black text-indigo-600 uppercase bg-indigo-50 border border-indigo-100 px-4 py-2 rounded-full tracking-widest">
@@ -496,15 +496,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     ) : (
                         <div className="divide-y divide-slate-100">
                             {displayOrders.map((order: any, idx: number) => (
-                                <div key={order.id || `book-${idx}`} className="p-8 hover:bg-slate-50/50 transition group relative overflow-hidden">
+                                <div key={order.id || `book-${idx}`} className="p-4 md:p-6 hover:bg-slate-50/20 transition group relative overflow-hidden">
                                      <div className="flex flex-col xl:flex-row items-center justify-between gap-8">
                                         <div className="flex items-center gap-6 w-full xl:w-auto">
-                                            <div className="w-16 h-20 md:w-20 md:h-24 bg-white rounded-2xl flex-shrink-0 flex items-center justify-center text-4xl shadow-lg border border-slate-100 group-hover:scale-110 transition-transform duration-500">
+                                            <div className="w-14 h-16 md:w-16 md:h-20 bg-white rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl shadow-md border border-slate-100 group-hover:scale-110 transition-transform duration-500">
                                                 📚
                                             </div>
                                             <div translate="no" className="min-w-0">
                                                 <span className="text-[10px] text-indigo-500 font-black uppercase tracking-[0.3em] mb-1 block leading-none">{(t as any).dashboard.bookTitleLabel}</span>
-                                                <h4 className="font-black text-slate-900 text-xl md:text-2xl uppercase tracking-tighter italic leading-tight truncate">
+                                                <h4 className="font-black text-slate-900 text-lg md:text-xl uppercase tracking-tighter italic leading-none truncate">
                                                     {order.title || (t as any).dashboard.bookTitleFallback}
                                                 </h4>
                                                 
@@ -535,10 +535,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
                                             {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'].includes((order.status || '').toUpperCase())) && (
                                                 <a
-                                                    href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/download-zip/${order.id}`}`}
+                                                    href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/${order.id}/download-zip`}`}
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    className="flex items-center gap-3 px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-black text-xs shadow-xl shadow-indigo-200 uppercase tracking-widest hover:scale-105 active:scale-95"
+                                                    className="flex items-center gap-3 px-6 py-3.5 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 transition-all font-black text-[10px] shadow-lg shadow-indigo-100 uppercase tracking-widest hover:scale-105 active:scale-95"
                                                 >
                                                     <IconDownload />
                                                     <span>{(t as any).dashboard.downloadKit}</span>
