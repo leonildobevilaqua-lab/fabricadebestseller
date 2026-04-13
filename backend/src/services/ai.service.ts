@@ -218,12 +218,12 @@ export const generateTitleOptions = async (topic: string, researchContext: strin
 
   const SYSTEM_PROMPT = `
 ATUE COMO O MAIOR EXPERT DO MUNDO EM TÍTULOS DE BEST-SELLERS (PULITZER, NYT LIST) E FILMES DE HOLLYWOOD.
-Sua missão é criar 8 títulos e subtítulos que não pareçam manuais ou guias, mas sim PROPRIEDADES INTELECTUAIS DE ELITE.
+Sua missão é criar 9 títulos e subtítulos que não pareçam manuais ou guias, mas sim PROPRIEDADES INTELECTUAIS DE ELITE.
 
 IDIOMA: ${langName}
 
 REGRAS MASTER PARA TÍTULOS:
-1. CURTOS E MAGNÉTICOS: O título deve ter entre 1 e 3 palavras. Seja direto, amigável ou profundamente evocativo. (Ex: "Magnólia", "Um Amor em Paris", "Sombras de Ontem").
+1. VARIABILIDADE E IMPACTO: Gere rigorosamente 9 opções. Alterne obrigatoriamente entre títulos curtos (1 ou 2 palavras) e títulos mais longos e narrativos (3 a 5 palavras). Seja direto, amigável ou profundamente evocativo. (Ex: "Inabalável", "O Caminho do Guerreiro", "Memórias de um Outono", "A Última Fronteira do Amanhã").
 2. NADA DE MANUAIS: Proibido usar "Guia", "Manual", "Tudo sobre", "Como", "Segredos de", "Desvendando".
 3. PADRÃO CINEMATOGRÁFICO: Imagine o título em um pôster de cinema ou em uma vitrine da livraria mais cara de Nova York.
 4. SONORIDADE: O título deve ser fácil de lembrar e "gostoso" de falar.
@@ -244,16 +244,16 @@ FOCO EM FICÇÃO (PADRÃO BEST-SELLER):
 ` : `
 FOCO EM NÃO FICÇÃO (PADRÃO BEST-SELLER):
 - Foco em AUTORIDADE e TRANSFORMAÇÃO.
-- Títulos de impacto (Ex: "Inabalável", "Essencialismo").
+- Títulos de impacto (Ex: "Inabalável", "Essencialismo", "O Poder da Presença").
 - Subtítulos que entregam a solução sem parecer um curso de internet.
 `}
 
-${titleInstruction ? `\nINSTRUÇÕES ADICIONAIS DO CLIENTE:\n"${titleInstruction}"\n` : ''}
+${titleInstruction ? `\nINSTRUÇÕES ADICIONAIS DO CLIENTE (PRIORIDADE MÁXIMA PARA MOLDAR A IDEIA):\n"${titleInstruction}"\n` : ''}
 
 CONTEXTO DE PESQUISA (Use para entender o que o público deste nicho REALMENTE consome):
 ${researchContext.substring(0, 5000)}
 
-RETORNE APENAS JSON LIMPO: [{ "title": "Título Curto", "subtitle": "Subtítulo Master" }]
+RETORNE APENAS JSON LIMPO: [{ "title": "Título Selecionado", "subtitle": "Subtítulo Master" }]
 `;
 
   const userPrompt = `TEMA: ${topic}`;
@@ -288,7 +288,7 @@ RETORNE APENAS JSON LIMPO: [{ "title": "Título Curto", "subtitle": "Subtítulo 
     console.error("[IA] Titles Deep Analysis Failed. Attempting Minimal Fallback...", error);
     try {
       // LAST RESORT: Try generation without any research context to unblock the user
-      const minimalPrompt = `TEMA: ${topic}. Crie 8 títulos virais e subtítulos em ${langName}. Retorne apenas JSON: [{ "title": "...", "subtitle": "..." }]`;
+      const minimalPrompt = `TEMA: ${topic}. Crie 9 títulos virais (alternando entre curtos e narrativos) e subtítulos master em ${langName}. Retorne apenas JSON: [{ "title": "...", "subtitle": "..." }]`;
       const fallbackTitles = await llm.generateJSON<any[]>(minimalPrompt);
       if (Array.isArray(fallbackTitles)) {
         return fallbackTitles.map((t, idx) => ({

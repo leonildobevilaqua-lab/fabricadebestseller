@@ -788,13 +788,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         <h2 className="text-3xl font-bold text-slate-800 mb-2 text-center font-serif">{t.marketAnalysisComplete}</h2>
         <p className="text-center text-slate-500 mb-8 text-lg">{t.selectTitle}</p>
 
-        <div className="grid gap-4 md:grid-cols-2 mt-6">
+        <div className="grid gap-6 md:grid-cols-3 mt-8">
           {project.titleOptions && project.titleOptions.length > 0 ? (
             project.titleOptions.map((opt, idx) => (
               <button
                 key={idx}
                 onClick={() => handleTitleSelect(opt)}
-                className={`text-left p-6 rounded-xl border transition-all bg-white group relative overflow-hidden ${opt.isTopChoice ? 'border-[#0ea5e9] shadow-lg ring-2 ring-[#e0f2fe]' : 'border-gray-200 hover:border-[#0ea5e9] hover:shadow-md'}`}
+                className={`text-left p-4 md:p-5 rounded-2xl border transition-all bg-white group relative overflow-hidden ${opt.isTopChoice ? 'border-[#0ea5e9] shadow-xl ring-2 ring-[#e0f2fe]' : 'border-gray-100 hover:border-[#0ea5e9] hover:shadow-lg'}`}
               >
                 <div className="absolute top-0 right-0 p-2 opacity-5">
                   <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
