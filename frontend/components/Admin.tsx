@@ -1080,7 +1080,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             });
         }
 
-        return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return filtered.sort((a, b) => new Date(b.date || b.created_at || b.createdAt || 0).getTime() - new Date(a.date || a.created_at || a.createdAt || 0).getTime());
     };
 
     const getCombinedTimeline = () => {

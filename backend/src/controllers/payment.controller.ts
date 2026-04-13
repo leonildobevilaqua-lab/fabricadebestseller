@@ -88,6 +88,7 @@ export const getLeads = async (req: Request, res: Response) => {
 
         // Enhance leads with credit status and latest plan
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
+            if (!lead) return null;
             if (!lead.email) return { ...lead, credits: 0 };
             const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
@@ -113,7 +114,7 @@ export const getLeads = async (req: Request, res: Response) => {
             return updatedLead;
         }));
 
-        res.json(leadsWithCredits);
+        res.json(leadsWithCredits.filter(Boolean));
     } catch (e) {
         console.error("Error getting leads:", e);
         res.json([]);
@@ -130,7 +131,8 @@ const updateLeadStatus = async (email: string, newStatus: string) => {
         let targetIndex = -1;
         // Search backwards to find the most recent
         for (let i = leads.length - 1; i >= 0; i--) {
-            if ((leads[i] as any).email.toLowerCase().trim() === email.toLowerCase().trim()) {
+            const l = leads[i] as any;
+            if (l && l.email && l.email.toLowerCase().trim() === email.toLowerCase().trim()) {
                 targetIndex = i;
                 break;
             }
@@ -169,7 +171,8 @@ export const approveLead = async (req: Request, res: Response) => {
 
         // Find latest lead
         for (let i = leads.length - 1; i >= 0; i--) {
-            if ((leads[i] as any).email.toLowerCase().trim() === email.toLowerCase().trim()) {
+            const l = leads[i] as any;
+            if (l && l.email && l.email.toLowerCase().trim() === email.toLowerCase().trim()) {
                 targetIndex = i;
                 break;
             }
@@ -459,9 +462,10 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 // Also update Lead if exists: find newest, preferably PENDING
                 let leadIndex = -1;
                 for (let i = leads.length - 1; i >= 0; i--) {
-                    if ((leads[i] as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                    const l = leads[i] as any;
+                    if (l && l.email?.toLowerCase().trim() === email.toLowerCase().trim()) {
                         leadIndex = i;
-                        if ((leads[i] as any).status === 'PENDING') break; // Prioritize the pending purchase
+                        if (l.status === 'PENDING') break; // Prioritize the pending purchase
                     }
                 }
 
@@ -508,7 +512,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     await setVal(`/users/${safeEmail}/language`, detectedLang);
 
                     // Search for lead again to ensure fresh scope index
-                    const leadIndex = leads.findIndex((l: any) => l.email?.toLowerCase().trim() === email.toLowerCase().trim());
+                    const leadIndex = leads.findIndex((l: any) => l && l.email?.toLowerCase().trim() === email.toLowerCase().trim());
 
                     if (leadIndex !== -1) {
                         await setVal(`/leads[${leadIndex}]/plan`, { name: detectedPlan, billing });
@@ -719,7 +723,8 @@ export const checkAccess = async (req: Request, res: Response) => {
                     const localLeads = Array.isArray(rawLds) ? rawLds : Object.values(rawLds);
                     let targetIndex = -1;
                     for (let i = localLeads.length - 1; i >= 0; i--) {
-                        if ((localLeads[i] as any).email?.toLowerCase().trim() === String(email).toLowerCase().trim()) {
+                        const l = localLeads[i] as any;
+                        if (l && l.email?.toLowerCase().trim() === String(email).toLowerCase().trim()) {
                             targetIndex = i;
                             break;
                         }
@@ -746,14 +751,14 @@ export const checkAccess = async (req: Request, res: Response) => {
         let pendingPlan: any = null;
         for (let i = leads.length - 1; i >= 0; i--) {
             const l = leads[i] as any;
-            if (l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim()) {
+            if (l && l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim()) {
                 leadStatus = l.status;
                 if (l.plan) pendingPlan = l.plan;
                 if (leadStatus === 'SUBSCRIBER') break;
             }
         }
 
-        const usageCount = leads.filter((l: any) => l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS' || l.status === 'APPROVED')).length;
+        const usageCount = leads.filter((l: any) => l && l.email?.toLowerCase().trim() === (email as string).toLowerCase().trim() && (l.status === 'COMPLETED' || l.status === 'LIVRO ENTREGUE' || l.status === 'IN_PROGRESS' || l.status === 'APPROVED')).length;
 
         // Pricing Logic
         let bookPrice = PRICING_RULES['AVULSO'] || 39.90;

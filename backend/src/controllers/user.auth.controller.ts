@@ -41,7 +41,7 @@ export const UserAuthController = {
 
                 let leadFn: any;
                 for (let i = leadsArray.length - 1; i >= 0; i--) {
-                    if ((leadsArray[i] as any).email?.toLowerCase().trim() === cleanUser) {
+                    if (leadsArray[i] && (leadsArray[i] as any).email?.toLowerCase().trim() === cleanUser) {
                         leadFn = leadsArray[i];
                         break;
                     }

@@ -35,7 +35,7 @@ export const simulateWebhook = async (req: Request, res: Response) => {
         let leadIndex = -1;
         // Search backwards to match current flow
         for (let i = leads.length - 1; i >= 0; i--) {
-            if ((leads[i] as any).email?.toLowerCase().trim() === user.email.toLowerCase().trim()) {
+            if (leads[i] && (leads[i] as any).email?.toLowerCase().trim() === user.email.toLowerCase().trim()) {
                 leadIndex = i;
                 break;
             }
