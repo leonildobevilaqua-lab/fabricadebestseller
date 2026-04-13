@@ -477,373 +477,116 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 {displayOrders.length} {(t as any).dashboard.projectsCount}
                             </span>
                         </div>
-                    </div>
 
-                    {displayOrders.length === 0 ? (
-                        <div className="p-12 text-center text-slate-400">
-                            <div className="mb-4 opacity-50"><IconBook /></div>
-                            <p>{(t as any).dashboard.noBooks}</p>
-                            <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="text-indigo-600 font-bold hover:underline mt-2">{(t as any).dashboard.startNow}</button>
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-slate-100 bg-white">
-                            {displayOrders.map((order: any, idx: number) => {
-                                const isCompleted = ['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'].includes((order.status || '').toUpperCase());
-                                const isProcessing = ['IN_PROGRESS', 'WRITING_CHAPTERS'].includes((order.status || '').toUpperCase());
-
-                                return (
-                                    <div key={order.id || order.projectId || idx} className="p-8 hover:bg-slate-50/80 transition flex flex-col lg:flex-row items-center justify-between gap-8 bg-white group border-b border-slate-100 last:border-0">
-                                        {/* INFO LEFT */}
-                                        <div className="flex items-center gap-8 w-full lg:flex-1">
-                                            <div className="w-24 h-32 bg-slate-50 rounded-3xl flex-shrink-0 flex items-center justify-center text-4xl shadow-inner border border-slate-100 group-hover:scale-105 transition-transform duration-500">
-                                                📚
-                                            </div>
-                                            
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex flex-col mb-6">
-                                                    <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.4em] leading-none mb-3 px-1">
-                                                        LIVRO GERADO
-                                                    </span>
-                                                    <h4 className="font-black text-slate-900 text-2xl lg:text-3xl leading-none uppercase tracking-tighter break-words italic group-hover:text-indigo-600 transition-colors" translate="no">
-                                                        {order.title || (t as any).dashboard.bookTitleFallback}
-                                                    </h4>
-                                                </div>
-                                                
-                                                {/* TEXT GRID - NO ICONS PER USER IMAGE */}
-                                                <div className="bg-slate-50/50 p-10 rounded-[40px] border border-slate-100/50 shadow-inner grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">Nome do Cliente</span>
-                                                        <span className="text-[15px] font-black text-slate-800 tracking-tight">{order.customerName || "-"}</span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">E-MAIL</span>
-                                                        <span className="text-[15px] font-black text-slate-500 truncate lowercase">{order.customerEmail || "-"}</span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">Nº DO WHATSAPP</span>
-                                                        <span className="text-[15px] font-black text-indigo-500 underline decoration-indigo-100 decoration-8 underline-offset-[-2px] tracking-tight">{order.customerPhone || "-"}</span>
-                                                    </div>
-                                                    <div className="flex flex-col">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">NOME DO AUTOR</span>
-                                                        <span className="text-[15px] font-black text-slate-900 tracking-tight">{order.authorName || "-"}</span>
-                                                    </div>
-                                                    <div className="flex flex-col md:col-span-2 pt-6 border-t border-slate-200/50 mt-2">
-                                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">DATA DA GERAÇÃO (DIA E HORÁRIO DE BRASÍLIA)</span>
-                                                        <span className="text-[16px] font-black text-slate-600">
-                                                            {order.date ? new Date(order.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "N/A"}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* ACTIONS RIGHT */}
-                                        <div className="flex flex-col items-center lg:items-end gap-6 w-full lg:w-auto">
-                                            <div className="flex items-center gap-3">
-                                               <span className={`text-[10px] font-black px-6 py-2.5 rounded-full border uppercase tracking-[0.2em] shadow-sm ${
-                                                   isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
-                                                   isProcessing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-yellow-50 text-yellow-600 border-yellow-200'
-                                               }`}>
-                                                   {isCompleted ? (t as any).dashboard.statusGenerated : (isProcessing ? (t as any).dashboard.statusProcessing : (t as any).dashboard.statusWaiting)}
-                                               </span>
-                                            </div>
-
-                                            <div className="flex items-center gap-4">
-                                                {isCompleted && (
-                                                    <button
-                                                        onClick={() => window.open(order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/download-zip/${order.id || order.projectId}`}`, '_blank')}
-                                                        className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-6 rounded-[30px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-300/50 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
-                                                    >
-                                                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:translate-x-full transition-transform duration-700 -skew-x-12" />
-                                                        <Download size={22} className="group-hover:animate-bounce" />
-                                                        <span>{(t as any).dashboard.downloadKit || 'Baixar Kit ZIP'}</span>
-                                                    </button>
-                                                )}
-                                                
-                                                <button
-                                                    onClick={() => handleDeleteProject(order.id || order.projectId)}
-                                                    className="p-6 bg-white border border-slate-200 rounded-[28px] text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-xl shadow-slate-100"
-                                                    title={(t as any).dashboard.deleteProject}
-                                                >
-                                                    <Trash2 size={24} />
-                                                </button>
-                                            </div>
-                                        </div>
+                        <div className="divide-y divide-slate-100">
+                            {displayOrders.length === 0 ? (
+                                <div className="p-16 text-center">
+                                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300">
+                                        <Book size={32} />
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* AFILIADOS - PASTA SECRETA (COPIE E COLE) */}
-                <div className="mb-12 bg-[#050b1a] border-2 border-blue-500/30 rounded-[40px] p-8 md:p-12 shadow-2xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-[100px] -mr-32 -mt-32"></div>
-                    <div className="relative z-10 grid lg:grid-cols-2 gap-10 items-center">
-                        <div>
-                            <span className="inline-block bg-blue-600/10 text-blue-400 text-[10px] font-black px-4 py-2 rounded-full border border-blue-500/20 uppercase tracking-widest mb-4">
-                                {(t as any).dashboard.affiliate.tag}
-                            </span>
-                            <h2 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter leading-tight italic">
-                                <span className="text-blue-500">{(t as any).dashboard.affiliate.title}</span> <br />
-                                {(t as any).dashboard.affiliate.subtitle}
-                            </h2>
-                            <p className="text-slate-400 text-lg mb-8 leading-relaxed font-medium">
-                                {(t as any).dashboard.affiliate.desc}
-                            </p>
-                            <a
-                                href={lang === 'en' ? "https://pay.kiwify.com/DdposAY" : "https://pay.kiwify.com.br/eAZIvMi"}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-3 bg-[#d4af37] hover:bg-yellow-400 text-black font-black uppercase py-4 px-8 rounded-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:scale-105 active:scale-98"
-                            >
-                                {(t as any).dashboard.affiliate.button} <ExternalLink size={20} />
-                            </a>
-                        </div>
-                        <div className="aspect-video bg-black rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
-                            <iframe
-                                className="w-full h-full"
-                                src="https://www.youtube.com/embed/qyZ5F1oZJyg"
-                                title={(t as any).dashboard.affiliate.title}
-                                frameBorder="0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                allowFullScreen
-                            ></iframe>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Extra Services Section (Re-implemented with Landing Page Design) */}
-                <ExtraServiceSection formData={{ email: user?.email, name: user?.name, phone: user?.phone }} products={products} />
-
-                <div className="pt-8 border-t border-slate-200">
-                    <SocialShare
-                        text={lang === 'en' ? "I'm creating amazing books with AI! Check out Best Seller Factory." : "Estou criando livros incríveis com Inteligência Artificial! Conheça a Fábrica de Best Sellers."}
-                        className="opacity-70 hover:opacity-100 transition-opacity"
-                    />
-                </div>
-
-            </main>
-
-            {/* Password Modal */}
-            {showPasswordModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-2 bg-indigo-600"></div>
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-black text-slate-900 uppercase">{(lang === 'en' ? "Security Settings" : "Segurança")}</h3>
-                            <button onClick={() => setShowPasswordModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">&times;</button>
-                        </div>
-
-                        <form onSubmit={handleUpdatePassword} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{lang === 'en' ? "Current Password" : "Senha Atual"}</label>
-                                <input 
-                                    type="password" 
-                                    value={currentPass}
-                                    onChange={e => setCurrentPass(e.target.value)}
-                                    required
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{lang === 'en' ? "New Password" : "Nova Senha"}</label>
-                                <input 
-                                    type="password" 
-                                    value={newPass}
-                                    onChange={e => setNewPass(e.target.value)}
-                                    required
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-1">{lang === 'en' ? "Confirm New Password" : "Confirmar Nova Senha"}</label>
-                                <input 
-                                    type="password" 
-                                    value={confirmPass}
-                                    onChange={e => setConfirmPass(e.target.value)}
-                                    required
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition"
-                                />
-                            </div>
-
-                            {passMsg.text && (
-                                <div className={`p-4 rounded-xl text-sm font-bold ${passMsg.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
-                                    {passMsg.text}
+                                    <p className="text-slate-400 font-bold">{(t as any).dashboard.noProjects}</p>
                                 </div>
+                            ) : (
+                                displayOrders.map((order: any, idx: number) => {
+                                    const isCompleted = order.status === 'COMPLETED' || order.status === 'LIVRO ENTREGUE' || order.status === 'APPROVED';
+                                    const isProcessing = order.status === 'IN_PROGRESS' || order.status === 'PROCESSING';
+                                    return (
+                                        <div key={order.id || order.projectId || idx} className="p-6 md:p-8 hover:bg-slate-50/50 transition bg-white group border-b border-slate-100 last:border-0 relative overflow-hidden">
+                                            <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                                            <div className="flex flex-col xl:flex-row items-start justify-between gap-10">
+                                                <div className="flex flex-1 items-start gap-8 w-full">
+                                                    <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-50 border-2 border-slate-100 rounded-3xl flex-shrink-0 flex items-center justify-center text-5xl shadow-xl transition-all duration-500">
+                                                        📚
+                                                    </div>
+                                                    
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex flex-col mb-4">
+                                                            <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.4em] leading-none mb-2 bg-emerald-50 w-fit px-3 py-1 rounded-full">
+                                                                {(t as any).dashboard.statusGenerated || 'LIVRO GERADO'}
+                                                            </span>
+                                                            <h4 className="font-black text-slate-900 text-xl md:text-2xl leading-tight uppercase tracking-tighter break-words italic group-hover:text-indigo-600 transition-colors" translate="no">
+                                                                {order.title || (t as any).dashboard.bookTitleFallback}
+                                                            </h4>
+                                                        </div>
+                                                        
+                                                        <div className="bg-[#f8fafc] p-6 rounded-[32px] border border-slate-200/50 shadow-inner grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><User size={18} /></div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">CLIENTE</span>
+                                                                    <span className="text-[14px] font-black text-slate-700 tracking-tight truncate max-w-[200px]">{order.customerName || "-"}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><Mail size={18} /></div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">E-MAIL</span>
+                                                                    <span className="text-[14px] font-black text-slate-500 truncate lowercase max-w-[200px]">{order.customerEmail || "-"}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><MessageCircle size={18} /></div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">WHATSAPP</span>
+                                                                    <span className="text-[14px] font-black text-indigo-500 underline decoration-indigo-100 underline-offset-4 tracking-tight">{order.customerPhone || "-"}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4">
+                                                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-emerald-500 font-black text-xs">A</div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">AUTOR(A)</span>
+                                                                    <span className="text-[14px] font-black text-slate-900 tracking-tight truncate max-w-[200px]">{order.authorName || "-"}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-4 md:col-span-2 pt-4 border-t border-slate-200/50 mt-1">
+                                                                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><Calendar size={18} /></div>
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">DATA DE GERAÇÃO</span>
+                                                                    <span className="text-[14px] font-black text-slate-600">
+                                                                        {order.date ? new Date(order.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "N/A"}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col items-end gap-6 w-full xl:w-auto">
+                                                    <div className="flex items-center gap-3">
+                                                       <span className={`text-[10px] font-black px-6 py-2.5 rounded-full border uppercase tracking-[0.2em] shadow-sm ${
+                                                           isCompleted ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 
+                                                           isProcessing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                                                       }`}>
+                                                           {isCompleted ? (t as any).dashboard.statusGenerated : (isProcessing ? (t as any).dashboard.statusProcessing : (t as any).dashboard.statusWaiting)}
+                                                       </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-4 w-full justify-end">
+                                                        {isCompleted && (
+                                                            <button
+                                                                onClick={() => window.open(order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/download-zip/${order.id || order.projectId}`}`, '_blank')}
+                                                                className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-indigo-200/50 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden flex-1 md:flex-none justify-center"
+                                                            >
+                                                                <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:translate-x-full transition-transform duration-700 -skew-x-12" />
+                                                                <Download size={20} className="group-hover:animate-bounce" />
+                                                                <span>{(t as any).dashboard.downloadKit || 'Baixar Kit ZIP'}</span>
+                                                            </button>
+                                                        )}
+                                                        
+                                                        <button
+                                                            onClick={() => handleDeleteProject(order.id || order.projectId)}
+                                                            className="p-5 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all"
+                                                            title={(t as any).dashboard.deleteProject}
+                                                        >
+                                                            <Trash2 size={24} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
                             )}
-
-                            <button 
-                                type="submit" 
-                                disabled={passLoading}
-                                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl transition shadow-lg shadow-indigo-100 disabled:opacity-50"
-                            >
-                                {passLoading ? (lang === 'en' ? "Updating..." : "Atualizando...") : (lang === 'en' ? "Update Password" : "Alterar Senha")}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
-// --- [RE-IMPLEMENTED] EXTRA SERVICE SECTION (LANDING PAGE STYLE) ---
-const ExtraServiceSection = ({ formData, products }: { formData: any, products: any }) => {
-    const { t, lang } = useLanguage();
-    return (
-        <section className="py-12 bg-slate-950 rounded-[40px] relative overflow-hidden shadow-2xl border border-slate-800">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-950"></div>
-            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent"></div>
-
-            <div className="relative max-w-6xl mx-auto px-6">
-                <div className="text-center mb-12">
-                    <span className="inline-block bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-4 py-2 rounded-full border border-emerald-500/20 uppercase tracking-widest mb-4">
-                        {(t as any).dashboard.extraServices.title}
-                    </span>
-                    <h2 className="text-3xl md:text-4xl font-black text-white mb-4 uppercase tracking-tight">
-                        {(t as any).dashboard.extraServices.subtitle}
-                    </h2>
-                    <p className="text-slate-500 text-sm max-w-2xl mx-auto font-medium">
-                        {(t as any).dashboard.extraServices.desc}
-                    </p>
-                </div>
-
-                {/* ── TRADUÇÃO ── */}
-                <div className="mb-10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-blue-500/20 border border-blue-500/30 rounded-lg flex items-center justify-center text-sm">🌍</div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">{(t as any).dashboard.extraServices.translation}</h3>
-                        <div className="flex-1 h-px bg-blue-500/20"></div>
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        {[
-                            { key: 'livro-ingles', icon: '🇺🇸', title: (t as any).dashboard.extraServices.items.engBook.title, subtitle: (t as any).dashboard.extraServices.items.engBook.subtitle, price: lang === 'en' ? 4.90 : 24.99, features: (t as any).dashboard.extraServices.items.engBook.features, href: products.trans_en },
-                            { key: 'livro-espanhol', icon: '🇪🇸', title: (t as any).dashboard.extraServices.items.espBook.title, subtitle: (t as any).dashboard.extraServices.items.espBook.subtitle, price: lang === 'en' ? 4.90 : 24.99, features: (t as any).dashboard.extraServices.items.espBook.features, href: products.trans_es },
-                        ].map(svc => (
-                            <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="blue" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
-                        ))}
-                    </div>
-                </div>
-
-                {/* ── DESIGN DE CAPA ── */}
-                <div className="mb-10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-purple-500/20 border border-purple-500/30 rounded-lg flex items-center justify-center text-sm">🎨</div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">{(t as any).dashboard.extraServices.coverDesign}</h3>
-                        <div className="flex-1 h-px bg-purple-500/20"></div>
-                    </div>
-                    <div className="grid sm:grid-cols-2 gap-4">
-                        {[
-                            { key: 'capa-impressa', icon: '📗', title: (t as any).dashboard.extraServices.items.printCover.title, subtitle: (t as any).dashboard.extraServices.items.printCover.subtitle, price: lang === 'en' ? 49.90 : 250.00, features: (t as any).dashboard.extraServices.items.printCover.features, href: products.cover_card },
-                            { key: 'capa-digital', icon: '📱', title: (t as any).dashboard.extraServices.items.digitalCover.title, subtitle: (t as any).dashboard.extraServices.items.digitalCover.subtitle, price: lang === 'en' ? 29.90 : 149.90, features: (t as any).dashboard.extraServices.items.digitalCover.features, href: products.cover_ebook },
-                        ].map(svc => (
-                            <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="purple" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
-                        ))}
-                    </div>
-                </div>
-
-                {/* ── PUBLICAÇÃO ── */}
-                <div className="mb-10">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center text-sm">🚀</div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">{(t as any).dashboard.extraServices.publication}</h3>
-                        <div className="flex-1 h-px bg-orange-500/20"></div>
-                    </div>
-                    <div className="grid sm:grid-cols-3 gap-4">
-                        {[
-                            { key: 'amazon-impresso', icon: '📦', title: (t as any).dashboard.extraServices.items.amazonPub.title + ' — ' + (lang === 'en' ? 'Print' : 'Impresso'), subtitle: (t as any).dashboard.extraServices.items.amazonPub.subtitle, price: lang === 'en' ? 14.90 : 69.90, features: (t as any).dashboard.extraServices.items.amazonPub.features, href: products.pub_amazon_printed },
-                            { key: 'amazon-digital', icon: '📲', title: (t as any).dashboard.extraServices.items.amazonPub.title + ' — ' + (lang === 'en' ? 'Digital' : 'Digital'), subtitle: (t as any).dashboard.extraServices.items.amazonPub.subtitle, price: lang === 'en' ? 12.90 : 59.90, features: (t as any).dashboard.extraServices.items.amazonPub.features, href: products.pub_amazon_digital },
-                            { key: 'uiclap-impresso', icon: '🇧🇷', title: (t as any).dashboard.extraServices.items.shelfPub.title + ' — ' + (lang === 'en' ? 'Print' : 'Impresso'), subtitle: (t as any).dashboard.extraServices.items.shelfPub.subtitle, price: lang === 'en' ? 12.90 : 59.90, features: (t as any).dashboard.extraServices.items.shelfPub.features, href: products.pub_uiclap },
-                        ].map(svc => (
-                            <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="orange" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
-                        ))}
-                    </div>
-                </div>
-
-                {/* ── REGISTROS LEGAIS ── */}
-                <div className="mb-12">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-amber-500/20 border border-amber-500/30 rounded-lg flex items-center justify-center text-sm">📋</div>
-                        <h3 className="text-xs font-black text-white uppercase tracking-widest">{(t as any).dashboard.extraServices.legal}</h3>
-                        <div className="flex-1 h-px bg-amber-500/20"></div>
-                    </div>
-                    <div className="grid sm:grid-cols-3 gap-4">
-                        {[
-                            { key: 'ficha-catalografica', icon: '🗂️', title: (t as any).dashboard.extraServices.items.cataloging.title, subtitle: (t as any).dashboard.extraServices.items.cataloging.subtitle, price: lang === 'en' ? 12.90 : 59.90, features: (t as any).dashboard.extraServices.items.cataloging.features, href: products.catalog_card },
-                            { key: 'isbn-impresso', icon: '📘', title: (t as any).dashboard.extraServices.items.isbn.title + ' — ' + (lang === 'en' ? 'Print' : 'Impresso'), subtitle: (t as any).dashboard.extraServices.items.isbn.subtitle, price: lang === 'en' ? 9.90 : 49.90, features: (t as any).dashboard.extraServices.items.isbn.features, href: products.isbn_printed },
-                            { key: 'isbn-digital', icon: '📗', title: (t as any).dashboard.extraServices.items.isbn.title + ' — ' + (lang === 'en' ? 'Digital' : 'Digital'), subtitle: (t as any).dashboard.extraServices.items.isbn.subtitle, price: lang === 'en' ? 9.90 : 49.90, features: (t as any).dashboard.extraServices.items.isbn.features, href: products.isbn_digital },
-                        ].map(svc => (
-                            <ExtraServiceCard key={svc.key} serviceId={svc.key} {...svc as any} accentColor="amber" formData={formData} getApiBase={getApiBase} trackInitiateCheckout={() => { }} />
-                        ))}
-                    </div>
-                </div>
-
-                {/* ── PACOTE COMPLETO ── */}
-                <div className="relative bg-gradient-to-br from-emerald-900/30 via-slate-800/60 to-slate-900 border border-emerald-500/40 rounded-3xl p-8 shadow-2xl">
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-900 text-[10px] font-black px-6 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                        {(t as any).dashboard.extraServices.bestValue}
-                    </div>
-
-                    <div className="flex flex-col md:flex-row gap-8 items-center justify-between">
-                        <div className="flex-1">
-                            <h3 className="text-2xl font-black text-white mb-2 uppercase">{(t as any).dashboard.extraServices.completePackage}</h3>
-                            <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                                {(t as any).dashboard.extraServices.packageDesc}
-                            </p>
-                            <div className="flex flex-wrap gap-x-4 gap-y-2">
-                                {[(t as any).dashboard.extraServices.items.engBook.title, (t as any).dashboard.extraServices.items.printCover.title, (t as any).dashboard.extraServices.items.amazonPub.title, (t as any).dashboard.extraServices.items.isbn.title, (t as any).dashboard.extraServices.items.cataloging.title].map((item, i) => (
-                                    <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-300 bg-slate-800/50 px-2 py-1 rounded-lg">
-                                        <span className="w-1 h-1 rounded-full bg-emerald-400"></span>
-                                        {item}
-                                    </div>
-                                ))}
-                            </div>
                         </div>
 
-                        <div className="text-center md:text-right">
-                            <div className="flex items-end justify-center md:justify-end gap-1 mb-4">
-                                <span className="text-slate-500 text-sm mb-1">{lang === 'en' ? '$' : 'R$'}</span>
-                                <span className="text-5xl font-black text-white tracking-tighter">{lang === 'en' ? '119.90' : '599,90'}</span>
-                            </div>
-                            <a
-                                href="https://pay.kiwify.com.br/IHk1tZd"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-black px-8 py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 uppercase text-xs tracking-widest inline-block"
-                            >
-                                {(t as any).dashboard.extraServices.hirePackage}
-                            </a>
-                            {/* Hidden internal button for logic */}
-                            <div className="hidden">
-                                <ExtraServiceBuyButton
-                                    serviceKey="pacote-completo"
-                                    serviceName="Pacote Completo de Serviços"
-                                    price={lang === 'en' ? 119.90 : 599.90}
-                                    label={(t as any).dashboard.extraServices.hirePackage}
-                                    accentClass="bg-emerald-500"
-                                    formData={formData}
-                                    getApiBase={getApiBase}
-                                    trackInitiateCheckout={() => { }}
-                                    href="https://pay.kiwify.com.br/IHk1tZd"
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="mt-8 text-center pb-12">
-                    <p className="text-slate-500 text-[10px] uppercase font-bold tracking-widest mb-4">
-                        {lang === 'en' ? '🔒 Secure Payment via Kiwify · Email Support' : '🔒 Pagamento Seguro via Kiwify · Suporte via E-mail'}
-                    </p>
-                    <Disclaimer />
-                </div>
-            </div>
-        </section>
-    );
-}
-
-const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>;
-const IconZap = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>;
-const IconGlobe = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>;
-const IconPalette = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r=".5" /><circle cx="17.5" cy="10.5" r=".5" /><circle cx="8.5" cy="7.5" r=".5" /><circle cx="6.5" cy="12.5" r=".5" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.5-1.1-.3-.3-.5-.7-.5-1.1 0-.9.7-1.6 1.6-1.6H17c2.8 0 5-2.2 5-5 0-5.5-4.5-10-10-10z" /></svg>;

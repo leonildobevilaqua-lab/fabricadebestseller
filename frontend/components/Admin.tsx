@@ -1333,631 +1333,115 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 </div>
 
                                 <div className="divide-y divide-slate-100">
-                                    {getCombinedTimeline().map((item: any, idx: number) => {
-                                        const order = item;
-                                        return (
-                                            <div key={order.projectId || idx} className="p-10 hover:bg-slate-50/50 transition flex flex-col lg:flex-row items-center justify-between gap-10 bg-white group border-b border-slate-100 last:border-0 relative overflow-hidden">
-                                                {/* PREMIUM LIGHT GLOW PERMITIDA */}
-                                                <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                     {getCombinedTimeline().map((item: any, idx: number) => {
+                                         const order = item;
+                                         return (
+                                             <div key={order.projectId || idx} className="p-6 md:p-8 hover:bg-slate-50/50 transition bg-white group border-b border-slate-100 last:border-0 relative overflow-hidden">
+                                                 <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                                                {/* INFO LEFT */}
-                                                <div className="flex items-center gap-10 w-full lg:flex-1">
-                                                    {/* BOOK ICON MATCHING IMAGE */}
-                                                    <div className="w-24 h-24 bg-white border-2 border-slate-100 rounded-3xl flex-shrink-0 flex items-center justify-center text-5xl shadow-xl group-hover:rotate-3 transition-transform duration-500">
-                                                        📚
-                                                    </div>
-                                                    
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex flex-col mb-6">
-                                                            <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.4em] leading-none mb-3 px-1">
-                                                                LIVRO GERADO
-                                                            </span>
-                                                            <h4 className="font-black text-slate-900 text-2xl lg:text-3xl leading-none uppercase tracking-tighter break-words italic group-hover:text-indigo-600 transition-colors">
-                                                                {order.title || "Untitled Project"}
-                                                            </h4>
-                                                        </div>
-                                                        
-                                                        {/* TEXT GRID - NO ICONS PER USER IMAGE */}
-                                                        <div className="bg-slate-50/50 p-10 rounded-[40px] border border-slate-100/50 shadow-inner grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-6">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">Nome do Cliente</span>
-                                                                <span className="text-[15px] font-black text-slate-800 tracking-tight">{order.customerName || "-"}</span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">E-MAIL</span>
-                                                                <span className="text-[15px] font-black text-slate-500 truncate lowercase">{order.customerEmail || "N/A"}</span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">Nº DO WHATSAPP</span>
-                                                                <span className="text-[15px] font-black text-indigo-500 underline decoration-indigo-100 decoration-8 underline-offset-[-2px] tracking-tight">{order.customerPhone || "N/A"}</span>
-                                                            </div>
-                                                            <div className="flex flex-col">
-                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">NOME DO AUTOR</span>
-                                                                <span className="text-[15px] font-black text-slate-900 tracking-tight">{order.authorName || "-"}</span>
-                                                            </div>
-                                                            <div className="flex flex-col md:col-span-2 pt-6 border-t border-slate-200/50 mt-2">
-                                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 opacity-60">DATA DA GERAÇÃO (DIA E HORÁRIO DE BRASÍLIA)</span>
-                                                                <span className="text-[16px] font-black text-slate-600">
-                                                                    {order.date ? new Date(order.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "N/A"}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                 <div className="flex flex-col xl:flex-row items-start justify-between gap-10">
+                                                     
+                                                     <div className="flex flex-1 items-start gap-8 w-full">
+                                                         <div className="w-20 h-20 md:w-24 md:h-24 bg-slate-50 border-2 border-slate-100 rounded-3xl flex-shrink-0 flex items-center justify-center text-5xl shadow-xl transition-all duration-500">
+                                                             📚
+                                                         </div>
+                                                         
+                                                         <div className="flex-1 min-w-0">
+                                                             <div className="flex flex-col mb-4">
+                                                                 <span className="text-[10px] text-emerald-600 font-black uppercase tracking-[0.4em] leading-none mb-2 bg-emerald-50 w-fit px-3 py-1 rounded-full">
+                                                                     LIVRO GERADO
+                                                                 </span>
+                                                                 <h4 className="font-black text-slate-900 text-xl md:text-2xl leading-tight uppercase tracking-tighter break-words italic group-hover:text-indigo-600 transition-colors">
+                                                                     {order.title || "PROJETO SEM TÍTULO"}
+                                                                 </h4>
+                                                             </div>
+                                                             
+                                                             <div className="bg-[#f8fafc] p-6 rounded-[32px] border border-slate-200/50 shadow-inner grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                                                 <div className="flex items-center gap-4">
+                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400"><User size={18} /></div>
+                                                                     <div className="flex flex-col">
+                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">CLIENTE</span>
+                                                                         <span className="text-[14px] font-black text-slate-700 tracking-tight truncate max-w-[200px]">{order.customerName || "-"}</span>
+                                                                     </div>
+                                                                 </div>
+                                                                 <div className="flex items-center gap-4">
+                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400"><Mail size={18} /></div>
+                                                                     <div className="flex flex-col">
+                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">E-MAIL</span>
+                                                                         <span className="text-[14px] font-black text-slate-500 truncate lowercase max-w-[200px]">{order.customerEmail || "N/A"}</span>
+                                                                     </div>
+                                                                 </div>
+                                                                 <div className="flex items-center gap-4">
+                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400"><MessageCircle size={18} /></div>
+                                                                     <div className="flex flex-col">
+                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">WHATSAPP</span>
+                                                                         <span className="text-[14px] font-black text-indigo-500 underline decoration-indigo-100 underline-offset-4 tracking-tight">{order.customerPhone || "N/A"}</span>
+                                                                     </div>
+                                                                 </div>
+                                                                 <div className="flex items-center gap-4">
+                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-emerald-500 font-black text-xs">A</div>
+                                                                     <div className="flex flex-col">
+                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">AUTOR(A)</span>
+                                                                         <span className="text-[14px] font-black text-slate-900 tracking-tight truncate max-w-[200px]">{order.authorName || "-"}</span>
+                                                                     </div>
+                                                                 </div>
+                                                                 <div className="flex items-center gap-4 md:col-span-2 pt-4 border-t border-slate-200/50 mt-1">
+                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400"><Calendar size={18} /></div>
+                                                                     <div className="flex flex-col">
+                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">DATA DE GERAÇÃO</span>
+                                                                         <span className="text-[14px] font-black text-slate-600">
+                                                                             {order.date ? new Date(order.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : "N/A"}
+                                                                         </span>
+                                                                     </div>
+                                                                 </div>
+                                                             </div>
+                                                         </div>
+                                                     </div>
 
-                                                {/* ACTIONS RIGHT - AS REQUESTED IN IMAGE */}
-                                                <div className="flex flex-col lg:flex-row items-center gap-6 w-full lg:w-auto">
-                                                    
-                                                    {/* PRIMARY CTA */}
-                                                    <button
-                                                        onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
-                                                        className="flex items-center gap-5 bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-6 rounded-[30px] font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-indigo-300/50 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden"
-                                                    >
-                                                        <Download size={24} className="group-hover:animate-bounce" />
-                                                        <span>BAIXAR KIT ZIP</span>
-                                                    </button>
-                                                    
-                                                    <button
-                                                        onClick={() => handleImpersonate(order.customerEmail)}
-                                                        className="p-6 bg-white border border-slate-200 rounded-[28px] text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-xl shadow-slate-100"
-                                                        title="Ver Área do Cliente"
-                                                    >
-                                                        <User size={28} />
-                                                    </button>
+                                                     <div className="flex flex-col items-end gap-6 w-full xl:w-auto">
+                                                         <div className="flex flex-wrap items-center justify-end gap-4 w-full">
+                                                             <span className="text-[10px] font-black px-5 py-2 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-600 uppercase tracking-widest shadow-sm">
+                                                                 LIVRO GERADO
+                                                             </span>
+                                                             
+                                                             <div className="flex items-center gap-3 bg-white p-1 px-4 rounded-xl border border-slate-200 shadow-sm shrink-0">
+                                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">CRÉDITOS:</span>
+                                                                 <div className="flex items-center bg-slate-50 rounded-lg border border-slate-100 overflow-hidden">
+                                                                     <button onClick={() => handleManageCreditsOp(-1)} className="px-3 py-1 hover:bg-white text-md font-black text-slate-400 hover:text-red-500 transition-all">-</button>
+                                                                     <div className="px-3 py-1 text-xs font-black text-slate-900 min-w-[30px] text-center border-x border-slate-100">{order.credits || foundCredits || 0}</div>
+                                                                     <button onClick={() => handleManageCreditsOp(1)} className="px-3 py-1 hover:bg-white text-md font-black text-slate-400 hover:text-emerald-500 transition-all">+</button>
+                                                                 </div>
+                                                             </div>
+                                                         </div>
 
-                                                    {/* Credits Widget Integrated Row */}
-                                                    <div className="flex items-center gap-4 bg-white p-2 px-5 rounded-[28px] border border-slate-200 shadow-lg">
-                                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">CRÉDITOS:</span>
-                                                        <div className="flex items-center bg-slate-50 rounded-xl border border-slate-100 overflow-hidden shadow-sm">
-                                                            <button onClick={() => handleManageCreditsOp(-1)} className="px-4 py-2 hover:bg-white text-lg font-black text-slate-300 hover:text-red-500 transition-all">-</button>
-                                                            <div className="px-5 py-2 text-sm font-black text-slate-900 min-w-[50px] text-center border-x border-slate-100">{order.credits || foundCredits || 0}</div>
-                                                            <button onClick={() => handleManageCreditsOp(1)} className="px-4 py-2 hover:bg-white text-lg font-black text-slate-300 hover:text-emerald-500 transition-all">+</button>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <button
-                                                        onClick={() => handleDeleteProject(order.projectId)}
-                                                        className="p-6 bg-white border border-slate-200 rounded-[28px] text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all shadow-xl shadow-slate-100"
-                                                        title="Excluir"
-                                                    >
-                                                        <Trash2 size={28} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
-                    )}
+                                                         <div className="flex items-center gap-4 w-full justify-end">
+                                                             <button
+                                                                 onClick={() => window.open(`${getApiBase()}/api/projects/download-zip/${order.projectId}`, '_blank')}
+                                                                 className="flex items-center gap-4 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-5 rounded-3xl font-black uppercase text-xs tracking-[0.2em] shadow-xl shadow-indigo-200/50 transition-all hover:scale-105 active:scale-95 group relative overflow-hidden flex-1 md:flex-none justify-center"
+                                                             >
+                                                                 <Download size={20} className="group-hover:animate-bounce" />
+                                                                 <span>BAIXAR KIT ZIP</span>
+                                                             </button>
+                                                             
+                                                             <button
+                                                                 onClick={() => handleImpersonate(order.customerEmail)}
+                                                                 className="p-5 bg-white border border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all"
+                                                                 title="Ver Área do Cliente"
+                                                             >
+                                                                 <User size={24} />
+                                                             </button>
+                                                             
+                                                             <button
+                                                                 onClick={() => handleDeleteProject(order.projectId)}
+                                                                 className="p-5 bg-white border border-red-100 rounded-2xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
+                                                                 title="Excluir"
+                                                             >
+                                                                 <Trash2 size={24} />
+                                                             </button>
+                                                         </div>
+                                                     </div>
+                                                 </div>
+                                             </div>
+                                         );
+                                     })}
 
-                    {/* SETUP SECTION */}
-                    {activeSection === 'setup' && (
-                        <div className="space-y-6 animate-fade-in max-w-3xl">
-                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Seleção de Modelo de IA</h3>
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-slate-700 mb-2">Provedor Ativo</label>
-                                    <select
-                                        value={settings.activeProvider}
-                                        onChange={e => setSettings({ ...settings, activeProvider: e.target.value })}
-                                        className="w-full p-2 border rounded-lg text-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                    >
-                                        <option value="gemini">Google Gemini (Recomendado)</option>
-                                        <option value="openai">OpenAI GPT-4</option>
-                                        <option value="anthropic">Anthropic Claude 3</option>
-                                        <option value="deepseek">DeepSeek Coder</option>
-                                        <option value="llama">Meta Llama 3 (Groq)</option>
-                                    </select>
-                                    <p className="text-xs text-slate-500 mt-2">
-                                        O modelo selecionado será usado para gerar todos os livros.
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Chaves de API (Secretas)</h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Gemini API Key</label>
-                                        <input
-                                            type="password"
-                                            value={settings.providers.gemini}
-                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, gemini: e.target.value } })}
-                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">OpenAI API Key</label>
-                                        <input
-                                            type="password"
-                                            value={settings.providers.openai}
-                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, openai: e.target.value } })}
-                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Anthropic Key</label>
-                                        <input
-                                            type="password"
-                                            value={settings.providers.anthropic}
-                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, anthropic: e.target.value } })}
-                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">DeepSeek Key</label>
-                                        <input
-                                            type="password"
-                                            value={settings.providers.deepseek}
-                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, deepseek: e.target.value } })}
-                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Groq (Llama) Key</label>
-                                        <input
-                                            type="password"
-                                            value={settings.providers.llama}
-                                            onChange={e => setSettings({ ...settings, providers: { ...settings.providers, llama: e.target.value } })}
-                                            className="w-full p-2 border rounded-lg font-mono text-sm bg-slate-50 focus:bg-white transition"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Configuração SMTP (E-mail)</h3>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="col-span-2">
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Host</label>
-                                        <input type="text" value={settings.email?.host || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, host: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" placeholder="smtp.example.com" />
-                                        <label className="text-xs font-bold uppercase text-slate-500 mb-1 block">Senha</label>
-                                        <input type="password" value={settings.email?.pass || ''} onChange={e => setSettings({ ...settings, email: { ...settings.email, pass: e.target.value } })} className="w-full p-2 border rounded-lg text-sm" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end pt-4">
-                                <button onClick={handleSave} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition transform active:scale-95">Salvar Configurações</button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* INTEGRATIONS SECTION */}
-                    {activeSection === 'integrations' && (
-                        <div className="space-y-6 animate-fade-in max-w-4xl">
-
-                            {/* === ASAAS GATEWAY === */}
-                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                <div className="flex items-center justify-between mb-4 border-b pb-3">
-                                    <div>
-                                        <h3 className="font-bold text-slate-800">Gateway Asaas</h3>
-                                        <p className="text-xs text-slate-500 mt-1">Alterne entre Sandbox e Produção. Chaves gerenciadas no Coolify.</p>
-                                    </div>
-                                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${asaasEnv === 'production' ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-yellow-100 text-yellow-700 border border-yellow-200'}`}>
-                                        {asaasEnv === 'production' ? '🟢 Produção Ativa' : '🟡 Sandbox Ativo'}
-                                    </span>
-                                </div>
-
-                                {/* Status das Chaves no Servidor */}
-                                <div className="mb-5 grid grid-cols-2 gap-3">
-                                    <div className={`p-3 rounded-lg border text-sm ${hasSandboxKey ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'}`}>
-                                        <div className="font-bold text-xs uppercase mb-1">ASAAS_SANDBOX_KEY</div>
-                                        <div>{hasSandboxKey ? '✅ Configurada no Coolify' : '❌ Não configurada'}</div>
-                                    </div>
-                                    <div className={`p-3 rounded-lg border text-sm ${hasProductionKey ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-600'}`}>
-                                        <div className="font-bold text-xs uppercase mb-1">ASAAS_PRODUCTION_KEY</div>
-                                        <div>{hasProductionKey ? '✅ Configurada no Coolify' : '❌ Não configurada'}</div>
-                                    </div>
-                                </div>
-
-                                {/* Environment Toggle */}
-                                <div className="mb-5">
-                                    <label className="text-xs font-bold uppercase text-slate-500 mb-2 block">Selecionar Ambiente</label>
-                                    <div className="flex gap-3">
-                                        <button
-                                            onClick={() => setAsaasEnv('sandbox')}
-                                            disabled={!hasSandboxKey}
-                                            className={`flex-1 py-3 rounded-lg text-sm font-bold border transition ${asaasEnv === 'sandbox'
-                                                ? 'bg-yellow-50 border-yellow-400 text-yellow-800'
-                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
-                                                } disabled:opacity-40 disabled:cursor-not-allowed`}
-                                        >
-                                            🟡 Sandbox (Testes)
-                                            {!hasSandboxKey && <span className="block text-xs font-normal mt-0.5">Chave não configurada</span>}
-                                        </button>
-                                        <button
-                                            onClick={() => setAsaasEnv('production')}
-                                            disabled={!hasProductionKey}
-                                            className={`flex-1 py-3 rounded-lg text-sm font-bold border transition ${asaasEnv === 'production'
-                                                ? 'bg-green-50 border-green-500 text-green-800'
-                                                : 'bg-slate-50 border-slate-200 text-slate-500 hover:border-slate-300'
-                                                } disabled:opacity-40 disabled:cursor-not-allowed`}
-                                        >
-                                            🟢 Produção
-                                            {!hasProductionKey && <span className="block text-xs font-normal mt-0.5">Chave não configurada</span>}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {asaasMsg && (
-                                    <p className={`text-sm mb-3 font-medium ${asaasMsg.startsWith('✅') ? 'text-green-600' : 'text-red-600'}`}>
-                                        {asaasMsg}
-                                    </p>
-                                )}
-
-                                <button
-                                    disabled={asaasSaving}
-                                    onClick={async () => {
-                                        setAsaasSaving(true);
-                                        setAsaasMsg('');
-                                        try {
-                                            const res = await fetch(`${getAdminUrl()}/asaas-env`, {
-                                                method: 'POST',
-                                                headers: {
-                                                    'Content-Type': 'application/json',
-                                                    Authorization: `Bearer ${token}`
-                                                },
-                                                body: JSON.stringify({ env: asaasEnv })
-                                            });
-                                            const data = await res.json();
-                                            if (res.ok) {
-                                                setAsaasMsg(`✅ ${data.message}`);
-                                            } else {
-                                                setAsaasMsg(`❌ ${data.error}`);
-                                            }
-                                        } catch (e: any) {
-                                            setAsaasMsg(`❌ Erro de rede: ${e.message}`);
-                                        } finally {
-                                            setAsaasSaving(false);
-                                            setTimeout(() => setAsaasMsg(''), 6000);
-                                        }
-                                    }}
-                                    className="w-full py-3 bg-slate-800 text-white font-bold rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                                >
-                                    {asaasSaving ? 'Alternando...' : `Confirmar: Ativar ${asaasEnv === 'production' ? 'Produção 🟢' : 'Sandbox 🟡'}`}
-                                </button>
-
-                                <p className="text-xs text-slate-400 mt-3 text-center">
-                                    As chaves ASAAS_SANDBOX_KEY, ASAAS_PRODUCTION_KEY, ASAAS_SANDBOX_WEBHOOK e ASAAS_PRODUCTION_WEBHOOK são gerenciadas exclusivamente pelo Coolify.
-                                </p>
-                            </div>
-
-
-                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Webhook de Pagamento</h3>
-                                <p className="text-sm text-slate-600 mb-4">A URL abaixo recebe notificações da Kiwify para liberar acesso automaticamente.</p>
-                                <div className="flex gap-2">
-                                    <input readOnly value={`${window.location.origin}/api/payment/webhook`} className="flex-1 p-2 border rounded bg-slate-50 text-xs font-mono text-slate-600" />
-                                    <button onClick={() => navigator.clipboard.writeText(`${window.location.origin}/api/payment/webhook`)} className="px-4 py-2 bg-slate-200 text-xs font-bold rounded hover:bg-slate-300">Copiar</button>
-                                </div>
-                            </div>
-
-                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                <h3 className="font-bold text-slate-800 mb-4 border-b pb-2">Links de Produtos (Upsell)</h3>
-                                <p className="text-sm text-slate-500 mb-6">Configure os links de checkout para os produtos adicionais oferecidos no App.</p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Livro em Inglês</label>
-                                        <input type="text" value={settings.products?.english_book || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, english_book: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Livro em Espanhol</label>
-                                        <input type="text" value={settings.products?.spanish_book || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, spanish_book: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Capa Impressa</label>
-                                        <input type="text" value={settings.products?.cover_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, cover_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Capa Ebook</label>
-                                        <input type="text" value={settings.products?.cover_ebook || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, cover_ebook: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Amazon Impresso</label>
-                                        <input type="text" value={settings.products?.pub_amazon_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_amazon_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Amazon Digital</label>
-                                        <input type="text" value={settings.products?.pub_amazon_digital || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_amazon_digital: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">UICLAP</label>
-                                        <input type="text" value={settings.products?.pub_uiclap || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, pub_uiclap: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Ficha Catalográfica</label>
-                                        <input type="text" value={settings.products?.catalog_card || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, catalog_card: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">ISBN Impresso</label>
-                                        <input type="text" value={settings.products?.isbn_printed || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, isbn_printed: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">ISBN Digital</label>
-                                        <input type="text" value={settings.products?.isbn_digital || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, isbn_digital: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div className="col-span-2">
-                                        <label className="text-xs font-bold text-slate-700">PACOTE COMPLETO</label>
-                                        <input type="text" value={settings.products?.complete_package || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, complete_package: e.target.value } })} className="w-full p-2 border rounded text-sm border-brand-300 ring-2 ring-brand-100" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Página de Vendas</label>
-                                        <input type="text" value={settings.products?.sales_page || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, sales_page: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-medium text-slate-500">Hospedagem</label>
-                                        <input type="text" value={settings.products?.hosting || ''} onChange={e => setSettings({ ...settings, products: { ...settings.products, hosting: e.target.value } })} className="w-full p-2 border rounded text-sm" placeholder="https://pay.kiwify..." />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex justify-end pt-4">
-                                <button onClick={handleSave} className="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-lg hover:bg-blue-700 transition">Salvar Integrações</button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* BACKUPS SECTION */}
-                    {activeSection === 'backups' && (
-                        <div className="space-y-6 animate-fade-in max-w-3xl">
-                            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                                <div className="flex justify-between items-center mb-6 border-b pb-4">
-                                    <div>
-                                        <h3 className="font-bold text-slate-800">Sistema de Backup</h3>
-                                        <p className="text-sm text-slate-500">Crie pontos de restauração antes de grandes mudanças.</p>
-                                    </div>
-                                    <button
-                                        onClick={async () => {
-                                            if (confirm("Criar backup agora?")) {
-                                                try {
-                                                    const res = await fetch(`${getAdminUrl()}/backups`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
-                                                    if (res.ok) alert("Backup criado!");
-                                                } catch (e) { alert("Erro de conexão"); }
-                                            }
-                                        }}
-                                        className="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700"
-                                    >
-                                        + Criar Novo Backup
-                                    </button>
-                                </div>
-                                <BackupList token={token} apiUrl={getAdminUrl()} />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* SIMULATOR SECTION */}
-                    {activeSection === 'simulator' && (
-                        <div className="animate-fade-in max-w-4xl">
-                            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-lg relative overflow-hidden">
-                                <div className="absolute top-0 right-0 p-4 opacity-10">
-                                    <span className="text-9xl">🚀</span>
-                                </div>
-                                <h3 className="font-bold text-2xl text-slate-800 mb-2 relative z-10">Simulador de Experiência</h3>
-                                <p className="text-slate-600 mb-8 max-w-lg relative z-10">
-                                    Use esta ferramenta para visualizar o aplicativo como se fosse um cliente, pulando etapas burocráticas para testar o fluxo rapidamente.
-                                    <br /><strong className="text-orange-600">Atenção:</strong> Isso abrirá uma nova aba e reiniciará a sessão do navegador.
-                                </p>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
-                                    <button
-                                        onClick={() => {
-                                            if (!confirm("Iniciar simulação limpa?")) return;
-                                            localStorage.clear();
-                                            window.open('/?new_session=true', '_blank');
-                                        }}
-                                        className="p-6 bg-slate-50 border-2 border-slate-200 rounded-xl hover:border-blue-500 hover:bg-blue-50 transition text-left group"
-                                    >
-                                        <div className="font-bold text-lg text-slate-700 group-hover:text-blue-700 mb-1">1. Novo Visitante</div>
-                                        <p className="text-sm text-slate-500">Simula um usuário chegando pela primeira vez. Vai para a Landing Page (Vendas).</p>
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            if (!confirm("Iniciar simulação?")) return;
-                                            const dummy = { name: "Admin Simulador", email: `admin.sim.${Date.now()}@test.com`, phone: "11999999999" };
-                                            localStorage.setItem('bsf_step', '1');
-                                            localStorage.setItem('bsf_userContact', JSON.stringify(dummy));
-                                            localStorage.setItem('bsf_hasAccess', 'true'); // Simulate Access Granted
-                                            window.open('/', '_blank');
-                                        }}
-                                        className="p-6 bg-slate-50 border-2 border-slate-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition text-left group"
-                                    >
-                                        <div className="font-bold text-lg text-slate-700 group-hover:text-purple-700 mb-1">2. Cliente com Acesso</div>
-                                        <p className="text-sm text-slate-500">Pula a Landing Page e vai direto para o cadastro inicial (Step 1) já autenticado/pago.</p>
-                                    </button>
-
-                                    <button
-                                        onClick={() => {
-                                            if (!confirm("Iniciar simulação?")) return;
-                                            const dummy = { name: "Admin Simulador", email: `admin.sim.${Date.now()}@test.com`, phone: "11999999999" };
-                                            const meta = { authorName: "Admin Author", topic: "Livro sobre Testes Automatizados", dedication: "Ao time de QA" };
-                                            localStorage.setItem('bsf_step', '2');
-                                            localStorage.setItem('bsf_userContact', JSON.stringify(dummy));
-                                            localStorage.setItem('bsf_metadata', JSON.stringify(meta));
-                                            localStorage.setItem('bsf_hasAccess', 'true');
-                                            window.open('/', '_blank');
-                                        }}
-                                        className="p-6 bg-slate-50 border-2 border-slate-200 rounded-xl hover:border-emerald-500 hover:bg-emerald-50 transition text-left group"
-                                    >
-                                        <div className="font-bold text-lg text-slate-700 group-hover:text-emerald-700 mb-1">3. Processo de Criação (Generator)</div>
-                                        <p className="text-sm text-slate-500">Pula todo o cadastro. Vai direto para a tela de geração com tópico preenchido.</p>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CREDITS MANAGEMENT SECTION */}
-                    {activeSection === 'credits' && (
-                        <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
-                            <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-xl overflow-hidden relative">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                                
-                                <div className="flex items-center gap-3 mb-8">
-                                    <div className="p-3 bg-amber-100 rounded-xl text-amber-600">
-                                        <Zap size={24} fill="currentColor" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-black text-2xl text-slate-800 uppercase tracking-tight">Gestão Manual de Créditos</h3>
-                                        <p className="text-slate-500 text-sm">Adicione ou remova créditos ativos para qualquer cliente usando o e-mail.</p>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-6 bg-slate-50 p-6 rounded-xl border border-slate-100">
-                                    <div>
-                                        <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-2">E-mail do Cliente</label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="email"
-                                                value={creditSearchEmail}
-                                                onChange={e => setCreditSearchEmail(e.target.value)}
-                                                onKeyDown={e => e.key === 'Enter' && handleSearchCredits()}
-                                                placeholder="exemplo@email.com"
-                                                className="flex-1 p-4 border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-all shadow-sm font-bold text-slate-700"
-                                            />
-                                            <button 
-                                                onClick={handleSearchCredits}
-                                                disabled={creditsOpLoading || !creditSearchEmail}
-                                                className="px-6 py-4 bg-slate-800 text-white font-black rounded-xl hover:bg-slate-700 disabled:opacity-50 transition-all flex items-center gap-2"
-                                            >
-                                                {creditsOpLoading ? '⌛' : '🔍'} <span className="hidden sm:inline">BUSCAR</span>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    {foundCredits !== null && (
-                                        <div className="p-4 bg-white rounded-xl border border-amber-100 shadow-sm animate-fade-in flex items-center justify-between">
-                                            <div>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Saldo Atual</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-3xl font-black text-slate-800">{foundCredits}</span>
-                                                    <span className="text-sm font-bold text-slate-500">Créditos ativos</span>
-                                                </div>
-                                            </div>
-                                            <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 text-2xl">
-                                                🪙
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {creditsMsg && (
-                                        <div className={`p-4 rounded-xl text-sm font-bold border animate-one-time-fade-in ${creditsMsg.includes('✅') ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-rose-50 border-rose-100 text-rose-700'}`}>
-                                            {creditsMsg}
-                                        </div>
-                                    )}
-
-                                    {foundCredits !== null && (
-                                        <div className="pt-4 border-t border-slate-200 space-y-4">
-                                            <div>
-                                                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3 text-center">Alterar Quantidade</label>
-                                                <div className="flex items-center justify-center gap-6">
-                                                    <button 
-                                                        onClick={() => handleManageCreditsOp(-1)}
-                                                        disabled={creditsOpLoading || foundCredits <= 0}
-                                                        className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-200 transition-colors disabled:opacity-30 shadow-sm border border-rose-200"
-                                                        title="Remover 1 Crédito"
-                                                    >
-                                                        <Trash2 size={24} />
-                                                    </button>
-                                                    
-                                                    <div className="text-center group">
-                                                        <div className="text-xs font-bold text-slate-400 mb-1 uppercase">Ação Rápida</div>
-                                                        <div className="text-3xl font-black text-slate-800 bg-white px-8 py-2 rounded-2xl border border-slate-200 shadow-inner">
-                                                            ±1
-                                                        </div>
-                                                    </div>
-
-                                                    <button 
-                                                        onClick={() => handleManageCreditsOp(1)}
-                                                        disabled={creditsOpLoading}
-                                                        className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 transition-colors shadow-sm border border-emerald-200"
-                                                        title="Adicionar 1 Crédito"
-                                                    >
-                                                        <Zap size={24} fill="currentColor" />
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3 mt-4">
-                                                <button 
-                                                    onClick={() => handleManageCreditsOp(5)}
-                                                    className="py-3 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-600 hover:bg-slate-50 transition shadow-sm uppercase"
-                                                >
-                                                    +5 Créditos
-                                                </button>
-                                                <button 
-                                                    onClick={() => handleManageCreditsOp(-foundCredits!)}
-                                                    className="py-3 bg-white border border-rose-100 rounded-xl text-xs font-black text-rose-500 hover:bg-rose-50 transition shadow-sm uppercase"
-                                                >
-                                                    Zerar Saldo
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="mt-8 p-4 bg-slate-900 rounded-xl text-white/70 text-[11px] leading-relaxed">
-                                    <p className="flex items-center gap-2 mb-1">
-                                        <span className="text-amber-400 font-bold">⚠️ NOTA:</span>
-                                        Alterar créditos aqui atualizará o saldo instantaneamente para o cliente na Área de Membros e no Gerador de Livros.
-                                    </p>
-                                    <p>Os registros de vendas (Orders) não são alterados por esta ferramenta, apenas o saldo disponível para uso.</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* PROFILE SECTION */}
-                    {activeSection === 'profile' && (
-                        <div className="space-y-6 animate-fade-in max-w-2xl mx-auto">
-                            <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm">
-                                <h3 className="font-bold text-xl text-slate-800 mb-6 flex items-center gap-2">
-                                    <span>🔐</span> Alterar Senha de Acesso
-                                </h3>
-
-                                <form onSubmit={handleChangePassword} className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">Senha Atual</label>
-                                        <input
-                                            type="password"
-                                            value={profileOldPass}
-                                            onChange={e => setProfileOldPass(e.target.value)}
-                                            className="w-full p-3 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder="Digite sua senha atual..."
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-slate-700 mb-2">Nova Senha</label>
-                                        <input
-                                            type="password"
-                                            value={profileNewPass}
-                                            onChange={e => setProfileNewPass(e.target.value)}
-                                            className="w-full p-3 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder="Digite a nova senha..."
-                                            required
-                                            minLength={6}
-                                        />
-                                        <p className="text-xs text-slate-500 mt-2">Mínimo de 6 caracteres.</p>
-                                    </div>
-
-                                    <div className="pt-4">
-                                        <button
-                                            type="submit"
-                                            className="w-full py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-slate-800 transition shadow-lg"
-                                        >
-                                            Atualizar Senha
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                </main>
-            </div>
-        </div>
-    );
-};
