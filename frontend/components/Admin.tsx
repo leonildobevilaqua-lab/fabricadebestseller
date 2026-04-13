@@ -1084,10 +1084,14 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
 
     const getCombinedTimeline = () => {
-        const pList = getFilteredProjects();
-        const lList = leads.map(l => ({ ...l, isLead: true, date: l.date || l.createdAt }));
+        const pList = getFilteredProjects().map(p => ({ ...p, isProject: true }));
+        const lList = leads.map(l => ({ ...l, isLead: true, isProject: false, date: l.date || l.createdAt }));
         const combined = [...pList, ...lList];
-        return combined.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return combined.sort((a, b) => {
+            const dateA = new Date(a.date || 0).getTime();
+            const dateB = new Date(b.date || 0).getTime();
+            return dateB - dateA;
+        });
     };
 
     const isLogged = !!token;
@@ -1397,7 +1401,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </header>
 
                 <main className="p-8 max-w-6xl mx-auto pb-20">
-
                     {/* DASHBOARD SECTION */}
                     {activeSection === 'dashboard' && (
                         <div className="space-y-8 animate-fade-in">
@@ -1451,150 +1454,121 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                             <DashboardCharts leads={leads} orders={orders} />
 
-                             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
-                                 <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                     <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight flex items-center gap-2">
-                                         <BookOpen className="text-emerald-500" size={24} />
-                                         Solicitações e Histórico de Geração
-                                     </h3>
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8">
+                                <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <h3 className="font-black text-xl text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                                        <BookOpen className="text-emerald-500" size={24} />
+                                        Solicitações e Histórico de Geração
+                                    </h3>
 
-                                     <div className="flex flex-wrap items-center gap-3 text-sm">
-                                         <select
-                                             value={salesFilter}
-                                             onChange={e => setSalesFilter(e.target.value as any)}
-                                             className="p-2 border rounded-md text-slate-700 font-medium"
-                                         >
-                                             <option value="all">Todo o Período</option>
-                                             <option value="today">Hoje</option>
-                                             <option value="week">Últimos 7 dias</option>
-                                             <option value="month">Este Mês</option>
-                                             <option value="custom">Data Personalizada</option>
-                                         </select>
+                                    <div className="flex flex-wrap items-center gap-3 text-sm">
+                                        <select
+                                            value={salesFilter}
+                                            onChange={e => setSalesFilter(e.target.value as any)}
+                                            className="p-2 border rounded-md text-slate-700 font-medium bg-white"
+                                        >
+                                            <option value="all">Todo o Período</option>
+                                            <option value="today">Hoje</option>
+                                            <option value="week">Últimos 7 dias</option>
+                                            <option value="month">Este Mês</option>
+                                            <option value="custom">Data Personalizada</option>
+                                        </select>
 
-                                         {salesFilter === 'custom' && (
-                                             <div className="flex items-center gap-2">
-                                                 <input type="date" value={salesStartDate} onChange={e => setSalesStartDate(e.target.value)} className="p-2 border rounded-md" />
-                                                 <span className="text-slate-500">até</span>
-                                                 <input type="date" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)} className="p-2 border rounded-md" />
-                                             </div>
-                                         )}
-                                     </div>
-                                 </div>
-                                 <div className="divide-y divide-slate-100 bg-white">
-                                     {getFilteredProjects().length === 0 && (
-                                         <div className="p-12 text-center text-slate-400 font-medium">
-                                             Nenhum registro encontrado para o período selecionado.
-                                         </div>
-                                     )}
-                                     {getCombinedTimeline().map((item: any, idx: number) => {
-                                         const order = item;
-                                         const isProject = item.isProject;
-                                         const isPaid = !isProject && (item.type === 'CHECKOUT_PAID' || item.type === 'BOOK_PURCHASED');
-                                         
-                                         return (
-                                             <div key={order.projectId || order.id || idx} className="p-4 md:p-6 hover:bg-slate-50/20 transition group border-b border-slate-50 last:border-0 relative">
-                                                 <div className={`absolute top-0 left-0 w-1.5 h-full transition-opacity ${isProject ? 'bg-indigo-500 opacity-0 group-hover:opacity-100' : 'bg-emerald-500 opacity-0 group-hover:opacity-100'}`} />
+                                        {salesFilter === 'custom' && (
+                                            <div className="flex items-center gap-2">
+                                                <input type="date" value={salesStartDate} onChange={e => setSalesStartDate(e.target.value)} className="p-2 border rounded-md" />
+                                                <span className="text-slate-500">até</span>
+                                                <input type="date" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)} className="p-2 border rounded-md" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                
+                                <div className="divide-y divide-slate-100 bg-white min-h-[100px]">
+                                    {getCombinedTimeline().length === 0 ? (
+                                        <div className="p-12 text-center text-slate-400 font-medium">
+                                            Nenhum registro encontrado para o período selecionado.
+                                        </div>
+                                    ) : (
+                                        getCombinedTimeline().map((item: any, idx: number) => {
+                                            const order = item;
+                                            const isProject = !!item.isProject;
+                                            const isPaid = !isProject && (item.type === 'CHECKOUT_PAID' || item.type === 'BOOK_PURCHASED');
+                                            
+                                            return (
+                                                <div key={order.projectId || order.id || idx} className="p-4 md:p-5 hover:bg-slate-50/50 transition group relative border-b border-slate-100 last:border-0">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-xl shadow-sm border ${isProject ? 'bg-indigo-50 border-indigo-100 text-indigo-600' : (isPaid ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-slate-50 border-slate-100 text-slate-400')}`}>
+                                                            {isProject ? <BookOpen size={18} /> : (isPaid ? <Zap size={18} fill="currentColor" /> : <User size={18} />)}
+                                                        </div>
 
-                                                 <div className="flex flex-col xl:flex-row items-center justify-between gap-6">
-                                                     
-                                                     <div className="flex flex-1 items-start gap-8 w-full">
-                                                         <div className={`w-16 h-16 md:w-20 md:h-20 rounded-[28px] flex-shrink-0 flex items-center justify-center text-4xl shadow-sm border ${isProject ? 'bg-white border-slate-100' : 'bg-white border-slate-100'}`}>
-                                                             {isProject ? '📚' : '👤'}
-                                                         </div>
-                                                         
-                                                         <div className="flex-1 min-w-0">
-                                                             <div className="flex flex-col mb-4">
-                                                                 <span className={`text-[8px] font-black uppercase tracking-[0.2em] leading-none mb-1 w-fit px-2 py-1 rounded-full ${isProject ? 'text-indigo-600 bg-indigo-50 border border-indigo-100' : 'text-slate-500 bg-slate-100 border border-slate-200'}`}>
-                                                                     {isProject ? 'LIVRO GERADO' : (isPaid ? 'COMPRA APROVADA' : 'LEAD / ORÇAMENTO')}
-                                                                 </span>
-                                                                 <h4 className="font-black text-slate-900 text-lg md:text-xl leading-snug uppercase tracking-tighter break-words italic" translate="no">
-                                                                     {isProject ? (order.title || "Geração sem Título") : (order.name || "Interessado sem Nome")}
-                                                                 </h4>
-                                                             </div>
-                                                             
-                                                             <div className="bg-[#f2f6fa] p-4 md:p-5 rounded-[24px] border border-slate-200/30 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-                                                                 <div className="flex items-center gap-4">
-                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><User size={18} /></div>
-                                                                     <div className="flex flex-col">
-                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">NOME DO CLIENTE</span>
-                                                                         <span className="text-[14px] font-black text-slate-700 tracking-tight truncate min-w-[120px]">{isProject ? (order.customerName || "-") : (order.name || "-")}</span>
-                                                                     </div>
-                                                                 </div>
-                                                                 <div className="flex items-center gap-4">
-                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><Mail size={18} /></div>
-                                                                     <div className="flex flex-col">
-                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">E-MAIL</span>
-                                                                         <span className="text-[14px] font-black text-slate-500 truncate lowercase min-w-[120px]">{isProject ? (order.customerEmail || "-") : (order.email || "-")}</span>
-                                                                     </div>
-                                                                 </div>
-                                                                 <div className="flex items-center gap-4">
-                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><MessageCircle size={18} /></div>
-                                                                     <div className="flex flex-col">
-                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Nº DO WHATSAPP</span>
-                                                                         <span className="text-[14px] font-black text-indigo-500 underline decoration-indigo-100 underline-offset-4 tracking-tight">{isProject ? (order.customerPhone || "-") : (order.fullPhone || "-")}</span>
-                                                                     </div>
-                                                                 </div>
-                                                                 <div className="flex items-center gap-4">
-                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-emerald-500 font-black text-xs">A</div>
-                                                                     <div className="flex flex-col">
-                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">NOME DO AUTOR</span>
-                                                                         <span className="text-[14px] font-black text-slate-900 tracking-tight">{isProject ? (order.authorName || "-") : "N/A"}</span>
-                                                                     </div>
-                                                                 </div>
-                                                                 <div className="flex items-center gap-4 md:col-span-2 pt-4 border-t border-slate-200/50 mt-1">
-                                                                     <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-sm border border-slate-100 text-slate-400 group-hover:text-indigo-500 transition-colors"><Calendar size={18} /></div>
-                                                                     <div className="flex flex-col">
-                                                                         <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">DATA DA GERAÇÃO (DIA E HORÁRIO)</span>
-                                                                         <span className="text-[14px] font-black text-slate-600">
-                                                                             {order.date ? new Date(order.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : "N/A"}
-                                                                         </span>
-                                                                     </div>
-                                                                 </div>
-                                                             </div>
-                                                         </div>
-                                                     </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-2 mb-0.5">
+                                                                <span className={`text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded ${isProject ? 'bg-indigo-600 text-white' : (isPaid ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-600')}`}>
+                                                                    {isProject ? 'PROJETO' : (isPaid ? 'VENDA' : 'LEAD')}
+                                                                </span>
+                                                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter">
+                                                                    {order.date ? new Date(order.date).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : "N/A"}
+                                                                </span>
+                                                            </div>
+                                                            <h4 className="font-bold text-slate-800 text-sm md:text-base truncate max-w-[400px]" translate="no">
+                                                                {isProject ? (order.title || "Geração sem Título") : (order.name || order.customerEmail || item.email || "N/A")}
+                                                            </h4>
+                                                            <div className="flex items-center gap-3 mt-0.5">
+                                                                <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
+                                                                    <User size={12} className="opacity-40" /> {isProject ? (order.customerName || "-") : (order.email || "-")}
+                                                                </span>
+                                                                {isProject && (
+                                                                    <span className="text-[11px] text-slate-400 italic">
+                                                                        by {order.authorName || "-"}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
 
-                                                     <div className="flex flex-wrap lg:flex-nowrap items-center gap-4 w-full xl:w-auto justify-end">
-                                                         {isProject && (['READY_TO_DOWNLOAD', 'COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS'].includes((order.status || '').toUpperCase())) && (
-                                                             <button
-                                                                 onClick={() => window.open(`${getApiBase()}/api/projects/${order.projectId || order.id}/download-zip`, '_blank')}
-                                                                 className="flex items-center gap-3 bg-[#4f46e5] hover:bg-[#4338ca] text-white px-6 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest shadow-lg shadow-indigo-100 transition-all active:scale-95 whitespace-nowrap"
-                                                             >
-                                                                 <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:translate-x-full transition-transform duration-700 -skew-x-12" />
-                                                                 <Download size={20} className="group-hover:animate-bounce" />
-                                                                 <span>BAIXAR KIT ZIP</span>
-                                                             </button>
-                                                         )}
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="hidden lg:flex flex-col items-end mr-4 text-right">
+                                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">SALDO</span>
+                                                                <span className="text-sm font-black text-amber-500 leading-none">{order.credits || 0} pts</span>
+                                                            </div>
 
-                                                         <button
-                                                             onClick={() => handleImpersonate(isProject ? order.customerEmail : order.email)}
-                                                             className="flex items-center gap-3 bg-white border border-indigo-100 text-indigo-600 px-6 py-5 rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-indigo-50 transition-all shadow-sm"
-                                                             title="Ver área do cliente"
-                                                         >
-                                                             <div className="flex flex-col text-right mr-2">
-                                                                 <span className="text-[8px] text-slate-400">CRÉDITOS</span>
-                                                                 <span className="text-sm font-black text-amber-500 leading-none">{order.credits || 0}</span>
-                                                             </div>
-                                                             <User size={24} />
-                                                         </button>
-                                                         
-                                                         <button
-                                                             onClick={() => isProject ? handleDeleteProject(order.projectId) : handleDelete(order.id)}
-                                                             className="p-5 bg-white border border-red-100 rounded-2xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all"
-                                                             title="Lixeira"
-                                                         >
-                                                             <Trash2 size={24} />
-                                                         </button>
-                                                     </div>
-                                                 </div>
-                                             </div>
-                                         );
-                                     })}
+                                                            {isProject && (['READY_TO_DOWNLOAD', 'COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS'].includes((order.status || '').toUpperCase())) && (
+                                                                <button
+                                                                    onClick={() => window.open(`${getApiBase()}/api/projects/${order.projectId || order.id}/download-zip`, '_blank')}
+                                                                    className="h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95"
+                                                                    title="Baixar Kit Completo"
+                                                                >
+                                                                    <Download size={16} />
+                                                                    <span className="hidden sm:inline text-xs font-black uppercase tracking-tighter">KIT ZIP</span>
+                                                                </button>
+                                                            )}
+
+                                                            <button
+                                                                onClick={() => handleImpersonate(isProject ? order.customerEmail : order.email)}
+                                                                className="w-10 h-10 bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl flex items-center justify-center transition-all shadow-sm"
+                                                                title="Visualizar como Cliente"
+                                                            >
+                                                                <User size={20} />
+                                                            </button>
+                                                            
+                                                            <button
+                                                                onClick={() => isProject ? handleDeleteProject(order.projectId) : handleDelete(order.id)}
+                                                                className="w-10 h-10 bg-white border border-slate-100 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl flex items-center justify-center transition-all shadow-sm"
+                                                                title="Excluir Registro"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
                                 <div className="bg-slate-50 p-4 border-t border-slate-200 text-right">
-                                    <span className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">Total de Gerações: </span>
+                                    <span className="text-slate-600 font-bold uppercase text-[10px] tracking-widest">Total de Registros: </span>
                                     <span className="text-xl font-black text-slate-800 ml-2">
-                                        {getCombinedTimeline().length} Registros
+                                        {getCombinedTimeline().length}
                                     </span>
                                 </div>
                             </div>

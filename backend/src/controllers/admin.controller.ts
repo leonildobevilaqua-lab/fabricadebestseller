@@ -699,7 +699,8 @@ export const manageCredits = async (req: Request, res: Response) => {
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
         let leadIndex = -1;
         for (let i = leads.length - 1; i >= 0; i--) {
-            if ((leads[i] as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+            const l = leads[i];
+            if (l && (l as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
                 leadIndex = i;
                 break;
             }

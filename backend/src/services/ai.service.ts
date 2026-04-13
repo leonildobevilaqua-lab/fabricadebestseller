@@ -223,10 +223,11 @@ Sua missão é criar 9 títulos e subtítulos que não pareçam manuais ou guias
 IDIOMA: ${langName}
 
 REGRAS MASTER PARA TÍTULOS:
-1. VARIABILIDADE E IMPACTO: Gere rigorosamente 9 opções. Alterne obrigatoriamente entre títulos curtos (1 ou 2 palavras) e títulos mais longos e narrativos (3 a 5 palavras). Seja direto, amigável ou profundamente evocativo. (Ex: "Inabalável", "O Caminho do Guerreiro", "Memórias de um Outono", "A Última Fronteira do Amanhã").
-2. NADA DE MANUAIS: Proibido usar "Guia", "Manual", "Tudo sobre", "Como", "Segredos de", "Desvendando".
-3. PADRÃO CINEMATOGRÁFICO: Imagine o título em um pôster de cinema ou em uma vitrine da livraria mais cara de Nova York.
+1. VARIABILIDADE E IMPACTO: Gere RIGOROSAMENTE 9 opções distintas. Alterne OBRIGATORIAMENTE entre títulos curtos (apenas 1 palavra impactante) e títulos mais longos e narrativos (entre 3 a 5 palavras). Pelo menos 3 opções devem ser curtas e 3 opções devem ser longas. O restante deve variar para dar opções ao cliente. Seja direto, amigável ou profundamente evocativo. (Exemplos Curtos: "Inabalável", "Gênese", "Impacto", "Essência". Exemplos Longos: "O Longo Caminho para a Liberdade", "Memórias de um Outono Esquecido", "A Última Fronteira do Amanhã").
+2. NADA DE MANUAIS: Proibido usar "Guia", "Manual", "Tudo sobre", "Como", "Segredos de", "Desvendando" no início do título.
+3. PADRÃO CINEMATOGRÁFICO: Imagine o título em um pôster de cinema ou em uma vitrine de livraria de prestígio.
 4. SONORIDADE: O título deve ser fácil de lembrar e "gostoso" de falar.
+5. ADAPTAÇÃO TOTAL: O título deve se moldar perfeitamente à ideia central do cliente, sem ser fixo ou robótico.
 
 REGRAS MASTER PARA SUBTÍTULOS:
 1. MESTRIA LITERÁRIA: O subtítulo não é um slogan de vendas barato. Ele deve ser uma frase poderosa que dá profundidade e contexto à obra com maestria.
@@ -288,7 +289,7 @@ RETORNE APENAS JSON LIMPO: [{ "title": "Título Selecionado", "subtitle": "Subt�
     console.error("[IA] Titles Deep Analysis Failed. Attempting Minimal Fallback...", error);
     try {
       // LAST RESORT: Try generation without any research context to unblock the user
-      const minimalPrompt = `TEMA: ${topic}. Crie 9 títulos virais (alternando entre curtos e narrativos) e subtítulos master em ${langName}. Retorne apenas JSON: [{ "title": "...", "subtitle": "..." }]`;
+      const minimalPrompt = `TEMA: ${topic}. Crie RIGOROSAMENTE 9 títulos virais (alternando entre curtos de 1 palavra e narrativos de 3-5 palavras) e subtítulos master em ${langName}. Retorne apenas JSON: [{ "title": "...", "subtitle": "..." }]`;
       const fallbackTitles = await llm.generateJSON<any[]>(minimalPrompt);
       if (Array.isArray(fallbackTitles)) {
         return fallbackTitles.map((t, idx) => ({
