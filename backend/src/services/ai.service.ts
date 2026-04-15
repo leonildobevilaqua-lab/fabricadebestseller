@@ -254,7 +254,13 @@ ${titleInstruction ? `\nINSTRUÇÕES ADICIONAIS DO CLIENTE (PRIORIDADE MÁXIMA P
 CONTEXTO DE PESQUISA (Use para entender o que o público deste nicho REALMENTE consome):
 ${researchContext.substring(0, 5000)}
 
-RETORNE APENAS JSON LIMPO: [{ "title": "Título Selecionado", "subtitle": "Subtítulo Master" }]
+RETORNE APENAS JSON LIMPO NA ESTRUTURA EXATA DE UM ARRAY COM EXATAMENTE 9 OPÇÕES:
+[
+  { "title": "Título 1", "subtitle": "Subtítulo 1" },
+  { "title": "Título 2", "subtitle": "Subtítulo 2" },
+  ... (até 9 itens) ...
+]
+NÃO GERE MARKDOWN FORA DO JSON. GERE EXATAMENTE 9 OPÇÕES (títulos curtos e títulos longos misturados).
 `;
 
   const userPrompt = `TEMA: ${topic}`;
