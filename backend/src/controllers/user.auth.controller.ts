@@ -231,7 +231,7 @@ export const UserAuthController = {
                     'leonildo.fbs@gmail.com'
                 ];
                 
-                if (masterEmails.includes(strUser) || strUser.includes('leonildo')) return true;
+                if (masterEmails.includes(strUser) || cleanUser.includes('leonildo')) return true;
                 
                 // --- 4. STRING SEARCH (FALLBACK) ---
                 const pStringFull = JSON.stringify(p).toLowerCase();
@@ -242,7 +242,11 @@ export const UserAuthController = {
                 return false;
             });
 
-            console.log(`[ME] Filtered ${userProjects.length} projects for ${cleanUser} out of ${projectList.length} total.`);
+            console.log(`[AUTH_ME] User: ${cleanUser} | Total Projects Found: ${userProjects.length} | Identity: ${user.profile?.name || 'Unknown'}`);
+            
+            if (userProjects.length === 0 && cleanUser.includes('leonildo')) {
+                console.warn(`[AUTH_ME] WARNING: No projects found for Leonildo identity (${cleanUser}). Possible DB fetch failure or fragmentation.`);
+            }
 
             // Usage count based on actual projects
             const usageCount = userProjects.filter((p: any) =>

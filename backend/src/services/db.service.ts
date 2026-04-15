@@ -59,39 +59,67 @@ export const getVal = async (pathStr: string): Promise<any> => {
             let allItems: any[] = [];
             console.log(`[DB] Fetching collection: ${normalized}`);
 
+            // OPTIMIZATION: If fetching /projects or /leads, we might want to avoid the massive 'value' blob which contains full book content.
+            // For listing in Dashboard/Admin, the 'metadata' part is usually enough.
+            const selectFields = (normalized === '/projects') 
+                ? 'key, updated_at, metadata:value->metadata' // Extract metadata as its own field if possible
+                : 'key, value, updated_at';
+
             const { data: rawItems, error: fetchErr } = await supabase
                 .from('kv_store')
-                .select('key, value, updated_at')
+                .select(selectFields)
                 .like('key', `${normalized}/%`)
-                .limit(5000); // FIX: Ensure we don't hit the default 100 limit as collection grows
+                .limit(5000); 
 
             if (fetchErr) {
                 console.error(`[DB] Supabase Fetch Error (${normalized}):`, fetchErr);
+                // If it failed with 400/500, try a 'lite' version without the full value
+                if (normalized === '/projects' || normalized === '/leads') {
+                    console.warn(`[DB] Retrying ${normalized} with LITE fields only...`);
+                    const { data: liteData, error: liteErr } = await supabase
+                        .from('kv_store')
+                        .select('key, updated_at, metadata:value->metadata')
+                        .like('key', `${normalized}/%`)
+                        .limit(5000);
+                    
+                    if (!liteErr && liteData) {
+                        return liteData.map((item: any) => ({
+                            ...item.metadata,
+                            id: item.key.split('/').pop(),
+                            key: item.key,
+                            updated_at: item.updated_at,
+                            metadata: item.metadata // For compatibility
+                        }));
+                    }
+                }
             }
 
             if (rawItems && rawItems.length > 0) {
                 // IMPORTANT: Filter out sub-keys (e.g., skip /projects/ID/metadata/translations if fetching /projects)
-                // We only want items that are DIRECT children of the collection root.
                 const filteredItems = rawItems.filter(item => {
                     const suffix = item.key.substring(normalized.length + 1);
                     return !suffix.includes('/'); 
                 });
 
-                console.log(`[DB] Found ${filteredItems.length} valid items for ${normalized} (Filtered ${rawItems.length - filteredItems.length} sub-keys)`);
+                console.log(`[DB] Found ${filteredItems.length} valid items for ${normalized}`);
                 
-                allItems = filteredItems.map(item => {
+                allItems = filteredItems.map((item: any) => {
                     try {
-                        const val = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+                        const val = item.value 
+                            ? (typeof item.value === 'string' ? JSON.parse(item.value) : item.value) 
+                            : (typeof item.metadata === 'string' ? JSON.parse(item.metadata) : (item.metadata || {}));
+                            
                         if (val && typeof val === 'object' && !Array.isArray(val)) {
                             return {
                                 ...val,
                                 id: val.id || item.key.split('/').pop(),
                                 key: item.key,
-                                updated_at: item.updated_at
+                                updated_at: item.updated_at,
+                                metadata: val.metadata || item.metadata || val // Resilience
                             };
                         }
                         return val;
-                    } catch (e) { return item.value; }
+                    } catch (e) { return item.value || item.metadata; }
                 });
             }
 
