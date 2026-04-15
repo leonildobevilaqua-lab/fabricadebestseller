@@ -522,18 +522,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                         </div>
 
                                         <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto justify-end">
-                                            <span className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'].includes((order.status || '').toUpperCase())) 
+                                            <span className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase())) 
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                                 ((order.status || '').toUpperCase() === 'IN_PROGRESS' || (order.status || '').toUpperCase() === 'WRITING_CHAPTERS') 
                                                 ? 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse' :
                                                 'bg-amber-50 text-amber-700 border-amber-200'
                                                 }`}>
-                                                {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'].includes((order.status || '').toUpperCase())) ? (t as any).dashboard.statusGenerated :
+                                                {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase())) ? (t as any).dashboard.statusGenerated :
                                                     ((order.status || '').toUpperCase() === 'IN_PROGRESS' || (order.status || '').toUpperCase() === 'WRITING_CHAPTERS') ? (t as any).dashboard.statusProcessing :
                                                         (t as any).dashboard.statusWaiting}
                                             </span>
 
-                                            {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'].includes((order.status || '').toUpperCase())) && (
+                                            {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase())) && (
                                                 <a
                                                     href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/${order.id}/download-zip`}`}
                                                     target="_blank"

@@ -223,15 +223,13 @@ export const UserAuthController = {
                     }
                 } catch (err) {}
 
-                // --- 3. MASTER/LEONILDO BYPASS ---
-                // If it's the master admin or any variations of his email, let him see ALL projects to simplify verification
-                const masterEmails = [
-                    'contato@leonildobevilaqua.com.br',
-                    'leonildobevilaquaoficial@gmail.com',
-                    'leonildo.fbs@gmail.com'
-                ];
+                // --- 3. IDENTITY MATCHING ---
+                // User sees their own projects by matching email/userId
+                if (emails.includes(strUser)) return true;
                 
-                if (masterEmails.includes(strUser) || cleanUser.includes('leonildo')) return true;
+                // Note: The global bypass for 'leonildo' was removed per user request. 
+                // Admin now sees only their OWN books in the Member Area.
+                // Full history is still available in the Admin Panel.
                 
                 // --- 4. STRING SEARCH (FALLBACK) ---
                 const pStringFull = JSON.stringify(p).toLowerCase();

@@ -1084,13 +1084,17 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     };
 
     const getCombinedTimeline = () => {
+        // PER USER REQUEST: Only show PROJETO entries. Do not show LEAD entries in the timeline.
         const pList = getFilteredProjects().map(p => ({ ...p, isProject: true }));
-        const lList = leads.map(l => ({ ...l, isLead: true, isProject: false, date: l.date || l.createdAt }));
-        const combined = [...pList, ...lList];
+        
+        // Leads are no longer listed in the history per manual request, but we could keep them for future use (commented out)
+        // const lList = leads.map(l => ({ ...l, isLead: true, isProject: false, date: l.date || l.createdAt }));
+        const combined = [...pList]; 
+
         return combined.sort((a, b) => {
-            const dateA = new Date(a.date || 0).getTime();
-            const dateB = new Date(b.date || 0).getTime();
-            return dateB - dateA;
+            const dateA = new Date(a.date || a.createdAt || 0).getTime();
+            const dateB = new Date(b.date || b.createdAt || 0).getTime();
+            return dateB - dateA; // Newest First
         });
     };
 
