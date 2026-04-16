@@ -15,7 +15,8 @@ import {
     Target, 
     Users, 
     Feather, 
-    PlayCircle 
+    PlayCircle,
+    Star
 } from 'lucide-react';
 
 interface LandingProps {
