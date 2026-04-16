@@ -40,45 +40,48 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
     return (
         <div className="min-h-screen bg-[#0a0f1d] text-white font-sans flex flex-col items-center selection:bg-yellow-500 selection:text-slate-900 scroll-smooth overflow-x-hidden">
             
-            {/* --- HERO SECTION --- (Optimized for First Fold) */}
-            <header className="w-full max-w-6xl px-4 pt-4 md:pt-16 pb-4 md:pb-12 text-center flex flex-col items-center">
+            {/* --- HERO SECTION --- (Optimized for First Fold + Vertical VSL) */}
+            <header className="w-full max-w-6xl px-4 pt-4 md:pt-12 pb-4 md:pb-8 text-center flex flex-col items-center">
                 
                 {/* Minimalist Badge */}
-                <div className="flex justify-center mb-4 md:mb-8 animate-fade-in">
+                <div className="flex justify-center mb-3 md:mb-6 animate-fade-in">
                     <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1 md:px-4 md:py-2 rounded-full">
                         <PlayCircle className="text-yellow-400 w-3 h-3 md:w-5 md:h-5" />
-                        <span className="text-[10px] md:text-xs font-bold text-slate-300 uppercase tracking-widest">Apresentação Exclusiva</span>
+                        <span className="text-[9px] md:text-xs font-bold text-slate-300 uppercase tracking-widest">Apresentação Exclusiva</span>
                     </div>
                 </div>
 
-                <h1 className="text-xl sm:text-2xl md:text-6xl font-black mb-3 md:mb-6 leading-[1.1] max-w-5xl mx-auto">
+                <h1 className="text-lg sm:text-2xl md:text-6xl font-black mb-2 md:mb-6 leading-[1.1] max-w-5xl mx-auto px-2">
                     O Atalho Definitivo para sua Autoridade: Tenha seu Nome na Capa de um Livro Profissional <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-yellow-200 to-yellow-500 underline decoration-yellow-500/30">Hoje Mesmo.</span>
                 </h1>
                 
-                <p className="text-[11px] sm:text-xs md:text-xl text-slate-400 max-w-3xl mx-auto mb-4 md:mb-10 leading-normal md:leading-relaxed px-4 opacity-80">
+                <p className="text-[10px] sm:text-xs md:text-xl text-slate-400 max-w-3xl mx-auto mb-4 md:mb-8 leading-tight md:leading-relaxed px-6 opacity-70">
                     Sem escrever uma única linha. Nossa tecnologia realiza a engenharia reversa do seu nicho e entrega um Kit completo: do manuscrito à sinopse profissional.
                 </p>
 
-                {/* Video VSL - Modified for 16:9 Central Crop on Mobile */}
-                <div className="relative w-full max-w-4xl mx-auto">
-                    {/* Shadow effect */}
-                    <div className="absolute inset-0 bg-yellow-500/10 blur-[60px] md:blur-[100px] rounded-full -z-10 animate-pulse"></div>
+                {/* Vertical Video VSL - 9:16 Format Optimized */}
+                <div className="relative w-full flex justify-center px-4">
+                    {/* Glowing effect */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[300px] h-[400px] bg-yellow-500/10 blur-[60px] md:blur-[120px] rounded-full -z-10 animate-pulse"></div>
                     
-                    <div className="relative aspect-video w-full rounded-xl md:rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-black">
+                    <div className="relative aspect-[9/16] w-[220px] sm:w-[280px] md:w-[350px] rounded-[2rem] md:rounded-[3rem] overflow-hidden border-4 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] bg-black">
                         {/* 
-                            For vertical videos on YouTube played in landscape (Shorts in 16:9), 
-                            we use a scaling trick to "zoom" to the central part on mobile.
+                            Forcing 9:16 and zooming slightly to eliminate any potential sidebars/branding.
+                            Using scale-110 and object-cover logic.
                         */}
-                        <div className="absolute inset-0 w-full h-full flex items-center justify-center overflow-hidden">
+                        <div className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-auto overflow-hidden">
                             <iframe
-                                className="w-full h-full scale-100 sm:scale-100 md:scale-100"
-                                src="https://www.youtube.com/embed/7iQ5BdT6R3k?autoplay=1&modestbranding=1&rel=0&showinfo=0"
+                                className="absolute w-[105%] h-[105%] max-w-none scale-[1.05] grayscale-[10%] hover:grayscale-0 transition-all duration-700"
+                                src="https://www.youtube.com/embed/7iQ5BdT6R3k?autoplay=1&modestbranding=1&rel=0&showinfo=0&controls=0&mute=0&loop=1"
                                 title="Fábrica de Best Sellers VSL"
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 allowFullScreen
                             ></iframe>
                         </div>
+                        
+                        {/* Elegant Shine Overlay */}
+                        <div className="absolute inset-0 pointer-events-none bg-gradient-to-tr from-white/5 to-transparent"></div>
                     </div>
                 </div>
             </header>
@@ -87,7 +90,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
             <div className={`w-full transition-all duration-1000 ease-out transform ${showOffer ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-20 invisible h-0 overflow-hidden'}`}>
                 
                 {/* Delayed CTA 1 */}
-                <div className="max-w-4xl mx-auto px-6 mt-12 mb-24 text-center animate-bounce-subtle">
+                <div className="max-w-4xl mx-auto px-6 mt-8 md:mt-12 mb-20 md:mb-24 text-center animate-bounce-subtle">
                     <button 
                         onClick={() => window.open('https://payment.ticto.app/O6CE296D4', '_blank')}
                         className="group relative w-full md:w-auto md:px-12 bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-black py-5 md:py-6 rounded-2xl text-lg md:text-2xl shadow-[0_20px_50px_rgba(234,179,8,0.3)] transition-all transform hover:scale-105"
@@ -158,23 +161,23 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                                 <ul className="space-y-3 md:space-y-4">
                                     <li className="flex items-start gap-4 p-4 bg-white/5 rounded-xl md:rounded-2xl border border-white/5">
                                         <BookOpen className="text-yellow-500 shrink-0 mt-0.5 md:mt-1 w-5 h-5" />
-                                        <span className="text-xs md:text-base"><strong className="text-white">Livro Completo:</strong> 12 capítulos, 170+ páginas, com Sumário, Agradecimentos e Dedicatória em Word Editável.</span>
+                                        <span className="text-xs md:text-base"><strong className="text-white">Livro Completo:</strong> 12 capítulos, 170+ páginas, em Word Editável.</span>
                                     </li>
                                     <li className="flex items-start gap-4 p-4 bg-white/5 rounded-xl md:rounded-2xl border border-white/5">
                                         <TrendingUp className="text-yellow-500 shrink-0 mt-0.5 md:mt-1 w-5 h-5" />
-                                        <span className="text-xs md:text-base"><strong className="text-white">9 Opções de Títulos:</strong> Criados para atrair cliques e vendas imediatas baseados em gatilhos mentais.</span>
+                                        <span className="text-xs md:text-base"><strong className="text-white">9 Opções de Títulos:</strong> Criados para atrair cliques baseados em gatilhos mentais.</span>
                                     </li>
                                     <li className="flex items-start gap-4 p-4 bg-white/5 rounded-xl md:rounded-2xl border border-white/5">
                                         <Award className="text-yellow-500 shrink-0 mt-0.5 md:mt-1 w-5 h-5" />
-                                        <span className="text-xs md:text-base"><strong className="text-white">Material de Capa:</strong> Textos prontos para Orelhas (Frente/Verso) e Contra-capa profissional.</span>
+                                        <span className="text-xs md:text-base"><strong className="text-white">Material de Capa:</strong> Textos prontos para Orelhas e Contra-capa profissional.</span>
                                     </li>
                                     <li className="flex items-start gap-4 p-4 bg-white/5 rounded-xl md:rounded-2xl border border-white/5">
                                         <Zap className="text-yellow-400 shrink-0 mt-0.5 md:mt-1 w-5 h-5" />
-                                        <span className="text-xs md:text-base"><strong className="text-white">Arsenal Amazon (Top Seller):</strong> Sinopse padrão e as 20 melhores Palavras-Chave para o algoritmo.</span>
+                                        <span className="text-xs md:text-base"><strong className="text-white">Arsenal Amazon (Top Seller):</strong> Sinopse padrão e palavras-chave poderosas.</span>
                                     </li>
                                     <li className="flex items-start gap-4 p-4 bg-yellow-500/10 rounded-xl md:rounded-2xl border border-yellow-500/20">
                                         <PlayCircle className="text-yellow-500 shrink-0 mt-0.5 md:mt-1 w-5 h-5" />
-                                        <span className="text-xs md:text-base"><strong className="text-yellow-500">Bônus de Marketing:</strong> Descrição profissional para seu vídeo de venda no YouTube.</span>
+                                        <span className="text-xs md:text-base"><strong className="text-yellow-500">Bônus de Marketing:</strong> Descrição profissional para seu vídeo de venda.</span>
                                     </li>
                                 </ul>
                             </div>
@@ -200,7 +203,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                             {[
                                 { icon: <Star className="text-yellow-500" />, title: "Especialistas", desc: "Que querem aumentar sua autoridade e cobrar mais caro em mentorias." },
                                 { icon: <Target className="text-yellow-500" />, title: "Empreendedores", desc: "Digital que buscam renda passiva na Amazon (KDP) de forma escalável." },
-                                { icon: <Users className="text-yellow-500" />, title: "Palestrantes", desc: "Que precisam de um livro físico/digital para vender em seus eventos e cursos." },
+                                { icon: <Users className="text-yellow-500" />, title: "Palestrantes", desc: "Que precisam de um livro físico/digital para vender em seus eventos." },
                                 { icon: <Feather className="text-yellow-500" />, title: "Aspirantes", desc: "Você, que tem uma mensagem, mas trava diante da tela branca e não sabe começar." }
                             ].map((item, idx) => (
                                 <div key={idx} className="p-8 bg-white/5 rounded-[2rem] md:rounded-[2.5rem] border border-white/5 hover:bg-white/10 transition-colors flex flex-col items-center text-center">
@@ -220,7 +223,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                     <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-yellow-500/10 blur-[120px] rounded-full"></div>
                     <div className="max-w-4xl mx-auto px-6 relative z-10">
                         <div className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-[2.5rem] md:rounded-[3rem] p-8 md:p-20 border border-white/10 shadow-[0_0_100px_-10px_rgba(0,0,0,0.5)] text-center">
-                            <h2 className="text-xl md:text-5xl font-black mb-8">Todo esse Ecossistema pelo preço de uma Pizza.</h2>
+                            <h2 className="text-xl md:text-5xl font-black mb-8">Todo Ecossistema pelo preço de uma Pizza.</h2>
                             <div className="mb-12">
                                 <span className="text-slate-400 line-through text-lg md:text-2xl">De R$ 197,90</span>
                                 <div className="flex items-center justify-center gap-2 mt-2">
@@ -252,9 +255,9 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                         </h2>
                         <div className="grid grid-cols-1 gap-4 md:gap-6">
                             {[
-                                { q: "Preciso escrever algo?", a: "Não. A ferramenta gera tudo de forma autônoma a partir do tema escolhido através da nossa Inteligência Artificial exclusiva." },
-                                { q: "O livro vem formatado?", a: "Sim, entregamos o arquivo pronto em Word para diagramação final ou publicação direta com sumários, agradecimentos e todos os itens profissionais." },
-                                { q: "Posso publicar na Amazon?", a: "Sim, o motor de criação é totalmente 'Amazon-Ready', otimizado para os padrões aceitos pelo KDP." }
+                                { q: "¿Preciso escrever algo?", a: "Não. A ferramenta gera tudo de forma autônoma a partir do tema escolhido com nossa IA exclusiva." },
+                                { q: "O livro vem formatado?", a: "Sim, entregamos o arquivo pronto em Word para diagramação final ou publicação direta." },
+                                { q: "Posso publicar na Amazon?", a: "Sim, o motor de criação é totalmente 'Amazon-Ready', otimizado para o KDP." }
                             ].map((faq, i) => (
                                 <div key={i} className="bg-white/5 rounded-[1.5rem] md:rounded-3xl p-6 md:p-8 border border-white/5">
                                     <h3 className="text-base md:text-xl font-bold mb-4 text-white flex gap-3"><span className="text-yellow-500">?</span> {faq.q}</h3>
@@ -278,9 +281,6 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                                 <a href="/terms" className="hover:text-white transition">Termos de Uso</a>
                                 <a href="/privacy-policy" className="hover:text-white transition">Privacidade</a>
                             </nav>
-                            <p className="max-w-xl mx-auto leading-relaxed italic opacity-70">
-                                "Este site não é afiliado ao Facebook, Google ou YouTube. Os resultados variam de acordo com o nicho e esforço individual de cada autor."
-                            </p>
                             <p>© 2026 Fábrica de Best Sellers. Todos os direitos reservados.</p>
                             <div className="pt-6">
                                 <Disclaimer />
@@ -290,7 +290,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                 </footer>
             </div>
 
-            {/* Hidden admin/login portal */}
+            {/* Hidden admin portal */}
             <button 
                 onClick={onLoginClick} 
                 className="fixed top-2 right-2 md:top-4 md:right-4 bg-white/5 hover:bg-white/10 text-white/20 hover:text-white px-2 py-0.5 md:px-3 md:py-1 rounded text-[8px] md:text-[10px] transition z-50"
