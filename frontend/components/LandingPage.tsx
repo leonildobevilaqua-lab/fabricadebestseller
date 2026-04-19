@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Disclaimer from './Disclaimer';
 import { 
     BookOpen, 
@@ -25,18 +25,6 @@ interface LandingProps {
 }
 
 const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
-    const [showOffer, setShowOffer] = useState(false);
-
-    // 3 minutes and 25 seconds = 205 seconds
-    const DELAY_SECONDS = 205;
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setShowOffer(true);
-        }, DELAY_SECONDS * 1000);
-        return () => clearTimeout(timer);
-    }, []);
-
     return (
         <div className="min-h-screen bg-[#0a0f1d] text-white font-sans flex flex-col items-center selection:bg-yellow-500 selection:text-slate-900 scroll-smooth overflow-x-hidden">
             
@@ -65,10 +53,6 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[300px] h-[400px] bg-yellow-500/10 blur-[60px] md:blur-[120px] rounded-full -z-10 animate-pulse"></div>
                     
                     <div className="relative aspect-[9/16] w-[220px] sm:w-[280px] md:w-[350px] rounded-[2rem] md:rounded-[3rem] overflow-hidden border-4 border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.8)] bg-black">
-                        {/* 
-                            Forcing 9:16 and zooming slightly to eliminate any potential sidebars/branding.
-                            Using scale-110 and object-cover logic.
-                        */}
                         <div className="absolute inset-0 w-full h-full flex items-center justify-center pointer-events-auto overflow-hidden">
                             <iframe
                                 className="absolute w-[105%] h-[105%] max-w-none scale-[1.05] grayscale-[10%] hover:grayscale-0 transition-all duration-700"
@@ -86,10 +70,10 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                 </div>
             </header>
 
-            {/* --- DELAYED CONTENT --- */}
-            <div className={`w-full transition-all duration-1000 ease-out transform ${showOffer ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-20 invisible h-0 overflow-hidden'}`}>
+            {/* --- IMMEDIATE CONTENT --- */}
+            <div className="w-full opacity-100 translate-y-0 visible transition-all duration-1000">
                 
-                {/* Delayed CTA 1 */}
+                {/* CTA 1 */}
                 <div className="max-w-4xl mx-auto px-6 mt-8 md:mt-12 mb-20 md:mb-24 text-center animate-bounce-subtle">
                     <button 
                         onClick={() => window.open('https://payment.ticto.app/O6CE296D4', '_blank')}
@@ -255,7 +239,7 @@ const LandingPage: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
                         </h2>
                         <div className="grid grid-cols-1 gap-4 md:gap-6">
                             {[
-                                { q: "¿Preciso escrever algo?", a: "Não. A ferramenta gera tudo de forma autônoma a partir do tema escolhido com nossa IA exclusiva." },
+                                { q: "Preciso escrever algo?", a: "Não. A ferramenta gera tudo de forma autônoma a partir do tema escolhido com nossa IA exclusiva." },
                                 { q: "O livro vem formatado?", a: "Sim, entregamos o arquivo pronto em Word para diagramação final ou publicação direta." },
                                 { q: "Posso publicar na Amazon?", a: "Sim, o motor de criação é totalmente 'Amazon-Ready', otimizado para o KDP." }
                             ].map((faq, i) => (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Disclaimer from './Disclaimer';
 import { 
     BookOpen, 
@@ -25,18 +25,6 @@ interface LandingProps {
 }
 
 const LandingPageSpanish: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
-    const [showOffer, setShowOffer] = useState(false);
-
-    // 3 minutes and 25 seconds = 205 seconds
-    const DELAY_SECONDS = 205;
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setShowOffer(true);
-        }, DELAY_SECONDS * 1000);
-        return () => clearTimeout(timer);
-    }, []);
-
     return (
         <div className="min-h-screen bg-[#0a0f1d] text-white font-sans flex flex-col items-center selection:bg-yellow-500 selection:text-slate-900 scroll-smooth overflow-x-hidden">
             
@@ -79,10 +67,10 @@ const LandingPageSpanish: React.FC<LandingProps> = ({ onStart, onLoginClick }) =
                 </div>
             </header>
 
-            {/* --- DELAYED CONTENT --- */}
-            <div className={`w-full transition-all duration-1000 ease-out transform ${showOffer ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-20 invisible h-0 overflow-hidden'}`}>
+            {/* --- IMMEDIATE CONTENT --- */}
+            <div className="w-full opacity-100 translate-y-0 visible transition-all duration-1000">
                 
-                {/* Delayed CTA 1 */}
+                {/* CTA 1 */}
                 <div className="max-w-4xl mx-auto px-6 mt-8 md:mt-12 mb-20 md:mb-24 text-center animate-bounce-subtle">
                     <button 
                         onClick={() => window.open('https://payment.ticto.app/O6CE296D4', '_blank')}
@@ -194,7 +182,7 @@ const LandingPageSpanish: React.FC<LandingProps> = ({ onStart, onLoginClick }) =
                         <h2 className="text-2xl md:text-5xl font-black text-center mb-16">¿Para quién es la Fábrica?</h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
-                                { icon: <Star className="text-yellow-500" />, title: "Especialistas", desc: "Que quieren aumentar su autoridad y cobrar más caro en mentorías." },
+                                { icon: <Star className="text-yellow-500" />, title: "Especialistas", desc: "Que quieren aumentar su autoridade e cobrar más caro en mentorías." },
                                 { icon: <Target className="text-yellow-500" />, title: "Emprendedores", desc: "Digitales que buscan ingresos pasivos en Amazon (KDP)." },
                                 { icon: <Users className="text-yellow-500" />, title: "Conferencistas", desc: "Que necesitan un libro para vender en sus eventos y cursos." },
                                 { icon: <Feather className="text-yellow-500" />, title: "Aspirantes", desc: "Tú, que tienes un mensaje, pero te bloqueas ante la pantalla blanca." }
@@ -233,7 +221,7 @@ const LandingPageSpanish: React.FC<LandingProps> = ({ onStart, onLoginClick }) =
                             </button>
 
                             <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6 text-slate-400 text-[10px] md:text-sm font-medium">
-                                <span className="flex items-center gap-2 text-center justify-center"><CheckCircle className="text-green-500 w-4 h-4 md:w-5 md:h-5" /> Satisfacción garantizada o su dinero en 7 dias.</span>
+                                <span className="flex items-center gap-2 text-center justify-center"><CheckCircle className="text-green-500 w-4 h-4 md:w-5 md:h-5" /> Satisfacción garantizada o su dinheiro en 7 dias.</span>
                                 <span className="flex items-center gap-2 text-center justify-center"><ShieldCheck className="text-blue-500 w-4 h-4 md:w-5 md:h-5" /> Compra 100% segura</span>
                             </div>
                         </div>
@@ -274,7 +262,7 @@ const LandingPageSpanish: React.FC<LandingProps> = ({ onStart, onLoginClick }) =
                                 <a href="/terms" className="hover:text-white transition">Términos de Uso</a>
                                 <a href="/privacy-policy" className="hover:text-white transition">Privacidad</a>
                             </nav>
-                            <p>© 2026 Fábrica de Best Sellers. Todos los derechos reservados.</p>
+                            <p>© 2026 Fábrica de Best Sellers. Todos os direitos reservados.</p>
                             <div className="pt-6">
                                 <Disclaimer />
                             </div>

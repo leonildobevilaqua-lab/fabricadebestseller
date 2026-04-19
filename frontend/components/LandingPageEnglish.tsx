@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Disclaimer from './Disclaimer';
 import { 
     BookOpen, 
@@ -25,18 +25,6 @@ interface LandingProps {
 }
 
 const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onLoginClick }) => {
-    const [showOffer, setShowOffer] = useState(false);
-
-    // 3 minutes and 25 seconds = 205 seconds
-    const DELAY_SECONDS = 205;
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setShowOffer(true);
-        }, DELAY_SECONDS * 1000);
-        return () => clearTimeout(timer);
-    }, []);
-
     return (
         <div className="min-h-screen bg-[#0a0f1d] text-white font-sans flex flex-col items-center selection:bg-yellow-500 selection:text-slate-900 scroll-smooth overflow-x-hidden">
             
@@ -79,10 +67,10 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onLoginClick }) =
                 </div>
             </header>
 
-            {/* --- DELAYED CONTENT --- */}
-            <div className={`w-full transition-all duration-1000 ease-out transform ${showOffer ? 'opacity-100 translate-y-0 visible' : 'opacity-0 translate-y-20 invisible h-0 overflow-hidden'}`}>
+            {/* --- IMMEDIATE CONTENT --- */}
+            <div className="w-full opacity-100 translate-y-0 visible transition-all duration-1000">
                 
-                {/* Delayed CTA 1 */}
+                {/* CTA 1 */}
                 <div className="max-w-4xl mx-auto px-6 mt-8 md:mt-12 mb-20 md:mb-24 text-center animate-bounce-subtle">
                     <button 
                         onClick={() => window.open('https://payment.ticto.app/O6CE296D4', '_blank')}
@@ -197,7 +185,7 @@ const LandingPageEnglish: React.FC<LandingProps> = ({ onStart, onLoginClick }) =
                                 { icon: <Star className="text-yellow-500" />, title: "Specialists", desc: "Who want to increase their authority and charge more for mentorships." },
                                 { icon: <Target className="text-yellow-500" />, title: "Entrepreneurs", desc: "Digital creators looking for passive income on Amazon (KDP)." },
                                 { icon: <Users className="text-yellow-500" />, title: "Speakers", desc: "Who need a book to sell at their events and courses." },
-                                { icon: <Feather className="text-yellow-500" />, title: "Aspirants", desc: "You, who have a message but freeze before the white screen." }
+                                { icon: <Feather className="text-yellow-500" />, title: "Aspirantes", desc: "You, who have a message but freeze before the white screen." }
                             ].map((item, idx) => (
                                 <div key={idx} className="p-8 bg-white/5 rounded-[2rem] md:rounded-[2.5rem] border border-white/5 hover:bg-white/10 transition-colors flex flex-col items-center text-center">
                                     <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-800 rounded-xl md:rounded-2xl flex items-center justify-center mb-6 shadow-xl border border-white/5">
