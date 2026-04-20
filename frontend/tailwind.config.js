@@ -17,6 +17,9 @@ export default {
                 'spin-slow': 'spin 3s linear infinite',
             },
             colors: {
+                'deep-charcoal': '#0A0A0A',
+                'cyber-gold': '#FFD700',
+                'signal-orange': '#FF4D00',
                 brand: {
                     50: '#f0f9ff',
                     100: '#e0f2fe',
