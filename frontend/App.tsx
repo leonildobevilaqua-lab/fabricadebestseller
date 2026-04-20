@@ -330,12 +330,7 @@ const App: React.FC = () => {
 
     return (
       <ErrorBoundary>
-        <LandingPage
-          onStart={handleStart}
-          onAdmin={() => setShowAdmin(true)}
-          lang={lang}
-          setLang={setLang}
-          initialState={landingProps}
+        <SalesLandingV5 
           onLoginClick={() => setCurrentView('login')}
         />
       </ErrorBoundary>

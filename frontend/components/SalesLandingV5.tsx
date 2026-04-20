@@ -32,7 +32,11 @@ const stagger = {
   whileInView: { transition: { staggerChildren: 0.1 } }
 };
 
-export const SalesLandingV5: React.FC = () => {
+interface SalesLandingProps {
+  onLoginClick: () => void;
+}
+
+export const SalesLandingV5: React.FC<SalesLandingProps> = ({ onLoginClick }) => {
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -47,6 +51,14 @@ export const SalesLandingV5: React.FC = () => {
         className="fixed top-0 left-0 right-0 h-1 bg-cyber-gold z-[100] origin-left" 
         style={{ scaleX }} 
       />
+
+      {/* Login Button */}
+      <button 
+        onClick={onLoginClick}
+        className="fixed top-4 right-4 z-[100] bg-white/5 hover:bg-white/10 text-white/40 hover:text-white px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border border-white/10"
+      >
+        Área do Aluno
+      </button>
 
       {/* Floating CTA (Desktop) */}
       <motion.div 
