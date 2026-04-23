@@ -85,18 +85,17 @@ export const ProfessionalCoverLanding: React.FC = () => {
           <motion.div 
             {...fadeInUp}
             transition={{ delay: 0.2 }}
-            className="relative max-w-4xl mx-auto aspect-video rounded-2xl overflow-hidden shadow-2xl border border-white/10 bg-black group"
+            className="relative w-full max-w-5xl mx-auto aspect-video rounded-2xl overflow-hidden shadow-[0_0_100px_-20px_rgba(255,215,0,0.3)] group"
           >
-            {/* Placeholder for Video/Visual */}
-            <img 
-              src="/assets/cover_course_mockup.png" 
-              alt="Curso Capa Profissional" 
-              className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700"
-            />
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-              <div className="w-20 h-20 bg-cyber-gold rounded-full flex items-center justify-center shadow-2xl animate-bounce">
-                <Zap className="w-10 h-10 text-black fill-black" />
-              </div>
+            <div className="absolute inset-0 bg-black flex items-center justify-center">
+              <iframe 
+                className="w-full h-full"
+                src="https://www.youtube.com/embed/K7AAxtH69WM?autoplay=0&rel=0&modestbranding=1" 
+                title="Curso Capa Profissional VSL"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen
+              />
             </div>
           </motion.div>
 
