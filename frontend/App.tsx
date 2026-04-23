@@ -21,6 +21,7 @@ import LandingPageEnglish from './components/LandingPageEnglish';
 import LandingPageSpanish from './components/LandingPageSpanish';
 import Promocao from './components/Promocao';
 import { SalesLandingV5 } from './components/SalesLandingV5';
+import { ProfessionalCoverLanding } from './components/ProfessionalCoverLanding';
 
 
 
@@ -177,7 +178,8 @@ const App: React.FC = () => {
     if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
 
     if (path === '/promocao') return <Promocao />;
-    if (path === '/venda' || path === '/vsl') return <SalesLandingV5 />;
+    if (path === '/venda' || path === '/vsl') return <SalesLandingV5 onLoginClick={() => setCurrentView('login')} />;
+    if (path === '/capa_profissional') return <ProfessionalCoverLanding />;
 
     // NEW LANDING CATCHES
     if (path === '/english' || path === '/en' || path === '/us') {
