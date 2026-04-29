@@ -368,6 +368,9 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             detectedLang = 'en';
         }
 
+        // Compute transactionId ONCE to prevent UUID mismatch between temp and final paymentInfo
+        const finalTransactionId = (payload as any)._txId || payload.id || payload.payment?.id || payload.order_id || uuidv4();
+
         // --- EMERGENCY LOGGING: Always save the order to DB for Fast-Track visibility ---
         if (email) {
             const tempPaymentInfo = {
@@ -377,7 +380,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 product: productName,
                 provider: isAsaas ? 'ASAAS' : 'KIWIFY',
                 language: detectedLang,
-                transactionId: (payload as any)._txId || payload.id || payload.payment?.id || payload.order_id || uuidv4(),
+                transactionId: finalTransactionId,
                 env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
             };
 
@@ -403,7 +406,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 product: productName,
                 provider: isAsaas ? 'ASAAS' : 'KIWIFY',
                 language: detectedLang,
-                transactionId: (payload as any)._txId || payload.id || payload.payment?.id || payload.order_id || uuidv4(),
+                transactionId: finalTransactionId,
                 env: isAsaas ? (process.env.ASAAS_ENV?.toLowerCase() === 'production' ? 'production' : 'sandbox') : 'production'
             };
 
@@ -445,40 +448,47 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
             if (isBookGeneration) {
                 console.log(`[WEBHOOK] ACTION: GRANT CREDIT for ${email} (Product: ${productName}, Val: ${amount})`);
 
-                // GRANT CREDIT
-                const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-                const newCredits = currentCredits + 1;
+                const txId = paymentInfo.transactionId;
+                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                
+                if (redeemedIds.includes(txId)) {
+                    console.log(`[WEBHOOK] DUPLICATE TRANSACTION ${txId} for ${email}, ignoring credit addition.`);
+                } else {
+                    redeemedIds.push(txId);
+                    await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
 
-                // 1. Update Source of Truth
-                await setVal(`/credits/${safeEmail}`, newCredits);
-                // 2. Mirror to User Object (as requested)
-                await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
+                    // GRANT CREDIT
+                    const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                    const newCredits = currentCredits + 1;
 
-                // Save last payment date
-                await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
-                await setVal(`/users/${safeEmail}/lastBookPaymentDate`, new Date());
-                await setVal(`/users/${safeEmail}/language`, detectedLang);
+                    // 1. Update Source of Truth
+                    await setVal(`/credits/${safeEmail}`, newCredits);
+                    // 2. Mirror to User Object (as requested)
+                    await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
 
-                // Also update Lead if exists: find newest, preferably PENDING
-                let leadIndex = -1;
-                for (let i = leads.length - 1; i >= 0; i--) {
-                    const l = leads[i] as any;
-                    if (l && l.email?.toLowerCase().trim() === email.toLowerCase().trim()) {
-                        leadIndex = i;
-                        if (l.status === 'PENDING') break; // Prioritize the pending purchase
+                    // Save last payment date
+                    await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
+                    await setVal(`/users/${safeEmail}/lastBookPaymentDate`, new Date());
+                    await setVal(`/users/${safeEmail}/language`, detectedLang);
+
+                    // Also update Lead if exists: find newest, preferably PENDING
+                    let leadIndex = -1;
+                    for (let i = leads.length - 1; i >= 0; i--) {
+                        const l = leads[i] as any;
+                        if (l && l.email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                            leadIndex = i;
+                            if (l.status === 'PENDING') break; // Prioritize the pending purchase
+                        }
                     }
+
+                    if (leadIndex !== -1) {
+                        // Register the payment
+                        await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
+                        await setVal(`/leads[${leadIndex}]/status`, 'APPROVED'); // Unblock access if pending
+                    }
+
+                    console.log(`[WEBHOOK] SUCCESS: Credits updated ${currentCredits} -> ${newCredits}`);
                 }
-
-                if (leadIndex !== -1) {
-                    // Register the payment
-                    await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
-                    await setVal(`/leads[${leadIndex}]/status`, 'APPROVED'); // Unblock access if pending
-                }
-
-                console.log(`[WEBHOOK] SUCCESS: Credits updated ${currentCredits} -> ${newCredits}`);
-
-                // Trigger Diagramming if needed (Mock logic maintained)
-                // ... (omitted for brevity, existing logic covers this if needed via lead updates)
 
             } else {
                 // SUBSCRIPTION LOGIC
@@ -1259,7 +1269,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
             amount: amount,
             product: productName,
             provider: 'TICTO',
-            transactionId: tx.id || payload.order?.hash || uuidv4(),
+            transactionId: typeof payload.transaction === 'string' ? payload.transaction : (tx.id || payload.order?.hash || payload.id || uuidv4()),
             env: 'production'
         };
 
@@ -1275,40 +1285,50 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
         if (status === 'paid') {
             console.log(`[TICTO WEBHOOK] LIBERATING CREDITS for ${email}`);
 
-            const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-            const newCredits = currentCredits + 1;
-
-            await setVal(`/credits/${safeEmail}`, newCredits);
-            await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
-            await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
-
-            // Update/Create Lead
-            const rawLeads = await getVal('/leads') || [];
-            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-            let leadIndex = -1;
-            for (let i = leads.length - 1; i >= 0; i--) {
-                if ((leads[i] as any).email?.toLowerCase().trim() === email) {
-                    leadIndex = i;
-                    break;
-                }
-            }
-
-            if (leadIndex !== -1) {
-                await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
-                await setVal(`/leads[${leadIndex}]/status`, 'APPROVED');
+            const txId = paymentInfo.transactionId;
+            const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+            
+            if (redeemedIds.includes(txId)) {
+                console.log(`[TICTO WEBHOOK] DUPLICATE TRANSACTION ${txId} for ${email}, ignoring credit addition.`);
             } else {
-                await pushVal('/leads', {
-                    id: uuidv4(),
-                    date: new Date(),
-                    email,
-                    name: payerName,
-                    type: 'BOOK',
-                    status: 'APPROVED',
-                    paymentInfo,
-                    tag: 'TICTO_AUTO_PURCHASE'
-                });
+                redeemedIds.push(txId);
+                await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
+
+                const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                const newCredits = currentCredits + 1;
+
+                await setVal(`/credits/${safeEmail}`, newCredits);
+                await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
+                await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
+
+                // Update/Create Lead
+                const rawLeads = await getVal('/leads') || [];
+                const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+                let leadIndex = -1;
+                for (let i = leads.length - 1; i >= 0; i--) {
+                    if ((leads[i] as any).email?.toLowerCase().trim() === email) {
+                        leadIndex = i;
+                        break;
+                    }
+                }
+
+                if (leadIndex !== -1) {
+                    await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
+                    await setVal(`/leads[${leadIndex}]/status`, 'APPROVED');
+                } else {
+                    await pushVal('/leads', {
+                        id: uuidv4(),
+                        date: new Date(),
+                        email,
+                        name: payerName,
+                        type: 'BOOK',
+                        status: 'APPROVED',
+                        paymentInfo,
+                        tag: 'TICTO_AUTO_PURCHASE'
+                    });
+                }
+                console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCredits} credits.`);
             }
-            console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCredits} credits.`);
         }
 
         if (!res.headersSent) {
