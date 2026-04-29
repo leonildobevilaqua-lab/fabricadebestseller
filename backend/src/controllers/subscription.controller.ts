@@ -257,24 +257,33 @@ export const SubscriptionController = {
 
                         if (customerData?.email) {
                             const safeEmail = customerData.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-                            let currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-                            currentCredits += 1;
-                            await setVal(`/credits/${safeEmail}`, currentCredits);
-                            console.log(`[WEBHOOK] Added 1 credit to ${customerData.email}. Total: ${currentCredits}`);
+                            
+                            const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                            if (redeemedIds.includes(transactionId)) {
+                                console.log(`[WEBHOOK] DUPLICATE TRANSACTION ${transactionId} for ${customerData.email}, ignoring.`);
+                            } else {
+                                redeemedIds.push(transactionId);
+                                await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
 
-                            // --- UPDATE LEAD FOR ADMIN VISIBILITY ---
-                            const rawLeads = await getVal('/leads') || [];
-                            const leadsArray = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-                            const leadIdx = leadsArray.findIndex((l: any) => l.email?.toLowerCase().trim() === customerData.email.toLowerCase().trim());
+                                let currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                                currentCredits += 1;
+                                await setVal(`/credits/${safeEmail}`, currentCredits);
+                                console.log(`[WEBHOOK] Added 1 credit to ${customerData.email}. Total: ${currentCredits}`);
 
-                            if (leadIdx !== -1) {
-                                await setVal(`/leads/${leadIdx}/paymentInfo`, {
-                                    provider: 'ASAAS',
-                                    id: transactionId,
-                                    amount: paidValue,
-                                    status: 'CONFIRMED'
-                                });
-                                await setVal(`/leads/${leadIdx}/status`, 'APPROVED');
+                                // --- UPDATE LEAD FOR ADMIN VISIBILITY ---
+                                const rawLeads = await getVal('/leads') || [];
+                                const leadsArray = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+                                const leadIdx = leadsArray.findIndex((l: any) => l.email?.toLowerCase().trim() === customerData.email.toLowerCase().trim());
+
+                                if (leadIdx !== -1) {
+                                    await setVal(`/leads/${leadIdx}/paymentInfo`, {
+                                        provider: 'ASAAS',
+                                        id: transactionId,
+                                        amount: paidValue,
+                                        status: 'CONFIRMED'
+                                    });
+                                    await setVal(`/leads/${leadIdx}/status`, 'APPROVED');
+                                }
                             }
 
                             await sendPurchaseEvent({
