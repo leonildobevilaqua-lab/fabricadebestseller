@@ -89,13 +89,14 @@ export const getLeads = async (req: Request, res: Response) => {
         // Enhance leads with credit status and latest plan
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
             if (!lead) return null;
-            if (!lead.email) return { ...lead, credits: 0 };
+            if (!lead.email) return { ...lead, credits: 0, cipCredits: 0 };
             const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            const cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
 
             // Fix Plan display out-of-sync for books
             const userPlan = await getVal(`/users/${safeEmail}/plan`);
-            let updatedLead = { ...lead, credits };
+            let updatedLead = { ...lead, credits, cipCredits };
 
             // If the lead was a generic Book request without plan context, but the user HAS an active plan, apply it so the UI shows the correct Plan and Discounted Price.
             if ((!updatedLead.plan || updatedLead.plan.name === 'AVULSO') && userPlan && userPlan.status === 'ACTIVE') {
@@ -1294,12 +1295,25 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 redeemedIds.push(txId);
                 await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
 
-                const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-                const newCredits = currentCredits + 1;
+                // Detect if it is CIP or BOOK
+                const pNameUpper = productName.toUpperCase();
+                const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA') || String(payload.item?.product_id) === 'O89DB6739' || String(tx.product?.id) === 'O89DB6739';
 
-                await setVal(`/credits/${safeEmail}`, newCredits);
-                await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
-                await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
+                if (isCIP) {
+                    const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+                    const newCipCredits = currentCipCredits + 1;
+                    await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
+                    await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCipCredits} CIP credits.`);
+                } else {
+                    const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                    const newCredits = currentCredits + 1;
+
+                    await setVal(`/credits/${safeEmail}`, newCredits);
+                    await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
+                    await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCredits} book credits.`);
+                }
 
                 // Update/Create Lead
                 const rawLeads = await getVal('/leads') || [];
@@ -1321,13 +1335,12 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                         date: new Date(),
                         email,
                         name: payerName,
-                        type: 'BOOK',
+                        type: isCIP ? 'FICHA_CATALOGRAFICA' : 'BOOK',
                         status: 'APPROVED',
                         paymentInfo,
-                        tag: 'TICTO_AUTO_PURCHASE'
+                        tag: isCIP ? 'TICTO_CIP_PURCHASE' : 'TICTO_AUTO_PURCHASE'
                     });
                 }
-                console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCredits} credits.`);
             }
         }
 

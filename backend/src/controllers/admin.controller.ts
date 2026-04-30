@@ -661,7 +661,8 @@ export const getCredits = async (req: Request, res: Response) => {
         if (!email) return res.status(400).json({ error: "Email requerido" });
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
         const credits = Number(await getVal(`/credits/${safeEmail}`) || 0);
-        res.json({ email, credits });
+        const cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
+        res.json({ email, credits, cipCredits });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -672,14 +673,44 @@ export const getCredits = async (req: Request, res: Response) => {
  */
 export const manageCredits = async (req: Request, res: Response) => {
     try {
-        const { email, amount } = req.body;
+        const { email, amount, type } = req.body;
         if (!email) return res.status(400).json({ error: "Email requerido" });
         if (amount === undefined) return res.status(400).json({ error: "Quantidade requerida" });
 
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
         
-        // 1. Update /credits/ (Primary Source of truth for Generator)
         await reloadDB();
+
+        if (type === 'cip') {
+            const currentCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
+            const base = Math.max(0, currentCredits);
+            const newTotal = Math.max(0, base + Number(amount));
+            await setVal(`/cipCredits/${safeEmail}`, newTotal);
+
+            const user = await getVal(`/users/${safeEmail}`);
+            if (user) {
+                user.cipCredits = newTotal;
+                await setVal(`/users/${safeEmail}`, user);
+            }
+
+            const rawLeads = await getVal('/leads') || [];
+            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+            let leadIndex = -1;
+            for (let i = leads.length - 1; i >= 0; i--) {
+                const l = leads[i];
+                if (l && (l as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
+                    leadIndex = i;
+                    break;
+                }
+            }
+            if (leadIndex !== -1) {
+                await setVal(`/leads[${leadIndex}]/cipCredits`, newTotal);
+            }
+            console.log(`[ADMIN] Manual CIP Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
+            return res.json({ success: true, email, previousTotal: currentCredits, newTotal, type: 'cip' });
+        }
+
+        // 1. Update /credits/ (Primary Source of truth for Generator)
         const currentCredits = Number(await getVal(`/credits/${safeEmail}`) || 0);
         // Safety: If current is negative (due to double-deduction bug), treat as 0 for the math
         const base = Math.max(0, currentCredits);

@@ -15,6 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 import paymentRoutes from './routes/payment.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import purchaseRoutes from './routes/purchase.routes';
+import cipRoutes from './routes/cip.routes';
 import { handleKiwifyWebhook, handleTictoWebhook } from './controllers/payment.controller'; // Direct link for speed
 import { SubscriptionController } from './controllers/subscription.controller';
 import jwt from 'jsonwebtoken'; // Added for Golden Route
@@ -87,6 +88,7 @@ app.all('/asaas-webhook-direct', SubscriptionController.webhook); // NO PREFIX -
 app.all('/webhook-test', (req, res) => res.json({ method: req.method, path: req.path, body: req.body }));
 
 app.use('/api/projects', projectRoutes);
+app.use('/api/cip', cipRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/purchase', purchaseRoutes);

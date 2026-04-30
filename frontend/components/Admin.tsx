@@ -414,6 +414,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     // --- Credits Management State ---
     const [creditSearchEmail, setCreditSearchEmail] = useState('');
     const [foundCredits, setFoundCredits] = useState<number | null>(null);
+    const [foundCipCredits, setFoundCipCredits] = useState<number | null>(null);
+    const [creditType, setCreditType] = useState<'book' | 'cip'>('book');
     const [creditAmount, setCreditAmount] = useState(1);
     const [creditsOpLoading, setCreditsOpLoading] = useState(false);
     const [creditsMsg, setCreditsMsg] = useState('');
@@ -429,10 +431,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             const data = await res.json();
             if (res.ok) {
                 setFoundCredits(data.credits);
-                if (data.credits === 0 && !creditsMsg) setCreditsMsg('ℹ️ Usuário encontrado, mas sem créditos no momento.');
+                setFoundCipCredits(data.cipCredits);
+                if (data.credits === 0 && data.cipCredits === 0 && !creditsMsg) setCreditsMsg('ℹ️ Usuário encontrado, mas sem créditos no momento.');
             } else {
                 setCreditsMsg(`❌ ${data.error || 'Usuário não encontrado ou erro na busca.'}`);
                 setFoundCredits(null);
+                setFoundCipCredits(null);
             }
         } catch (e: any) {
             setCreditsMsg(`❌ Erro de conexão: ${e.message}`);
@@ -443,8 +447,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleManageCreditsOp = async (amount: number) => {
         if (!creditSearchEmail) return;
+        const typeLabel = creditType === 'cip' ? 'Ficha CIP' : 'Livro';
         const actionLabel = amount > 0 ? 'adicionar' : 'remover';
-        if (!confirm(`Deseja realmente ${actionLabel} ${Math.abs(amount)} crédito(s) para ${creditSearchEmail}?`)) return;
+        if (!confirm(`Deseja realmente ${actionLabel} ${Math.abs(amount)} crédito(s) de ${typeLabel} para ${creditSearchEmail}?`)) return;
 
         setCreditsOpLoading(true);
         setCreditsMsg('');
@@ -455,12 +460,20 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({ email: creditSearchEmail.trim(), amount })
+                body: JSON.stringify({ 
+                    email: creditSearchEmail.trim(), 
+                    amount,
+                    type: creditType
+                })
             });
             const data = await res.json();
             if (res.ok) {
-                setFoundCredits(data.newTotal);
-                setCreditsMsg(`✅ Sucesso! Novo saldo de ${creditSearchEmail}: ${data.newTotal} créditos.`);
+                if (creditType === 'cip') {
+                    setFoundCipCredits(data.newTotal);
+                } else {
+                    setFoundCredits(data.newTotal);
+                }
+                setCreditsMsg(`✅ Sucesso! Novo saldo de ${typeLabel} para ${creditSearchEmail}: ${data.newTotal} créditos.`);
                 refreshAll(); // Reload leads to sync UI
             } else {
                 setCreditsMsg(`❌ ${data.error || 'Erro ao processar alteração.'}`);
@@ -1533,7 +1546,10 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         <div className="flex items-center gap-2">
                                                             <div className="hidden lg:flex flex-col items-end mr-4 text-right">
                                                                 <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">SALDO</span>
-                                                                <span className="text-sm font-black text-amber-500 leading-none">{order.credits || 0} pts</span>
+                                                                <div className="flex gap-2">
+                                                                    <span className="text-xs font-black text-amber-500" title="Créditos de Livro">📚 {order.credits || 0}</span>
+                                                                    <span className="text-xs font-black text-indigo-500" title="Créditos de Ficha CIP">🗂️ {order.cipCredits || 0}</span>
+                                                                </div>
                                                             </div>
 
                                                             {isProject && (['READY_TO_DOWNLOAD', 'COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS'].includes((order.status || '').toUpperCase())) && (
@@ -1976,16 +1992,35 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </div>
 
                                     {foundCredits !== null && (
-                                        <div className="p-4 bg-white rounded-xl border border-amber-100 shadow-sm animate-fade-in flex items-center justify-between">
-                                            <div>
-                                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Saldo Atual</span>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-3xl font-black text-slate-800">{foundCredits}</span>
-                                                    <span className="text-sm font-bold text-slate-500">Créditos ativos</span>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
+                                            <div 
+                                                onClick={() => setCreditType('book')}
+                                                className={`p-4 rounded-xl border cursor-pointer transition-all shadow-sm flex items-center justify-between ${creditType === 'book' ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200' : 'bg-white border-slate-100 hover:border-slate-300'}`}
+                                            >
+                                                <div>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Livros</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-3xl font-black text-slate-800">{foundCredits}</span>
+                                                    </div>
+                                                </div>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${creditType === 'book' ? 'bg-amber-200 text-amber-700' : 'bg-slate-50 text-slate-400'}`}>
+                                                    📚
                                                 </div>
                                             </div>
-                                            <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center text-amber-500 text-2xl">
-                                                🪙
+
+                                            <div 
+                                                onClick={() => setCreditType('cip')}
+                                                className={`p-4 rounded-xl border cursor-pointer transition-all shadow-sm flex items-center justify-between ${creditType === 'cip' ? 'bg-indigo-50 border-indigo-300 ring-2 ring-indigo-200' : 'bg-white border-slate-100 hover:border-slate-300'}`}
+                                            >
+                                                <div>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Ficha CIP</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-3xl font-black text-slate-800">{foundCipCredits ?? 0}</span>
+                                                    </div>
+                                                </div>
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${creditType === 'cip' ? 'bg-indigo-200 text-indigo-700' : 'bg-slate-50 text-slate-400'}`}>
+                                                    🗂️
+                                                </div>
                                             </div>
                                         </div>
                                     )}
@@ -1999,11 +2034,13 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     {foundCredits !== null && (
                                         <div className="pt-4 border-t border-slate-200 space-y-4">
                                             <div>
-                                                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3 text-center">Alterar Quantidade</label>
+                                                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3 text-center">
+                                                    Gerenciar Créditos de {creditType === 'cip' ? 'FICHA CIP' : 'LIVRO'}
+                                                </label>
                                                 <div className="flex items-center justify-center gap-6">
                                                     <button 
                                                         onClick={() => handleManageCreditsOp(-1)}
-                                                        disabled={creditsOpLoading || foundCredits <= 0}
+                                                        disabled={creditsOpLoading || (creditType === 'book' ? foundCredits <= 0 : (foundCipCredits ?? 0) <= 0)}
                                                         className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-200 transition-colors disabled:opacity-30 shadow-sm border border-rose-200"
                                                         title="Remover 1 Crédito"
                                                     >
@@ -2023,7 +2060,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                         className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center hover:bg-emerald-200 transition-colors shadow-sm border border-emerald-200"
                                                         title="Adicionar 1 Crédito"
                                                     >
-                                                        <Zap size={24} fill="currentColor" />
+                                                        {creditType === 'cip' ? <FileText size={24} /> : <Zap size={24} fill="currentColor" />}
                                                     </button>
                                                 </div>
                                             </div>
@@ -2036,7 +2073,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     +5 Créditos
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleManageCreditsOp(-foundCredits!)}
+                                                    onClick={() => handleManageCreditsOp(creditType === 'book' ? -foundCredits! : -(foundCipCredits ?? 0))}
                                                     className="py-3 bg-white border border-rose-100 rounded-xl text-xs font-black text-rose-500 hover:bg-rose-50 transition shadow-sm uppercase"
                                                 >
                                                     Zerar Saldo

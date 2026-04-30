@@ -293,10 +293,14 @@ export const UserAuthController = {
                 credits = user.bookCredits;
             }
 
+            let cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+            if (!cipCredits && user.cipCredits) cipCredits = user.cipCredits;
+
             // --- 5. MASTER RESTORATION ---
             if (isMaster) {
                 console.log("💎 FORCE RESTORING 14 CREDITS FOR MASTER LEONILDO");
                 credits = 14; 
+                cipCredits = 100;
                 // We also ensure plan is BLACK
                 if (!user.plan || user.plan.name !== 'BLACK') {
                     user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'monthly' };
@@ -307,6 +311,7 @@ export const UserAuthController = {
                 profile: user.profile,
                 plan: user.plan || { name: 'FREE', status: 'INACTIVE' },
                 credits: credits, 
+                cipCredits: cipCredits,
                 stats: {
                     purchaseCycleCount: cycleIndex,
                     totalBooksGenerated: usageCount,

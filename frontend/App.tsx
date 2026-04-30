@@ -22,6 +22,7 @@ import LandingPageSpanish from './components/LandingPageSpanish';
 import Promocao from './components/Promocao';
 import { SalesLandingV5 } from './components/SalesLandingV5';
 import { ProfessionalCoverLanding } from './components/ProfessionalCoverLanding';
+import CipGenerator from './components/CipGenerator';
 
 
 
@@ -180,6 +181,7 @@ const App: React.FC = () => {
     if (path === '/promocao') return <Promocao />;
     if (path === '/venda' || path === '/vsl') return <SalesLandingV5 onLoginClick={() => setCurrentView('login')} />;
     if (path === '/capa_profissional') return <ProfessionalCoverLanding />;
+    if (path === '/ficha-catalografica' || path === '/cip') return <CipGenerator />;
 
     // NEW LANDING CATCHES
     if (path === '/english' || path === '/en' || path === '/us') {
