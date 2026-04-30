@@ -181,12 +181,12 @@ ${text.substring(0, 8000)}
                         new Paragraph({ border: { top: { color: "000000", space: 1, style: BorderStyle.THICK, size: 12 } }, text: "" }),
                         new Paragraph({ children: [new TextRun({ text: aiData.cutter, size: 28 })], indent: { left: 850 }, spacing: { before: 200 } }),
                         new Paragraph({ children: [new TextRun({ text: aiData.authorFormatted, bold: true, size: 28 })], alignment: AlignmentType.LEFT, spacing: { after: 100 } }),
-                        new Paragraph({ children: [new TextRun({ text: \`\${aiData.title}\${aiData.subtitle ? ': ' + aiData.subtitle : ''} / \${aiData.author}. – 1ª edição – \${formattedCidade}, \${formattedEstado}: Editora 360 Express, \${aiData.year}.\`, size: 28 })], indent: { left: 850 }, alignment: AlignmentType.LEFT, spacing: { after: 100 } }),
-                        new Paragraph({ children: [new TextRun({ text: \`\${aiData.pages} p.; 15,2 x 22,8 cm\`, size: 28 })], alignment: AlignmentType.LEFT, spacing: { after: 400 } }),
-                        new Paragraph({ children: [new TextRun({ text: \`ISBN \${formattedISBN}\`, bold: true, size: 52 })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
+                        new Paragraph({ children: [new TextRun({ text: `${aiData.title}${aiData.subtitle ? ': ' + aiData.subtitle : ''} / ${aiData.author}. – 1ª edição – ${formattedCidade}, ${formattedEstado}: Editora 360 Express, ${aiData.year}.`, size: 28 })], indent: { left: 850 }, alignment: AlignmentType.LEFT, spacing: { after: 100 } }),
+                        new Paragraph({ children: [new TextRun({ text: `${aiData.pages} p.; 15,2 x 22,8 cm`, size: 28 })], alignment: AlignmentType.LEFT, spacing: { after: 400 } }),
+                        new Paragraph({ children: [new TextRun({ text: `ISBN ${formattedISBN}`, bold: true, size: 52 })], alignment: AlignmentType.CENTER, spacing: { after: 400 } }),
                         new Paragraph({ children: [new TextRun({ text: keywordsText, size: 28 })], alignment: AlignmentType.LEFT, spacing: { after: 200 } }),
                         new Paragraph({ border: { bottom: { color: "000000", space: 1, style: BorderStyle.THICK, size: 12 } }, text: "" }),
-                        new Paragraph({ children: [new TextRun({ text: \`CDD: \${aiData.cdd}\`, bold: true, size: 36 })], alignment: AlignmentType.RIGHT, spacing: { before: 100 } }),
+                        new Paragraph({ children: [new TextRun({ text: `CDD: ${aiData.cdd}`, bold: true, size: 36 })], alignment: AlignmentType.RIGHT, spacing: { before: 100 } }),
                       ]
                     })
                   ]
@@ -198,7 +198,7 @@ ${text.substring(0, 8000)}
       });
 
       const docxBuffer = await Packer.toBuffer(doc);
-      const docxFilename = \`CIP_\${Date.now()}.docx\`;
+      const docxFilename = `CIP_${Date.now()}.docx`;
       const docxPath = path.join(__dirname, '../../generated_books', docxFilename);
       fs.writeFileSync(docxPath, docxBuffer);
 
@@ -232,7 +232,7 @@ ${text.substring(0, 8000)}
       ctx.fillText(aiData.authorFormatted, 40, 180);
       
       ctx.font = '20px Times New Roman';
-      const descText = \`\${aiData.title}\${aiData.subtitle ? ': ' + aiData.subtitle : ''} / \${aiData.author}. – 1ª edição – \${formattedCidade}, \${formattedEstado}: Editora 360 Express, \${aiData.year}.\`;
+      const descText = `${aiData.title}${aiData.subtitle ? ': ' + aiData.subtitle : ''} / ${aiData.author}. – 1ª edição – ${formattedCidade}, ${formattedEstado}: Editora 360 Express, ${aiData.year}.`;
       
       const wrapText = (context: any, text: string, x: number, y: number, rightMargin: number, lineHeight: number, indentFirstLine: boolean = false) => {
         const words = text.split(' ');
@@ -255,11 +255,11 @@ ${text.substring(0, 8000)}
       };
 
       let nextY = wrapText(ctx, descText, 40, 210, 750, 26, true);
-      ctx.fillText(\`\${aiData.pages} p.; 15,2 x 22,8 cm\`, 40, nextY + 30);
+      ctx.fillText(`${aiData.pages} p.; 15,2 x 22,8 cm`, 40, nextY + 30);
       
       ctx.textAlign = 'center';
       ctx.font = 'bold 36px Times New Roman';
-      ctx.fillText(\`ISBN \${formattedISBN}\`, 400, nextY + 110);
+      ctx.fillText(`ISBN ${formattedISBN}`, 400, nextY + 110);
       
       ctx.textAlign = 'left';
       ctx.font = '20px Times New Roman';
@@ -273,10 +273,10 @@ ${text.substring(0, 8000)}
       
       ctx.textAlign = 'right';
       ctx.font = 'bold 26px Times New Roman';
-      ctx.fillText(\`CDD: \${aiData.cdd}\`, 760, 550);
+      ctx.fillText(`CDD: ${aiData.cdd}`, 760, 550);
 
       const pngBuffer = canvas.toBuffer('image/png');
-      const pngFilename = \`CIP_\${Date.now()}.png\`;
+      const pngFilename = `CIP_${Date.now()}.png`;
       const pngPath = path.join(__dirname, '../../generated_books', pngFilename);
       fs.writeFileSync(pngPath, pngBuffer);
 
@@ -284,8 +284,8 @@ ${text.substring(0, 8000)}
         success: true,
         data: aiData,
         files: {
-          docx: \`/downloads/\${docxFilename}\`,
-          png: \`/downloads/\${pngFilename}\`
+          docx: `/downloads/${docxFilename}`,
+          png: `/downloads/${pngFilename}`
         }
       });
 
