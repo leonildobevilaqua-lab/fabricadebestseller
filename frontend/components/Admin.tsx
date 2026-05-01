@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar, Zap, MessageCircle } from 'lucide-react';
+import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar, Zap, MessageCircle, FileText, Search } from 'lucide-react';
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 const DEFAULT_BASE = (import.meta as any).env.VITE_API_URL || '';

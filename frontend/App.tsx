@@ -189,10 +189,6 @@ const App: React.FC = () => {
         <ErrorBoundary>
           <LandingPageEnglish
             onStart={handleStart}
-            onAdmin={() => setShowAdmin(true)}
-            lang='en'
-            setLang={() => { }}
-            initialState={landingProps}
             onLoginClick={() => setCurrentView('login')}
           />
         </ErrorBoundary>
@@ -204,10 +200,6 @@ const App: React.FC = () => {
         <ErrorBoundary>
           <LandingPageSpanish
             onStart={handleStart}
-            onAdmin={() => setShowAdmin(true)}
-            lang='es'
-            setLang={() => { }}
-            initialState={landingProps}
             onLoginClick={() => setCurrentView('login')}
           />
         </ErrorBoundary>

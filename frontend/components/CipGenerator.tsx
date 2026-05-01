@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import axios from 'axios';
 import { Upload, FileText, Loader2, Download, CheckCircle, AlertCircle, ShoppingCart } from 'lucide-react';
 import './CipGenerator.css';
 import { getApiBase } from '../services/api';
@@ -50,12 +49,13 @@ const CipGenerator: React.FC = () => {
       const parsedContact = JSON.parse(contact);
       setUserEmail(parsedContact.email);
 
-      const res = await axios.get(`${getApiBase()}/api/user/me?email=${parsedContact.email}`, {
+      const response = await fetch(`${getApiBase()}/api/user/me?email=${parsedContact.email}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      const data = await response.json();
       
-      if (res.data?.profile?.cipCredits !== undefined) {
-        setCipCredits(Number(res.data.profile.cipCredits));
+      if (data?.cipCredits !== undefined) {
+        setCipCredits(Number(data.cipCredits));
       } else {
         setCipCredits(0);
       }
@@ -104,24 +104,32 @@ const CipGenerator: React.FC = () => {
     formData.append('isbn', isbn);
 
     try {
-      const response = await axios.post(`${getApiBase()}/api/cip/generate`, formData, {
+      const response = await fetch(`${getApiBase()}/api/cip/generate`, {
+        method: 'POST',
+        body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
         }
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Erro ao processar o arquivo.");
+      }
+
+      const data = await response.json();
       
       const filesWithBase = {
-          docx: response.data.files.docx.startsWith('http') ? response.data.files.docx : `${getApiBase()}${response.data.files.docx}`,
-          png: response.data.files.png.startsWith('http') ? response.data.files.png : `${getApiBase()}${response.data.files.png}`
+          docx: data.files.docx.startsWith('http') ? data.files.docx : `${getApiBase()}${data.files.docx}`,
+          png: data.files.png.startsWith('http') ? data.files.png : `${getApiBase()}${data.files.png}`
       };
 
-      setResult({ ...response.data, files: filesWithBase });
+      setResult({ ...data, files: filesWithBase });
       
       // Update credits locally
       setCipCredits(prev => prev !== null ? Math.max(0, prev - 1) : 0);
     } catch (err: any) {
-      setError(err.response?.data?.error || "Ocorreu um erro ao processar o arquivo.");
+      setError(err.message || "Ocorreu um erro ao processar o arquivo.");
     } finally {
       setLoading(false);
     }
