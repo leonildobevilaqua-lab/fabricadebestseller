@@ -214,9 +214,9 @@ ${text.substring(0, 8000)}
       
       ctx.fillStyle = '#000000';
       ctx.textAlign = 'center';
-      ctx.font = 'bold 20px Times New Roman';
+      ctx.font = 'bold 20px "Times New Roman", serif';
       ctx.fillText("Dados Internacionais de Catalogação na Publicação (CIP)", 400, 60);
-      ctx.font = 'bold italic 20px Times New Roman';
+      ctx.font = 'bold italic 20px "Times New Roman", serif';
       ctx.fillText("(Ficha Catalográfica Elaborada pela Editora 360 Express)", 400, 90);
       
       ctx.beginPath();
@@ -226,12 +226,12 @@ ${text.substring(0, 8000)}
       ctx.stroke();
       
       ctx.textAlign = 'left';
-      ctx.font = '20px Times New Roman';
+      ctx.font = '20px "Times New Roman", serif';
       ctx.fillText(aiData.cutter, 90, 150);
-      ctx.font = 'bold 20px Times New Roman';
+      ctx.font = 'bold 20px "Times New Roman", serif';
       ctx.fillText(aiData.authorFormatted, 40, 180);
       
-      ctx.font = '20px Times New Roman';
+      ctx.font = '20px "Times New Roman", serif';
       const descText = `${aiData.title}${aiData.subtitle ? ': ' + aiData.subtitle : ''} / ${aiData.author}. – 1ª edição – ${formattedCidade}, ${formattedEstado}: Editora 360 Express, ${aiData.year}.`;
       
       const wrapText = (context: any, text: string, x: number, y: number, rightMargin: number, lineHeight: number, indentFirstLine: boolean = false) => {
@@ -258,11 +258,11 @@ ${text.substring(0, 8000)}
       ctx.fillText(`${aiData.pages} p.; 15,2 x 22,8 cm`, 40, nextY + 30);
       
       ctx.textAlign = 'center';
-      ctx.font = 'bold 36px Times New Roman';
+      ctx.font = 'bold 36px "Times New Roman", serif';
       ctx.fillText(`ISBN ${formattedISBN}`, 400, nextY + 110);
       
       ctx.textAlign = 'left';
-      ctx.font = '20px Times New Roman';
+      ctx.font = '20px "Times New Roman", serif';
       nextY = wrapText(ctx, keywordsText, 40, nextY + 170, 750, 26, false);
 
       ctx.beginPath();
@@ -272,7 +272,7 @@ ${text.substring(0, 8000)}
       ctx.stroke();
       
       ctx.textAlign = 'right';
-      ctx.font = 'bold 26px Times New Roman';
+      ctx.font = 'bold 26px "Times New Roman", serif';
       ctx.fillText(`CDD: ${aiData.cdd}`, 760, 550);
 
       const pngBuffer = canvas.toBuffer('image/png');
