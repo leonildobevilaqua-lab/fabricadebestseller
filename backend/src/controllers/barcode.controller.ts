@@ -35,11 +35,14 @@ export const BarcodeController = {
       }
 
       // Clean ISBN: remove dashes and spaces
-      const cleanIsbn = isbn.replace(/[-\s]/g, '');
+      let cleanIsbn = isbn.replace(/[-\s]/g, '');
+      
+      // If 13 digits, take first 12 to let bwip-js calculate the correct check digit
+      if (cleanIsbn.length === 13) {
+        cleanIsbn = cleanIsbn.substring(0, 12);
+      }
 
       // BWIP-JS Options to match requested layout
-      // Width: 50mm, Height: 25mm
-      // Scale 2-3 usually works best for professional printing
       const options: any = {
         bcid: 'ean13',      // Use ean13 for ISBN-13 barcodes
         text: cleanIsbn,    // Text to encode
