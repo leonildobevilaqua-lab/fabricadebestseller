@@ -41,7 +41,7 @@ export const BarcodeController = {
       // Width: 50mm, Height: 25mm
       // Scale 2-3 usually works best for professional printing
       const options: any = {
-        bcid: 'isbn',       // Barcode type
+        bcid: 'ean13',      // Use ean13 for ISBN-13 barcodes
         text: cleanIsbn,    // Text to encode
         scale: 3,           // 3x scaling
         height: 15,         // Bar height, in millimeters (bwip-js height is in mm/units usually depending on config)
