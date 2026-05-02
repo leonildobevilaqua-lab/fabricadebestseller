@@ -234,7 +234,7 @@ const CipGenerator: React.FC = () => {
                             onClick={handleBuyCredits} 
                         >
                             <ShoppingCart className="icon" />
-                            Comprar Crédito Agora
+                            Comprar Crédito R$ 27,90
                         </button>
 
                         <div className="text-left space-y-3 pt-2">

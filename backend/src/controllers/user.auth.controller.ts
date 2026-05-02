@@ -300,7 +300,7 @@ export const UserAuthController = {
             if (isMaster) {
                 console.log("💎 FORCE RESTORING 14 CREDITS FOR MASTER LEONILDO");
                 credits = 14; 
-                cipCredits = 100;
+                // cipCredits = 100; // Removed per user request to test purchase UI
                 // We also ensure plan is BLACK
                 if (!user.plan || user.plan.name !== 'BLACK') {
                     user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'monthly' };
