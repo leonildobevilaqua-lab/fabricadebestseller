@@ -53,15 +53,61 @@ export const BarcodeController = {
         textsize: 13,       // Font size for the bottom text
       };
 
-      // Generate the barcode
-      const pngBuffer = await bwipjs.toBuffer(options);
+      // Generate the barcode with bwip-js
+      const barcodeBuffer = await bwipjs.toBuffer(options);
+
+      // Helper to calculate EAN-13 check digit
+      const calculateEan13CheckDigit = (digits12: string) => {
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+          sum += parseInt(digits12[i]) * (i % 2 === 0 ? 1 : 3);
+        }
+        const checkDigit = (10 - (sum % 10)) % 10;
+        return checkDigit.toString();
+      };
+
+      const fullIsbn13 = cleanIsbn + calculateEan13CheckDigit(cleanIsbn);
       
+      // Format ISBN for the top text (e.g., ISBN 978-65-00-00000-0)
+      // If user provided dashes, try to preserve some of them or just use a standard format
+      const formattedIsbnTop = `ISBN ${fullIsbn13.slice(0,3)}-${fullIsbn13.slice(3,5)}-${fullIsbn13.slice(5,10)}-${fullIsbn13.slice(10,12)}-${fullIsbn13.slice(12)}`;
+
+      // Composite with Canvas
+      let finalBuffer = barcodeBuffer;
+      try {
+        const { createCanvas, loadImage } = require('canvas');
+        const barcodeImg = await loadImage(barcodeBuffer);
+        
+        // Create a slightly larger canvas to accommodate the top text
+        // Adding 40px padding at the top for the ISBN text
+        const canvas = createCanvas(barcodeImg.width, barcodeImg.height + 60);
+        const ctx = canvas.getContext('2d');
+        
+        // Fill white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw the ISBN text at the top
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 30px "Helvetica", "Arial", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(formattedIsbnTop, canvas.width / 2, 40);
+        
+        // Draw the barcode image below the text
+        ctx.drawImage(barcodeImg, 0, 50);
+        
+        finalBuffer = canvas.toBuffer('image/png');
+      } catch (e) {
+        console.error("Canvas composition failed for barcode, using raw barcode.", e);
+        // Fallback to raw barcode if canvas fails
+      }
+
       const filename = `BARCODE_${Date.now()}.png`;
       const generatedDir = path.join(__dirname, '../../generated_books');
       if (!fs.existsSync(generatedDir)) fs.mkdirSync(generatedDir, { recursive: true });
       
       const filePath = path.join(generatedDir, filename);
-      fs.writeFileSync(filePath, pngBuffer);
+      fs.writeFileSync(filePath, finalBuffer);
 
       // Decrement credit if not master
       if (!isMaster) {
