@@ -125,7 +125,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const menuItems = [
         { id: 'livro', label: 'Gerador de Livros', icon: BookOpen, price: 'R$ 39,90' },
         { id: 'cbl-tutorial', label: 'Registro CBL (Tutorial)', icon: FileText, price: 'R$ 19,90' },
-        { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 37,90' },
+        { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 27,90' },
         { id: 'barras', label: 'Código de Barras', icon: Barcode, isPreparation: true },
         { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'Curso Ticto' },
         { id: 'capa-ebook', label: 'Capa Ebook (Digital)', icon: Smartphone, isPreparation: true },

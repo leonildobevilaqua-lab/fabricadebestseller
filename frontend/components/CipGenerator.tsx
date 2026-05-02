@@ -218,15 +218,43 @@ const CipGenerator: React.FC = () => {
                 )}
                 </button>
             ) : (
-                <div className="flex flex-col gap-3">
-                    <button 
-                    className="generate-btn" 
-                    style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
-                    onClick={handleBuyCredits} 
-                    >
-                        <ShoppingCart className="icon" />
-                        Crédito R$ 37,90 - Comprar Agora!
-                    </button>
+                <div className="flex flex-col gap-5">
+                    <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6 text-center space-y-4">
+                        <div className="space-y-1">
+                            <p className="text-xs text-slate-400 uppercase font-black tracking-[0.2em]">Crédito para Gerar</p>
+                            <div className="flex items-center justify-center gap-3">
+                                <span className="text-slate-500 line-through text-lg">R$ 68,60</span>
+                                <span className="text-3xl font-black text-white italic">R$ 27,90</span>
+                            </div>
+                        </div>
+
+                        <button 
+                            className="generate-btn w-full !py-5" 
+                            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+                            onClick={handleBuyCredits} 
+                        >
+                            <ShoppingCart className="icon" />
+                            Comprar Crédito Agora
+                        </button>
+
+                        <div className="text-left space-y-3 pt-2">
+                            <p className="text-[11px] text-slate-400 leading-relaxed">
+                                Lembrando que a Ficha Catalográfica é gerada de forma profissional, você receberá o documento em <strong>word</strong> e em <strong>imagem no formato PNG</strong>.
+                            </p>
+                            
+                            <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl">
+                                <p className="text-[10px] font-black text-amber-500 uppercase mb-1">⚠️ ATENÇÃO...</p>
+                                <p className="text-[11px] text-amber-200/80 leading-relaxed font-medium">
+                                    Após efetuar seu pagamento retorne para está página e gere sua Ficha Catalográfica Profissional.
+                                </p>
+                            </div>
+
+                            <p className="text-[10px] text-slate-500 font-bold uppercase text-center pt-2">
+                                * O GERADOR FUNCIONA UTILIZANDO APENAS OS LIVROS GERADOS PELA FÁBRICA DE BEST SELLER.
+                            </p>
+                        </div>
+                    </div>
+
                     {userEmail && (
                         <button 
                         className="reset-btn flex items-center justify-center gap-2"
@@ -234,11 +262,6 @@ const CipGenerator: React.FC = () => {
                         >
                         <CheckCircle size={18} /> Já comprei! Atualizar créditos
                         </button>
-                    )}
-                    {!userEmail && (
-                        <p className="text-center text-sm text-slate-400 mt-2">
-                           Você precisa fazer <a href="/login" className="text-indigo-400 underline">login</a> na Fábrica de Best Seller.
-                        </p>
                     )}
                 </div>
             )}
