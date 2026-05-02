@@ -214,7 +214,7 @@ const CipGenerator: React.FC = () => {
                     Analisando e Gerando Ficha...
                     </>
                 ) : (
-                    `Gerar Ficha Catalográfica (${cipCredits} crédito${cipCredits > 1 ? 's' : ''} disponível)`
+                    'Gerar Ficha Catalográfica Agora'
                 )}
                 </button>
             ) : (
@@ -225,7 +225,7 @@ const CipGenerator: React.FC = () => {
                     onClick={handleBuyCredits} 
                     >
                         <ShoppingCart className="icon" />
-                        {userEmail ? 'Comprar Créditos (R$ 59,90)' : 'Comprar Créditos para Gerar'}
+                        Crédito R$ 27,90 - Comprar Agora!
                     </button>
                     {userEmail && (
                         <button 
