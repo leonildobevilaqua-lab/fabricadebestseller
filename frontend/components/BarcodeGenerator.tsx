@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Barcode, Download, ShoppingCart, Info, AlertCircle, FileText, CheckCircle } from 'lucide-react';
+import { getApiBase } from '../services/api';
 
 interface BarcodeGeneratorProps {
     credits: number;
@@ -28,11 +29,11 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ credits, userEmail,
         setGeneratedUrl(null);
 
         try {
-            const res = await fetch('/api/barcode/generate', {
+            const res = await fetch(`${getApiBase()}/api/barcode/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('bsf_token')}`
                 },
                 body: JSON.stringify({ isbn })
             });
@@ -40,7 +41,8 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ credits, userEmail,
             const data = await res.json();
 
             if (res.ok) {
-                setGeneratedUrl(data.url);
+                const finalUrl = data.url.startsWith('http') ? data.url : `${getApiBase()}${data.url}`;
+                setGeneratedUrl(finalUrl);
                 onRefresh(); // Update credits
             } else {
                 setError(data.error || 'Erro ao gerar código de barras.');
