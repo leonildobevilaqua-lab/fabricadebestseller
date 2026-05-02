@@ -156,7 +156,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     <ExternalProductView 
                         title="Tutorial Registro Oficial CBL"
                         desc="Aprenda o passo a passo para registrar seu livro na Câmara Brasileira do Livro e garantir seus direitos autorais."
-                        videoId="uBvagSevkaI" // Placeholder video
+                        videoId="NeM3tTW7MgU"
                         checkoutUrl="https://checkout.ticto.app/O77037442"
                         price="R$ 19,90"
                     />
