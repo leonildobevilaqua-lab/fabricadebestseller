@@ -3,7 +3,7 @@ import mammoth from 'mammoth';
 import AdmZip from 'adm-zip';
 import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
 import { Document, Paragraph, TextRun, Packer, AlignmentType, BorderStyle, Table, TableRow, TableCell, WidthType } from 'docx';
-import { createCanvas } from 'canvas';
+// import { createCanvas } from 'canvas'; // Removed top-level import to prevent startup crash
 import fs from 'fs';
 import path from 'path';
 import { SUBJECT_CODES } from '../cip.constants';
@@ -203,7 +203,24 @@ ${text.substring(0, 8000)}
       fs.writeFileSync(docxPath, docxBuffer);
 
       // 4. Generate Image (.png)
-      const canvas = createCanvas(800, 600);
+      let canvas;
+      try {
+        const { createCanvas } = require('canvas');
+        canvas = createCanvas(800, 600);
+      } catch (e) {
+        console.error("Canvas loading failed. CIP Image will not be generated.", e);
+        // If canvas fails, we still return the success for DOCX
+        return res.json({
+          success: true,
+          data: aiData,
+          files: {
+            docx: `/downloads/${docxFilename}`,
+            png: null // Signal no image available
+          },
+          warning: "A imagem da ficha não pôde ser gerada devido a dependências do servidor, mas o arquivo Word está disponível."
+        });
+      }
+      
       const ctx = canvas.getContext('2d');
       
       ctx.fillStyle = '#ffffff';
