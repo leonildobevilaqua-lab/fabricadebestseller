@@ -25,6 +25,7 @@
         "archiver": "^7.0.1",
         "axios": "^1.13.2",
         "bcrypt": "^6.0.0",
+        "bwip-js": "^4.10.1",
         "canvas": "^3.2.3",
         "cors": "^2.8.5",
         "docx": "^9.5.1",
@@ -41,5 +42,8 @@
         "typescript": "^5.3.3",
         "uuid": "^9.0.1",
         "youtube-search-api": "^2.0.1"
+    },
+    "devDependencies": {
+        "@types/bwip-js": "^3.2.3"
     }
 }

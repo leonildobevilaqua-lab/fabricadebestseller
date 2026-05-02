@@ -11,6 +11,7 @@ import { SidebarItem } from './SidebarItem';
 import { BookGeneratorView } from './BookGeneratorView';
 import { PlaceholderView, ExternalProductView } from './DashboardViews';
 import CipGenerator from './CipGenerator';
+import BarcodeGenerator from './BarcodeGenerator';
 
 interface DashboardProps {
     user: any;
@@ -126,7 +127,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         { id: 'livro', label: 'Gerador de Livros', icon: BookOpen, price: 'R$ 39,90' },
         { id: 'cbl-tutorial', label: 'Registro CBL (Tutorial)', icon: FileText, price: 'R$ 19,90' },
         { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 27,90' },
-        { id: 'barras', label: 'Código de Barras', icon: Barcode, isPreparation: true },
+        { id: 'barras', label: 'Código de Barras', icon: Barcode, price: 'R$ 27,90' },
         { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
         { id: 'capa-ebook', label: 'Capa Ebook (Digital)', icon: Smartphone, isPreparation: true },
         { id: 'amazon', label: 'Publicação Amazon', icon: Cloud, isPreparation: true },
@@ -179,7 +180,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         price="R$ 149,90"
                     />
                 );
-            case 'barras': return <PlaceholderView title="Gerador de Código de Barras" />;
+            case 'barras':
+                return (
+                    <BarcodeGenerator 
+                        credits={stats?.barcodeCredits || 0}
+                        userEmail={user.email}
+                        onRefresh={fetchMe}
+                    />
+                );
             case 'capa-ebook': return <PlaceholderView title="Capa Profissional (Ebook)" />;
             case 'amazon': return <PlaceholderView title="Publicação na Amazon" />;
             case 'uiclap': return <PlaceholderView title="Publicação na UICLAP" />;

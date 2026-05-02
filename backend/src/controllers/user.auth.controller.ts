@@ -296,11 +296,15 @@ export const UserAuthController = {
             let cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
             if (!cipCredits && user.cipCredits) cipCredits = user.cipCredits;
 
+            let barcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+            if (!barcodeCredits && user.barcodeCredits) barcodeCredits = user.barcodeCredits;
+
             // --- 5. MASTER RESTORATION ---
             if (isMaster) {
                 console.log("💎 FORCE RESTORING 14 CREDITS FOR MASTER LEONILDO");
                 credits = 14; 
                 // cipCredits = 100; // Removed per user request to test purchase UI
+                // barcodeCredits = 100; // Removed per user request to test purchase UI
                 // We also ensure plan is BLACK
                 if (!user.plan || user.plan.name !== 'BLACK') {
                     user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'monthly' };
@@ -312,6 +316,7 @@ export const UserAuthController = {
                 plan: user.plan || { name: 'FREE', status: 'INACTIVE' },
                 credits: credits, 
                 cipCredits: cipCredits,
+                barcodeCredits: barcodeCredits,
                 stats: {
                     purchaseCycleCount: cycleIndex,
                     totalBooksGenerated: usageCount,

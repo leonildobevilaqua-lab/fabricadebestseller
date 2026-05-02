@@ -662,7 +662,8 @@ export const getCredits = async (req: Request, res: Response) => {
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
         const credits = Number(await getVal(`/credits/${safeEmail}`) || 0);
         const cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
-        res.json({ email, credits, cipCredits });
+        const barcodeCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`) || 0);
+        res.json({ email, credits, cipCredits, barcodeCredits });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -708,6 +709,22 @@ export const manageCredits = async (req: Request, res: Response) => {
             }
             console.log(`[ADMIN] Manual CIP Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
             return res.json({ success: true, email, previousTotal: currentCredits, newTotal, type: 'cip' });
+        }
+
+        if (type === 'barcode') {
+            const currentCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`) || 0);
+            const base = Math.max(0, currentCredits);
+            const newTotal = Math.max(0, base + Number(amount));
+            await setVal(`/barcodeCredits/${safeEmail}`, newTotal);
+
+            const user = await getVal(`/users/${safeEmail}`);
+            if (user) {
+                user.barcodeCredits = newTotal;
+                await setVal(`/users/${safeEmail}`, user);
+            }
+
+            console.log(`[ADMIN] Manual Barcode Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
+            return res.json({ success: true, email, previousTotal: currentCredits, newTotal, type: 'barcode' });
         }
 
         // 1. Update /credits/ (Primary Source of truth for Generator)

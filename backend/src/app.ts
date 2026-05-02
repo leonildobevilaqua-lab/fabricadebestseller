@@ -21,6 +21,7 @@ import { SubscriptionController } from './controllers/subscription.controller';
 import jwt from 'jsonwebtoken'; // Added for Golden Route
 import userRoutes from './routes/user.routes';
 import { createBookGenerationCharge } from './controllers/payment.controller'; // Emergency Import
+import barcodeRoutes from './routes/barcode.routes';
 
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
 
@@ -94,6 +95,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/purchase', purchaseRoutes);
 app.use('/api/subscription', subscriptionRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/barcode', barcodeRoutes);
 app.use('/downloads', express.static(path.join(__dirname, '../generated_books')));
 
 app.get('/health', (req, res) => {
