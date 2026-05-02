@@ -24,8 +24,15 @@ export const PlaceholderView: React.FC<PlaceholderViewProps> = ({ title, descrip
     );
 };
 
-export const ExternalProductView: React.FC<{ title: string; desc: string; videoId: string; checkoutUrl: string; price: string }> = ({ 
-    title, desc, videoId, checkoutUrl, price 
+export const ExternalProductView: React.FC<{ 
+    title: string; 
+    desc: string; 
+    videoId: string; 
+    checkoutUrl: string; 
+    price: string;
+    originalPrice?: string;
+}> = ({ 
+    title, desc, videoId, checkoutUrl, price, originalPrice 
 }) => {
     return (
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in">
@@ -49,7 +56,12 @@ export const ExternalProductView: React.FC<{ title: string; desc: string; videoI
                 <div className="flex flex-col items-center gap-6">
                     <div className="text-center">
                         <p className="text-sm text-slate-400 uppercase font-black tracking-widest mb-1">Acesso Imediato por apenas</p>
-                        <div className="text-5xl font-black text-slate-900">{price}</div>
+                        <div className="flex items-center justify-center gap-4">
+                            {originalPrice && (
+                                <span className="text-2xl text-slate-300 line-through font-bold">{originalPrice}</span>
+                            )}
+                            <div className="text-5xl font-black text-slate-900 italic">{price}</div>
+                        </div>
                     </div>
 
                     <a

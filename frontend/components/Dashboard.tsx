@@ -127,7 +127,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         { id: 'cbl-tutorial', label: 'Registro CBL (Tutorial)', icon: FileText, price: 'R$ 19,90' },
         { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 27,90' },
         { id: 'barras', label: 'Código de Barras', icon: Barcode, isPreparation: true },
-        { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'Curso Ticto' },
+        { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
         { id: 'capa-ebook', label: 'Capa Ebook (Digital)', icon: Smartphone, isPreparation: true },
         { id: 'amazon', label: 'Publicação Amazon', icon: Cloud, isPreparation: true },
         { id: 'uiclap', label: 'Publicação UICLAP', icon: Upload, isPreparation: true },
@@ -173,9 +173,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     <ExternalProductView 
                         title="Criação de Capa Profissional (Físico)"
                         desc="Tenha uma capa de alta conversão para o seu livro impresso. Design premium que vende à primeira vista."
-                        videoId="uBvagSevkaI" // Placeholder video
+                        videoId="K7AAxtH69WM"
                         checkoutUrl="https://checkout.ticto.app/O6FA2355C"
-                        price="Curso Completo"
+                        originalPrice="R$ 297,90"
+                        price="R$ 149,90"
                     />
                 );
             case 'barras': return <PlaceholderView title="Gerador de Código de Barras" />;
