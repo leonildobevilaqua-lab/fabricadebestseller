@@ -205,6 +205,7 @@ const CipGenerator: React.FC = () => {
             {cipCredits !== null && cipCredits > 0 ? (
                 <button 
                 className="generate-btn" 
+                style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}
                 onClick={handleUpload} 
                 disabled={!file || !cidade || !estado || !isbn || loading}
                 >
