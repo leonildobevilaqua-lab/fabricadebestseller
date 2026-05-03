@@ -37,28 +37,7 @@ export const BarcodeController = {
       // Clean ISBN: remove dashes and spaces
       let cleanIsbn = isbn.replace(/[-\s]/g, '');
       
-      // If 13 digits, take first 12 to let bwip-js calculate the correct check digit
-      if (cleanIsbn.length === 13) {
-        cleanIsbn = cleanIsbn.substring(0, 12);
-      }
-
-      // BWIP-JS Options to match requested layout
-      // Using 'ean13' with standard text rendering
-      const options: any = {
-        bcid: 'ean13',
-        text: cleanIsbn,
-        scale: 4,           // High scale for sharpness
-        height: 12,         // Bar height (approx 12mm relative)
-        includetext: true,  // Bottom numerals in standard EAN-13 layout
-        textxalign: 'center',
-        textsize: 10,       // Size for bottom text
-        textyoffset: 2,     // Offset to prevent touching bars
-      };
-
-      // Generate the barcode with bwip-js
-      const barcodeBuffer = await bwipjs.toBuffer(options);
-
-      // Helper to calculate EAN-13 check digit
+      // Calculate EAN-13 check digit if missing or to ensure it's correct
       const calculateEan13CheckDigit = (digits12: string) => {
         let sum = 0;
         for (let i = 0; i < 12; i++) {
@@ -68,62 +47,30 @@ export const BarcodeController = {
         return checkDigit.toString();
       };
 
-      const checkDigit = calculateEan13CheckDigit(cleanIsbn);
-      const fullIsbn13 = cleanIsbn + checkDigit;
+      const digits12 = cleanIsbn.substring(0, 12);
+      const checkDigit = calculateEan13CheckDigit(digits12);
+      const fullIsbn13 = digits12 + checkDigit;
       
-      // Format ISBN for the top text (3-2-2-5-1 format as requested)
-      // Example: 978-65-02-07968-3
-      const formattedIsbnTop = `ISBN: ${fullIsbn13.slice(0,3)}-${fullIsbn13.slice(3,5)}-${fullIsbn13.slice(5,7)}-${fullIsbn13.slice(7,12)}-${fullIsbn13.slice(12)}`;
+      // Format ISBN with EXACTLY 17 characters (13 digits + 4 dashes)
+      // This is required by bwip-js 'isbn' symbology to avoid 'Bad Length' error
+      const formattedIsbn = `${fullIsbn13.slice(0,3)}-${fullIsbn13.slice(3,5)}-${fullIsbn13.slice(5,7)}-${fullIsbn13.slice(7,12)}-${fullIsbn13.slice(12)}`;
 
-      // Composite with Canvas to target exactly 50mm x 25mm (590x295px @ 300DPI)
-      let finalBuffer = barcodeBuffer;
-      try {
-        const { createCanvas, loadImage } = require('canvas');
-        const barcodeImg = await loadImage(barcodeBuffer);
-        
-        // Target dimensions in pixels for 50mm x 25mm at 300DPI
-        const TARGET_WIDTH = 590;
-        const TARGET_HEIGHT = 295;
-        
-        const canvas = createCanvas(TARGET_WIDTH, TARGET_HEIGHT);
-        const ctx = canvas.getContext('2d');
-        
-        // Fill white background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // 1. Draw the ISBN text at the top
-        ctx.fillStyle = '#000000';
-        ctx.font = '24px "Arial", "Helvetica", sans-serif'; // Professional clean font
-        ctx.textAlign = 'center';
-        ctx.fillText(formattedIsbnTop, canvas.width / 2, 45); // Centered at top
-        
-        // 2. Calculate scaling to fit the barcode image in the remaining space
-        // We want to leave some padding around the barcode
-        const PADDING_SIDE = 40;
-        const TOP_OFFSET = 60; // Space for ISBN text
-        const BOTTOM_PADDING = 20;
-        
-        const availableWidth = TARGET_WIDTH - (PADDING_SIDE * 2);
-        const availableHeight = TARGET_HEIGHT - TOP_OFFSET - BOTTOM_PADDING;
-        
-        // Fit keeping aspect ratio
-        const scaleX = availableWidth / barcodeImg.width;
-        const scaleY = availableHeight / barcodeImg.height;
-        const scale = Math.min(scaleX, scaleY);
-        
-        const drawWidth = barcodeImg.width * scale;
-        const drawHeight = barcodeImg.height * scale;
-        const drawX = (TARGET_WIDTH - drawWidth) / 2;
-        const drawY = TOP_OFFSET + (availableHeight - drawHeight) / 2;
-        
-        // Draw the barcode image
-        ctx.drawImage(barcodeImg, drawX, drawY, drawWidth, drawHeight);
-        
-        finalBuffer = canvas.toBuffer('image/png');
-      } catch (e) {
-        console.error("Canvas composition failed for barcode, using raw barcode.", e);
-      }
+      // BWIP-JS Options using the native 'isbn' symbology
+      // This symbology is professional and handles top text, bars, and bottom text perfectly.
+      const options: any = {
+        bcid: 'isbn',         // Professional ISBN symbology
+        text: formattedIsbn,  // Must be 17 characters for ISBN-13
+        scale: 3,             // High resolution
+        height: 25,           // Standard height
+        includetext: true,    // Includes both top and bottom text
+        backgroundcolor: 'ffffff', // FORCE WHITE BACKGROUND
+        paddingwidth: 10,     // Add some margin
+        paddingheight: 10,
+      };
+
+      // Generate the barcode with bwip-js
+      // This is pure JS and doesn't depend on native canvas/cairo
+      const finalBuffer = await bwipjs.toBuffer(options);
 
       const filename = `BARCODE_${Date.now()}.png`;
       const generatedDir = path.join(__dirname, '../../generated_books');
