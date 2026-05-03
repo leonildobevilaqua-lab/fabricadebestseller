@@ -16,12 +16,11 @@ export const BarcodeController = {
 
       const safeEmail = String(email).trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
 
-      // Check Barcode Credits - Unify source of truth
+      // Check Barcode Credits
       await reloadDB();
       const userObj = await getVal(`/users/${safeEmail}`);
       let barcodeCredits = Number(userObj?.barcodeCredits || 0);
 
-      // REMOVED isMaster exemption - Everyone MUST have credits to test or generate
       if (barcodeCredits <= 0) {
         return res.status(403).json({ error: "Sem créditos de Código de Barras. Por favor, adquira créditos na Área VIP." });
       }
@@ -34,7 +33,12 @@ export const BarcodeController = {
       // Clean ISBN: remove dashes and spaces
       let cleanIsbn = isbn.replace(/[-\s]/g, '');
       
-      // Calculate EAN-13 check digit
+      // Ensure we have 13 digits for EAN-13/ISBN-13
+      if (cleanIsbn.length < 12) {
+        return res.status(400).json({ error: 'O código deve ter pelo menos 12 ou 13 dígitos.' });
+      }
+
+      // Calculate EAN-13 check digit if we have 12 or to verify 13
       const calculateEan13CheckDigit = (digits12: string) => {
         let sum = 0;
         for (let i = 0; i < 12; i++) {
@@ -46,19 +50,26 @@ export const BarcodeController = {
 
       const digits12 = cleanIsbn.substring(0, 12);
       const checkDigit = calculateEan13CheckDigit(digits12);
-      const fullIsbn13 = digits12 + checkDigit;
+      const fullCode = digits12 + checkDigit;
       
-      // Format ISBN for top text
-      const formattedIsbn = `${fullIsbn13.slice(0,3)}-${fullIsbn13.slice(3,5)}-${fullIsbn13.slice(5,7)}-${fullIsbn13.slice(7,12)}-${fullIsbn13.slice(12)}`;
+      // Format for top text (Professional ISBN format)
+      // Even if not a real ISBN prefix, we keep the requested format for the user
+      const formattedTop = `ISBN ${fullCode.slice(0,3)}-${fullCode.slice(3,5)}-${fullCode.slice(5,7)}-${fullCode.slice(7,12)}-${fullCode.slice(12)}`;
 
       // BWIP-JS Options
+      // Using 'ean13' instead of 'isbn' to be more flexible with prefixes (allowing tests like 272...)
+      // but still looking like a professional ISBN
       const options: any = {
-        bcid: 'isbn',
-        text: formattedIsbn,
-        scale: 4,             
+        bcid: 'ean13',
+        text: fullCode,
+        scale: 5,             
         height: 25,
         includetext: true,
         backgroundcolor: 'ffffff',
+        alttext: formattedTop, // This puts the formatted ISBN at the top!
+        textxalign: 'center',
+        textsize: 10,
+        textyoffset: 4,
       };
 
       // Generate the barcode buffer
@@ -71,8 +82,6 @@ export const BarcodeController = {
         const barcodeImage = await Jimp.read(barcodeBuffer);
         
         // TARGET: 591 x 295
-        // Resize the generated barcode to fill the exact dimensions requested
-        // Using RESIZE_BEZIER for smoother text or NEAREST_NEIGHBOR for crisper bars
         barcodeImage.resize(591, 295); 
         
         finalBuffer = await barcodeImage.getBufferAsync(Jimp.MIME_PNG);
@@ -87,7 +96,7 @@ export const BarcodeController = {
       const filePath = path.join(generatedDir, filename);
       fs.writeFileSync(filePath, finalBuffer);
 
-      // Decrement credit - Unify source of truth
+      // Decrement credit
       barcodeCredits = Math.max(0, barcodeCredits - 1);
       if (userObj) {
           await setVal(`/users/${safeEmail}/barcodeCredits`, barcodeCredits);
