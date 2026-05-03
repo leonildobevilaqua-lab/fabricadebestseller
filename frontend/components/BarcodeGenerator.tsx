@@ -166,9 +166,9 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ credits, userEmail,
                                         <div className="flex flex-col items-center">
                                             <div className="flex items-center gap-2">
                                                 <ShoppingCart size={24} />
-                                                <span>COMPRAR CRÉDITO R$ 27,90</span>
+                                                <span>COMPRAR CRÉDITO R$ 19,90</span>
                                             </div>
-                                            <span className="text-[10px] opacity-70">De <del>R$ 68,60</del> por apenas R$ 27,90</span>
+                                            <span className="text-[10px] opacity-70">Na CBL você pagaria R$ 41,20 | <strong>Condição Especial: R$ 19,90</strong></span>
                                         </div>
                                     </a>
                                 </div>
