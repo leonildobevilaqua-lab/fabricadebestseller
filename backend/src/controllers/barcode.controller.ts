@@ -71,17 +71,11 @@ export const BarcodeController = {
         const barcodeImage = await Jimp.read(barcodeBuffer);
         
         // TARGET: 591 x 295
-        const background = new Jimp(591, 295, 0xFFFFFFFF); // Solid White
+        // Resize the generated barcode to fill the exact dimensions requested
+        // Using RESIZE_BEZIER for smoother text or NEAREST_NEIGHBOR for crisper bars
+        barcodeImage.resize(591, 295); 
         
-        // Center the barcode inside the target frame with some padding
-        barcodeImage.scaleToFit(531, 265); 
-        
-        const x = Math.round((591 - barcodeImage.bitmap.width) / 2);
-        const y = Math.round((295 - barcodeImage.bitmap.height) / 2);
-        
-        background.composite(barcodeImage, x, y);
-        
-        finalBuffer = await background.getBufferAsync(Jimp.MIME_PNG);
+        finalBuffer = await barcodeImage.getBufferAsync(Jimp.MIME_PNG);
       } catch (e) {
         console.error("Jimp processing failed:", e);
       }
