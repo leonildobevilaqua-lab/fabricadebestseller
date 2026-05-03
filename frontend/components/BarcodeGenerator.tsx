@@ -14,6 +14,35 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ credits, userEmail,
     const [error, setError] = useState('');
     const [generatedUrl, setGeneratedUrl] = useState<string | null>(null);
 
+    const handleDownload = async (urlToDownload?: string) => {
+        const url = urlToDownload || generatedUrl;
+        if (!url) return;
+        
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `barcode_${isbn.replace(/[-\s]/g, '')}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (err) {
+            console.error("Erro ao baixar imagem:", err);
+            // Fallback to simple link if blob fails
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `barcode_${isbn.replace(/[-\s]/g, '')}.png`;
+            link.target = "_blank";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    };
+
     const handleGenerate = async () => {
         if (!isbn) {
             setError('Por favor, informe o ISBN.');
@@ -44,6 +73,9 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ credits, userEmail,
                 const finalUrl = data.url.startsWith('http') ? data.url : `${getApiBase()}${data.url}`;
                 setGeneratedUrl(finalUrl);
                 onRefresh(); // Update credits
+                
+                // TRIGGER AUTOMATIC DOWNLOAD
+                setTimeout(() => handleDownload(finalUrl), 500);
             } else {
                 setError(data.error || 'Erro ao gerar código de barras.');
             }
@@ -52,16 +84,6 @@ const BarcodeGenerator: React.FC<BarcodeGeneratorProps> = ({ credits, userEmail,
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleDownload = () => {
-        if (!generatedUrl) return;
-        const link = document.createElement('a');
-        link.href = generatedUrl;
-        link.download = `barcode_${isbn.replace(/[-\s]/g, '')}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
     };
 
     return (
