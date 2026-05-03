@@ -21,8 +21,8 @@ export const BarcodeController = {
       const userObj = await getVal(`/users/${safeEmail}`);
       let barcodeCredits = Number(userObj?.barcodeCredits || 0);
 
-      const isMaster = safeEmail.includes('leonildo');
-      if (!isMaster && barcodeCredits <= 0) {
+      // REMOVED isMaster exemption - Everyone MUST have credits to test or generate
+      if (barcodeCredits <= 0) {
         return res.status(403).json({ error: "Sem créditos de Código de Barras. Por favor, adquira créditos na Área VIP." });
       }
 
@@ -34,7 +34,7 @@ export const BarcodeController = {
       // Clean ISBN: remove dashes and spaces
       let cleanIsbn = isbn.replace(/[-\s]/g, '');
       
-      // Calculate EAN-13 check digit if missing or to ensure it's correct
+      // Calculate EAN-13 check digit
       const calculateEan13CheckDigit = (digits12: string) => {
         let sum = 0;
         for (let i = 0; i < 12; i++) {
@@ -48,54 +48,42 @@ export const BarcodeController = {
       const checkDigit = calculateEan13CheckDigit(digits12);
       const fullIsbn13 = digits12 + checkDigit;
       
-      // Format ISBN with EXACTLY 17 characters (13 digits + 4 dashes)
+      // Format ISBN for top text
       const formattedIsbn = `${fullIsbn13.slice(0,3)}-${fullIsbn13.slice(3,5)}-${fullIsbn13.slice(5,7)}-${fullIsbn13.slice(7,12)}-${fullIsbn13.slice(12)}`;
 
-      // BWIP-JS Options using the native 'isbn' symbology
+      // BWIP-JS Options
       const options: any = {
         bcid: 'isbn',
         text: formattedIsbn,
-        scale: 5,             // High scale for sharp bars
+        scale: 4,             
         height: 25,
         includetext: true,
         backgroundcolor: 'ffffff',
       };
 
-      // Generate the barcode with bwip-js
+      // Generate the barcode buffer
       const barcodeBuffer = await bwipjs.toBuffer(options);
 
-      // Composite with Canvas to target exactly 591 x 295 px (50mm x 25mm)
+      // PURE JS PROCESSING WITH JIMP (No native dependencies)
       let finalBuffer = barcodeBuffer;
       try {
-        const { createCanvas, loadImage } = require('canvas');
-        const barcodeImg = await loadImage(barcodeBuffer);
+        const Jimp = require('jimp');
+        const barcodeImage = await Jimp.read(barcodeBuffer);
         
-        // STRICT SIZE AS REQUESTED
-        const TARGET_WIDTH = 591;
-        const TARGET_HEIGHT = 295;
+        // TARGET: 591 x 295
+        const background = new Jimp(591, 295, 0xFFFFFFFF); // Solid White
         
-        const canvas = createCanvas(TARGET_WIDTH, TARGET_HEIGHT);
-        const ctx = canvas.getContext('2d');
+        // Center the barcode inside the target frame with some padding
+        barcodeImage.scaleToFit(531, 265); 
         
-        // Fill white background (Essential for "fundo branco")
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+        const x = Math.round((591 - barcodeImage.bitmap.width) / 2);
+        const y = Math.round((295 - barcodeImage.bitmap.height) / 2);
         
-        // Fit keeping aspect ratio but centered
-        const scaleX = (TARGET_WIDTH - 60) / barcodeImg.width; // 60px side padding
-        const scaleY = (TARGET_HEIGHT - 40) / barcodeImg.height; // 40px top/bottom padding
-        const scale = Math.min(scaleX, scaleY);
+        background.composite(barcodeImage, x, y);
         
-        const drawWidth = barcodeImg.width * scale;
-        const drawHeight = barcodeImg.height * scale;
-        const drawX = (TARGET_WIDTH - drawWidth) / 2;
-        const drawY = (TARGET_HEIGHT - drawHeight) / 2;
-        
-        ctx.drawImage(barcodeImg, drawX, drawY, drawWidth, drawHeight);
-        
-        finalBuffer = canvas.toBuffer('image/png');
+        finalBuffer = await background.getBufferAsync(Jimp.MIME_PNG);
       } catch (e) {
-        console.error("Canvas composition failed for barcode, using raw barcode.", e);
+        console.error("Jimp processing failed:", e);
       }
 
       const filename = `BARCODE_${Date.now()}.png`;
@@ -110,7 +98,6 @@ export const BarcodeController = {
       if (userObj) {
           await setVal(`/users/${safeEmail}/barcodeCredits`, barcodeCredits);
       }
-      // Sync legacy path too
       await setVal(`/barcodeCredits/${safeEmail}`, barcodeCredits);
 
       return res.json({
