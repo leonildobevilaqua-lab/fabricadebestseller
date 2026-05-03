@@ -43,15 +43,16 @@ export const BarcodeController = {
       }
 
       // BWIP-JS Options to match requested layout
-      // Using 'ean13' for reliable generation without strict dash validation
+      // Using 'ean13' with standard text rendering
       const options: any = {
-        bcid: 'ean13',      // Standard EAN-13 (used for ISBN-13)
-        text: cleanIsbn,    // First 12 digits
-        scale: 3,           // 3x scaling for high resolution
-        height: 30,         // Taller bars (30mm)
+        bcid: 'ean13',
+        text: cleanIsbn,
+        scale: 4,           // High scale for sharpness
+        height: 12,         // Bar height (approx 12mm relative)
         includetext: true,  // Bottom numerals in standard EAN-13 layout
         textxalign: 'center',
-        textsize: 10,       // Standard size for bottom text
+        textsize: 10,       // Size for bottom text
+        textyoffset: 2,     // Offset to prevent touching bars
       };
 
       // Generate the barcode with bwip-js
@@ -67,33 +68,57 @@ export const BarcodeController = {
         return checkDigit.toString();
       };
 
-      const fullIsbn13 = cleanIsbn + calculateEan13CheckDigit(cleanIsbn);
+      const checkDigit = calculateEan13CheckDigit(cleanIsbn);
+      const fullIsbn13 = cleanIsbn + checkDigit;
       
-      // Format ISBN for the top text (e.g., ISBN: 978-65-02-07968-3)
+      // Format ISBN for the top text (3-2-2-5-1 format as requested)
+      // Example: 978-65-02-07968-3
       const formattedIsbnTop = `ISBN: ${fullIsbn13.slice(0,3)}-${fullIsbn13.slice(3,5)}-${fullIsbn13.slice(5,7)}-${fullIsbn13.slice(7,12)}-${fullIsbn13.slice(12)}`;
 
-      // Composite with Canvas to add the top ISBN text
+      // Composite with Canvas to target exactly 50mm x 25mm (590x295px @ 300DPI)
       let finalBuffer = barcodeBuffer;
       try {
         const { createCanvas, loadImage } = require('canvas');
         const barcodeImg = await loadImage(barcodeBuffer);
         
-        // Create canvas with extra 70px top padding
-        const canvas = createCanvas(barcodeImg.width, barcodeImg.height + 70);
+        // Target dimensions in pixels for 50mm x 25mm at 300DPI
+        const TARGET_WIDTH = 590;
+        const TARGET_HEIGHT = 295;
+        
+        const canvas = createCanvas(TARGET_WIDTH, TARGET_HEIGHT);
         const ctx = canvas.getContext('2d');
         
         // Fill white background
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Draw the ISBN text at the top
+        // 1. Draw the ISBN text at the top
         ctx.fillStyle = '#000000';
-        ctx.font = 'bold 30px "Arial", sans-serif';
+        ctx.font = '24px "Arial", "Helvetica", sans-serif'; // Professional clean font
         ctx.textAlign = 'center';
-        ctx.fillText(formattedIsbnTop, canvas.width / 2, 45);
+        ctx.fillText(formattedIsbnTop, canvas.width / 2, 45); // Centered at top
         
-        // Draw the barcode image below the text (70px offset)
-        ctx.drawImage(barcodeImg, 0, 70);
+        // 2. Calculate scaling to fit the barcode image in the remaining space
+        // We want to leave some padding around the barcode
+        const PADDING_SIDE = 40;
+        const TOP_OFFSET = 60; // Space for ISBN text
+        const BOTTOM_PADDING = 20;
+        
+        const availableWidth = TARGET_WIDTH - (PADDING_SIDE * 2);
+        const availableHeight = TARGET_HEIGHT - TOP_OFFSET - BOTTOM_PADDING;
+        
+        // Fit keeping aspect ratio
+        const scaleX = availableWidth / barcodeImg.width;
+        const scaleY = availableHeight / barcodeImg.height;
+        const scale = Math.min(scaleX, scaleY);
+        
+        const drawWidth = barcodeImg.width * scale;
+        const drawHeight = barcodeImg.height * scale;
+        const drawX = (TARGET_WIDTH - drawWidth) / 2;
+        const drawY = TOP_OFFSET + (availableHeight - drawHeight) / 2;
+        
+        // Draw the barcode image
+        ctx.drawImage(barcodeImg, drawX, drawY, drawWidth, drawHeight);
         
         finalBuffer = canvas.toBuffer('image/png');
       } catch (e) {
