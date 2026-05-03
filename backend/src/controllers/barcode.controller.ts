@@ -132,13 +132,11 @@ export const BarcodeController = {
       const filePath = path.join(generatedDir, filename);
       fs.writeFileSync(filePath, finalBuffer);
 
-      // Decrement credit if not master
-      if (!isMaster) {
-        barcodeCredits -= 1;
-        await setVal(`/barcodeCredits/${safeEmail}`, barcodeCredits);
-        if (userObj) {
-            await setVal(`/users/${safeEmail}/barcodeCredits`, barcodeCredits);
-        }
+      // Decrement credit
+      barcodeCredits = Math.max(0, barcodeCredits - 1);
+      await setVal(`/barcodeCredits/${safeEmail}`, barcodeCredits);
+      if (userObj) {
+          await setVal(`/users/${safeEmail}/barcodeCredits`, barcodeCredits);
       }
 
       return res.json({
