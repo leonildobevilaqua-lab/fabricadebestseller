@@ -363,7 +363,13 @@ export const startResearch = async (req: Request, res: Response) => {
         if (!hasAccess) {
             // 1. Check Unified Ledger Credits (Source of Truth)
             const safeEmail = (userEmail as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-            const ledgerCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            let ledgerCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+
+            // Fallback to user object if root path is empty (Legacy support)
+            if (!ledgerCredits) {
+                const userObj = await getVal(`/users/${safeEmail}`);
+                if (userObj?.bookCredits) ledgerCredits = Number(userObj.bookCredits);
+            }
 
             if (ledgerCredits > 0) {
                 hasAccess = true;

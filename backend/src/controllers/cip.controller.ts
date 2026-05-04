@@ -38,10 +38,15 @@ export const CipController = {
 
       const safeEmail = String(email).trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
 
-      // Check CIP Credits - UNIFIED SOURCE OF TRUTH
+      // Check CIP Credits - UNIFIED SOURCE OF TRUTH (Matches Admin & Dashboard)
       await reloadDB();
       const userObj = await getVal(`/users/${safeEmail}`);
-      let cipCredits = Number(userObj?.cipCredits || 0);
+      let cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
+      
+      // Fallback to user object if root path is empty (Legacy support)
+      if (!cipCredits && userObj?.cipCredits) {
+        cipCredits = Number(userObj.cipCredits);
+      }
 
       // REMOVED isMaster exemption - Everyone MUST have credits
       if (cipCredits <= 0) {

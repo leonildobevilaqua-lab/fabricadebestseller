@@ -16,10 +16,15 @@ export const BarcodeController = {
 
       const safeEmail = String(email).trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
 
-      // Check Barcode Credits
+      // Check Barcode Credits - UNIFIED SOURCE OF TRUTH (Matches Admin & Dashboard)
       await reloadDB();
       const userObj = await getVal(`/users/${safeEmail}`);
-      let barcodeCredits = Number(userObj?.barcodeCredits || 0);
+      let barcodeCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`) || 0);
+
+      // Fallback to user object if root path is empty (Legacy support)
+      if (!barcodeCredits && userObj?.barcodeCredits) {
+        barcodeCredits = Number(userObj.barcodeCredits);
+      }
 
       if (barcodeCredits <= 0) {
         return res.status(403).json({ error: "Sem créditos de Código de Barras. Por favor, adquira créditos na Área VIP." });
