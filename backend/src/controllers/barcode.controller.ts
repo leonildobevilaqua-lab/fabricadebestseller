@@ -66,11 +66,11 @@ export const BarcodeController = {
         bcid: 'ean13',
         text: fullCode,
         scale: 4,             // High resolution
-        height: 30,           // Standard height for bars
+        height: 30,           // Bar height (in mm-ish units)
         includetext: true,    // EAN-13 numbers below (interleaved)
         backgroundcolor: 'ffffff',
-        // Important: Remove manual text positioning to let EAN-13 renderer 
-        // handle the standard interleaved layout (first digit on left, others below).
+        textsize: 13,         // Larger text for bottom numbers
+        textyoffset: 1,      // Small offset
       };
 
       // Generate the barcode buffer
@@ -87,23 +87,24 @@ export const BarcodeController = {
         // 2. Create Background (591x295 White - Standard size requested)
         const canvas = new Jimp(591, 295, 0xFFFFFFFF);
         
-        // 3. Resize Barcode
-        // Width 540 is good for 591 canvas. Height Jimp.AUTO to keep aspect ratio
-        barcodeImage.resize(540, Jimp.AUTO); 
+        // 3. Resize Barcode to fit BOTH width and height constraints
+        // Available height: Total (295) - ISBN Top (~60) - Bottom Padding (~15) = ~220
+        // available width: 560
+        barcodeImage.scaleToFit(560, 210); 
         
         // 4. Position Barcode
         // x: centered
-        // y: leave room for ISBN (top) and numbers (bottom)
+        // y: leave room for ISBN (top). Position it so numbers at bottom aren't cut.
         const x = (canvas.bitmap.width - barcodeImage.bitmap.width) / 2;
-        const y = 85; // Centered vertically in the available space
+        const y = 70; // Pushed up slightly to ensure bottom numbers fit
         canvas.composite(barcodeImage, x, y);
         
-        // 5. Add ISBN Text at Top (Centered and Large)
+        // 5. Add ISBN Text at Top (Centered)
         try {
           const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
           const textWidth = Jimp.measureText(font, formattedTop);
           const tx = (canvas.bitmap.width - textWidth) / 2;
-          canvas.print(font, tx, 30, formattedTop); // Center at top with margin
+          canvas.print(font, tx, 20, formattedTop); // Higher margin
         } catch (fontErr) {
           console.error("Font loading failed, skipping top text:", fontErr);
         }
