@@ -61,17 +61,17 @@ export const BarcodeController = {
       // Even if not a real ISBN prefix, we keep the requested format for the user
       const formattedTop = `ISBN ${fullCode.slice(0,3)}-${fullCode.slice(3,5)}-${fullCode.slice(5,7)}-${fullCode.slice(7,12)}-${fullCode.slice(12)}`;
 
-      // BWIP-JS Options
+      // BWIP-JS Options (EAN-13)
       const options: any = {
         bcid: 'ean13',
         text: fullCode,
-        scale: 4,             // Good resolution
-        height: 35,           // Standard height for professional look
+        scale: 4,             // High resolution
+        height: 40,           // Taller bars for professional look
         includetext: true,    // EAN-13 numbers below
         backgroundcolor: 'ffffff',
         textxalign: 'center',
-        textsize: 11,
-        textyoffset: -1,      // Move numbers DOWN to avoid overlap
+        textsize: 10,
+        textyoffset: 2,      // Positive offset moves numbers DOWN, away from bars
       };
 
       // Generate the barcode buffer
@@ -85,25 +85,26 @@ export const BarcodeController = {
         // 1. Load Barcode
         const barcodeImage = await Jimp.read(barcodeBuffer);
         
-        // 2. Create Background (591x295 White)
+        // 2. Create Background (591x295 White - Standard size requested)
         const canvas = new Jimp(591, 295, 0xFFFFFFFF);
         
-        // 3. Resize Barcode to fill width properly (matching model)
-        // We want the bars to be prominent but leave space for ISBN at top and numbers at bottom
-        barcodeImage.resize(550, Jimp.AUTO); 
+        // 3. Resize Barcode
+        // Width 540 is good for 591 canvas. Height Jimp.AUTO to keep aspect ratio
+        barcodeImage.resize(540, Jimp.AUTO); 
         
         // 4. Position Barcode
-        // y: leave ~60px for ISBN text, center the rest
+        // x: centered
+        // y: leave room for ISBN (top) and numbers (bottom)
         const x = (canvas.bitmap.width - barcodeImage.bitmap.width) / 2;
-        const y = 80; // Pushed down to leave room for large ISBN text
+        const y = 85; // Centered vertically in the available space
         canvas.composite(barcodeImage, x, y);
         
         // 5. Add ISBN Text at Top (Centered and Large)
         try {
-          const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK); // Larger font for readability
+          const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
           const textWidth = Jimp.measureText(font, formattedTop);
           const tx = (canvas.bitmap.width - textWidth) / 2;
-          canvas.print(font, tx, 25, formattedTop); // Center at top
+          canvas.print(font, tx, 30, formattedTop); // Center at top with margin
         } catch (fontErr) {
           console.error("Font loading failed, skipping top text:", fontErr);
         }
