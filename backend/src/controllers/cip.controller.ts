@@ -43,6 +43,8 @@ export const CipController = {
       const userObj = await getVal(`/users/${safeEmail}`);
       let cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
       
+      console.log(`[CIP] Credit Check for ${email} (${safeEmail}): Root=${cipCredits} | UserProfile=${userObj?.cipCredits || 0}`);
+
       // Fallback to user object if root path is empty (Legacy support)
       if (!cipCredits && userObj?.cipCredits) {
         cipCredits = Number(userObj.cipCredits);
@@ -50,6 +52,7 @@ export const CipController = {
 
       // REMOVED isMaster exemption - Everyone MUST have credits
       if (cipCredits <= 0) {
+        console.warn(`[CIP] User ${email} has no credits. Denying generation.`);
         if (req.file) fs.unlinkSync(req.file.path);
         return res.status(403).json({ error: "Sem créditos de Ficha Catalográfica. Por favor, adquira créditos na Área VIP." });
       }
