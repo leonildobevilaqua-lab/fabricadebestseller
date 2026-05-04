@@ -57,8 +57,6 @@ export const BarcodeController = {
       const formattedTop = `ISBN ${fullCode.slice(0,3)}-${fullCode.slice(3,5)}-${fullCode.slice(5,7)}-${fullCode.slice(7,12)}-${fullCode.slice(12)}`;
 
       // BWIP-JS Options
-      // Using 'ean13' instead of 'isbn' to be more flexible with prefixes (allowing tests like 272...)
-      // but still looking like a professional ISBN
       const options: any = {
         bcid: 'ean13',
         text: fullCode,
@@ -66,7 +64,6 @@ export const BarcodeController = {
         height: 15,
         includetext: true,
         backgroundcolor: 'ffffff',
-        alttext: formattedTop, 
         textxalign: 'center',
         textsize: 11,
         textyoffset: 2,
@@ -75,16 +72,36 @@ export const BarcodeController = {
       // Generate the barcode buffer
       const barcodeBuffer = await bwipjs.toBuffer(options);
 
-      // PURE JS PROCESSING WITH JIMP (No native dependencies)
+      // PURE JS PROCESSING WITH JIMP
       let finalBuffer = barcodeBuffer;
       try {
         const Jimp = require('jimp');
+        
+        // 1. Load Barcode
         const barcodeImage = await Jimp.read(barcodeBuffer);
         
-        // TARGET: 591 x 295
-        barcodeImage.resize(591, 295); 
+        // 2. Create Background (591x295 White)
+        const canvas = new Jimp(591, 295, 0xFFFFFFFF);
         
-        finalBuffer = await barcodeImage.getBufferAsync(Jimp.MIME_PNG);
+        // 3. Resize Barcode to fit nicely (preserving aspect ratio)
+        barcodeImage.resize(500, Jimp.AUTO);
+        
+        // 4. Center Barcode on Canvas (leave space at top for ISBN text)
+        const x = (canvas.bitmap.width - barcodeImage.bitmap.width) / 2;
+        const y = (canvas.bitmap.height - barcodeImage.bitmap.height) / 2 + 15;
+        canvas.composite(barcodeImage, x, y);
+        
+        // 5. Add ISBN Text at Top
+        try {
+          const font = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
+          const textWidth = Jimp.measureText(font, formattedTop);
+          const tx = (canvas.bitmap.width - textWidth) / 2;
+          canvas.print(font, tx, 20, formattedTop);
+        } catch (fontErr) {
+          console.error("Font loading failed, skipping top text:", fontErr);
+        }
+        
+        finalBuffer = await canvas.getBufferAsync(Jimp.MIME_PNG);
       } catch (e) {
         console.error("Jimp processing failed:", e);
       }
