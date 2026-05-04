@@ -43,7 +43,7 @@ const getIndividualKey = async (normalizedPath: string): Promise<any> => {
     return null;
 };
 
-export const getVal = async (pathStr: string): Promise<any> => {
+export const getVal = async (pathStr: string, options: { fields?: string } = {}): Promise<any> => {
     try {
         if (!pathStr) return null;
         
@@ -61,9 +61,16 @@ export const getVal = async (pathStr: string): Promise<any> => {
 
             // OPTIMIZATION: If fetching /projects or /leads, we might want to avoid the massive 'value' blob which contains full book content.
             // For listing in Dashboard/Admin, the 'metadata' part is usually enough.
-            const selectFields = (normalized === '/projects') 
-                ? 'key, updated_at, metadata:value->metadata' // Extract metadata as its own field if possible
-                : 'key, value, updated_at';
+            let selectFields = options.fields || 'key, value, updated_at';
+            
+            if (!options.fields) {
+                if (normalized === '/projects') {
+                    // Fetch only ID and Metadata for listing
+                    selectFields = 'key, updated_at, metadata:value->metadata';
+                } else if (normalized === '/leads') {
+                    selectFields = 'key, updated_at, value';
+                }
+            }
 
             const { data: rawItems, error: fetchErr } = await supabase
                 .from('kv_store')

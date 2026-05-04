@@ -180,65 +180,41 @@ export const UserAuthController = {
                 }
             }
 
-            // --- 3. CALCULATIONS ---
-            const rawLeads = await getVal('/leads') || [];
-            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-            const userProjectsRaw = await getVal('/projects') || [];
-            const projectList = Array.isArray(userProjectsRaw) ? userProjectsRaw : Object.values(userProjectsRaw);
+            // --- 3. CALCULATIONS (OPTIMIZED) ---
+            const strUser = String(email || '').toLowerCase().trim();
+            const isAdmin = cleanUser.includes('leonildo');
 
-            const userProjects = projectList.filter((p: any) => {
-                if (!p) return false;
-                
-                const strUser = String(email || '').toLowerCase().trim();
-                const metadata = p.metadata || {};
-                const contact = metadata.contact || p.contact || {};
-                
-                // --- 1. SEARCH IN DIRECT FIELDS ---
-                const emails = [
-                    contact.email,
-                    contact.userEmail,
-                    p.contact?.email,
-                    p.email,
-                    metadata.email,
-                    metadata.userEmail,
-                    metadata.authorEmail, // ADDED: Critical for many projects
-                    p.userEmail,
-                    p.metadata?.userEmail,
-                    p.metadata?.authorEmail, // ADDED
-                    p.userId
-                ].filter(Boolean).map(e => String(e).toLowerCase().trim());
+            // 3.1 Fetch Leads (Only if Admin or for usage count)
+            // Still fast because we fetch lite
+            const { data: dbLeads, error: leadsErr } = await supabase
+                .from('kv_store')
+                .select('key, updated_at, value')
+                .like('key', '/leads/%')
+                .limit(isAdmin ? 1000 : 1); 
 
-                if (emails.includes(strUser)) return true;
+            const leads = (dbLeads || []).map(l => l.value);
 
-                // --- 2. DEEP METADATA PROBE ---
-                try {
-                    if (p.metadata) {
-                        const mEmail = (p.metadata.email || p.metadata.userEmail || p.metadata.authorEmail || '').trim().toLowerCase();
-                        if (mEmail === strUser) return true;
+            // 3.2 Fetch Projects (Optimized)
+            const { data: dbProjects, error: dbErr } = await supabase
+                .from('kv_store')
+                .select('key, updated_at, metadata:value->metadata')
+                .like('key', '/projects/%')
+                .filter('value::text', 'ilike', `%${strUser}%`)
+                .limit(isAdmin ? 500 : 100); 
 
-                        if (p.metadata.contact && p.metadata.contact.email) {
-                            const cEmail = (p.metadata.contact.email || '').trim().toLowerCase();
-                            if (cEmail === strUser) return true;
-                        }
-                    }
-                } catch (err) {}
+            if (dbErr) console.error(`[AUTH_ME] DB Filter Error for ${cleanUser}:`, dbErr);
 
-                // --- 3. IDENTITY MATCHING ---
-                // User sees their own projects by matching email/userId
-                if (emails.includes(strUser)) return true;
-                
-                // Note: The global bypass for 'leonildo' was removed per user request. 
-                // Admin now sees only their OWN books in the Member Area.
-                // Full history is still available in the Admin Panel.
-                
-                // --- 4. STRING SEARCH (FALLBACK) ---
-                const pStringFull = JSON.stringify(p).toLowerCase();
-                if (pStringFull.includes(`"${strUser}"`) || pStringFull.includes(`:${strUser}`)) {
-                    return true;
-                }
-
-                return false;
+            const userProjects = (dbProjects || []).map((item: any) => {
+                const val = item.metadata || {};
+                return {
+                    ...val,
+                    id: item.key.split('/').pop(),
+                    key: item.key,
+                    updated_at: item.updated_at
+                };
             });
+
+            const usageCount = userProjects.length;
 
             console.log(`[AUTH_ME] User: ${cleanUser} | Total Projects Found: ${userProjects.length} | Identity: ${user.profile?.name || 'Unknown'}`);
             
