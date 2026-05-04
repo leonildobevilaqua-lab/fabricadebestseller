@@ -94,7 +94,6 @@ Dado o texto extraído de um livro, determine as seguintes informações:
 5. Assuntos secundários (lista com no MÁXIMO 5 palavras-chave. Extraia apenas os 5 principais conceitos como strings limpas, sem número ou pontos no final)
 6. Código CDD (escolha o mais adequado da tabela)
 7. Código Cutter-Sanborn (Utilize a tabela Cutter-Sanborn de 3 dígitos exatos. Exemplo: para Santos, é 237. Formato: Letra do sobrenome em maiúscula + 3 números da tabela + Letra inicial do título em minúscula. ATENÇÃO REGRA: Ignore artigos iniciais do título (O, A, Os, As, Um, Uma). Exemplo: para o título "O Último Refúgio", a letra é "u", resultando em "S237u" e não "S237o".)
-8. Nome no formato "Sobrenome, Nome."
 9. Ano de publicação (use 2026 se não encontrar)
 
 Tabela de Assuntos e CDD disponíveis:
@@ -105,7 +104,7 @@ ${text.substring(0, 8000)}
 `;
 
       const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash", // FIXED MODEL NAME
+        model: "gemini-1.5-flash", 
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -192,26 +191,11 @@ ${text.substring(0, 8000)}
       const docxPath = path.join(generatedDir, docxFilename);
       fs.writeFileSync(docxPath, docxBuffer);
 
-      // 4. Generate Image (.png) - USE JIMP FOR STABILITY
-      let pngFilename = `CIP_${Date.now()}.png`;
-      try {
-        const Jimp = require('jimp');
-        // CIP images are usually portrait, around 800x600 for preview
-        const background = new Jimp(800, 600, 0xFFFFFFFF);
-        
-        // We could use Jimp's print() but it requires bitmap fonts.
-        // For now, let's just create a blank placeholder if canvas isn't available,
-        // or try to use a more stable way.
-        // Actually, for now let's just skip the image if it's too complex for pure Jimp
-        // or provide a basic info image.
-      } catch (e) {
-        console.error("Jimp preview generation failed.");
-      }
-      
       // Decrement credit
       cipCredits = Math.max(0, cipCredits - 1);
       if (userObj) {
-          await setVal(`/users/${safeEmail}/cipCredits`, cipCredits);
+          userObj.cipCredits = cipCredits;
+          await setVal(`/users/${safeEmail}`, userObj);
       }
       await setVal(`/cipCredits/${safeEmail}`, cipCredits);
 
@@ -220,16 +204,20 @@ ${text.substring(0, 8000)}
         data: aiData,
         files: {
           docx: `/downloads/${docxFilename}`,
-          png: null // Returning null png for now to ensure stability
+          png: null 
         }
       });
 
       if (req.file) fs.unlinkSync(req.file.path);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("CIP Generation Error:", error);
       if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      res.status(500).json({ error: 'Erro ao gerar ficha catalográfica. Verifique se o arquivo é um DOCX válido.' });
+      const detail = error.message || "";
+      res.status(500).json({ 
+        error: `Erro ao gerar ficha catalográfica: ${detail.includes('quota') ? 'Limite de uso da IA excedido.' : 'Falha na análise do documento.'}`,
+        details: detail
+      });
     }
   }
 };

@@ -87,6 +87,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   const [showUpsell, setShowUpsell] = useState(false);
 
   const [isPollingPayment, setIsPollingPayment] = useState(false);
+  const [lastProgress, setLastProgress] = useState<number>(0);
+  const [lastProgressTime, setLastProgressTime] = useState<number>(Date.now());
 
   // --- NEW: PRE-VALIDATE ACCESS ON MOUNT ---
   useEffect(() => {
@@ -608,13 +610,35 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     const interval = setInterval(async () => {
       try {
         const p = await API.getProject(projectId);
-        if (p && p.metadata) setProject(p);
+        if (p && p.metadata) {
+          // Track progress changes for Auto-Resume
+          const newProgress = Number(p.metadata.progress || 0);
+          if (newProgress !== lastProgress) {
+            setLastProgress(newProgress);
+            setLastProgressTime(Date.now());
+          }
+          setProject(p);
+        }
       } catch (e) {
         console.error("Polling error", e);
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [projectId]);
+  }, [projectId, lastProgress]);
+
+  // AUTO-RESUME EFFECT: If stuck for > 60s in an active state, kick it!
+  useEffect(() => {
+    if (!projectId || !project || error) return;
+    const { status } = project.metadata;
+    const now = Date.now();
+    const isStuck = (now - lastProgressTime > 60000); // 1 minute without progress update
+
+    if (isStuck && (status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' || status === 'GENERATING_MARKETING')) {
+       console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Retrying...`);
+       setLastProgressTime(now); // Reset timer to avoid spamming
+       handleRetry();
+    }
+  }, [projectId, project, lastProgress, lastProgressTime, error]);
 
   // Sync App Step
   useEffect(() => {

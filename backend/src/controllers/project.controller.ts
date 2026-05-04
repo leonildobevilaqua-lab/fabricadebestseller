@@ -481,15 +481,26 @@ export const startResearch = async (req: Request, res: Response) => {
                 code: "PAYMENT_REQUIRED",
                 details: `Email: ${userEmail}`
             });
-        }
+           const workerId = uuidv4();
+
+    // 1. LOCK CHECK
+    const now = Date.now();
+    const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
+    const isActuallyRunning = project.metadata.status === 'RESEARCHING' && (now - lastPulse < 30000);
+
+    if (isActuallyRunning) {
+        console.log(`[startResearch] Research already active for ${id}. Skipping.`);
+        return res.json({ success: true, message: "Research already in progress", status: 'ACTIVE' });
     }
 
-    // Update status and ensure language is in metadata (even if in-memory)
+    // 2. TAKE OVER
     await QueueService.updateMetadata(id, {
         status: 'RESEARCHING',
-        progress: 1,
+        progress: project.metadata.progress || 1,
         statusMessage: "🏭 Iniciando esteira de produção de conhecimento...",
-        language: language || project.metadata.language || 'pt'
+        language: language || project.metadata.language || 'pt',
+        lastWorkerPulse: new Date().toISOString(),
+        currentWorkerId: workerId
     });
 
     // --- UPDATE LEAD STATUS TO IN_PROGRESS ---
@@ -510,168 +521,162 @@ export const startResearch = async (req: Request, res: Response) => {
         console.error("Error updating lead status:", e);
     }
 
-    // Respond to client IMMEDIATELY to prevent timeout
-    res.json({ message: "Research started" });
+    // Respond to client IMMEDIATELY
+    res.json({ message: "Research started", workerId });
 
-    // Background Process (Fire-and-Forget)
+    // Background Process
     (async () => {
         try {
-            const topic = project.metadata.topic;
             const targetLang = language || project.metadata.language || 'pt';
-            const currentProgress = Number(project.metadata.progress || 0);
+            
+            // Check preemption helper
+            const checkPreemption = async () => {
+                const latest = await QueueService.getProject(id);
+                if (!latest || latest.metadata.currentWorkerId !== workerId) {
+                    throw new Error("PREEMPTED");
+                }
+                return latest;
+            };
 
-            // RESUME LOGIC: If it was already researching and failed, resume from last stable checkpoint
-            console.log(`[startResearch] Background process starting (Progress: ${currentProgress}%)`);
+            const topic = project.metadata.topic;
+            let currentProject = project;
 
             if (titleInstruction) {
-                // SKIP FULL RESEARCH: Just regenerate titles
                 await QueueService.updateMetadata(id, {
                     progress: 28,
                     statusMessage: project.metadata.isFiction 
                         ? "🏗️ Refinando agora a estrutura narrativa e ganchos..." 
-                        : "🏗️ Refinando agora a estrutura de títulos..."
+                        : "🏗️ Refinando agora a estrutura de títulos...",
+                    lastWorkerPulse: new Date().toISOString()
                 });
 
                 const fullContext = project.researchContext || `TEMA: ${topic}`; 
                 const titles = await AIService.generateTitleOptions(topic, fullContext, targetLang, titleInstruction, project.metadata.isFiction);
-                await QueueService.updateProject(id, { titleOptions: titles });
-
-                await QueueService.updateMetadata(id, {
-                    status: 'WAITING_TITLE',
-                    progress: 30,
-                    statusMessage: "✅ Novos títulos gerados com sucesso."
+                
+                currentProject = await checkPreemption();
+                await QueueService.updateProject(id, { 
+                    titleOptions: titles,
+                    metadata: { ...currentProject.metadata, status: 'WAITING_TITLE', progress: 30, statusMessage: "✅ Novos títulos gerados.", lastWorkerPulse: new Date().toISOString() }
                 });
                 return;
             }
 
-            // Step 1: YouTube (Checkpoint: progress < 5)
+            // Step 1: YouTube
             let ytResearch = "";
+            currentProject = await checkPreemption();
+            const currentProgress = Number(currentProject.metadata.progress || 0);
+
             if (currentProgress < 12) {
                 await QueueService.updateMetadata(id, {
-                    progress: 1,
-                    statusMessage: project.metadata.isFiction 
-                        ? `📡 Benchmarking: Pesquisando obras de sucesso no gênero ${project.metadata.genre || 'Ficção'}...`
-                        : `📡 Iniciando varredura no YouTube: "${topic}"...`
-                });
-
-                await QueueService.updateMetadata(id, {
                     progress: 5,
-                    statusMessage: `🔍 Coletando insights virais no YouTube...`
+                    statusMessage: `🔍 Coletando insights virais no YouTube...`,
+                    lastWorkerPulse: new Date().toISOString()
                 });
 
                 try {
                     ytResearch = await AIService.researchYoutube(topic, targetLang);
                 } catch (ytError: any) {
-                    console.error("YouTube Research Failed (Continuing anyway):", ytError);
-                    ytResearch = "Pesquisa YouTube indisponível. Seguindo com Google Search.";
+                    ytResearch = "Pesquisa YouTube indisponível.";
                 }
             } else {
-                ytResearch = project.researchContext?.split('### PESQUISA GOOGLE')[0] || "Dados de YouTube já processados.";
-                console.log("[startResearch] Skipping YouTube (Progress: already > 12%)");
+                ytResearch = currentProject.researchContext?.split('### PESQUISA GOOGLE')[0] || "Dados processados.";
             }
 
-            // Step 2: Google (Checkpoint: progress < 15)
+            // Step 2: Google
             let googleResearch = "";
-            if (currentProgress < 22) {
+            currentProject = await checkPreemption();
+            if (Number(currentProject.metadata.progress || 0) < 22) {
                 await QueueService.updateMetadata(id, {
                     progress: 15,
-                    statusMessage: `🔎 Pesquisando tendências no Google Search...`
+                    statusMessage: `🔎 Pesquisando tendências no Google Search...`,
+                    lastWorkerPulse: new Date().toISOString()
                 });
 
                 try {
                     googleResearch = await AIService.researchGoogle(topic, ytResearch, targetLang);
                 } catch (googleError: any) {
-                    console.error("Google Research Failed:", googleError);
-                    googleResearch = "Google Search indisponível. Seguindo para análise competitiva.";
+                    googleResearch = "Google Search indisponível.";
                 }
             } else {
-                googleResearch = "Dados de Google já processados.";
-                console.log("[startResearch] Skipping Google (Progress: already > 22%)");
+                googleResearch = "Dados processados.";
             }
 
-            // Step 3: Competitors (Checkpoint: progress < 25)
+            // Step 3: Competitors
             let compResearch = "";
-            if (currentProgress < 28) {
+            currentProject = await checkPreemption();
+            if (Number(currentProject.metadata.progress || 0) < 28) {
                 await QueueService.updateMetadata(id, {
                     progress: 25,
-                    statusMessage: `🏆 Analisando Best-Sellers da Amazon e concorrência...`
+                    statusMessage: `🏆 Analisando Best-Sellers e concorrência...`,
+                    lastWorkerPulse: new Date().toISOString()
                 });
 
                 try {
                     compResearch = await AIService.analyzeCompetitors(topic, ytResearch + "\n" + googleResearch, targetLang);
                 } catch (compError: any) {
-                    console.error("Competitor Analysis Failed:", compError);
-                    compResearch = "Análise de concorrentes indisponível. Usando base de conhecimento da IA.";
+                    compResearch = "Análise indisponível.";
                 }
 
-                // Only update context if we reached this far
+                currentProject = await checkPreemption();
                 const fullContext = `### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch} `;
-                await QueueService.updateProject(id, { researchContext: fullContext });
-            } else {
-                console.log("[startResearch] Skipping Research steps (Progress: already > 28%)");
+                await QueueService.updateProject(id, { 
+                    researchContext: fullContext,
+                    metadata: { ...currentProject.metadata, lastWorkerPulse: new Date().toISOString() }
+                });
             }
 
-            // FINAL STEP: Titles (Skip if already has one)
-            const finalFullContext = project.researchContext || `TEMA: ${topic} \n\n### PESQUISA YOUTUBE: \n${ytResearch} \n\n### PESQUISA GOOGLE: \n${googleResearch} \n\n### ANÁLISE DE LIVROS: \n${compResearch}`;
+            // FINAL STEP: Titles
+            currentProject = await checkPreemption();
+            const isManualTitle = currentProject.metadata.bookTitle && currentProject.metadata.bookTitle.trim().length > 1;
 
-            // Robust check: Only skip if bookTitle is present AND has length > 1 (avoiding empty strings or noise)
-            const isManualTitle = project.metadata.bookTitle && 
-                               project.metadata.bookTitle.trim().length > 1 && 
-                               !project.metadata.bookTitle.includes('Livro Gerado') &&
-                               !project.metadata.bookTitle.includes('Título Provisório');
-
-            if (isManualTitle && project.metadata.status !== 'WAITING_TITLE') {
-                console.log(`[startResearch] Manual title detected: "${project.metadata.bookTitle}". Skipping AI title selection phase.`);
-                
-                // Proceed to structure generation immediately
+            if (isManualTitle && currentProject.metadata.status !== 'WAITING_TITLE') {
                 await QueueService.updateMetadata(id, {
                     status: 'GENERATING_STRUCTURE',
                     progress: 35,
-                    statusMessage: "🏗️ Título definido detectado. Construindo estrutura personalizada..."
+                    statusMessage: "🏗️ Título detectado. Construindo estrutura...",
+                    lastWorkerPulse: new Date().toISOString()
                 });
 
                 const structure = await AIService.generateStructure(
-                    project.metadata.bookTitle || 'Livro', 
-                    project.metadata.subTitle || "", 
-                    finalFullContext, 
+                    currentProject.metadata.bookTitle!, 
+                    currentProject.metadata.subTitle || "", 
+                    currentProject.researchContext || topic, 
                     targetLang, 
-                    project.metadata.contentStyle || 'Profissional'
+                    currentProject.metadata.contentStyle || 'Profissional'
                 );
 
-                await QueueService.updateProject(id, { structure });
-                await QueueService.updateMetadata(id, {
-                    status: 'REVIEW_STRUCTURE',
-                    progress: 40,
-                    statusMessage: "Estrutura pronta para aprovação."
+                currentProject = await checkPreemption();
+                await QueueService.updateProject(id, { 
+                    structure,
+                    metadata: { ...currentProject.metadata, status: 'REVIEW_STRUCTURE', progress: 40, statusMessage: "Estrutura pronta.", lastWorkerPulse: new Date().toISOString() }
                 });
                 return;
             }
 
             await QueueService.updateMetadata(id, {
                 progress: 28,
-                statusMessage: "🏗️ Moldando estruturas de títulos de alta conversão..."
+                statusMessage: "🏗️ Moldando títulos de alta conversão...",
+                lastWorkerPulse: new Date().toISOString()
             });
 
-            const titles = await AIService.generateTitleOptions(topic, finalFullContext, targetLang);
-            await QueueService.updateProject(id, { titleOptions: titles });
-
-            await QueueService.updateMetadata(id, {
-                status: 'WAITING_TITLE',
-                progress: 30,
-                statusMessage: "✅ Pesquisa de mercado concluída! Selecione o título do seu Best-Seller abaixo."
+            const titles = await AIService.generateTitleOptions(topic, currentProject.researchContext || topic, targetLang);
+            
+            currentProject = await checkPreemption();
+            await QueueService.updateProject(id, { 
+                titleOptions: titles,
+                metadata: { ...currentProject.metadata, status: 'WAITING_TITLE', progress: 30, statusMessage: "✅ Pesquisa concluída!", lastWorkerPulse: new Date().toISOString() }
             });
 
         } catch (error: any) {
+            if (error.message === 'PREEMPTED') return;
             console.error("Research Error:", error);
-            const errorMessage = error?.message || "Erro desconhecido";
-            // Check for quota errors to be more specific
-            const isQuota = errorMessage.includes('429') || errorMessage.toLowerCase().includes('quota') || errorMessage.toLowerCase().includes('rate limit');
-            
             await QueueService.updateMetadata(id, {
                 status: 'FAILED',
-                statusMessage: isQuota 
-                    ? `⚠️ Limite excedido na API de Inteligência Artificial. Aguarde um minuto e o sistema tentará automaticamente (Erro 429).`
-                    : `⚠️ Falha na linha de produção: ${errorMessage.substring(0, 100)}... Redigitalizando...`
+                statusMessage: `⚠️ Falha na produção: ${error.message?.substring(0, 100)}... Redigitalizando...`
+            });
+        }
+    })();
+rrorMessage.substring(0, 100)}... Redigitalizando...`
             });
         }
     })();
@@ -753,28 +758,59 @@ export const generateBookContent = async (req: Request, res: Response) => {
     const project = await QueueService.getProject(id);
     if (!project) return res.status(404).json({ error: "Not found" });
 
+    const workerId = uuidv4();
     const targetLang = language || project.metadata.language || 'pt';
 
-    await QueueService.updateMetadata(id, { status: 'WRITING_CHAPTERS', progress: 41 });
-    res.json({ message: "Content generation started" });
+    // 1. LOCK CHECK: Prevent multiple workers from processing the same project
+    const now = Date.now();
+    const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
+    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 30000); // 30s grace
+
+    if (isActuallyRunning) {
+        console.log(`[PROJECT] Generation already active for ${id} (Pulse: ${now - lastPulse}ms ago). Skipping new worker.`);
+        return res.json({ message: "Content generation already in progress", status: 'ACTIVE' });
+    }
+
+    // 2. TAKE OVER / START
+    await QueueService.updateMetadata(id, { 
+        status: 'WRITING_CHAPTERS', 
+        progress: project.metadata.progress || 41,
+        lastWorkerPulse: new Date().toISOString(),
+        currentWorkerId: workerId 
+    });
+
+    res.json({ message: "Content generation started", workerId });
 
     try {
-        const chapters = [...project.structure];
+        // We reload the project inside the loop to get the most fresh state
+        let chapters = [...project.structure];
         const total = chapters.length;
 
-        // 1. Write Chapters
         for (let i = 0; i < total; i++) {
+            // RELOAD: Ensure we have the latest structure (maybe updated by a previous worker before crash)
+            const freshProject = await QueueService.getProject(id);
+            if (!freshProject) break;
+            
+            // CHECK LOCK: If someone else took over, we stop
+            if (freshProject.metadata.currentWorkerId !== workerId) {
+                console.log(`[PROJECT] Worker ${workerId} preempted by ${freshProject.metadata.currentWorkerId}. Stopping.`);
+                return;
+            }
+
+            chapters = freshProject.structure;
             const chapter = chapters[i];
 
-            // RESUME LOGIC: Skip if already generated and has content
+            // RESUME LOGIC: Skip if already generated
             if (chapter.isGenerated && chapter.content && chapter.content.length > 100) {
-                console.log(`Skipping Chapter ${chapter.id} (Already generated)`);
+                console.log(`[PROJECT] Skipping Chapter ${chapter.id} (Already exists)`);
                 continue;
             }
 
+            // Update Pulse & Progress
             await QueueService.updateMetadata(id, {
                 statusMessage: `Escrevendo Capítulo ${chapter.id}: ${chapter.title}...`,
-                progress: 41 + Math.floor(((i) / total) * 40) // 41% to 81%
+                progress: 41 + Math.floor(((i) / total) * 40), // 41% to 81%
+                lastWorkerPulse: new Date().toISOString()
             });
 
             // RETRY STRATEGY (3 Attempts)
@@ -783,24 +819,31 @@ export const generateBookContent = async (req: Request, res: Response) => {
             while (!success && attempts < 3) {
                 try {
                     attempts++;
-                    // Pass language to writer
-                    const meta = { ...project.metadata, language: targetLang };
-                    const content = await AIService.writeChapter(meta, chapter, project.structure, project.researchContext);
-                    chapter.content = content;
-                    chapter.isGenerated = true;
-                    await QueueService.updateProject(id, { structure: chapters });
+                    const meta = { ...freshProject.metadata, language: targetLang };
+                    const content = await AIService.writeChapter(meta, chapter, chapters, freshProject.researchContext);
+                    
+                    // RELOAD AGAIN before saving to be super safe
+                    const latest = await QueueService.getProject(id);
+                    if (latest && latest.metadata.currentWorkerId === workerId) {
+                        latest.structure[i].content = content;
+                        latest.structure[i].isGenerated = true;
+                        await QueueService.updateProject(id, { 
+                            structure: latest.structure,
+                            metadata: { ...latest.metadata, lastWorkerPulse: new Date().toISOString() }
+                        });
+                    }
                     success = true;
                 } catch (e: any) {
                     console.error(`Error writing chapter ${chapter.id} (Attempt ${attempts}/3):`, e);
                     if (attempts >= 3) {
-                        // EMERGENCY FALLBACK TO PREVENT HALT
-                        console.error(`CRITICAL: Chapter ${chapter.id} failed after 3 attempts. Using Emergency Placeholder.`);
-                        chapter.content = `[ERRO NA GERAÇÃO DESTE CAPÍTULO]\n\nInfelizmente a IA não conseguiu completar este capítulo após múltiplas tentativas. O tema era: ${chapter.title}.\n\nSugerimos que você escreva este trecho manualmente ou regenere o projeto.`;
-                        chapter.isGenerated = true; // Mark as done to finish the process!!!
-                        await QueueService.updateProject(id, { structure: chapters });
-                        success = true; // Force success to continue loop
+                        const latest = await QueueService.getProject(id);
+                        if (latest && latest.metadata.currentWorkerId === workerId) {
+                           latest.structure[i].content = `[ERRO NA GERAÇÃO DESTE CAPÍTULO]\n\nTema: ${chapter.title}.\nSugerimos regenerar este trecho manualmente.`;
+                           latest.structure[i].isGenerated = true; 
+                           await QueueService.updateProject(id, { structure: latest.structure });
+                        }
+                        success = true; 
                     } else {
-                        // Wait 2s before retry
                         await new Promise(r => setTimeout(r, 2000));
                     }
                 }

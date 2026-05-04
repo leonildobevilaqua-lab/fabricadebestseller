@@ -62,14 +62,14 @@ export const BarcodeController = {
       const options: any = {
         bcid: 'ean13',
         text: fullCode,
-        scale: 5,             
-        height: 25,
+        scale: 6,             
+        height: 15,
         includetext: true,
         backgroundcolor: 'ffffff',
-        alttext: formattedTop, // This puts the formatted ISBN at the top!
+        alttext: formattedTop, 
         textxalign: 'center',
-        textsize: 10,
-        textyoffset: 4,
+        textsize: 11,
+        textyoffset: 2,
       };
 
       // Generate the barcode buffer
@@ -99,7 +99,8 @@ export const BarcodeController = {
       // Decrement credit
       barcodeCredits = Math.max(0, barcodeCredits - 1);
       if (userObj) {
-          await setVal(`/users/${safeEmail}/barcodeCredits`, barcodeCredits);
+          userObj.barcodeCredits = barcodeCredits;
+          await setVal(`/users/${safeEmail}`, userObj);
       }
       await setVal(`/barcodeCredits/${safeEmail}`, barcodeCredits);
 
