@@ -26,6 +26,8 @@ export interface BookMetadata {
     isFiction?: boolean;
     genre?: string;
     characters?: { name: string; info: string }[];
+    lastWorkerPulse?: string;
+    currentWorkerId?: string;
 }
 
 export type JobStatus = 'IDLE' | 'RESEARCHING' | 'WAITING_TITLE' | 'GENERATING_STRUCTURE' | 'WAITING_STRUCTURE' | 'WRITING' | 'WAITING_DETAILS' | 'COMPLETED' | 'FAILED' | 'REVIEW_STRUCTURE' | 'WRITING_CHAPTERS' | 'GENERATING_MARKETING' | 'LIVRO ENTREGUE' | 'MODELING_FICTION';

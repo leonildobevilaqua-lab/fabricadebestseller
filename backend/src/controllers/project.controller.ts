@@ -331,11 +331,11 @@ export const startResearch = async (req: Request, res: Response) => {
     }
 
     const userEmail = project.metadata.contact?.email || bodyEmail;
+    let hasAccess = false;
+    let currentStatus = 'UNKNOWN';
+
     if (userEmail) {
         await reloadDB(); // Force sync to see Admin Approval
-
-        let hasAccess = false;
-        let currentStatus = 'UNKNOWN';
 
         // VIP BYPASS (Hotfix)
         if (userEmail.toLowerCase().includes('subevilaqua')) {
@@ -390,8 +390,9 @@ export const startResearch = async (req: Request, res: Response) => {
                     }
                 }
             }
+        }
 
-            // 3. EMERGENCY CHECK: VALIDATE RECENT PAYMENTS DIRECTLY FROM ASAAS (Last 24h)
+        // 3. EMERGENCY CHECK: VALIDATE RECENT PAYMENTS DIRECTLY FROM ASAAS (Last 24h)
             if (!hasAccess) {
                 try {
                     console.log(`[startResearch] Validating Asaas for ${userEmail}...`);
@@ -481,7 +482,8 @@ export const startResearch = async (req: Request, res: Response) => {
                 code: "PAYMENT_REQUIRED",
                 details: `Email: ${userEmail}`
             });
-           const workerId = uuidv4();
+        }
+        const workerId = uuidv4();
 
     // 1. LOCK CHECK
     const now = Date.now();
@@ -673,10 +675,6 @@ export const startResearch = async (req: Request, res: Response) => {
             await QueueService.updateMetadata(id, {
                 status: 'FAILED',
                 statusMessage: `⚠️ Falha na produção: ${error.message?.substring(0, 100)}... Redigitalizando...`
-            });
-        }
-    })();
-rrorMessage.substring(0, 100)}... Redigitalizando...`
             });
         }
     })();
