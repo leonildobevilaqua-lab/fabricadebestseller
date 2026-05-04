@@ -103,7 +103,7 @@ export const getVal = async (pathStr: string, options: { fields?: string } = {})
 
             if (rawItems && rawItems.length > 0) {
                 // IMPORTANT: Filter out sub-keys (e.g., skip /projects/ID/metadata/translations if fetching /projects)
-                const filteredItems = rawItems.filter(item => {
+                const filteredItems = (rawItems as any[]).filter(item => {
                     const suffix = item.key.substring(normalized.length + 1);
                     return !suffix.includes('/'); 
                 });

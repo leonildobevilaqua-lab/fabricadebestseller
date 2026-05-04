@@ -1,6 +1,7 @@
 
 import { Request, Response } from 'express';
 import { getVal, setVal, reloadDB } from '../services/db.service';
+import { supabase } from '../services/supabase';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -192,7 +193,7 @@ export const UserAuthController = {
                 .like('key', '/leads/%')
                 .limit(isAdmin ? 1000 : 1); 
 
-            const leads = (dbLeads || []).map(l => l.value);
+            const leads = (dbLeads || []).map((l: any) => l.value);
 
             // 3.2 Fetch Projects (Optimized)
             const { data: dbProjects, error: dbErr } = await supabase
@@ -222,12 +223,12 @@ export const UserAuthController = {
                 console.warn(`[AUTH_ME] WARNING: No projects found for Leonildo identity (${cleanUser}). Possible DB fetch failure or fragmentation.`);
             }
 
-            // Usage count based on actual projects
-            const usageCount = userProjects.filter((p: any) =>
+            // Final usage count for stats
+            const finalUsageCount = userProjects.filter((p: any) =>
                 ['COMPLETED', 'LIVRO ENTREGUE', 'WRITING_CHAPTERS', 'SUCCESS', 'READY'].includes((p.metadata?.status || p.status || '').toUpperCase())
             ).length;
 
-            const cycleIndex = usageCount % 4;
+            const cycleIndex = finalUsageCount % 4;
 
             // PREÇOS (FONTE DA VERDADE 2025)
             const isPlanActive = user.plan?.status === 'ACTIVE';
@@ -295,8 +296,8 @@ export const UserAuthController = {
                 barcodeCredits: barcodeCredits,
                 stats: {
                     purchaseCycleCount: cycleIndex,
-                    totalBooksGenerated: usageCount,
-                    totalBooks: userProjects.length || usageCount,
+                    totalBooksGenerated: finalUsageCount,
+                    totalBooks: userProjects.length || finalUsageCount,
                     nextBookPrice: nextBookPrice
                 },
                 orders: mappedOrders.length > 0 ? mappedOrders : (user.orders || [])
