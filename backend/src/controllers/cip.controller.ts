@@ -98,10 +98,11 @@ Dado o texto extraído de um livro, determine as seguintes informações:
 1. Título do livro
 2. Subtítulo (se houver, senão vazio)
 3. Nome do autor (ou autora)
-4. Assunto principal (nome do assunto principal, sem número)
-5. Assuntos secundários (lista com no MÁXIMO 5 palavras-chave. Extraia apenas os 5 principais conceitos como strings limpas, sem número ou pontos no final)
-6. Código CDD (escolha o mais adequado da tabela)
-7. Código Cutter-Sanborn (Utilize a tabela Cutter-Sanborn de 3 dígitos exatos. Exemplo: para Santos, é 237. Formato: Letra do sobrenome em maiúscula + 3 números da tabela + Letra inicial do título em minúscula. ATENÇÃO REGRA: Ignore artigos iniciais do título (O, A, Os, As, Um, Uma). Exemplo: para o título "O Último Refúgio", a letra é "u", resultando em "S237u" e não "S237o".)
+4. authorFormatted (Nome do autor formatado para catalogação: SOBRENOME, Nomes próprios. Exemplo: SILVA, João da)
+5. mainSubject (Assunto principal do livro como uma string única e limpa)
+6. Assuntos secundários (lista com no MÁXIMO 5 palavras-chave. Extraia apenas os 5 principais conceitos como strings limpas, sem número ou pontos no final)
+7. Código CDD (escolha o mais adequado da tabela)
+8. Código Cutter-Sanborn (Utilize a tabela Cutter-Sanborn de 3 dígitos exatos. Exemplo: para Santos, é 237. Formato: Letra do sobrenome em maiúscula + 3 números da tabela + Letra inicial do título em minúscula. ATENÇÃO REGRA: Ignore artigos iniciais do título (O, A, Os, As, Um, Uma). Exemplo: para o título "O Último Refúgio", a letra é "u", resultando em "S237u" e não "S237o".)
 9. Ano de publicação (use 2026 se não encontrar)
 
 Tabela de Assuntos e CDD disponíveis:

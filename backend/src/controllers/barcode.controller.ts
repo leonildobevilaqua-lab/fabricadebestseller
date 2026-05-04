@@ -66,12 +66,11 @@ export const BarcodeController = {
         bcid: 'ean13',
         text: fullCode,
         scale: 4,             // High resolution
-        height: 40,           // Taller bars for professional look
-        includetext: true,    // EAN-13 numbers below
+        height: 30,           // Standard height for bars
+        includetext: true,    // EAN-13 numbers below (interleaved)
         backgroundcolor: 'ffffff',
-        textxalign: 'center',
-        textsize: 10,
-        textyoffset: 2,      // Positive offset moves numbers DOWN, away from bars
+        // Important: Remove manual text positioning to let EAN-13 renderer 
+        // handle the standard interleaved layout (first digit on left, others below).
       };
 
       // Generate the barcode buffer
