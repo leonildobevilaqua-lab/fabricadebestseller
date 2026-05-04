@@ -60,13 +60,13 @@ export const BarcodeController = {
       const options: any = {
         bcid: 'ean13',
         text: fullCode,
-        scale: 6,             
-        height: 15,
-        includetext: true,
+        scale: 4,             // Good resolution
+        height: 35,           // Standard height for professional look
+        includetext: true,    // EAN-13 numbers below
         backgroundcolor: 'ffffff',
         textxalign: 'center',
         textsize: 11,
-        textyoffset: 2,
+        textyoffset: -1,      // Move numbers DOWN to avoid overlap
       };
 
       // Generate the barcode buffer
@@ -83,20 +83,22 @@ export const BarcodeController = {
         // 2. Create Background (591x295 White)
         const canvas = new Jimp(591, 295, 0xFFFFFFFF);
         
-        // 3. Resize Barcode to fit nicely (preserving aspect ratio)
-        barcodeImage.resize(500, Jimp.AUTO);
+        // 3. Resize Barcode to fill width properly (matching model)
+        // We want the bars to be prominent but leave space for ISBN at top and numbers at bottom
+        barcodeImage.resize(550, Jimp.AUTO); 
         
-        // 4. Center Barcode on Canvas (leave space at top for ISBN text)
+        // 4. Position Barcode
+        // y: leave ~60px for ISBN text, center the rest
         const x = (canvas.bitmap.width - barcodeImage.bitmap.width) / 2;
-        const y = (canvas.bitmap.height - barcodeImage.bitmap.height) / 2 + 15;
+        const y = 80; // Pushed down to leave room for large ISBN text
         canvas.composite(barcodeImage, x, y);
         
-        // 5. Add ISBN Text at Top
+        // 5. Add ISBN Text at Top (Centered and Large)
         try {
-          const font = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
+          const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK); // Larger font for readability
           const textWidth = Jimp.measureText(font, formattedTop);
           const tx = (canvas.bitmap.width - textWidth) / 2;
-          canvas.print(font, tx, 20, formattedTop);
+          canvas.print(font, tx, 25, formattedTop); // Center at top
         } catch (fontErr) {
           console.error("Font loading failed, skipping top text:", fontErr);
         }
