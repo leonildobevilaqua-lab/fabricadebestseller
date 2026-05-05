@@ -1319,15 +1319,32 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 redeemedIds.push(txId);
                 await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
 
-                // Detect Product Type (BOOK, CIP, BARCODE, QR)
+                // Detect Product Type (BOOK, CIP, BARCODE, QR, COMPLETE_PACKAGE)
                 const pNameUpper = productName.toUpperCase();
                 const productId = String(payload.item?.product_id || tx.product?.id || "");
                 
                 const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA') || productId === 'O89DB6739';
                 const isBarcode = pNameUpper.includes('BARRAS') || productId === 'O77037442';
                 const isQR = pNameUpper.includes('QR CODE') || productId === 'O8B28DD61';
+                const isCompletePackage = pNameUpper.includes('PACOTE COMPLETO') || productId === 'OAE19BCE4';
 
-                if (isCIP) {
+                if (isCompletePackage) {
+                    // Grant 1 of each credit
+                    const currentCip = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+                    const currentBarcode = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+                    const currentQr = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+
+                    await setVal(`/cipCredits/${safeEmail}`, currentCip + 1);
+                    await setVal(`/users/${safeEmail}/cipCredits`, currentCip + 1);
+                    
+                    await setVal(`/barcodeCredits/${safeEmail}`, currentBarcode + 1);
+                    await setVal(`/users/${safeEmail}/barcodeCredits`, currentBarcode + 1);
+
+                    await setVal(`/qrCredits/${safeEmail}`, currentQr + 1);
+                    await setVal(`/users/${safeEmail}/qrCredits`, currentQr + 1);
+
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} received COMPLETE PACKAGE (CIP, Barcode, QR).`);
+                } else if (isCIP) {
                     const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
                     const newCipCredits = currentCipCredits + 1;
                     await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
