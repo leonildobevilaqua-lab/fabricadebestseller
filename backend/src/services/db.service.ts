@@ -181,7 +181,7 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         console.log(`[DB] Successfully fetched and cached individual key: ${normalized}`);
                         return parsed;
                     }
-                } catch (e) { 
+                } catch (e: any) { 
                     console.warn(`[DB] Fetch failed or timed out for ${k}:`, e.message); 
                 }
             }
