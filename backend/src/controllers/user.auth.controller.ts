@@ -35,20 +35,17 @@ export const UserAuthController = {
                 }
             }
 
-            // Fallback: Tenta buscar nos leads se nao achar em /users
+            // Fallback: Tenta buscar nos leads se nao achar em /users (Optimized)
             if (!user && !isAuthenticated) {
-                const leads = await getVal('/leads') || [];
-                const leadsArray = Array.isArray(leads) ? leads : Object.values(leads);
+                const { data: dbLeads, error: leadsErr } = await supabase
+                    .from('kv_store')
+                    .select('value')
+                    .like('key', '/leads/%')
+                    .or(`value->>email.ilike.%${cleanUser}%`)
+                    .limit(1);
 
-                let leadFn: any;
-                for (let i = leadsArray.length - 1; i >= 0; i--) {
-                    if (leadsArray[i] && (leadsArray[i] as any).email?.toLowerCase().trim() === cleanUser) {
-                        leadFn = leadsArray[i];
-                        break;
-                    }
-                }
-
-                if (leadFn) {
+                if (dbLeads && dbLeads.length > 0) {
+                    const leadFn = dbLeads[0].value;
                     user = {
                         profile: {
                             name: leadFn.name || "Autor",
@@ -107,25 +104,31 @@ export const UserAuthController = {
             await reloadDB();
             let user = await getVal(`/users/${safeEmail}`);
 
-            // 1. Tenta sincronizar com Leads se nao achar user full ou se estiver faltando o profile (ex: criado via webhook)
+            // 1. Optimized profile sync (Avoid full leads scan)
             if (!user || !user.profile || !user.plan) {
-                const leads = await getVal('/leads') || [];
-                const leadsArray = Array.isArray(leads) ? leads : Object.values(leads);
+                console.log(`[AUTH_ME] Profile incomplete for ${cleanUser}. Fetching targeted lead...`);
+                const { data: dbLeads, error: leadsErr } = await supabase
+                    .from('kv_store')
+                    .select('value')
+                    .like('key', '/leads/%')
+                    .filter('value->>email', 'ilike', cleanUser)
+                    .limit(1);
 
-                // Pesquisa de trás para frente para pegar o lead mais recente
-                let leadFn: any;
-                for (let i = leadsArray.length - 1; i >= 0; i--) {
-                    if (leadsArray[i] && (leadsArray[i] as any).email?.toLowerCase().trim() === cleanUser) {
-                        leadFn = leadsArray[i];
-                        break;
-                    }
+                if (leadsErr) {
+                    console.error(`[AUTH_ME] Targeted fetch error for ${cleanUser}:`, leadsErr);
                 }
 
-                if (leadFn) {
+                if (dbLeads && dbLeads.length > 0) {
+                    const leadFn = dbLeads[0].value;
                     user = {
-                        ...(user || {}), // preserva keys parciais (ex: bookCredits, auth, etc)
-                        profile: user?.profile || { name: leadFn.name || "Autor", email: cleanUser, phone: leadFn.phone || "", cpf: leadFn.cpfCnpj || leadFn.document || "" },
-                        plan: user?.plan || leadFn.plan || null, // NUNCA sobrescreve um plano existente
+                        ...(user || {}), 
+                        profile: user?.profile || { 
+                            name: leadFn.name || "Autor", 
+                            email: cleanUser, 
+                            phone: leadFn.phone || "", 
+                            cpf: leadFn.cpfCnpj || leadFn.document || "" 
+                        },
+                        plan: user?.plan || leadFn.plan || null,
                         orders: user?.orders || [],
                         stats: user?.stats || { purchaseCycleCount: 0 }
                     };
@@ -196,11 +199,12 @@ export const UserAuthController = {
             const leads = (dbLeads || []).map((l: any) => l.value);
 
             // 3.2 Fetch Projects (Optimized)
+            // Use targeted JSONB search instead of expensive full-text scan
             const { data: dbProjects, error: dbErr } = await supabase
                 .from('kv_store')
                 .select('key, updated_at, metadata:value->metadata')
                 .like('key', '/projects/%')
-                .filter('value::text', 'ilike', `%${strUser}%`)
+                .or(`value->metadata->>email.ilike.%${strUser}%,value->metadata->contact->>email.ilike.%${strUser}%`)
                 .limit(isAdmin ? 500 : 100); 
 
             if (dbErr) console.error(`[AUTH_ME] DB Filter Error for ${cleanUser}:`, dbErr);
@@ -276,13 +280,10 @@ export const UserAuthController = {
             let barcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
             if (!barcodeCredits && user.barcodeCredits) barcodeCredits = user.barcodeCredits;
 
-            // --- 5. MASTER RESTORATION ---
+            // --- 5. MASTER RESTORATION (REMOVED PER USER REQUEST TO TEST CREDITS) ---
             if (isMaster) {
-                console.log("💎 FORCE RESTORING 14 CREDITS FOR MASTER LEONILDO");
-                credits = 14; 
-                // cipCredits = 100; // Removed per user request to test purchase UI
-                // barcodeCredits = 100; // Removed per user request to test purchase UI
-                // We also ensure plan is BLACK
+                console.log("💎 MASTER LEONILDO LOGGED IN - NO AUTO CREDITS APPLIED (Testing Mode)");
+                // We ensure plan is BLACK
                 if (!user.plan || user.plan.name !== 'BLACK') {
                     user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'monthly' };
                 }

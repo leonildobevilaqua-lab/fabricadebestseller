@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { SUBJECT_CODES } from '../cip.constants';
 import { getVal, setVal, reloadDB } from '../services/db.service';
+import Jimp from 'jimp';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
@@ -51,8 +52,10 @@ export const CipController = {
       }
 
       // REMOVED isMaster exemption - Everyone MUST have credits
+      console.log(`[CIP] Credit check for ${email}: root=${cipCredits}, userObj=${userObj?.cipCredits || 0}`);
+      
       if (cipCredits <= 0) {
-        console.warn(`[CIP] User ${email} has no credits. Denying generation.`);
+        console.warn(`[CIP] User ${email} has no credits. Denying generation. Credits found: ${cipCredits}`);
         if (req.file) fs.unlinkSync(req.file.path);
         return res.status(403).json({ error: "Sem créditos de Ficha Catalográfica. Por favor, adquira créditos na Área VIP." });
       }
@@ -61,48 +64,58 @@ export const CipController = {
         return res.status(400).json({ error: 'Nenhum arquivo enviado.' });
       }
 
-      const { cidade, estado, isbn } = req.body;
+      const { cidade, estado, isbn, pageCount } = req.body;
       if (!cidade || !estado || !isbn) {
-        fs.unlinkSync(req.file.path);
+        if (req.file) fs.unlinkSync(req.file.path);
         return res.status(400).json({ error: 'Cidade, Estado e ISBN são obrigatórios.' });
       }
 
-      // 1. Get Exact Page Count from DOCX XML
-      let exactPages = 0;
-      try {
-        const zip = new AdmZip(req.file.path);
-        const appXml = zip.readAsText("docProps/app.xml");
-        if (appXml) {
-          const match = appXml.match(/<(?:[^:]+:)?Pages>(\d+)<\/(?:[^:]+:)?Pages>/i);
-          if (match && match[1]) {
-            exactPages = parseInt(match[1], 10);
-          }
-        }
-      } catch (e) {
-        console.log("Aviso: Não foi possível ler as páginas exatas via XML.");
-      }
-
-      // Extract text
+      // 1. Extract Text First (Always needed for Gemini)
       const result = await mammoth.extractRawText({ path: req.file.path });
       const text = result.value;
 
-      if (exactPages === 0) {
-        const wordCount = text.split(/\s+/).length;
-        exactPages = Math.max(1, Math.ceil(wordCount / 250));
+      // 2. Determine Page Count
+      let exactPages = 0;
+      
+      // PRIORITIZE MANUAL PAGE COUNT FROM USER
+      if (pageCount && !isNaN(parseInt(pageCount))) {
+        exactPages = parseInt(pageCount, 10);
+        console.log(`[CIP] Using MANUAL Page Count: ${exactPages}`);
+      } else {
+        // Fallback to automatic detection if not provided manually
+        try {
+          const zip = new AdmZip(req.file.path);
+          const appXml = zip.readAsText("docProps/app.xml");
+          if (appXml) {
+            const match = appXml.match(/<(?:[^:]+:)?Pages>(\d+)<\/(?:[^:]+:)?Pages>/i);
+            if (match && match[1]) {
+              exactPages = parseInt(match[1], 10);
+              console.log(`[CIP] XML Page Count detected: ${exactPages}`);
+            }
+          }
+        } catch (e) {
+          console.log("[CIP] Warning: Could not read app.xml metadata.");
+        }
+
+        if (exactPages <= 1) {
+          const charCount = text.length;
+          exactPages = Math.max(1, Math.ceil(charCount / 1800));
+          console.log(`[CIP] Heuristic Page Count fallback: ${exactPages}`);
+        }
       }
 
-      // 2. Ask Gemini
+      // 2. Ask Gemini (SYNCED WITH WORKING VERSION IN LOCALHOST:5173)
       const prompt = `
 Você é um bibliotecário especialista em catalogação.
 Dado o texto extraído de um livro, determine as seguintes informações:
 1. Título do livro
 2. Subtítulo (se houver, senão vazio)
 3. Nome do autor (ou autora)
-4. authorFormatted (Nome do autor formatado para catalogação: SOBRENOME, Nomes próprios. Exemplo: SILVA, João da)
-5. mainSubject (Assunto principal do livro como uma string única e limpa)
-6. Assuntos secundários (lista com no MÁXIMO 5 palavras-chave. Extraia apenas os 5 principais conceitos como strings limpas, sem número ou pontos no final)
-7. Código CDD (escolha o mais adequado da tabela)
-8. Código Cutter-Sanborn (Utilize a tabela Cutter-Sanborn de 3 dígitos exatos. Exemplo: para Santos, é 237. Formato: Letra do sobrenome em maiúscula + 3 números da tabela + Letra inicial do título em minúscula. ATENÇÃO REGRA: Ignore artigos iniciais do título (O, A, Os, As, Um, Uma). Exemplo: para o título "O Último Refúgio", a letra é "u", resultando em "S237u" e não "S237o".)
+4. Assunto principal (nome do assunto principal, sem número)
+5. Assuntos secundários (lista com no MÁXIMO 5 palavras-chave. Extraia apenas os 5 principais conceitos como strings limpas, sem número ou pontos no final)
+6. Código CDD (escolha o mais adequado da tabela)
+7. Código Cutter-Sanborn (Utilize a tabela Cutter-Sanborn de 3 dígitos exatos. Exemplo: para Santos, é 237. Formato: Letra do sobrenome em maiúscula + 3 números da tabela + Letra inicial do título em minúscula. ATENÇÃO REGRA: Ignore artigos iniciais do título (O, A, Os, As, Um, Uma). Exemplo: para o título "O Último Refúgio", a letra é "u", resultando em "S237u" e não "S237o".)
+8. Nome no formato "Sobrenome, Nome."
 9. Ano de publicação (use 2026 se não encontrar)
 
 Tabela de Assuntos e CDD disponíveis:
@@ -113,7 +126,7 @@ ${text.substring(0, 8000)}
 `;
 
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash", 
+        model: "gemini-2.5-flash", // MATCHING THE WORKING STANDALONE VERSION
         generationConfig: {
           responseMimeType: "application/json",
           responseSchema: {
@@ -137,16 +150,30 @@ ${text.substring(0, 8000)}
         }
       });
 
-      const completion = await model.generateContent(prompt);
-      const responseText = completion.response.text();
-      const aiData = JSON.parse(responseText);
+      let aiData: any;
+      try {
+        const completion = await model.generateContent(prompt);
+        const responseText = completion.response.text();
+        console.log("[CIP] Raw AI Response (Synced):", responseText);
+        aiData = JSON.parse(responseText);
+      } catch (aiErr: any) {
+        console.error("[CIP] AI Analysis Failure (Synced):", aiErr);
+        throw new Error(`Falha na análise do documento (Erro na IA: ${aiErr.message})`);
+      }
       aiData.pages = exactPages;
 
       const formattedCidade = cidade.trim();
       const formattedEstado = getEstadoSigla(estado);
       const formattedISBN = isbn.trim();
 
-      const limitedKeywords = aiData.keywords.slice(0, 5);
+      if (!aiData || !aiData.title || !aiData.mainSubject) {
+        console.error("[CIP] Gemini returned valid JSON but missing mandatory fields:", aiData);
+        throw new Error("Falha na análise do documento (Dados incompletos retornados pela IA).");
+      }
+
+      console.log("[CIP] AI Analysis successful for:", aiData.title);
+
+      const limitedKeywords = (aiData.keywords || []).slice(0, 4);
       const formattedKeywordsList = limitedKeywords.map((kw: string, i: number) => `${i + 1}. ${kw.replace(/\.$/, '')}`);
       const keywordsText = formattedKeywordsList.join(". ") + `. I. Título. II. ${aiData.mainSubject.replace(/\.$/, '')}.`;
 
@@ -208,12 +235,61 @@ ${text.substring(0, 8000)}
       }
       await setVal(`/cipCredits/${safeEmail}`, cipCredits);
 
+      // 4. Generate Image (.png) using Jimp
+      const pngFilename = `CIP_${Date.now()}.png`;
+      const pngPath = path.join(generatedDir, pngFilename);
+      
+      try {
+        // Create a white canvas (800x600)
+        const image = new Jimp(800, 600, 0xFFFFFFFF);
+        const font = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
+        const fontBold = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
+        const fontSmall = await Jimp.loadFont(Jimp.FONT_SANS_14_BLACK);
+
+        // Draw Border
+        for (let i = 0; i < 4; i++) {
+            image.scan(20 + i, 20, 760 - (i*2), 1, function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
+            image.scan(20 + i, 580 - i, 760 - (i*2), 1, function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
+            image.scan(20, 20 + i, 1, 560 - (i*2), function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
+            image.scan(780 - i, 20 + i, 1, 560 - (i*2), function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
+        }
+
+        // Header
+        image.print(font, 0, 50, { text: "Dados Internacionais de Catalogação na Publicação (CIP)", alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, 800);
+        image.print(font, 0, 80, { text: "(Ficha Catalográfica Elaborada pela Editora 360 Express)", alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, 800);
+
+        // Divider
+        image.scan(40, 110, 720, 2, function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
+
+        // Content
+        image.print(font, 90, 140, aiData.cutter);
+        image.print(font, 40, 170, aiData.authorFormatted);
+        
+        const descText = `${aiData.title}${aiData.subtitle ? ': ' + aiData.subtitle : ''} / ${aiData.author}. - 1a edicao - ${formattedCidade}, ${formattedEstado}: Editora 360 Express, ${aiData.year}.`;
+        image.print(font, 90, 200, { text: descText, alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT }, 670);
+        
+        image.print(font, 90, 280, `${aiData.pages} p.; 15,2 x 22,8 cm`);
+        
+        // ISBN (Highlight)
+        image.print(fontBold, 0, 340, { text: `ISBN ${formattedISBN}`, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, 800);
+        
+        image.print(font, 40, 420, { text: keywordsText, alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT }, 720);
+
+        // Footer Divider
+        image.scan(40, 520, 720, 2, function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
+        image.print(font, 0, 540, { text: `CDD: ${aiData.cdd}`, alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT }, 760);
+
+        await image.writeAsync(pngPath);
+      } catch (pngErr) {
+        console.error("[CIP] Error generating PNG image:", pngErr);
+      }
+
       res.json({
         success: true,
         data: aiData,
         files: {
           docx: `/downloads/${docxFilename}`,
-          png: null 
+          png: fs.existsSync(pngPath) ? `/downloads/${pngFilename}` : null
         }
       });
 

@@ -66,12 +66,14 @@ export const BarcodeController = {
         bcid: 'ean13',
         text: fullCode,
         scale: 4,             // High resolution
-        height: 30,           // Bar height (in mm-ish units)
+        height: 25,           // Bar height (in mm-ish units)
         includetext: true,    // EAN-13 numbers below (interleaved)
         backgroundcolor: 'ffffff',
         textsize: 13,         // Larger text for bottom numbers
-        textyoffset: 1,      // Small offset
+        textyoffset: 1,       // Small offset
       };
+
+      console.log("[Barcode] Starting generation for:", fullCode);
 
       // Generate the barcode buffer
       const barcodeBuffer = await bwipjs.toBuffer(options);
@@ -87,16 +89,13 @@ export const BarcodeController = {
         // 2. Create Background (591x295 White - Standard size requested)
         const canvas = new Jimp(591, 295, 0xFFFFFFFF);
         
-        // 3. Resize Barcode to fit BOTH width and height constraints
-        // Available height: Total (295) - ISBN Top (~60) - Bottom Padding (~15) = ~220
-        // available width: 560
-        barcodeImage.scaleToFit(560, 210); 
+        // 3. Resize Barcode to fit width but keep height reasonable for numbers
+        // We increase height to 210 to ensure text isn't squashed
+        barcodeImage.scaleToFit(540, 210); 
         
         // 4. Position Barcode
-        // x: centered
-        // y: leave room for ISBN (top). Position it so numbers at bottom aren't cut.
         const x = (canvas.bitmap.width - barcodeImage.bitmap.width) / 2;
-        const y = 70; // Pushed up slightly to ensure bottom numbers fit
+        const y = 55; // Lower start to give room for top text
         canvas.composite(barcodeImage, x, y);
         
         // 5. Add ISBN Text at Top (Centered)
@@ -104,7 +103,7 @@ export const BarcodeController = {
           const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
           const textWidth = Jimp.measureText(font, formattedTop);
           const tx = (canvas.bitmap.width - textWidth) / 2;
-          canvas.print(font, tx, 20, formattedTop); // Higher margin
+          canvas.print(font, tx, 12, formattedTop); // Professional spacing
         } catch (fontErr) {
           console.error("Font loading failed, skipping top text:", fontErr);
         }

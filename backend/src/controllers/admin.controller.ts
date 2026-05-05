@@ -138,11 +138,12 @@ export const login = async (req: Request, res: Response) => {
 
         // FINAL DECISION
         if (isAuthenticated) {
+            console.log(`✅ Login SUCCESS for ${cleanUser}`);
             // @ts-ignore
             const token = jwt.sign({ user: cleanUser }, SECRET_KEY, { expiresIn: '8h' });
             return res.json({ token });
         } else {
-            console.log(`❌ Login Failed for ${cleanUser}`);
+            console.warn(`❌ Login FAILED for ${cleanUser}. Credentials did not match Master, DB File, or Config Service.`);
             // Retorna 401 explícito com tag da versão
             res.status(401).json({ error: "Invalid credentials (Auth v6.0 - Full Restore)" });
         }
@@ -463,31 +464,18 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const getProjectHistory = async (req: Request, res: Response) => {
     try {
-        // 1. Get all projects (the source of truth for the "Book History" requested)
-        const projectsArray = await getVal('/projects') || [];
-        const projects = Array.isArray(projectsArray) ? projectsArray : Object.values(projectsArray);
+        // 1. Get projects (LITE version via optimized getVal)
+        const projects = await getVal('/projects', { fields: 'key, updated_at, metadata:value->metadata' }) || [];
 
         // 2. Enhance projects with latest credits and metadata
         const allCredits = await getVal('/credits') || {};
         
-        // Robust Phone Lookup: Map email -> phone from leads
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-        const phoneMap: Record<string, string> = {};
-        leads.forEach((l: any) => {
-            if (l && l.email && (l.fullPhone || l.phone)) {
-                const cleanE = l.email.toLowerCase().trim();
-                phoneMap[cleanE] = l.fullPhone || l.phone;
-            }
-        });
-
         const projectHistory = projects
-            .filter((p: any) => p && (p.projectId || p.id || (p.metadata && p.metadata.id))) // SAFETY: Filter out ghost/empty entries
+            .filter((p: any) => p && (p.projectId || p.id || (p.metadata && p.metadata.id))) 
             .map((p: any) => {
                 const metadata = p.metadata || {};
                 const projectId = p.projectId || p.id || metadata.id || `unknown_${Math.random().toString(36).substring(7)}`;
                 
-                // Replicate info from VIP Area: Title, Author, Date, Status
                 const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || p.title || "Geração de IA";
                 const authorName = metadata.authorName || metadata.contact?.name || p.authorName || "Autor";
                 const customerName = metadata.contact?.name || metadata.customerName || p.customerName || authorName || "Cliente";
@@ -499,18 +487,10 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                      p.metadata?.userEmail || 
                      "N/A").trim().toLowerCase();
                 
-                // Fetch credits from allCredits
                 const safeEmail = customerEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-                const cleanEmail = customerEmail.toLowerCase().trim();
                 const credits = Number(allCredits[safeEmail] || 0);
 
-                // Phone Lookup
-                const customerPhone = metadata.contact?.phone || metadata.contact?.fullPhone || p.phone || p.fullPhone || phoneMap[cleanEmail] || "N/A";
-
-                // Physical file check
                 let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
-                
-                // Truncate title if it's too long (safety against "bagunça")
                 const safeTitle = (bookTitle.length > 150) ? bookTitle.substring(0, 150) + "..." : bookTitle;
 
                 return {
@@ -520,7 +500,6 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                     authorName: authorName,
                     customerName: customerName,
                     customerEmail: customerEmail,
-                    customerPhone: customerPhone,
                     status: (metadata.status || p.status || "READY").toUpperCase(),
                     projectId: projectId,
                     downloadUrl: downloadLink,
@@ -529,13 +508,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                 };
             });
 
-        // 3. Final Sort - Newer first
-        const sorted = projectHistory.sort((a: any, b: any) => {
-            const dateA = new Date(a.date).getTime();
-            const dateB = new Date(b.date).getTime();
-            return dateB - dateA;
-        });
-
+        const sorted = projectHistory.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
         res.json(sorted);
     } catch (e: any) {
         console.error("🔥 CRITICAL ADMIN PROJECTS ERROR:", e);
@@ -684,28 +657,13 @@ export const manageCredits = async (req: Request, res: Response) => {
 
         if (type === 'cip') {
             const currentCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
-            const base = Math.max(0, currentCredits);
-            const newTotal = Math.max(0, base + Number(amount));
+            const newTotal = Math.max(0, currentCredits + Number(amount));
             await setVal(`/cipCredits/${safeEmail}`, newTotal);
 
             const user = await getVal(`/users/${safeEmail}`);
             if (user) {
                 user.cipCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, user);
-            }
-
-            const rawLeads = await getVal('/leads') || [];
-            const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-            let leadIndex = -1;
-            for (let i = leads.length - 1; i >= 0; i--) {
-                const l = leads[i];
-                if (l && (l as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
-                    leadIndex = i;
-                    break;
-                }
-            }
-            if (leadIndex !== -1) {
-                await setVal(`/leads[${leadIndex}]/cipCredits`, newTotal);
             }
             console.log(`[ADMIN] Manual CIP Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
             return res.json({ success: true, email, previousTotal: currentCredits, newTotal, type: 'cip' });
@@ -729,9 +687,7 @@ export const manageCredits = async (req: Request, res: Response) => {
 
         // 1. Update /credits/ (Primary Source of truth for Generator)
         const currentCredits = Number(await getVal(`/credits/${safeEmail}`) || 0);
-        // Safety: If current is negative (due to double-deduction bug), treat as 0 for the math
-        const base = Math.max(0, currentCredits);
-        const newTotal = Math.max(0, base + Number(amount));
+        const newTotal = Math.max(0, currentCredits + Number(amount));
 
         await setVal(`/credits/${safeEmail}`, newTotal);
 
@@ -741,24 +697,8 @@ export const manageCredits = async (req: Request, res: Response) => {
             user.bookCredits = newTotal;
             await setVal(`/users/${safeEmail}`, user);
         }
-
-        // 3. Mirror to LATEST LEAD (For Admin Panel visibility)
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-        let leadIndex = -1;
-        for (let i = leads.length - 1; i >= 0; i--) {
-            const l = leads[i];
-            if (l && (l as any).email?.toLowerCase().trim() === email.toLowerCase().trim()) {
-                leadIndex = i;
-                break;
-            }
-        }
-        if (leadIndex !== -1) {
-            await setVal(`/leads[${leadIndex}]/credits`, newTotal);
-        }
         
         console.log(`[ADMIN] Manual Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
-        
         res.json({ success: true, email, previousTotal: currentCredits, newTotal });
     } catch (e: any) {
         console.error("manageCredits Error", e);

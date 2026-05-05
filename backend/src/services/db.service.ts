@@ -10,20 +10,23 @@ import path from 'path';
 
 const DB_PATH = path.resolve(process.cwd(), 'database.json');
 
+let cachedLocalDB: any = null;
+
 const getLocalDB = () => {
+    if (cachedLocalDB) return cachedLocalDB;
     try {
         if (fs.existsSync(DB_PATH)) {
             const stats = fs.statSync(DB_PATH);
-            if (stats.size > 1024 * 1024 * 50) {
-                console.warn(`[DB] Local DB is large: ${Math.round(stats.size / 1024 / 1024)}MB. Optimization active.`);
-            }
             const content = fs.readFileSync(DB_PATH, 'utf-8');
-            return JSON.parse(content);
+            cachedLocalDB = JSON.parse(content);
+            console.log(`[DB] Local DB loaded into memory: ${Math.round(stats.size / 1024)}KB`);
+            return cachedLocalDB;
         }
     } catch (e) { 
         console.error("[DB] getLocalDB error:", e);
     }
-    return {};
+    cachedLocalDB = {};
+    return cachedLocalDB;
 };
 
 const getIndividualKey = async (normalizedPath: string): Promise<any> => {
@@ -54,138 +57,103 @@ export const getVal = async (pathStr: string, options: { fields?: string } = {})
         const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
         const isCollectionRoot = collections.includes(normalized);
 
-        // 1. SUPABASE PRIMARY: Check Supabase First
-        if (isCollectionRoot) {
-            let allItems: any[] = [];
-            console.log(`[DB] Fetching collection: ${normalized}`);
-
-            // OPTIMIZATION: If fetching /projects or /leads, we might want to avoid the massive 'value' blob which contains full book content.
-            // For listing in Dashboard/Admin, the 'metadata' part is usually enough.
-            let selectFields = options.fields || 'key, value, updated_at';
-            
-            if (!options.fields) {
-                if (normalized === '/projects') {
-                    // Fetch only ID and Metadata for listing
-                    selectFields = 'key, updated_at, metadata:value->metadata';
-                } else if (normalized === '/leads') {
-                    selectFields = 'key, updated_at, value';
-                }
-            }
-
-            const { data: rawItems, error: fetchErr } = await supabase
-                .from('kv_store')
-                .select(selectFields)
-                .like('key', `${normalized}/%`)
-                .limit(5000); 
-
-            if (fetchErr) {
-                console.error(`[DB] Supabase Fetch Error (${normalized}):`, fetchErr);
-                // If it failed with 400/500, try a 'lite' version without the full value
-                if (normalized === '/projects' || normalized === '/leads') {
-                    console.warn(`[DB] Retrying ${normalized} with LITE fields only...`);
-                    const { data: liteData, error: liteErr } = await supabase
-                        .from('kv_store')
-                        .select('key, updated_at, metadata:value->metadata')
-                        .like('key', `${normalized}/%`)
-                        .limit(5000);
-                    
-                    if (!liteErr && liteData) {
-                        return liteData.map((item: any) => ({
-                            ...item.metadata,
-                            id: item.key.split('/').pop(),
-                            key: item.key,
-                            updated_at: item.updated_at,
-                            metadata: item.metadata // For compatibility
-                        }));
-                    }
-                }
-            }
-
-            if (rawItems && rawItems.length > 0) {
-                // IMPORTANT: Filter out sub-keys (e.g., skip /projects/ID/metadata/translations if fetching /projects)
-                const filteredItems = (rawItems as any[]).filter(item => {
-                    const suffix = item.key.substring(normalized.length + 1);
-                    return !suffix.includes('/'); 
-                });
-
-                console.log(`[DB] Found ${filteredItems.length} valid items for ${normalized}`);
-                
-                allItems = filteredItems.map((item: any) => {
-                    try {
-                        const val = item.value 
-                            ? (typeof item.value === 'string' ? JSON.parse(item.value) : item.value) 
-                            : (typeof item.metadata === 'string' ? JSON.parse(item.metadata) : (item.metadata || {}));
-                            
-                        if (val && typeof val === 'object' && !Array.isArray(val)) {
-                            return {
-                                ...val,
-                                id: val.id || item.key.split('/').pop(),
-                                key: item.key,
-                                updated_at: item.updated_at,
-                                metadata: val.metadata || item.metadata || val // Resilience
-                            };
-                        }
-                        return val;
-                    } catch (e) { return item.value || item.metadata; }
-                });
-            }
-
-            // [CRITICAL] 3. Sync with legacy Root Array if exists (e.g. data still in database.json or root key)
-            const rootVal = await getIndividualKey(normalized);
-            if (rootVal && Array.isArray(rootVal)) {
-                 console.log(`[DB] Merging ${rootVal.length} legacy items from root key ${normalized}`);
-                 allItems = [...allItems, ...rootVal];
-            }
-
-            return allItems.sort((a, b) => {
-                const da = new Date(a?.updated_at || a?.date || a?.createdAt || 0).getTime();
-                const db = new Date(b?.updated_at || b?.date || b?.createdAt || 0).getTime();
-                return db - da; // Newer first
-            });
-        }
-
-        // 2. SUPABASE EXACT MATCH
-        const possibleKeys = [normalized, normalized.startsWith('/') ? normalized.substring(1) : '/' + normalized];
-        
-        for (const k of possibleKeys) {
-            const { data, error } = await supabase
-                .from('kv_store')
-                .select('value')
-                .eq('key', k)
-                .maybeSingle();
-
-            if (error) {
-                console.error(`[DB] Supabase error fetching exact key ${k}:`, error.message);
-            }
-
-            if (!error && data) {
-                const val = data.value;
-                console.log(`[DB] Serving key ${normalized} from Supabase`);
-                return typeof val === 'string' ? JSON.parse(val) : val;
-            }
-        }
-
-        // 3. FALLBACK TO LOCAL JSON (Proactive Safety)
+        // 1. LOCAL CACHE FIRST (Instant)
         const localDB = getLocalDB();
-        
+        if (!isCollectionRoot && localDB[normalized]) {
+            const val = localDB[normalized];
+            console.log(`[DB] Serving key ${normalized} from Memory Cache (Instant)`);
+            
+            // Background Sync (Optional: trigger a re-fetch to keep cache fresh if needed)
+            return typeof val === 'string' ? JSON.parse(val) : val;
+        }
+
         if (isCollectionRoot) {
             const results: any[] = [];
-            for (const [k, v] of Object.entries(localDB)) {
-                if (k.startsWith(`${normalized}/`)) {
-                    const parsed = typeof v === 'string' ? JSON.parse(v) : v;
-                    results.push(parsed);
+            try {
+                for (const [k, v] of Object.entries(localDB)) {
+                    if (k && k.startsWith(`${normalized}/`)) {
+                        try {
+                            const val = typeof v === 'string' ? JSON.parse(v) : v;
+                            if (val) results.push(val);
+                        } catch (e) { console.warn(`[DB] Error parsing key ${k}`); }
+                    }
                 }
-            }
+            } catch (e) { console.error("[DB] Cache loop error", e); }
+
             if (results.length > 0) {
-                console.log(`[DB] Serving collection ${normalized} from localDB (Fallback)`);
-                return results;
+                console.log(`[DB] Serving collection ${normalized} from Memory Cache (Instant)`);
+                return results.sort((a: any, b: any) => {
+                    const da = new Date(a?.updated_at || a?.date || a?.createdAt || 0).getTime();
+                    const db = new Date(b?.updated_at || b?.date || b?.createdAt || 0).getTime();
+                    return db - da;
+                });
             }
         }
 
-        if (localDB[normalized]) {
-            const val = localDB[normalized];
-            console.log(`[DB] Serving key ${normalized} from localDB (Fallback)`);
-            return typeof val === 'string' ? JSON.parse(val) : val;
+        // 2. SUPABASE FALLBACK (Triggered ONLY if really empty, but non-blocking preferred)
+        if (isCollectionRoot) {
+            console.log(`[DB] Collection ${normalized} missing from cache. Syncing in background...`);
+            
+            // Start background sync but don't wait for it if we want instant response
+            const syncPromise = (async () => {
+                try {
+                    let selectFields = options.fields || 'key, value, updated_at';
+                    if (!options.fields) {
+                        if (normalized === '/projects') selectFields = 'key, updated_at, metadata:value->metadata';
+                        else if (normalized === '/leads') selectFields = 'key, updated_at, value';
+                    }
+
+                    // Use a race to enforce a strict timeout even for the fetch
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000));
+                    const fetchPromise = supabase
+                        .from('kv_store')
+                        .select(selectFields)
+                        .like('key', `${normalized}/%`)
+                        .limit(2000);
+
+                    const { data: rawItems } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+                    if (rawItems && rawItems.length > 0) {
+                        const localDB = getLocalDB();
+                        rawItems.forEach((item: any) => {
+                            try {
+                                let val = item.value;
+                                if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) val = JSON.parse(val);
+                                else if (typeof val === 'string') val = { value: val };
+                                val = val || (item.metadata || {});
+                                localDB[item.key] = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
+                            } catch (e) {}
+                        });
+                        cachedLocalDB = localDB;
+                    }
+                } catch (e) { console.warn(`[DB] Background sync failed for ${normalized} (Service possibly slow/down)`); }
+            })();
+
+            return []; 
+        } else {
+            const possibleKeys = [normalized, normalized.startsWith('/') ? normalized.substring(1) : '/' + normalized];
+            for (const k of possibleKeys) {
+                try {
+                    // Fast Exact Match with 1.5s timeout
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1500));
+                    const fetchPromise = supabase.from('kv_store').select('value').eq('key', k).maybeSingle();
+                    
+                    const result = await Promise.race([fetchPromise, timeoutPromise]) as any;
+                    if (result && result.data) {
+                        const val = result.data.value;
+                        let parsed = val;
+                        try {
+                            if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) parsed = JSON.parse(val);
+                            else if (typeof val === 'string') parsed = { value: val };
+                        } catch(e) {}
+                        
+                        const localDB = getLocalDB();
+                        localDB[normalized] = parsed;
+                        cachedLocalDB = localDB;
+                        return parsed;
+                    }
+                } catch (e) { console.warn(`[DB] Fast fetch failed for ${k}`); }
+            }
         }
 
         return isCollectionRoot ? [] : null;
@@ -200,6 +168,13 @@ export const setVal = async (pathStr: string, value: any) => {
         if (!pathStr) return;
         const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
         const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
+
+        // 1. UPDATE MEMORY CACHE IMMEDIATELY
+        try {
+            const db = getLocalDB();
+            db[normalized] = value;
+            cachedLocalDB = db;
+        } catch (e) { console.error("[DB] Cache write error", e); }
 
         // INDEX LOGIC (/leads[0]) - Maintain compatibility with older controller styles
         if (normalized.includes('[') && normalized.includes(']')) {
@@ -230,22 +205,23 @@ export const setVal = async (pathStr: string, value: any) => {
             }
         }
 
-        // SAVE TO SUPABASE
-        await supabase
+        // 2. SAVE TO SUPABASE (Non-blocking background sync)
+        supabase
             .from('kv_store')
             .upsert({
                 key: normalized,
                 value: value,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'key' });
+            }, { onConflict: 'key' })
+            .then(({ error }) => {
+                if (error) console.error(`[DB] Background Sync Error for ${normalized}:`, error.message);
+            });
 
-        // 3. PROACTIVE LOCAL BACKUP (Safety for VPS restarts/sync issues)
-        // [OPTIMIZATION] Non-blocking async write + removed indentation to save memory/cpu
+        // 3. PROACTIVE LOCAL BACKUP (Disk)
         setTimeout(async () => {
             try {
                 const db = getLocalDB();
-                db[normalized] = value;
-                const json = JSON.stringify(db); // No indentation (null, 2)
+                const json = JSON.stringify(db);
                 fs.writeFile(DB_PATH, json, (err) => {
                     if (err) console.error("[DB] Proactive Backup Error:", err);
                 });

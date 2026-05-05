@@ -24,6 +24,7 @@ const CipGenerator: React.FC = () => {
   const [cidade, setCidade] = useState('');
   const [estado, setEstado] = useState('');
   const [isbn, setIsbn] = useState('');
+  const [pageCount, setPageCount] = useState('');
   const [cipCredits, setCipCredits] = useState<number | null>(null);
   const [isCheckingCredits, setIsCheckingCredits] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -84,8 +85,8 @@ const CipGenerator: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    if (!cidade || !estado || !isbn) {
-      setError("Preencha todos os campos obrigatórios (Cidade, Estado, ISBN).");
+    if (!cidade || !estado || !isbn || !pageCount) {
+      setError("Preencha todos os campos obrigatórios (Cidade, Estado, ISBN, Quant. de Páginas).");
       setLoading(false);
       return;
     }
@@ -102,6 +103,7 @@ const CipGenerator: React.FC = () => {
     formData.append('cidade', cidade);
     formData.append('estado', estado);
     formData.append('isbn', isbn);
+    formData.append('pageCount', pageCount);
 
     try {
       const response = await fetch(`${getApiBase()}/api/cip/generate`, {
@@ -120,8 +122,8 @@ const CipGenerator: React.FC = () => {
       const data = await response.json();
       
       const filesWithBase = {
-          docx: data.files.docx.startsWith('http') ? data.files.docx : `${getApiBase()}${data.files.docx}`,
-          png: data.files.png.startsWith('http') ? data.files.png : `${getApiBase()}${data.files.png}`
+          docx: (data.files && data.files.docx && data.files.docx.startsWith('http')) ? data.files.docx : `${getApiBase()}${data.files.docx || ''}`,
+          png: (data.files && data.files.png && data.files.png.startsWith('http')) ? data.files.png : `${getApiBase()}${data.files.png || ''}`
       };
 
       setResult({ ...data, files: filesWithBase });
@@ -193,6 +195,13 @@ const CipGenerator: React.FC = () => {
               <input type="text" placeholder="Estado (Ex: SP)" value={estado} onChange={e => setEstado(e.target.value)} />
               <input type="text" placeholder="Cidade (Ex: São Paulo)" value={cidade} onChange={e => setCidade(e.target.value)} />
               <input type="text" placeholder="Nº do ISBN (Ex: 978-65-02-02105-7)" value={isbn} onChange={e => setIsbn(e.target.value)} />
+              <input 
+                type="number" 
+                placeholder="Quant. de Páginas (Ex: 150)" 
+                value={pageCount} 
+                onChange={e => setPageCount(e.target.value)} 
+                className="page-count-input"
+              />
             </div>
 
             {error && (
@@ -204,18 +213,22 @@ const CipGenerator: React.FC = () => {
 
             {cipCredits !== null && cipCredits > 0 ? (
                 <button 
-                className="generate-btn" 
-                style={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)' }}
+                className={`generate-btn has-credits ${loading ? 'loading' : ''}`} 
+                style={{ 
+                    background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                    boxShadow: '0 4px 15px rgba(234, 88, 12, 0.3)',
+                    marginTop: '20px'
+                }}
                 onClick={handleUpload} 
-                disabled={!file || !cidade || !estado || !isbn || loading}
+                disabled={!file || !cidade || !estado || !isbn || !pageCount || loading}
                 >
                 {loading ? (
                     <>
                     <Loader2 className="icon spin" />
-                    Analisando e Gerando Ficha...
+                    Gerando sua Ficha...
                     </>
                 ) : (
-                    'Gerar Ficha Catalográfica Agora'
+                    'Gerar Ficha Catalográfica Agora!'
                 )}
                 </button>
             ) : (
