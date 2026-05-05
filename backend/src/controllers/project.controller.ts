@@ -494,7 +494,7 @@ export const startResearch = async (req: Request, res: Response) => {
     // 1. LOCK CHECK
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'RESEARCHING' && (now - lastPulse < 30000);
+    const isActuallyRunning = project.metadata.status === 'RESEARCHING' && (now - lastPulse < 600000); // 10 min grace
 
     if (isActuallyRunning) {
         console.log(`[startResearch] Research already active for ${id}. Skipping.`);
@@ -768,7 +768,7 @@ export const generateBookContent = async (req: Request, res: Response) => {
     // 1. LOCK CHECK: Prevent multiple workers from processing the same project
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 30000); // 30s grace
+    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 600000); // 10 min grace (600s)
 
     if (isActuallyRunning) {
         console.log(`[PROJECT] Generation already active for ${id} (Pulse: ${now - lastPulse}ms ago). Skipping new worker.`);
@@ -824,7 +824,10 @@ export const generateBookContent = async (req: Request, res: Response) => {
                 try {
                     attempts++;
                     const meta = { ...freshProject.metadata, language: targetLang };
-                    const content = await AIService.writeChapter(meta, chapter, chapters, freshProject.researchContext);
+                    const content = await AIService.writeChapter(meta, chapter, chapters, freshProject.researchContext, async () => {
+                        // Pulse Callback: Update server activity after each section
+                        await QueueService.updateMetadata(id, { lastWorkerPulse: new Date().toISOString() });
+                    });
                     
                     // RELOAD AGAIN before saving to be super safe
                     const latest = await QueueService.getProject(id);

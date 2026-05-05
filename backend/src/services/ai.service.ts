@@ -467,7 +467,8 @@ export const writeChapter = async (
   metadata: BookMetadata,
   chapter: Chapter,
   structure: Chapter[],
-  researchContext: string
+  researchContext: string,
+  onPulse?: () => Promise<void>
 ): Promise<string> => {
   const llm = await getLLMProvider();
   const lang = metadata.language || 'pt';
@@ -526,6 +527,7 @@ export const writeChapter = async (
         LANGUAGE: ${langName}.
     `;
     fullChapterContent += (await llm.generateText(introPrompt)) + "\n\n";
+    if (onPulse) await onPulse();
 
     // 2.2 Sections
     for (const subtopic of subtopics) {
@@ -562,6 +564,7 @@ export const writeChapter = async (
         `;
       const content = await llm.generateText(sectionPrompt);
       fullChapterContent += `### ${subtopic}\n\n${content}\n\n`;
+      if (onPulse) await onPulse();
     }
 
     // 2.3 Conclusion

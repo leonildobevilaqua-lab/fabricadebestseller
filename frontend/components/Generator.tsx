@@ -616,6 +616,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           if (newProgress !== lastProgress) {
             setLastProgress(newProgress);
             setLastProgressTime(Date.now());
+          } else if (p.metadata.lastWorkerPulse) {
+            // Even if progress % is same, if pulse updated, we are NOT stuck
+            const pulseTime = new Date(p.metadata.lastWorkerPulse).getTime();
+            if (pulseTime > lastProgressTime) {
+                setLastProgressTime(pulseTime);
+            }
           }
           setProject(p);
         }
@@ -631,7 +637,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     if (!projectId || !project || error) return;
     const { status } = project.metadata;
     const now = Date.now();
-    const isStuck = (now - lastProgressTime > 60000); // 1 minute without progress update
+    const isStuck = (now - lastProgressTime > 300000); // 5 minutes without progress or pulse update
 
     if (isStuck && (status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' || status === 'GENERATING_MARKETING')) {
        console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Retrying...`);
