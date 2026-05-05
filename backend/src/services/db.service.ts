@@ -46,7 +46,7 @@ const getIndividualKey = async (normalizedPath: string): Promise<any> => {
     return null;
 };
 
-export const getVal = async (pathStr: string, options: { fields?: string } = {}): Promise<any> => {
+export const getVal = async (pathStr: string, options: { fields?: string, forceSync?: boolean } = {}): Promise<any> => {
     try {
         if (!pathStr) return null;
         
@@ -57,9 +57,9 @@ export const getVal = async (pathStr: string, options: { fields?: string } = {})
         const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders'];
         const isCollectionRoot = collections.includes(normalized);
 
-        // 1. LOCAL CACHE FIRST (Instant)
+        // 1. LOCAL CACHE FIRST (Instant) - Skip if forceSync is active
         const localDB = getLocalDB();
-        if (!isCollectionRoot && localDB[normalized]) {
+        if (!options.forceSync && !isCollectionRoot && localDB[normalized]) {
             const val = localDB[normalized];
             console.log(`[DB] Serving key ${normalized} from Memory Cache (Instant)`);
             
@@ -67,7 +67,7 @@ export const getVal = async (pathStr: string, options: { fields?: string } = {})
             return typeof val === 'string' ? JSON.parse(val) : val;
         }
 
-        if (isCollectionRoot) {
+        if (!options.forceSync && isCollectionRoot) {
             const results: any[] = [];
             try {
                 for (const [k, v] of Object.entries(localDB)) {
@@ -92,6 +92,34 @@ export const getVal = async (pathStr: string, options: { fields?: string } = {})
 
         // 2. SUPABASE FALLBACK (Triggered ONLY if really empty, but non-blocking preferred)
         if (isCollectionRoot) {
+            if (options.forceSync) {
+                console.log(`[DB] Collection ${normalized} - Forced Real-time Fetch...`);
+                let selectFields = options.fields || 'key, value, updated_at';
+                const { data: rawItems, error } = await supabase.from('kv_store').select(selectFields).like('key', `${normalized}/%`).limit(2000);
+                
+                if (!error && rawItems) {
+                    const syncedResults: any[] = [];
+                    const localDB = getLocalDB();
+                    rawItems.forEach((item: any) => {
+                        try {
+                            let val = item.value;
+                            if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) val = JSON.parse(val);
+                            else if (typeof val === 'string') val = { value: val };
+                            val = val || (item.metadata || {});
+                            const parsed = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
+                            localDB[item.key] = parsed;
+                            syncedResults.push(parsed);
+                        } catch (e) {}
+                    });
+                    cachedLocalDB = localDB;
+                    return syncedResults.sort((a: any, b: any) => {
+                        const da = new Date(a?.updated_at || a?.date || a?.createdAt || 0).getTime();
+                        const db = new Date(b?.updated_at || b?.date || b?.createdAt || 0).getTime();
+                        return db - da;
+                    });
+                }
+            }
+
             console.log(`[DB] Collection ${normalized} missing from cache. Syncing in background...`);
             
             // Start background sync but don't wait for it if we want instant response
@@ -134,8 +162,8 @@ export const getVal = async (pathStr: string, options: { fields?: string } = {})
             const possibleKeys = [normalized, normalized.startsWith('/') ? normalized.substring(1) : '/' + normalized];
             for (const k of possibleKeys) {
                 try {
-                    // Fast Exact Match with 1.5s timeout
-                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 1500));
+                    // Increased timeout to 5s for Production Stability
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000));
                     const fetchPromise = supabase.from('kv_store').select('value').eq('key', k).maybeSingle();
                     
                     const result = await Promise.race([fetchPromise, timeoutPromise]) as any;
@@ -150,9 +178,12 @@ export const getVal = async (pathStr: string, options: { fields?: string } = {})
                         const localDB = getLocalDB();
                         localDB[normalized] = parsed;
                         cachedLocalDB = localDB;
+                        console.log(`[DB] Successfully fetched and cached individual key: ${normalized}`);
                         return parsed;
                     }
-                } catch (e) { console.warn(`[DB] Fast fetch failed for ${k}`); }
+                } catch (e) { 
+                    console.warn(`[DB] Fetch failed or timed out for ${k}:`, e.message); 
+                }
             }
         }
 
@@ -273,6 +304,10 @@ export const deleteVal = async (pathStr: string) => {
     } catch (e) { }
 };
 
-export const reloadDB = async () => Promise.resolve();
+export const reloadDB = async () => {
+    cachedLocalDB = null;
+    console.log("[DB] Memory Cache cleared. Next request will be forced to sync with Supabase.");
+    return Promise.resolve();
+};
 
 export default { getVal, setVal, pushVal, deleteVal, reloadDB };

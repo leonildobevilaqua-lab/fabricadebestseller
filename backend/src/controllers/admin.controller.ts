@@ -633,9 +633,9 @@ export const getCredits = async (req: Request, res: Response) => {
         const { email } = req.params;
         if (!email) return res.status(400).json({ error: "Email requerido" });
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        const credits = Number(await getVal(`/credits/${safeEmail}`) || 0);
-        const cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
-        const barcodeCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`) || 0);
+        const credits = Number(await getVal(`/credits/${safeEmail}`, { forceSync: true }) || 0);
+        const cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`, { forceSync: true }) || 0);
+        const barcodeCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true }) || 0);
         res.json({ email, credits, cipCredits, barcodeCredits });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -656,11 +656,11 @@ export const manageCredits = async (req: Request, res: Response) => {
         await reloadDB();
 
         if (type === 'cip') {
-            const currentCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
+            const currentCredits = Number(await getVal(`/cipCredits/${safeEmail}`, { forceSync: true }) || 0);
             const newTotal = Math.max(0, currentCredits + Number(amount));
             await setVal(`/cipCredits/${safeEmail}`, newTotal);
 
-            const user = await getVal(`/users/${safeEmail}`);
+            const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
             if (user) {
                 user.cipCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, user);
@@ -670,12 +670,12 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         if (type === 'barcode') {
-            const currentCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`) || 0);
+            const currentCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true }) || 0);
             const base = Math.max(0, currentCredits);
             const newTotal = Math.max(0, base + Number(amount));
             await setVal(`/barcodeCredits/${safeEmail}`, newTotal);
 
-            const user = await getVal(`/users/${safeEmail}`);
+            const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
             if (user) {
                 user.barcodeCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, user);
@@ -686,13 +686,13 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         // 1. Update /credits/ (Primary Source of truth for Generator)
-        const currentCredits = Number(await getVal(`/credits/${safeEmail}`) || 0);
+        const currentCredits = Number(await getVal(`/credits/${safeEmail}`, { forceSync: true }) || 0);
         const newTotal = Math.max(0, currentCredits + Number(amount));
 
         await setVal(`/credits/${safeEmail}`, newTotal);
 
         // 2. Mirror to /users/ (For User Profile/Dashboard visibility)
-        const user = await getVal(`/users/${safeEmail}`);
+        const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
         if (user) {
             user.bookCredits = newTotal;
             await setVal(`/users/${safeEmail}`, user);
@@ -747,7 +747,7 @@ export const impersonateUser = async (req: Request, res: Response) => {
         const safeEmail = cleanEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
         await reloadDB();
-        const user = await getVal(`/users/${safeEmail}`);
+        const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
 
         if (!user) {
             return res.status(404).json({ error: "Usuário não encontrado na base /users." });
