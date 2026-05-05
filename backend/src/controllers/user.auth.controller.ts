@@ -280,6 +280,9 @@ export const UserAuthController = {
             let barcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true })) || 0);
             if (!barcodeCredits && user.barcodeCredits) barcodeCredits = user.barcodeCredits;
 
+            let qrCredits = Number((await getVal(`/qrCredits/${safeEmail}`, { forceSync: true })) || 0);
+            if (!qrCredits && user.qrCredits) qrCredits = user.qrCredits;
+
             // --- 5. MASTER RESTORATION (REMOVED PER USER REQUEST TO TEST CREDITS) ---
             if (isMaster) {
                 console.log("💎 MASTER LEONILDO LOGGED IN - NO AUTO CREDITS APPLIED (Testing Mode)");
@@ -295,6 +298,7 @@ export const UserAuthController = {
                 credits: credits, 
                 cipCredits: cipCredits,
                 barcodeCredits: barcodeCredits,
+                qrCredits: qrCredits,
                 stats: {
                     purchaseCycleCount: cycleIndex,
                     totalBooksGenerated: finalUsageCount,

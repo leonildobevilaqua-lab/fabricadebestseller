@@ -12,6 +12,7 @@ import { BookGeneratorView } from './BookGeneratorView';
 import { PlaceholderView, ExternalProductView } from './DashboardViews';
 import CipGenerator from './CipGenerator';
 import BarcodeGenerator from './BarcodeGenerator';
+import QrCodeGenerator from './QrCodeGenerator';
 
 interface DashboardProps {
     user: any;
@@ -128,6 +129,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         { id: 'cbl-tutorial', label: 'Registro CBL (Tutorial)', icon: FileText, price: 'R$ 19,90' },
         { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 27,90' },
         { id: 'barras', label: 'Código de Barras', icon: Barcode, price: 'R$ 19,90' },
+        { id: 'qr-code', label: 'Gerador QR Code', icon: Smartphone, price: 'R$ 7,00' },
         { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
         { id: 'capa-ebook', label: 'Capa Ebook (Digital)', icon: Smartphone, isPreparation: true },
         { id: 'amazon', label: 'Publicação Amazon', icon: Cloud, isPreparation: true },
@@ -184,6 +186,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 return (
                     <BarcodeGenerator 
                         credits={stats?.barcodeCredits || 0}
+                        userEmail={user.email}
+                        onRefresh={fetchMe}
+                    />
+                );
+            case 'qr-code':
+                return (
+                    <QrCodeGenerator 
+                        credits={stats?.qrCredits || 0}
                         userEmail={user.email}
                         onRefresh={fetchMe}
                     />

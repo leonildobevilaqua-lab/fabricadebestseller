@@ -416,7 +416,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [foundCredits, setFoundCredits] = useState<number | null>(null);
     const [foundCipCredits, setFoundCipCredits] = useState<number | null>(null);
     const [foundBarcodeCredits, setFoundBarcodeCredits] = useState<number | null>(null);
-    const [creditType, setCreditType] = useState<'book' | 'cip' | 'barcode'>('book');
+    const [foundQrCredits, setFoundQrCredits] = useState<number | null>(null);
+    const [creditType, setCreditType] = useState<'book' | 'cip' | 'barcode' | 'qr'>('book');
     const [creditAmount, setCreditAmount] = useState(1);
     const [creditsOpLoading, setCreditsOpLoading] = useState(false);
     const [creditsMsg, setCreditsMsg] = useState('');
@@ -434,12 +435,14 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 setFoundCredits(data.credits);
                 setFoundCipCredits(data.cipCredits);
                 setFoundBarcodeCredits(data.barcodeCredits);
-                if (data.credits === 0 && data.cipCredits === 0 && data.barcodeCredits === 0 && !creditsMsg) setCreditsMsg('ℹ️ Usuário encontrado, mas sem créditos no momento.');
+                setFoundQrCredits(data.qrCredits);
+                if (data.credits === 0 && data.cipCredits === 0 && data.barcodeCredits === 0 && data.qrCredits === 0 && !creditsMsg) setCreditsMsg('ℹ️ Usuário encontrado, mas sem créditos no momento.');
             } else {
                 setCreditsMsg(`❌ ${data.error || 'Usuário não encontrado ou erro na busca.'}`);
                 setFoundCredits(null);
                 setFoundCipCredits(null);
                 setFoundBarcodeCredits(null);
+                setFoundQrCredits(null);
             }
         } catch (e: any) {
             setCreditsMsg(`❌ Erro de conexão: ${e.message}`);
@@ -450,7 +453,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const handleManageCreditsOp = async (amount: number) => {
         if (!creditSearchEmail) return;
-        const typeLabel = creditType === 'cip' ? 'Ficha CIP' : creditType === 'barcode' ? 'Cód. Barras' : 'Livro';
+        const typeLabel = creditType === 'cip' ? 'Ficha CIP' : creditType === 'barcode' ? 'Cód. Barras' : creditType === 'qr' ? 'QR Code' : 'Livro';
         const actionLabel = amount > 0 ? 'adicionar' : 'remover';
         if (!confirm(`Deseja realmente ${actionLabel} ${Math.abs(amount)} crédito(s) de ${typeLabel} para ${creditSearchEmail}?`)) return;
 
@@ -475,6 +478,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     setFoundCipCredits(data.newTotal);
                 } else if (creditType === 'barcode') {
                     setFoundBarcodeCredits(data.newTotal);
+                } else if (creditType === 'qr') {
+                    setFoundQrCredits(data.newTotal);
                 } else {
                     setFoundCredits(data.newTotal);
                 }
@@ -2029,6 +2034,17 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     <span className="text-xl">📊</span>
                                                 </div>
                                             </div>
+
+                                            <div 
+                                                onClick={() => setCreditType('qr')}
+                                                className={`p-3 rounded-xl border cursor-pointer transition-all shadow-sm flex flex-col justify-center gap-1 ${creditType === 'qr' ? 'bg-rose-50 border-rose-300 ring-2 ring-rose-200' : 'bg-white border-slate-100 hover:border-slate-300'}`}
+                                            >
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest block">QR Code</span>
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-2xl font-black text-slate-800">{foundQrCredits ?? 0}</span>
+                                                    <span className="text-xl">📱</span>
+                                                </div>
+                                            </div>
                                         </div>
 
                                     {creditsMsg && (
@@ -2041,12 +2057,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         <div className="pt-4 border-t border-slate-200 space-y-4">
                                             <div>
                                                 <label className="block text-[10px] font-black uppercase text-slate-400 tracking-widest mb-3 text-center">
-                                                    Gerenciar Créditos de {creditType === 'cip' ? 'FICHA CIP' : creditType === 'barcode' ? 'CÓD. BARRAS' : 'LIVRO'}
+                                                    Gerenciar Créditos de {creditType === 'cip' ? 'FICHA CIP' : creditType === 'barcode' ? 'CÓD. BARRAS' : creditType === 'qr' ? 'QR CODE' : 'LIVRO'}
                                                 </label>
                                                 <div className="flex items-center justify-center gap-6">
                                                     <button 
                                                         onClick={() => handleManageCreditsOp(-1)}
-                                                        disabled={creditsOpLoading || (creditType === 'book' ? (foundCredits ?? 0) <= 0 : creditType === 'cip' ? (foundCipCredits ?? 0) <= 0 : (foundBarcodeCredits ?? 0) <= 0)}
+                                                        disabled={creditsOpLoading || (creditType === 'book' ? (foundCredits ?? 0) <= 0 : creditType === 'cip' ? (foundCipCredits ?? 0) <= 0 : creditType === 'barcode' ? (foundBarcodeCredits ?? 0) <= 0 : (foundQrCredits ?? 0) <= 0)}
                                                         className="w-14 h-14 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center hover:bg-rose-200 transition-colors disabled:opacity-30 shadow-sm border border-rose-200"
                                                         title="Remover 1 Crédito"
                                                     >
@@ -2079,7 +2095,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                     +5 Créditos
                                                 </button>
                                                 <button 
-                                                    onClick={() => handleManageCreditsOp(creditType === 'book' ? -foundCredits! : creditType === 'cip' ? -(foundCipCredits ?? 0) : -(foundBarcodeCredits ?? 0))}
+                                                    onClick={() => handleManageCreditsOp(creditType === 'book' ? -foundCredits! : creditType === 'cip' ? -(foundCipCredits ?? 0) : creditType === 'barcode' ? -(foundBarcodeCredits ?? 0) : -(foundQrCredits ?? 0))}
                                                     className="py-3 bg-white border border-rose-100 rounded-xl text-xs font-black text-rose-500 hover:bg-rose-50 transition shadow-sm uppercase"
                                                 >
                                                     Zerar Saldo

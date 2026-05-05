@@ -88,15 +88,15 @@ export const getLeads = async (req: Request, res: Response) => {
 
         // Enhance leads with credit status and latest plan
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
-            if (!lead) return null;
-            if (!lead.email) return { ...lead, credits: 0, cipCredits: 0 };
+            if (!lead.email) return { ...lead, credits: 0, cipCredits: 0, qrCredits: 0 };
             const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
             const credits = Number((await getVal(`/credits/${safeEmail}`, { forceSync: true })) || 0);
             const cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`, { forceSync: true })) || 0);
+            const qrCredits = Number((await getVal(`/qrCredits/${safeEmail}`, { forceSync: true })) || 0);
 
             // Fix Plan display out-of-sync for books
             const userPlan = await getVal(`/users/${safeEmail}/plan`, { forceSync: true });
-            let updatedLead = { ...lead, credits, cipCredits };
+            let updatedLead = { ...lead, credits, cipCredits, qrCredits };
 
             // If the lead was a generic Book request without plan context, but the user HAS an active plan, apply it so the UI shows the correct Plan and Discounted Price.
             if ((!updatedLead.plan || updatedLead.plan.name === 'AVULSO') && userPlan && userPlan.status === 'ACTIVE') {
@@ -458,14 +458,38 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     redeemedIds.push(txId);
                     await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
 
-                    // GRANT CREDIT
-                    const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-                    const newCredits = currentCredits + 1;
+                    // Detect Product Type
+                    const pNameUpper = productName.toUpperCase();
+                    const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA');
+                    const isBarcode = pNameUpper.includes('BARRAS');
+                    const isQR = pNameUpper.includes('QR CODE');
 
-                    // 1. Update Source of Truth
-                    await setVal(`/credits/${safeEmail}`, newCredits);
-                    // 2. Mirror to User Object (as requested)
-                    await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
+                    if (isCIP) {
+                        const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+                        const newCipCredits = currentCipCredits + 1;
+                        await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
+                        await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
+                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newCipCredits} CIP credits.`);
+                    } else if (isBarcode) {
+                        const currentBarcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+                        const newBarcodeCredits = currentBarcodeCredits + 1;
+                        await setVal(`/barcodeCredits/${safeEmail}`, newBarcodeCredits);
+                        await setVal(`/users/${safeEmail}/barcodeCredits`, newBarcodeCredits);
+                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newBarcodeCredits} Barcode credits.`);
+                    } else if (isQR) {
+                        const currentQrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+                        const newQrCredits = currentQrCredits + 1;
+                        await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
+                        await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
+                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newQrCredits} QR credits.`);
+                    } else {
+                        // DEFAULT: BOOK CREDIT
+                        const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                        const newCredits = currentCredits + 1;
+                        await setVal(`/credits/${safeEmail}`, newCredits);
+                        await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
+                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newCredits} book credits.`);
+                    }
 
                     // Save last payment date
                     await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
@@ -1295,9 +1319,13 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 redeemedIds.push(txId);
                 await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
 
-                // Detect if it is CIP or BOOK
+                // Detect Product Type (BOOK, CIP, BARCODE, QR)
                 const pNameUpper = productName.toUpperCase();
-                const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA') || String(payload.item?.product_id) === 'O89DB6739' || String(tx.product?.id) === 'O89DB6739';
+                const productId = String(payload.item?.product_id || tx.product?.id || "");
+                
+                const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA') || productId === 'O89DB6739';
+                const isBarcode = pNameUpper.includes('BARRAS') || productId === 'O77037442';
+                const isQR = pNameUpper.includes('QR CODE') || productId === 'O8B28DD61';
 
                 if (isCIP) {
                     const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
@@ -1305,6 +1333,18 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
                     await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
                     console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCipCredits} CIP credits.`);
+                } else if (isBarcode) {
+                    const currentBarcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+                    const newBarcodeCredits = currentBarcodeCredits + 1;
+                    await setVal(`/barcodeCredits/${safeEmail}`, newBarcodeCredits);
+                    await setVal(`/users/${safeEmail}/barcodeCredits`, newBarcodeCredits);
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newBarcodeCredits} Barcode credits.`);
+                } else if (isQR) {
+                    const currentQrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+                    const newQrCredits = currentQrCredits + 1;
+                    await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
+                    await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newQrCredits} QR credits.`);
                 } else {
                     const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
                     const newCredits = currentCredits + 1;

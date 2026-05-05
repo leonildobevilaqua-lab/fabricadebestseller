@@ -22,6 +22,9 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe, 
     const [prodStatus, setProdStatus] = useState(lead.productionStatus);
     const [loading, setLoading] = useState(false);
     const [credits, setCredits] = useState(lead.credits || 0);
+    const [cipCredits, setCipCredits] = useState(lead.cipCredits || 0);
+    const [barcodeCredits, setBarcodeCredits] = useState(lead.barcodeCredits || 0);
+    const [qrCredits, setQrCredits] = useState(lead.qrCredits || 0);
 
 
     // Update if props change
@@ -30,6 +33,9 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe, 
         setStatus(lead.status || 'PENDING');
         setProdStatus(lead.productionStatus);
         setCredits(lead.credits || 0);
+        setCipCredits(lead.cipCredits || 0);
+        setBarcodeCredits(lead.barcodeCredits || 0);
+        setQrCredits(lead.qrCredits || 0);
     }, [lead]);
 
 
@@ -113,8 +119,13 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe, 
             });
             const data = await res.json();
             if (data.success) {
-                setCredits(data.newTotal);
-                setLiberado(data.newTotal > 0);
+                if (data.type === 'cip') setCipCredits(data.newTotal);
+                else if (data.type === 'barcode') setBarcodeCredits(data.newTotal);
+                else if (data.type === 'qr') setQrCredits(data.newTotal);
+                else {
+                    setCredits(data.newTotal);
+                    setLiberado(data.newTotal > 0);
+                }
             } else {
                 alert("Erro ao gerenciar créditos: " + data.error);
             }
@@ -306,11 +317,23 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe, 
             </td>
 
             {/* CREDITS DISPLAY */}
-            <td className="p-4 align-top text-center">
-                <div className="flex flex-col items-center justify-center h-full pt-2">
-                    <div className="text-[10px] font-black text-slate-400 uppercase leading-none mb-1">Saldo</div>
-                    <div className={`text-xl font-black ${credits > 0 ? 'text-emerald-600' : 'text-slate-300'}`}>
-                        {credits}
+            <td className="p-4 align-top">
+                <div className="flex flex-col gap-1.5 min-w-[80px]">
+                    <div className="flex items-center justify-between bg-amber-50 px-2 py-1 rounded border border-amber-100">
+                        <span className="text-[9px] font-black text-amber-600 uppercase">LIV</span>
+                        <span className="text-xs font-black text-slate-700">{credits}</span>
+                    </div>
+                    <div className="flex items-center justify-between bg-indigo-50 px-2 py-1 rounded border border-indigo-100">
+                        <span className="text-[9px] font-black text-indigo-600 uppercase">CIP</span>
+                        <span className="text-xs font-black text-slate-700">{cipCredits}</span>
+                    </div>
+                    <div className="flex items-center justify-between bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
+                        <span className="text-[9px] font-black text-emerald-600 uppercase">BAR</span>
+                        <span className="text-xs font-black text-slate-700">{barcodeCredits}</span>
+                    </div>
+                    <div className="flex items-center justify-between bg-rose-50 px-2 py-1 rounded border border-rose-100">
+                        <span className="text-[9px] font-black text-rose-600 uppercase">QR</span>
+                        <span className="text-xs font-black text-slate-700">{qrCredits}</span>
                     </div>
                 </div>
             </td>
