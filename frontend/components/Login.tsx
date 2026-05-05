@@ -151,6 +151,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                             required
                         />
                     </div>
+                    <div>
                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
                             {(t as any).auth.passwordLabel}
                         </label>
