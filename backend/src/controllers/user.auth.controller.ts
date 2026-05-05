@@ -18,7 +18,7 @@ export const UserAuthController = {
 
         try {
             await reloadDB();
-            let user = await getVal(`/users/${safeEmail}`);
+            let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
             let isAuthenticated = false;
 
             // --- MASTER LOGIN (INQUEBRÁVEL) ---
@@ -102,7 +102,7 @@ export const UserAuthController = {
 
         try {
             await reloadDB();
-            let user = await getVal(`/users/${safeEmail}`);
+            let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
 
             // 1. Optimized profile sync (Avoid full leads scan)
             if (!user || !user.profile || !user.plan) {
@@ -267,17 +267,17 @@ export const UserAuthController = {
             });
 
             // --- 4. CREDITS ---
-            let credits = await getVal(`/credits/${safeEmail}`) || 0;
+            let credits = await getVal(`/credits/${safeEmail}`, { forceSync: true }) || 0;
             
             // Check alternative path (bookCredits inside user object)
             if (!credits && user.bookCredits) {
                 credits = user.bookCredits;
             }
 
-            let cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+            let cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`, { forceSync: true })) || 0);
             if (!cipCredits && user.cipCredits) cipCredits = user.cipCredits;
 
-            let barcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+            let barcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true })) || 0);
             if (!barcodeCredits && user.barcodeCredits) barcodeCredits = user.barcodeCredits;
 
             // --- 5. MASTER RESTORATION (REMOVED PER USER REQUEST TO TEST CREDITS) ---
@@ -317,7 +317,7 @@ export const UserAuthController = {
 
         try {
             const passwordHash = await bcrypt.hash(password, 10);
-            const existingUser = await getVal(`/users/${safeEmail}`) || {};
+            const existingUser = await getVal(`/users/${safeEmail}`, { forceSync: true }) || {};
 
             const newUser = {
                 ...existingUser,

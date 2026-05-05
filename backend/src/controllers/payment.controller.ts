@@ -48,7 +48,7 @@ export const createLead = async (req: Request, res: Response) => {
         let resolvedPlan = plan ? { ...plan, status: 'PENDING' } : undefined;
 
         if (safeEmail && !resolvedPlan) {
-            const userPlan = await getVal(`/users/${safeEmail}/plan`);
+            const userPlan = await getVal(`/users/${safeEmail}/plan`, { forceSync: true });
             if (userPlan && userPlan.status === 'ACTIVE') {
                 resolvedPlan = userPlan; // Inherit plan so admin sees correct price
             }
@@ -83,7 +83,7 @@ export const createLead = async (req: Request, res: Response) => {
 export const getLeads = async (req: Request, res: Response) => {
     try {
         await reloadDB();
-        const rawLeads = await getVal('/leads') || [];
+        const rawLeads = await getVal('/leads', { forceSync: true }) || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
         // Enhance leads with credit status and latest plan
@@ -91,11 +91,11 @@ export const getLeads = async (req: Request, res: Response) => {
             if (!lead) return null;
             if (!lead.email) return { ...lead, credits: 0, cipCredits: 0 };
             const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-            const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-            const cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+            const credits = Number((await getVal(`/credits/${safeEmail}`, { forceSync: true })) || 0);
+            const cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`, { forceSync: true })) || 0);
 
             // Fix Plan display out-of-sync for books
-            const userPlan = await getVal(`/users/${safeEmail}/plan`);
+            const userPlan = await getVal(`/users/${safeEmail}/plan`, { forceSync: true });
             let updatedLead = { ...lead, credits, cipCredits };
 
             // If the lead was a generic Book request without plan context, but the user HAS an active plan, apply it so the UI shows the correct Plan and Discounted Price.

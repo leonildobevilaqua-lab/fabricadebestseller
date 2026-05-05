@@ -444,8 +444,8 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 export const getOrders = async (req: Request, res: Response) => {
     try {
-        // 1. Get real financial orders for the Dashboard
-        const ordersArray = await getVal('/orders') || [];
+        // 1. Get real financial orders for the Dashboard (Force Sync for Admin)
+        const ordersArray = await getVal('/orders', { forceSync: true }) || [];
         const orders = Array.isArray(ordersArray) ? ordersArray : Object.values(ordersArray);
 
         // 2. Sort - Newer first
@@ -464,11 +464,14 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const getProjectHistory = async (req: Request, res: Response) => {
     try {
-        // 1. Get projects (LITE version via optimized getVal)
-        const projects = await getVal('/projects', { fields: 'key, updated_at, metadata:value->metadata' }) || [];
+        // 1. Get projects (LITE version via optimized getVal) - Force Sync for Admin
+        const projects = await getVal('/projects', { 
+            fields: 'key, updated_at, metadata:value->metadata',
+            forceSync: true 
+        }) || [];
 
         // 2. Enhance projects with latest credits and metadata
-        const allCredits = await getVal('/credits') || {};
+        const allCredits = await getVal('/credits', { forceSync: true }) || {};
         
         const projectHistory = projects
             .filter((p: any) => p && (p.projectId || p.id || (p.metadata && p.metadata.id))) 

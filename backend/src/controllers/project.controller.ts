@@ -52,7 +52,7 @@ export const create = async (req: Request, res: Response) => {
         // if (isLocal) console.log(`[PROJECT] DEV MODE DETECTED: Bypassing Credit Check for ${authorName}`);
 
         if (!isResuming && safeEmail && !isLocal) {
-            let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            let credits = Number((await getVal(`/credits/${safeEmail}`, { forceSync: true })) || 0);
 
             // --- KIWIFY/ASAAS FAST-TRACK SYNC ---
             // If credits <= 0, try one last time to sync from raw orders/payments before denying
@@ -138,7 +138,7 @@ export const create = async (req: Request, res: Response) => {
             await setVal(`/credits/${safeEmail}`, newTotal);
             
             // Mirror to user profile for dashboard visibility
-            const userProfile = await getVal(`/users/${safeEmail}`);
+            const userProfile = await getVal(`/users/${safeEmail}`, { forceSync: true });
             if (userProfile) {
                 userProfile.bookCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, userProfile);
