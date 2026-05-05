@@ -64,7 +64,10 @@ const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({ credits, userEmail, o
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('bsf_token')}`
                 },
-                body: JSON.stringify({ url })
+                body: JSON.stringify({ 
+                    url,
+                    email: userEmail 
+                })
             });
 
             const data = await res.json();
