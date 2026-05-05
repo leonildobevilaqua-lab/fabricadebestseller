@@ -253,7 +253,7 @@ const CipGenerator: React.FC = () => {
 
                         <div className="text-left space-y-3 pt-2">
                             <p className="text-[11px] text-slate-400 leading-relaxed">
-                                Lembrando que a Ficha Catalográfica é gerada de forma profissional, você receberá o documento em <strong>word</strong> e em <strong>imagem no formato PNG</strong>.
+                                Lembrando que a Ficha Catalográfica é gerada de forma profissional, você receberá o documento em <strong>word</strong>.
                             </p>
                             
                             <div className="bg-amber-500/10 border border-amber-500/20 p-3 rounded-xl">
@@ -314,10 +314,6 @@ const CipGenerator: React.FC = () => {
               <a href={result.files.docx} target="_blank" rel="noopener noreferrer" className="download-btn docx">
                 <Download className="icon" />
                 Baixar Ficha em Word (.docx)
-              </a>
-              <a href={result.files.png} target="_blank" rel="noopener noreferrer" className="download-btn png">
-                <Download className="icon" />
-                Baixar Ficha em Imagem (.png)
               </a>
             </div>
 

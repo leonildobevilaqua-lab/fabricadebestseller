@@ -235,61 +235,12 @@ ${text.substring(0, 8000)}
       }
       await setVal(`/cipCredits/${safeEmail}`, cipCredits);
 
-      // 4. Generate Image (.png) using Jimp
-      const pngFilename = `CIP_${Date.now()}.png`;
-      const pngPath = path.join(generatedDir, pngFilename);
-      
-      try {
-        // Create a white canvas (800x600)
-        const image = new Jimp(800, 600, 0xFFFFFFFF);
-        const font = await Jimp.loadFont(Jimp.FONT_SANS_16_BLACK);
-        const fontBold = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
-        const fontSmall = await Jimp.loadFont(Jimp.FONT_SANS_14_BLACK);
-
-        // Draw Border
-        for (let i = 0; i < 4; i++) {
-            image.scan(20 + i, 20, 760 - (i*2), 1, function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
-            image.scan(20 + i, 580 - i, 760 - (i*2), 1, function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
-            image.scan(20, 20 + i, 1, 560 - (i*2), function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
-            image.scan(780 - i, 20 + i, 1, 560 - (i*2), function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
-        }
-
-        // Header
-        image.print(font, 0, 50, { text: "Dados Internacionais de Catalogação na Publicação (CIP)", alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, 800);
-        image.print(font, 0, 80, { text: "(Ficha Catalográfica Elaborada pela Editora 360 Express)", alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, 800);
-
-        // Divider
-        image.scan(40, 110, 720, 2, function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
-
-        // Content
-        image.print(font, 90, 140, aiData.cutter);
-        image.print(font, 40, 170, aiData.authorFormatted);
-        
-        const descText = `${aiData.title}${aiData.subtitle ? ': ' + aiData.subtitle : ''} / ${aiData.author}. - 1a edicao - ${formattedCidade}, ${formattedEstado}: Editora 360 Express, ${aiData.year}.`;
-        image.print(font, 90, 200, { text: descText, alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT }, 670);
-        
-        image.print(font, 90, 280, `${aiData.pages} p.; 15,2 x 22,8 cm`);
-        
-        // ISBN (Highlight)
-        image.print(fontBold, 0, 340, { text: `ISBN ${formattedISBN}`, alignmentX: Jimp.HORIZONTAL_ALIGN_CENTER }, 800);
-        
-        image.print(font, 40, 420, { text: keywordsText, alignmentX: Jimp.HORIZONTAL_ALIGN_LEFT }, 720);
-
-        // Footer Divider
-        image.scan(40, 520, 720, 2, function(x, y, idx) { this.bitmap.data.set([0,0,0,255], idx); });
-        image.print(font, 0, 540, { text: `CDD: ${aiData.cdd}`, alignmentX: Jimp.HORIZONTAL_ALIGN_RIGHT }, 760);
-
-        await image.writeAsync(pngPath);
-      } catch (pngErr) {
-        console.error("[CIP] Error generating PNG image:", pngErr);
-      }
-
       res.json({
         success: true,
         data: aiData,
         files: {
           docx: `/downloads/${docxFilename}`,
-          png: fs.existsSync(pngPath) ? `/downloads/${pngFilename}` : null
+          png: null // PNG generation disabled as per user request
         }
       });
 

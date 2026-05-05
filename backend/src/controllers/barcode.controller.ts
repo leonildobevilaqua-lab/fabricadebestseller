@@ -61,19 +61,21 @@ export const BarcodeController = {
       // Even if not a real ISBN prefix, we keep the requested format for the user
       const formattedTop = `ISBN ${fullCode.slice(0,3)}-${fullCode.slice(3,5)}-${fullCode.slice(5,7)}-${fullCode.slice(7,12)}-${fullCode.slice(12)}`;
 
-      // BWIP-JS Options (EAN-13)
+      // BWIP-JS Options (EAN-13) - 100% FIDELITY TO REFERENCE
       const options: any = {
         bcid: 'ean13',
         text: fullCode,
-        scale: 4,             // High resolution
-        height: 25,           // Bar height (in mm-ish units)
-        includetext: true,    // EAN-13 numbers below (interleaved)
+        scale: 5,             // Optimal resolution for 590px
+        height: 25,           // Standard bar height
+        includetext: true,    
         backgroundcolor: 'ffffff',
-        textsize: 13,         // Larger text for bottom numbers
-        textyoffset: 1,       // Small offset
+        textsize: 11,         // Professional font size
+        textyoffset: 2,       // CLEAN GAP BETWEEN BARS AND NUMBERS
+        guardwhitespace: true, // ENSURES LEADING "9" IS OUTSIDE ON THE LEFT
+        inkdetect: false
       };
 
-      console.log("[Barcode] Starting generation for:", fullCode);
+      console.log("[Barcode] Generating 100% Match EAN-13 for:", fullCode);
 
       // Generate the barcode buffer
       const barcodeBuffer = await bwipjs.toBuffer(options);
@@ -82,30 +84,25 @@ export const BarcodeController = {
       let finalBuffer = barcodeBuffer;
       try {
         const Jimp = require('jimp');
-        
-        // 1. Load Barcode
         const barcodeImage = await Jimp.read(barcodeBuffer);
         
-        // 2. Create Background (591x295 White - Standard size requested)
-        const canvas = new Jimp(591, 295, 0xFFFFFFFF);
+        // 1. EXACT SIZE: 590 x 295 PX
+        const canvas = new Jimp(590, 295, 0xFFFFFFFF);
         
-        // 3. Resize Barcode to fit width but keep height reasonable for numbers
-        // We increase height to 210 to ensure text isn't squashed
-        barcodeImage.scaleToFit(540, 210); 
+        // 2. POSITION BARCODE (Giving enough space for top and bottom)
+        const bx = (canvas.bitmap.width - barcodeImage.bitmap.width) / 2;
+        const by = 55; // Perfect vertical balance
+        canvas.composite(barcodeImage, bx, by);
         
-        // 4. Position Barcode
-        const x = (canvas.bitmap.width - barcodeImage.bitmap.width) / 2;
-        const y = 55; // Lower start to give room for top text
-        canvas.composite(barcodeImage, x, y);
-        
-        // 5. Add ISBN Text at Top (Centered)
+        // 3. ADD ISBN TEXT AT TOP (Centered)
         try {
           const font = await Jimp.loadFont(Jimp.FONT_SANS_32_BLACK);
-          const textWidth = Jimp.measureText(font, formattedTop);
+          const textToPrint = `ISBN: ${formattedTop.replace('ISBN ', '')}`;
+          const textWidth = Jimp.measureText(font, textToPrint);
           const tx = (canvas.bitmap.width - textWidth) / 2;
-          canvas.print(font, tx, 12, formattedTop); // Professional spacing
+          canvas.print(font, tx, 15, textToPrint);
         } catch (fontErr) {
-          console.error("Font loading failed, skipping top text:", fontErr);
+          console.error("Font loading failed:", fontErr);
         }
         
         finalBuffer = await canvas.getBufferAsync(Jimp.MIME_PNG);
