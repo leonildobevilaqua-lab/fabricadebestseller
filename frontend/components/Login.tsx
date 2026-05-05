@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useLanguage } from '../i18n/context';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface LoginProps {
     onLogin: (data: any) => void;
@@ -12,6 +13,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
     const { t } = useLanguage();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [isRegistering, setIsRegistering] = useState(false);
@@ -149,18 +151,27 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                             required
                         />
                     </div>
-                    <div>
                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">
                             {(t as any).auth.passwordLabel}
                         </label>
-                        <input
-                            type="password"
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
-                            placeholder={(t as any).auth.placeholderPassword}
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none pr-10"
+                                placeholder={(t as any).auth.placeholderPassword}
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors"
+                                tabIndex={-1}
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
 
                     {error && (

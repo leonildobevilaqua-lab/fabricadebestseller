@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar, Zap, MessageCircle, FileText, Search } from 'lucide-react';
+import { Download, Trash2, Clock, CheckCircle, BookOpen, User, Mail, Calendar, Zap, MessageCircle, FileText, Search, Eye, EyeOff } from 'lucide-react';
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 // Define a base: Se tiver na nuvem (Coolify), usa a variável. Se não, vazio (usa o localhost).
 const DEFAULT_BASE = (import.meta as any).env.VITE_API_URL || '';
@@ -421,6 +421,10 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [creditAmount, setCreditAmount] = useState(1);
     const [creditsOpLoading, setCreditsOpLoading] = useState(false);
     const [creditsMsg, setCreditsMsg] = useState('');
+    const [showLoginPass, setShowLoginPass] = useState(false);
+    const [showResetPass, setShowResetPass] = useState(false);
+    const [showProfileOldPass, setShowProfileOldPass] = useState(false);
+    const [showProfileNewPass, setShowProfileNewPass] = useState(false);
 
     const handleSearchCredits = async () => {
         if (!creditSearchEmail) return;
@@ -1173,14 +1177,24 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </div>
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-slate-700 mb-1">Senha</label>
-                            <input
-                                type="password"
-                                value={pass}
-                                onChange={e => setPass(e.target.value)}
-                                className="w-full p-2 border rounded-lg"
-                                placeholder="******"
-                                required
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showLoginPass ? "text" : "password"}
+                                    value={pass}
+                                    onChange={e => setPass(e.target.value)}
+                                    className="w-full p-2 border rounded-lg pr-10"
+                                    placeholder="******"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLoginPass(!showLoginPass)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                    tabIndex={-1}
+                                >
+                                    {showLoginPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
 
                         {showApiOverride && (
@@ -1262,15 +1276,25 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                         </div>
                         <div className="mb-6">
                             <label className="block text-sm font-medium text-slate-700 mb-1">Nova Senha</label>
-                            <input
-                                type="password"
-                                value={newPass}
-                                onChange={e => setNewPass(e.target.value)}
-                                className="w-full p-2 border rounded-lg"
-                                placeholder="******"
-                                required
-                                minLength={6}
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showResetPass ? "text" : "password"}
+                                    value={newPass}
+                                    onChange={e => setNewPass(e.target.value)}
+                                    className="w-full p-2 border rounded-lg pr-10"
+                                    placeholder="******"
+                                    required
+                                    minLength={6}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowResetPass(!showResetPass)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                    tabIndex={-1}
+                                >
+                                    {showResetPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
                         </div>
                         {msg && <p className="text-red-500 text-sm mb-4 text-center">{msg}</p>}
                         <button type="submit" className="w-full py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition">
@@ -2127,26 +2151,46 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <form onSubmit={handleChangePassword} className="space-y-6">
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">Senha Atual</label>
-                                        <input
-                                            type="password"
-                                            value={profileOldPass}
-                                            onChange={e => setProfileOldPass(e.target.value)}
-                                            className="w-full p-3 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder="Digite sua senha atual..."
-                                            required
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type={showProfileOldPass ? "text" : "password"}
+                                                value={profileOldPass}
+                                                onChange={e => setProfileOldPass(e.target.value)}
+                                                className="w-full p-3 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none pr-10"
+                                                placeholder="Digite sua senha atual..."
+                                                required
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowProfileOldPass(!showProfileOldPass)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                                tabIndex={-1}
+                                            >
+                                                {showProfileOldPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">Nova Senha</label>
-                                        <input
-                                            type="password"
-                                            value={profileNewPass}
-                                            onChange={e => setProfileNewPass(e.target.value)}
-                                            className="w-full p-3 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-                                            placeholder="Digite a nova senha..."
-                                            required
-                                            minLength={6}
-                                        />
+                                        <div className="relative">
+                                            <input
+                                                type={showProfileNewPass ? "text" : "password"}
+                                                value={profileNewPass}
+                                                onChange={e => setProfileNewPass(e.target.value)}
+                                                className="w-full p-3 border rounded-lg bg-slate-50 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none pr-10"
+                                                placeholder="Digite a nova senha..."
+                                                required
+                                                minLength={6}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowProfileNewPass(!showProfileNewPass)}
+                                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                                                tabIndex={-1}
+                                            >
+                                                {showProfileNewPass ? <EyeOff size={18} /> : <Eye size={18} />}
+                                            </button>
+                                        </div>
                                         <p className="text-xs text-slate-500 mt-2">Mínimo de 6 caracteres.</p>
                                     </div>
 
