@@ -928,6 +928,24 @@ export const generateBookContent = async (req: Request, res: Response) => {
     }
 };
 
+export const resumeGeneration = async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const project = await QueueService.getProject(id);
+    if (!project) return res.status(404).json({ error: "Not found" });
+
+    console.log(`[RESUME] Forcing unlock for project ${id} to resume generation.`);
+    
+    // Force unlock by resetting the pulse
+    await QueueService.updateMetadata(id, {
+        status: 'WRITING_CHAPTERS',
+        lastWorkerPulse: new Date(0).toISOString(),
+        currentWorkerId: '' // Clear stale worker
+    });
+
+    // Call the generator again
+    return generateBookContent(req, res);
+};
+
 /**
  * Perform final steps: Marketing Assets -> PDF/Docx -> Email
  */
@@ -1018,6 +1036,18 @@ export const finalizeBookContent = async (req: Request, res: Response) => {
 
     const project = await QueueService.getProject(id);
     if (!project) return res.status(404).json({ error: "Not found" });
+
+    // CRITICAL SAFETY CHECK: Ensure all chapters were generated before finalizing
+    if (project.structure && project.structure.length > 0) {
+        const missingChapters = project.structure.filter(ch => !ch.isGenerated || !ch.content || ch.content.length < 100);
+        if (missingChapters.length > 0) {
+            console.error(`[PROJECT] Finalize called but ${missingChapters.length} chapters are missing for project ${id}! Rejecting.`);
+            return res.status(400).json({ 
+                error: "Existem capítulos não finalizados.", 
+                details: "A inteligência artificial ainda não terminou de escrever todos os capítulos ou houve uma falha. Por favor, feche esta tela e clique no botão laranja 'Continuar Geração' no seu painel para retomar." 
+            });
+        }
+    }
 
     try {
         const targetLang = language || project.metadata.language || 'pt';

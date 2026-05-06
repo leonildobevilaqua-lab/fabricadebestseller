@@ -133,6 +133,13 @@ export const finalizeProject = async (id: string, data: any): Promise<void> => {
         body: JSON.stringify(data)
     });
     if (!res.ok) {
-        throw new Error("Erro ao finalizar livro.");
+        let errMsg = "Erro ao finalizar livro.";
+        try {
+            const errData = await res.json();
+            errMsg = errData.details || errData.error || errMsg;
+        } catch (e) {
+            // keep default message
+        }
+        throw new Error(errMsg);
     }
 };

@@ -219,6 +219,32 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                                                 <span>{(t as any).dashboard.downloadKit}</span>
                                             </a>
                                         )}
+
+                                        {(!(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase()))) && (
+                                            <button
+                                                onClick={async () => {
+                                                    if (!window.confirm("O livro travou? Clique em OK para forçar a inteligência artificial a retomar de onde parou.")) return;
+                                                    const token = localStorage.getItem('bsf_token');
+                                                    try {
+                                                        const res = await fetch(`${getApiBase()}/api/projects/${order.id}/resume`, {
+                                                            method: 'POST',
+                                                            headers: { 'Authorization': `Bearer ${token}` }
+                                                        });
+                                                        if(res.ok) {
+                                                            alert("Sinal de retomada enviado! A inteligência artificial assumiu o controle novamente. Atualize a página em alguns instantes.");
+                                                        } else {
+                                                            alert("Erro ao enviar sinal de retomada.");
+                                                        }
+                                                    } catch (e) {
+                                                        console.error(e);
+                                                    }
+                                                }}
+                                                className="flex items-center gap-2 px-6 py-3.5 bg-amber-500 text-white rounded-2xl hover:bg-amber-600 transition-all font-black text-[10px] shadow-lg shadow-amber-100 uppercase tracking-widest hover:scale-105 active:scale-95"
+                                                title="Retomar Geração de Onde Parou"
+                                            >
+                                                <span>▶️ Continuar Geração</span>
+                                            </button>
+                                        )}
                                         
                                         <button
                                             onClick={() => handleDeleteProject(order.id)}

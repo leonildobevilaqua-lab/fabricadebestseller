@@ -15,6 +15,7 @@ router.delete('/:id', ProjectController.remove);
 router.post('/:id/research', ProjectController.startResearch);
 router.post('/:id/select-title', ProjectController.selectTitle);
 router.post('/:id/generate', ProjectController.generateBookContent);
+router.post('/:id/resume', ProjectController.resumeGeneration);
 router.patch('/:id', ProjectController.update);
 router.post('/:id/finalize', ProjectController.finalizeBookContent);
 router.post('/:id/send-email', upload.single('file'), ProjectController.sendBookEmail);

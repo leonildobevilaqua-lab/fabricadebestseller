@@ -368,11 +368,10 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         progress: 88,
         statusMessage: "Enviando dados de autoria e gerando materiais de marketing..."
       });
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to finalize via backend", e);
-      // Fallback: Just update local status if backend finalize fails (LEGACY MODE)
-      await API.updateProject(project.id, { metadata: { ...project.metadata, dedication, acknowledgments: ack, aboutAuthor, status: 'COMPLETED' as any, progress: 100 } });
-      setProject(p => p ? { ...p, metadata: { ...p.metadata, status: 'COMPLETED' as any, progress: 100 } } : p);
+      alert(e.message || "Erro ao finalizar livro. Por favor, feche e clique em 'Continuar Geração' no seu painel.");
+      // Do NOT force complete the project to prevent empty DOCX files.
     }
 
     setSending(false);

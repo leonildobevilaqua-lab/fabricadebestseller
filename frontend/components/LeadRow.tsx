@@ -437,8 +437,34 @@ export const LeadRow = ({ lead, onApprove, onDelete, onEdit, onDiagram, onWipe, 
 
                             {/* Regenerate */}
                             {(status === 'COMPLETED' || status === 'LIVRO ENTREGUE' || prodStatus) && (
-                                <button onClick={handleRegenerate} disabled={loading} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold py-2 rounded border border-slate-200">
+                                <button onClick={handleRegenerate} disabled={loading} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 text-[10px] font-bold py-2 rounded border border-slate-200 mt-1">
                                     🔄 REGERAR
+                                </button>
+                            )}
+
+                            {/* Resume Generation (For Stuck Projects) */}
+                            {((lead.projectId || lead.details?.projectId || lead.project_id || lead.id) && status !== 'COMPLETED' && status !== 'LIVRO ENTREGUE' && status !== 'SUBSCRIBER') && (
+                                <button
+                                    onClick={async () => {
+                                        if (!window.confirm("O livro parece estar travado na esteira? Clique em OK para forçar a inteligência artificial a retomar do exato ponto em que parou.")) return;
+                                        const token = localStorage.getItem('admin_token') || localStorage.getItem('bsf_token');
+                                        try {
+                                            const projectId = lead.projectId || lead.details?.projectId || lead.project_id || lead.id;
+                                            const res = await fetch(`${getApiBase()}/api/projects/${projectId}/resume`, {
+                                                method: 'POST',
+                                                headers: { 'Authorization': `Bearer ${token}` }
+                                            });
+                                            if (res.ok) alert("Sinal de socorro enviado! O servidor assumiu o projeto novamente.");
+                                            else alert("Erro ao enviar sinal. Verifique os logs.");
+                                        } catch (e) {
+                                            console.error(e);
+                                            alert("Erro de conexão.");
+                                        }
+                                    }}
+                                    className="w-full bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold py-2 rounded shadow transition border border-amber-600 mt-1"
+                                    title="Descongelar Geração"
+                                >
+                                    ▶️ FORÇAR RETOMADA
                                 </button>
                             )}
                         </>
