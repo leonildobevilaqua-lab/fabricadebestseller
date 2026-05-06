@@ -511,8 +511,6 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                         await setVal(`/leads[${leadIndex}]/paymentInfo`, paymentInfo);
                         await setVal(`/leads[${leadIndex}]/status`, 'APPROVED'); // Unblock access if pending
                     }
-
-                    console.log(`[WEBHOOK] SUCCESS: Credits updated ${currentCredits} -> ${newCredits}`);
                 }
 
             } else {
