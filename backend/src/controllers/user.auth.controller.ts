@@ -204,7 +204,7 @@ export const UserAuthController = {
                 .from('kv_store')
                 .select('key, updated_at, metadata:value->metadata')
                 .like('key', '/projects/%')
-                .or(`value->metadata->>email.ilike.%${strUser}%,value->metadata->contact->>email.ilike.%${strUser}%`)
+                .or(`value->metadata->>email.ilike.%${strUser}%,value->metadata->contact->>email.ilike.%${strUser}%,value->metadata->>userEmail.ilike.%${strUser}%,value->metadata->>authorEmail.ilike.%${strUser}%`)
                 .limit(isAdmin ? 500 : 100); 
 
             if (dbErr) console.error(`[AUTH_ME] DB Filter Error for ${cleanUser}:`, dbErr);
@@ -212,6 +212,7 @@ export const UserAuthController = {
             const userProjects = (dbProjects || []).map((item: any) => {
                 const val = item.metadata || {};
                 return {
+                    metadata: val,
                     ...val,
                     id: item.key.split('/').pop(),
                     key: item.key,

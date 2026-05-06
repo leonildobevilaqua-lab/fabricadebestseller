@@ -113,11 +113,20 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
         } else {
             // SUPABASE LOGIC (Original)
             if (isCollectionRoot) {
-                const { data: rawItems, error } = await supabase.from('kv_store').select(options.fields || 'key, value, updated_at').like('key', `${normalized}/%`).limit(2000);
+                let selectFields = options.fields || 'key, value, updated_at';
+                if (!options.fields) {
+                    if (normalized === '/projects') selectFields = 'key, updated_at, metadata:value->metadata';
+                    else if (normalized === '/leads') selectFields = 'key, updated_at, value';
+                }
+
+                const { data: rawItems, error } = await supabase.from('kv_store').select(selectFields).like('key', `${normalized}/%`).limit(2000);
                 if (!error && rawItems) {
                     const syncedResults = rawItems.map((item: any) => {
                         let val = item.value;
                         if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) val = JSON.parse(val);
+                        else if (typeof val === 'string') val = { value: val };
+                        val = val || (item.metadata || {});
+                        
                         const parsed = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
                         localDB[item.key] = parsed;
                         return parsed;
