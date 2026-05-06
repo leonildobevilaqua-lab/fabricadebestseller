@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../i18n/context';
 import { Eye, EyeOff } from 'lucide-react';
+import { setAdvancedMatching } from '../services/meta-pixel';
 
 interface LoginProps {
     onLogin: (data: any) => void;
@@ -26,7 +27,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
         const nameParam = params.get('name');
         const mode = params.get('mode');
 
-        // Prevent literal placeholders like {{email}} or {{full_name}} from being filled
         if (emailParam && !emailParam.includes('{') && !emailParam.includes('}')) setEmail(emailParam);
         if (nameParam && !nameParam.includes('{') && !nameParam.includes('}')) setName(nameParam);
         if (mode === 'register') setIsRegistering(true);
@@ -39,7 +39,6 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
         setLoading(true);
 
         try {
-            // Check API URL override
             const getApiBase = () => {
                 const env = (import.meta as any).env.VITE_API_URL;
                 if (env) return env;
@@ -60,6 +59,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                 const data = await res.json();
 
                 if (res.ok && data.success) {
+                    setAdvancedMatching(email);
                     setRegisterSuccess((t as any).auth.registerSuccess);
                     setIsRegistering(false);
                     setPassword('');
@@ -76,6 +76,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin, onBack, onForgotPassword 
                 const data = await res.json();
 
                 if (res.ok && data.success) {
+                    setAdvancedMatching(email);
                     onLogin(data);
                 } else {
                     setError(data.error || (t as any).auth.errorDefault);

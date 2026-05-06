@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { registerPromoLead } from '../services/api';
+import { setAdvancedMatching } from '../services/meta-pixel';
 
 const Promocao: React.FC = () => {
     const [name, setName] = useState('');
@@ -22,6 +23,9 @@ const Promocao: React.FC = () => {
 
         setIsLoading(true);
         try {
+            // Atualiza Correspondência Avançada do Meta Pixel instantaneamente
+            setAdvancedMatching(email, phone);
+            
             await registerPromoLead(name, email, phone);
             window.location.href = CHECKOUT_URL;
         } catch (error) {

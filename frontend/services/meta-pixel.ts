@@ -23,6 +23,22 @@ const safeFireEvent = (eventName: string, params: Record<string, any> = {}, even
     }
 };
 
+/** Re-inicializa o Pixel com os dados de Correspondência Avançada (Advanced Matching) */
+export const setAdvancedMatching = (email?: string, phone?: string) => {
+    try {
+        if (typeof window !== 'undefined' && window.fbq) {
+            const data: any = {};
+            if (email) data.em = email.toLowerCase().trim();
+            if (phone) data.ph = phone.replace(/\D/g, '');
+            if (Object.keys(data).length > 0) {
+                window.fbq('init', '3000632083435824', data);
+            }
+        }
+    } catch (e) {
+        console.warn('[META PIXEL] Erro ao setar Advanced Matching:', e);
+    }
+};
+
 /** Dispara PageView — chamar em cada mudança de rota */
 export const trackPageView = () => safeFireEvent('PageView');
 

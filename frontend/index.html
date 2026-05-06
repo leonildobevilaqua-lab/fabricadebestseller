@@ -21,7 +21,27 @@
       s.parentNode.insertBefore(t, s)
     }(window, document, 'script',
       'https://connect.facebook.net/en_US/fbevents.js');
-    fbq('init', '3000632083435824');
+    // Advanced Matching Logic
+    var advancedMatching = undefined;
+    try {
+        var userStr = localStorage.getItem('user');
+        if (userStr) {
+            var user = JSON.parse(userStr);
+            if (user && user.email) {
+                advancedMatching = { em: user.email.toLowerCase().trim() };
+                if (user.phone) {
+                    advancedMatching.ph = user.phone.replace(/\D/g, '');
+                }
+            }
+        }
+    } catch(e) {}
+
+    if (advancedMatching) {
+        fbq('init', '3000632083435824', advancedMatching);
+    } else {
+        fbq('init', '3000632083435824');
+    }
+    
     fbq('track', 'PageView');
   </script>
 
