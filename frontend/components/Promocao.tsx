@@ -9,7 +9,7 @@ const Promocao: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isValid, setIsValid] = useState(false);
 
-    const CHECKOUT_URL = 'https://pay.kiwify.com.br/ZMGu0vr';
+    const CHECKOUT_URL = 'https://payment.ticto.app/O6CE296D4?email=leonildobevilaqua%40gmail.com&utm_source=organic&utm_campaign=&utm_medium=&utm_content=&utm_term=';
 
     useEffect(() => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
