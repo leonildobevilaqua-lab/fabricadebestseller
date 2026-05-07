@@ -130,7 +130,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 27,90' },
         { id: 'barras', label: 'Código de Barras', icon: Barcode, price: 'R$ 19,90' },
         { id: 'qr-code', label: 'Gerador QR Code', icon: Smartphone, price: 'R$ 7,00' },
-        { id: 'pacote-completo', label: 'Pacote Completo Registro', icon: Package, price: 'R$ 49,90' },
+        { id: 'pacote-completo', label: 'Pacote (Ficha Catalog. + Cód. Barras + QR Code)', icon: Package, price: 'R$ 49,90' },
         { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
         { id: 'capa-ebook', label: 'Capa Ebook (Digital)', icon: Smartphone, isPreparation: true },
         { id: 'amazon', label: 'Publicação Amazon', icon: Cloud, isPreparation: true },
