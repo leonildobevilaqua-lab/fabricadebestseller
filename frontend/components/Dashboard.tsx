@@ -202,7 +202,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             case 'pacote-completo':
                 return (
                     <ExternalProductView 
-                        title="Pacote Completo de Registro"
+                        title="Pacote (Ficha Catalog. + Cód. Barras + QR Code)"
                         desc="Economize com o combo essencial para seu livro: Ficha Catalográfica (CIP) + Código de Barras + QR Code Personalizado. Tudo o que você precisa para profissionalizar sua obra em um só lugar."
                         checkoutUrl="https://checkout.ticto.app/OAE19BCE4"
                         price="R$ 49,90"

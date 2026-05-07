@@ -110,8 +110,19 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     }
 
     // 1. Prepare Content Object
-    const introChapter = project.structure.find(c => c.id === 0 || ['introdução', 'introduction', 'intro'].some(term => c.title.toLowerCase().includes(term)));
-    const mainChapters = project.structure.filter(c => c.id !== 0 && !['introdução', 'introduction', 'intro'].some(term => c.title.toLowerCase().includes(term)));
+    // BUG FIX: Improved detection of intro vs main chapters. 
+    // Only treats as intro if ID is 0 OR title is exactly "Introdução" or "Introduction" (or variation)
+    const introTerms = ['introdução', 'introdução.', 'introducao', 'introduction', 'introduction.', 'intro'];
+    
+    const introChapter = project.structure.find(c => 
+        c.id === 0 || 
+        introTerms.includes(c.title.toLowerCase().trim())
+    );
+    
+    const mainChapters = project.structure.filter(c => 
+        c.id !== 0 && 
+        !introTerms.includes(c.title.toLowerCase().trim())
+    );
 
     mainChapters.sort((a, b) => a.id - b.id);
 
