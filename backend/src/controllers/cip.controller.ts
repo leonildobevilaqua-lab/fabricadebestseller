@@ -114,7 +114,7 @@ Dado o texto extraído de um livro, determine as seguintes informações:
 4. Assunto principal (nome do assunto principal, sem número)
 5. Assuntos secundários (lista com no MÁXIMO 5 palavras-chave. Extraia apenas os 5 principais conceitos como strings limpas, sem número ou pontos no final)
 6. Código CDD (escolha o mais adequado da tabela)
-7. Código Cutter-Sanborn (Utilize a tabela Cutter-Sanborn de 3 dígitos exatos. Exemplo: para Santos, é 237. Formato: Letra do sobrenome em maiúscula + 3 números da tabela + Letra inicial do título em minúscula. ATENÇÃO REGRA: Ignore artigos iniciais do título (O, A, Os, As, Um, Uma). Exemplo: para o título "O Último Refúgio", a letra é "u", resultando em "S237u" e não "S237o".)
+7. Código Cutter-Sanborn (OBRIGATÓRIO TER 3 DÍGITOS NUMÉRICOS. Exemplo: para Santos, é 237. Formato: Letra do sobrenome em maiúscula + 3 números da tabela + Letra inicial do título em minúscula. ATENÇÃO: Se a tabela possuir apenas 2 números, você DEVE adicionar um '1' ao final para completar 3 dígitos (ex: B57 -> B571). ATENÇÃO REGRA: Ignore artigos iniciais do título (O, A, Os, As, Um, Uma). Exemplo: para o título "O Último Refúgio", a letra é "u", resultando em "S237u" e não "S237o".)
 8. Nome no formato "Sobrenome, Nome."
 9. Ano de publicação (use 2026 se não encontrar)
 
@@ -156,6 +156,14 @@ ${text.substring(0, 8000)}
         const responseText = completion.response.text();
         console.log("[CIP] Raw AI Response (Synced):", responseText);
         aiData = JSON.parse(responseText);
+        
+        // FIX CUTTER-SANBORN 3-DIGIT REQUIREMENT
+        if (aiData.cutter) {
+            const cutterMatch = aiData.cutter.match(/^([A-Z])(\d{2})([a-z])$/);
+            if (cutterMatch) {
+                aiData.cutter = `${cutterMatch[1]}${cutterMatch[2]}1${cutterMatch[3]}`;
+            }
+        }
       } catch (aiErr: any) {
         console.error("[CIP] AI Analysis Failure (Synced):", aiErr);
         throw new Error(`Falha na análise do documento (Erro na IA: ${aiErr.message})`);
