@@ -6,15 +6,13 @@ import { LLMProvider } from "./provider.interface";
 
 export class GeminiProvider implements LLMProvider {
     private client: GoogleGenerativeAI;
-    // UPDATED: Comprehensive list including user-requested 'gemini-2.5-flash'
-    // Tries 2.5 (User Preferred) -> 1.5 Flash (Standard) -> 1.5 Pro (Quality) -> Legacy
-    // UPDATED: Prioritizing STABLE models for Production
-    // Removed 2.5 as it was causing instability/hallucinations
+    // UPDATED: Prioritizing Gemini 2.5 Flash as requested and verified in AI Studio.
+    // This model provides the best balance of speed, cost and quality for this project.
     private models = [
-        "gemini-2.0-flash",  // USER REQUEST: Prioritizing latest Flash (referred to as 2.5 by user)
-        "gemini-1.5-flash",  // Current Stable Standard
-        "gemini-2.0-pro-exp", // Experimental High-Performance
-        "gemini-1.5-pro",    // Stable Quality
+        "gemini-2.5-flash",  // PRIMARY: Confirmed active in User AI Studio
+        "gemini-2.5-pro",    // SECONDARY: Confirmed active in User AI Studio
+        "gemini-2-flash",    // TERTIARY: Confirmed active in User AI Studio
+        "gemini-1.5-flash",  // LEGACY FALLBACK
     ];
 
 
