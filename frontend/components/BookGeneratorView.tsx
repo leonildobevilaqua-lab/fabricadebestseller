@@ -35,6 +35,25 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
 
     return (
         <div className="space-y-8 animate-fade-in">
+            {/* Promo Blocked Alert */}
+            {stats?.stats?.promo_blocked && (
+                <div className="bg-red-50 border-2 border-red-200 rounded-3xl p-6 md:p-8 flex items-start gap-4 animate-shake shadow-xl shadow-red-100">
+                    <div className="bg-red-500 text-white p-3 rounded-2xl shrink-0 shadow-lg shadow-red-200">
+                        <AlertCircle size={28} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-black text-red-900 uppercase tracking-tight mb-1">
+                            {lang === 'en' ? 'Offer Already Used' : 'Oferta Já Utilizada'}
+                        </h3>
+                        <p className="text-red-700 font-medium leading-relaxed">
+                            {lang === 'en' 
+                                ? 'We detected that you have already taken advantage of the special R$ 5.99 offer. This condition is valid only for the FIRST book. To generate more books, please use the standard R$ 39.90 plan below.' 
+                                : 'Identificamos que você já aproveitou a oferta especial de R$ 5,99 anteriormente. Esta condição é válida apenas para o PRIMEIRO livro. Para gerar novos livros, utilize o plano padrão de R$ 39,90 abaixo.'}
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Action Card - Fixed Price */}
             <div className="bg-slate-900 rounded-3xl p-6 md:p-10 text-white shadow-xl relative overflow-hidden border border-slate-800">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>

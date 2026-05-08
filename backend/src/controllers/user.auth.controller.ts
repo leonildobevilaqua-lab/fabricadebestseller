@@ -304,7 +304,8 @@ export const UserAuthController = {
                     purchaseCycleCount: cycleIndex,
                     totalBooksGenerated: finalUsageCount,
                     totalBooks: userProjects.length || finalUsageCount,
-                    nextBookPrice: nextBookPrice
+                    nextBookPrice: nextBookPrice,
+                    promo_blocked: user.promo_blocked === true
                 },
                 orders: mappedOrders.length > 0 ? mappedOrders : (user.orders || [])
             });

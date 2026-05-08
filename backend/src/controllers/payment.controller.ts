@@ -1323,6 +1323,21 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 const pNameUpper = productName.toUpperCase();
                 const productId = String(payload.item?.product_id || tx.product?.id || "");
                 
+                // --- SPECIAL PROMO RESTRICTION (R$ 5,99) ---
+                if (productId === 'O01C5F91D') {
+                    const alreadyUsed = await getVal(`/users/${safeEmail}/promo_599_used`) === true;
+                    if (alreadyUsed) {
+                        console.log(`[TICTO WEBHOOK] BLOCKED: ${email} tried to reuse promo O01C5F91D.`);
+                        await setVal(`/users/${safeEmail}/promo_blocked`, true);
+                        // We do NOT increment credits here
+                        if (!res.headersSent) {
+                            return res.status(200).json({ received: true, processed: true, warning: "promo_already_used" });
+                        }
+                        return;
+                    }
+                    await setVal(`/users/${safeEmail}/promo_599_used`, true);
+                }
+
                 const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA') || productId === 'O89DB6739';
                 const isBarcode = pNameUpper.includes('BARRAS') || productId === 'O77037442';
                 const isQR = pNameUpper.includes('QR CODE') || productId === 'O8B28DD61';

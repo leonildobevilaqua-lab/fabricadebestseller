@@ -9,7 +9,7 @@ const Promocao: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isValid, setIsValid] = useState(false);
 
-    const CHECKOUT_URL = 'https://payment.ticto.app/O6CE296D4?email=leonildobevilaqua%40gmail.com&utm_source=organic&utm_campaign=&utm_medium=&utm_content=&utm_term=';
+    const CHECKOUT_URL = 'https://checkout.ticto.app/O01C5F91D';
 
     useEffect(() => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -131,11 +131,11 @@ const Promocao: React.FC = () => {
                     </div>
 
                     {/* Artwork Container */}
-                    <div className="w-full h-full max-w-2xl flex items-center justify-center p-4">
+                    <div className="w-full max-w-sm flex items-center justify-center p-4">
                         <img 
-                            src="/assets/promocao-arte.png" 
+                            src="/assets/promocao-arte-v2.png" 
                             alt="Oferta Relâmpago Arte"
-                            className="w-full h-auto object-contain rounded-3xl shadow-2xl shadow-indigo-200/40 transform -rotate-1 hover:rotate-0 transition-transform duration-500 border border-slate-100"
+                            className="w-full h-auto object-contain rounded-3xl shadow-2xl shadow-indigo-200/40 transform rotate-1 hover:rotate-0 transition-transform duration-500 border border-slate-100"
                             onError={(e) => {
                                 // Fallback if image not uploaded yet
                                 e.currentTarget.src = "https://placehold.co/800x600/f8fafc/6366f1?text=Arte+da+Oferta";
