@@ -51,7 +51,7 @@ const Promocao: React.FC = () => {
                         OFERTA RELÂMPAGO: <br/> 
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600">
                             Seu Primeiro Livro Profissional
-                        </span> Gerado por <br/> apenas R$ 5,99
+                        </span> Gerado por <br/> apenas R$ 9,99
                     </h1>
 
                     <p className="text-lg md:text-xl text-slate-500 font-medium max-w-3xl mx-auto leading-relaxed px-4">
