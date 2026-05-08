@@ -130,12 +130,12 @@ const Promocao: React.FC = () => {
                         </form>
                     </div>
 
-                    {/* Artwork Container */}
-                    <div className="w-full max-w-sm flex items-center justify-center p-4">
+                    {/* Artwork Container - Styled to match Form */}
+                    <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-slate-200/60 border border-slate-100 flex flex-col items-center justify-center relative transform transition-transform duration-300 hover:scale-[1.01]">
                         <img 
                             src="/assets/promocao-arte-v2.png" 
                             alt="Oferta Relâmpago Arte"
-                            className="w-full h-auto object-contain rounded-3xl shadow-2xl shadow-indigo-200/40 transform rotate-1 hover:rotate-0 transition-transform duration-500 border border-slate-100"
+                            className="w-full h-auto object-contain rounded-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500"
                             onError={(e) => {
                                 // Fallback if image not uploaded yet
                                 e.currentTarget.src = "https://placehold.co/800x600/f8fafc/6366f1?text=Arte+da+Oferta";
