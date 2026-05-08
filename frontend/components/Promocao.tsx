@@ -9,7 +9,7 @@ const Promocao: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isValid, setIsValid] = useState(false);
 
-    const CHECKOUT_URL = 'https://checkout.ticto.app/O01C5F91D';
+    const CHECKOUT_URL = 'https://checkout.ticto.app/O6F5202E7';
 
     useEffect(() => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

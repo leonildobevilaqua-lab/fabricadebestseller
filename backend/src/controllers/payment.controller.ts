@@ -1323,8 +1323,8 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 const pNameUpper = productName.toUpperCase();
                 const productId = String(payload.item?.product_id || tx.product?.id || "");
                 
-                // --- SPECIAL PROMO RESTRICTION (R$ 5,99) ---
-                if (productId === 'O01C5F91D') {
+                // --- SPECIAL PROMO RESTRICTION (R$ 9,99 / R$ 5,99) ---
+                if (productId === 'O01C5F91D' || productId === 'O6F5202E7') {
                     const alreadyUsed = await getVal(`/users/${safeEmail}/promo_599_used`) === true;
                     if (alreadyUsed) {
                         console.log(`[TICTO WEBHOOK] BLOCKED: ${email} tried to reuse promo O01C5F91D.`);
