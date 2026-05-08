@@ -130,8 +130,8 @@ const Promocao: React.FC = () => {
                         </form>
                     </div>
 
-                    {/* Artwork Container - Styled to match Form */}
-                    <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-slate-200/60 border border-slate-100 flex flex-col items-center justify-center relative transform transition-transform duration-300 hover:scale-[1.01]">
+                    {/* Artwork Container - Styled to be LARGER than Form */}
+                    <div className="w-full max-w-lg bg-white rounded-[2.5rem] p-4 md:p-6 shadow-2xl shadow-slate-200/60 border border-slate-100 flex flex-col items-center justify-center relative transform transition-transform duration-300 hover:scale-[1.01]">
                         <img 
                             src="/assets/promocao-arte-v2.png" 
                             alt="Oferta Relâmpago Arte"
