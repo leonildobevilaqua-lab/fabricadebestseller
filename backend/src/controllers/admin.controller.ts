@@ -10,6 +10,7 @@ import { getVal, setVal, reloadDB, deleteVal } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../services/supabase';
 import * as DocService from '../services/doc.service';
+import * as AIService from '../services/ai.service';
 import * as QueueService from '../services/queue.service';
 
 // ... (Login logic)
@@ -810,12 +811,14 @@ export const adminUpdateUserPassword = async (req: Request, res: Response) => {
  * ADMIN: Impersonate a user (Generate a valid User JWT)
  */
 export const impersonateUser = async (req: Request, res: Response) => {
-    try {
-        const { email } = req.body;
-        if (!email) return res.status(400).json({ error: "Email requerido" });
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
 
-        const cleanEmail = email.toLowerCase().trim();
-        const safeEmail = cleanEmail.replace(/[^a-zA-Z0-9]/g, '_');
+    const cleanEmail = email.toLowerCase().trim();
+    const USER_SECRET = process.env.JWT_SECRET || "USER_SECRET_KEY_123";
+
+    try {
+   const safeEmail = cleanEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
         await reloadDB();
         let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
@@ -884,7 +887,6 @@ export const impersonateUser = async (req: Request, res: Response) => {
         }
 
         // Generate a token compatible with UserAuthController
-        const USER_SECRET = process.env.JWT_SECRET || "USER_SECRET_KEY_123";
         const token = jwt.sign({ email: cleanEmail }, USER_SECRET, { expiresIn: '1h' });
 
         console.log(`[ADMIN] Impersonate Session created for ${cleanEmail} by Admin`);

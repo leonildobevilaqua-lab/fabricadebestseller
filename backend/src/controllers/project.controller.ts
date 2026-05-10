@@ -951,7 +951,7 @@ export const resumeGeneration = async (req: Request, res: Response) => {
     // LOGIC: Where did it stop?
     
     // 1. If it's finished but stuck in a weird state, just finalize it properly
-    if (status === 'COMPLETED' || status === 'READY_TO_DOWNLOAD' || status === 'LIVRO ENTREGUE') {
+    if (status === 'COMPLETED' || (status as string) === 'READY_TO_DOWNLOAD' || status === 'LIVRO ENTREGUE') {
         console.log(`[RESUME] Project ${id} already finished. Regenerating files to be sure.`);
         await finalizeProjectLogic(id, project.metadata.language || 'pt');
         return res.json({ message: "Projeto finalizado e arquivos regerados.", status: 'COMPLETED' });
