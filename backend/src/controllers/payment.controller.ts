@@ -837,7 +837,7 @@ export const checkAccess = async (req: Request, res: Response) => {
             subscriptionPrice: (userPlan && SUBSCRIPTION_PRICES[planName]?.[(userPlan.billing || 'monthly').toLowerCase()]?.price) || (pendingPlan && pendingPlan.price) || 79.90,
             planLabel,
             totalBooksGenerated: usageCount,
-            checkoutUrl: `https://payment.ticto.app/O6CE296D4?email=${encodeURIComponent(email as string)}`
+            checkoutUrl: `https://checkout.ticto.app/O6F5202E7?email=${encodeURIComponent(email as string)}`
         });
     } catch (error) {
         console.error("Critical CheckAccess Error", error);

@@ -60,10 +60,10 @@ const Promocao: React.FC = () => {
                 </header>
 
                 {/* Main Action Section (Form + Image) */}
-                <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-12 flex-grow mt-6 mb-6">
+                <div className="flex flex-col md:flex-row items-stretch justify-center gap-8 md:gap-12 flex-grow mt-6 mb-6">
                     
                     {/* Form Component */}
-                    <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-slate-200/60 border border-slate-100 flex flex-col justify-center relative transform transition-transform duration-300 hover:scale-[1.01]">
+                    <div className="w-full max-w-md bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl shadow-slate-200/60 border border-slate-100 flex flex-col justify-center relative transform transition-transform duration-300 hover:scale-[1.01] min-h-[500px]">
                         {/* Secure Badge */}
                         <div className="absolute -top-4 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 px-4 py-1.5 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-lg z-20">
                             <span className="text-yellow-400">🔒</span> CHECKOUT SEGURO
@@ -130,15 +130,14 @@ const Promocao: React.FC = () => {
                         </form>
                     </div>
 
-                    {/* Artwork Container - Styled to be LARGER than Form */}
-                    <div className="w-full max-w-lg bg-white rounded-[2.5rem] p-4 md:p-6 shadow-2xl shadow-slate-200/60 border border-slate-100 flex flex-col items-center justify-center relative transform transition-transform duration-300 hover:scale-[1.01]">
+                    {/* Artwork Container - Identical height to Form */}
+                    <div className="w-full max-w-lg bg-white rounded-[2.5rem] p-4 md:p-6 shadow-2xl shadow-slate-200/60 border border-slate-100 flex flex-col items-center justify-center relative transform transition-transform duration-300 hover:scale-[1.01] min-h-[500px]">
                         <img 
-                            src="/assets/promocao-arte-v2.png" 
+                            src="/assets/promocao-arte-v3.png" 
                             alt="Oferta Relâmpago Arte"
-                            className="w-full h-auto object-contain rounded-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500"
+                            className="w-full h-full object-contain rounded-2xl transform rotate-1 hover:rotate-0 transition-transform duration-500"
                             onError={(e) => {
-                                // Fallback if image not uploaded yet
-                                e.currentTarget.src = "https://placehold.co/800x600/f8fafc/6366f1?text=Arte+da+Oferta";
+                                e.currentTarget.src = "https://placehold.co/800x600/f8fafc/6366f1?text=Arte+V3";
                             }}
                         />
                     </div>

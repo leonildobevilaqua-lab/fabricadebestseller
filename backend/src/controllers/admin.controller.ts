@@ -9,6 +9,8 @@ import { sendEmail } from '../services/email.service';
 import { getVal, setVal, reloadDB, deleteVal } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../services/supabase';
+import * as DocService from '../services/doc.service';
+import * as QueueService from '../services/queue.service';
 
 // ... (Login logic)
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
@@ -472,26 +474,74 @@ export const getProjectHistory = async (req: Request, res: Response) => {
 
         // 2. Enhance projects with latest credits and metadata
         const allCredits = await getVal('/credits', { forceSync: true }) || {};
+        const allLeads = await getVal('/leads', { forceSync: true }) || [];
+        const leads = Array.isArray(allLeads) ? allLeads : Object.values(allLeads);
+        const allOrders = await getVal('/orders', { forceSync: true }) || [];
+        const orders = Array.isArray(allOrders) ? allOrders : Object.values(allOrders);
         
         const projectHistory = projects
             .filter((p: any) => p && (p.projectId || p.id || (p.metadata && p.metadata.id))) 
             .map((p: any) => {
-                const metadata = p.metadata || {};
+                // If getVal already returned the metadata as the object (due to field optimization), use p
+                const metadata = (p.metadata && typeof p.metadata === 'object') ? p.metadata : p;
                 const projectId = p.projectId || p.id || metadata.id || `unknown_${Math.random().toString(36).substring(7)}`;
                 
                 const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || p.title || "Geração de IA";
                 const authorName = metadata.authorName || metadata.contact?.name || p.authorName || "Autor";
                 const customerName = metadata.contact?.name || metadata.customerName || p.customerName || authorName || "Cliente";
                 
-                const customerEmail = 
+                let customerEmail = 
                     (p.customerEmail || p.email || p.userEmail || 
                      p.metadata?.contact?.email || 
                      p.metadata?.email || 
                      p.metadata?.userEmail || 
                      "N/A").trim().toLowerCase();
+
+                // --- AGGRESSIVE ENRICHMENT (v2) ---
+                // If email is still N/A, try multiple fallback strategies
+                if (customerEmail === "n/a" || customerEmail === "") {
+                    // 1. Find by Project ID
+                    const foundLeadByPid = leads.find((l: any) => l.projectId === projectId || (l.details && l.details.projectId === projectId));
+                    if (foundLeadByPid && foundLeadByPid.email) {
+                        customerEmail = foundLeadByPid.email.toLowerCase().trim();
+                    } else {
+                        const foundOrderByPid = orders.find((o: any) => o.id === projectId || o.projectId === projectId || (o.paymentInfo && o.paymentInfo.transactionId === projectId));
+                        if (foundOrderByPid && (foundOrderByPid.email || (foundOrderByPid.paymentInfo && foundOrderByPid.paymentInfo.payerEmail))) {
+                            customerEmail = (foundOrderByPid.email || foundOrderByPid.paymentInfo.payerEmail).toLowerCase().trim();
+                        } else if (customerName && customerName !== "Cliente" && customerName !== "Autor") {
+                            // 2. Find by Customer Name
+                            const foundLeadByName = leads.find((l: any) => l.name === customerName || l.authorName === customerName);
+                            if (foundLeadByName && foundLeadByName.email) {
+                                customerEmail = foundLeadByName.email.toLowerCase().trim();
+                            } else {
+                                const foundOrderByName = orders.find((o: any) => o.name === customerName || (o.paymentInfo && o.paymentInfo.payer === customerName));
+                                if (foundOrderByName && (foundOrderByName.email || (foundOrderByName.paymentInfo && foundOrderByName.paymentInfo.payerEmail))) {
+                                    customerEmail = (foundOrderByName.email || foundOrderByName.paymentInfo.payerEmail).toLowerCase().trim();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                const safeEmail = customerEmail === "n/a" ? "" : customerEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                const credits = safeEmail ? Number(allCredits[safeEmail] || 0) : 0;
+
+                let customerPhone = metadata.contact?.phone || metadata.phone || metadata.customerPhone || p.customerPhone || "";
                 
-                const safeEmail = customerEmail.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-                const credits = Number(allCredits[safeEmail] || 0);
+                // If phone is missing, try to find it in leads/orders by email or project ID
+                if ((!customerPhone || customerPhone === "-") && (customerEmail !== "n/a" || projectId)) {
+                    const foundLead = leads.find((l: any) => (customerEmail !== "n/a" && l.email?.toLowerCase().trim() === customerEmail) || l.projectId === projectId);
+                    if (foundLead) {
+                        customerPhone = foundLead.fullPhone || foundLead.phone || "";
+                    } else {
+                        const foundOrder = orders.find((o: any) => (customerEmail !== "n/a" && o.paymentInfo?.payerEmail?.toLowerCase().trim() === customerEmail) || o.id === projectId || o.projectId === projectId);
+                        if (foundOrder && foundOrder.paymentInfo?.payerPhone) {
+                            customerPhone = foundOrder.paymentInfo.payerPhone;
+                        }
+                    }
+                }
+
+                if (!customerPhone || customerPhone === "") customerPhone = "-";
 
                 let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
                 const safeTitle = (bookTitle.length > 150) ? bookTitle.substring(0, 150) + "..." : bookTitle;
@@ -503,6 +553,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                     authorName: authorName,
                     customerName: customerName,
                     customerEmail: customerEmail,
+                    customerPhone: customerPhone,
                     status: (metadata.status || p.status || "READY").toUpperCase(),
                     projectId: projectId,
                     downloadUrl: downloadLink,
@@ -767,10 +818,69 @@ export const impersonateUser = async (req: Request, res: Response) => {
         const safeEmail = cleanEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
         await reloadDB();
-        const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+        let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+
+        let userName = "Cliente";
+        let userPlan = "FREE";
 
         if (!user) {
-            return res.status(404).json({ error: "Usuário não encontrado na base /users." });
+            console.log(`[ADMIN] Impersonate: User ${cleanEmail} not in /users. Searching in /leads...`);
+            // Fallback: Search in leads using Supabase for speed
+            const { data: dbLeads } = await supabase
+                .from('kv_store')
+                .select('value')
+                .like('key', '/leads/%')
+                .filter('value->>email', 'ilike', cleanEmail)
+                .limit(1);
+
+            if (dbLeads && dbLeads.length > 0) {
+                const leadFn = dbLeads[0].value;
+                userName = leadFn.name || "Autor";
+                userPlan = leadFn.plan?.name || "FREE";
+                console.log(`[ADMIN] Impersonate: Found lead for ${cleanEmail}. Proceeding with temporary identity.`);
+            } else {
+                // Second Fallback: Search in orders
+                const { data: dbOrders } = await supabase
+                    .from('kv_store')
+                    .select('value')
+                    .like('key', '/orders/%')
+                    .or(`value->paymentInfo->>payerEmail.ilike.%${cleanEmail}%,value->>email.ilike.%${cleanEmail}%`)
+                    .limit(1);
+
+                if (dbOrders && dbOrders.length > 0) {
+                    const orderFn = dbOrders[0].value;
+                    userName = orderFn.paymentInfo?.payer || orderFn.name || orderFn.payer_name || "Cliente";
+                    userPlan = orderFn.paymentInfo?.plan || orderFn.plan_name || "FREE";
+                    console.log(`[ADMIN] Impersonate: Found order for ${cleanEmail}. Proceeding with temporary identity.`);
+                } else {
+                    // Final desperation: search by name in leads
+                    const { data: dbLeadsByName } = await supabase
+                        .from('kv_store')
+                        .select('value')
+                        .like('key', '/leads/%')
+                        .or(`value->>name.ilike.%${cleanEmail}%,value->>authorName.ilike.%${cleanEmail}%`)
+                        .limit(1);
+
+                    if (dbLeadsByName && dbLeadsByName.length > 0) {
+                        const leadFn = dbLeadsByName[0].value;
+                        const realEmail = leadFn.email;
+                        if (realEmail) {
+                            console.log(`[ADMIN] Impersonate: Found lead by name match for ${cleanEmail} -> ${realEmail}`);
+                            const token = jwt.sign({ email: realEmail }, USER_SECRET, { expiresIn: '1h' });
+                            return res.json({
+                                success: true,
+                                token,
+                                user: { name: leadFn.name || "Cliente", email: realEmail, plan: leadFn.plan?.name || "FREE" }
+                            });
+                        }
+                    }
+
+                    return res.status(404).json({ error: "Usuário não encontrado em nenhuma base (/users, /leads ou /orders)." });
+                }
+            }
+        } else {
+            userName = user.profile?.name || "Cliente";
+            userPlan = user.plan?.name || "FREE";
         }
 
         // Generate a token compatible with UserAuthController
@@ -783,9 +893,9 @@ export const impersonateUser = async (req: Request, res: Response) => {
             success: true,
             token,
             user: {
-                name: user.profile?.name || "Cliente",
+                name: userName,
                 email: cleanEmail,
-                plan: user.plan?.name || 'FREE'
+                plan: userPlan
             }
         });
     } catch (e: any) {
@@ -794,3 +904,69 @@ export const impersonateUser = async (req: Request, res: Response) => {
     }
 };
 
+
+export const forceFinalizeProject = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        if (!id) return res.status(400).json({ error: "ID required" });
+
+        const project = await getVal(`/projects/${id}`, { forceSync: true });
+        if (!project) return res.status(404).json({ error: "Project not found" });
+
+        console.log(`[Admin] Smart-Force Finalizing Project: ${id}`);
+
+        // 1. If no structure, attempt one quick recovery
+        if (!project.structure || project.structure.length === 0) {
+            console.log(`[Admin] Project ${id} has no structure. Attempting emergency recovery...`);
+            try {
+                const lang = project.metadata.language || 'pt';
+                const structure = await AIService.generateStructure(
+                    project.metadata.bookTitle || project.metadata.title || project.metadata.topic || "Livro",
+                    project.metadata.subTitle || "",
+                    project.researchContext || `TEMA: ${project.metadata.topic}`,
+                    lang,
+                    project.metadata.genre || project.metadata.contentStyle,
+                    project.metadata.isFiction
+                );
+                project.structure = structure;
+            } catch (err) {
+                console.error("[Admin] Emergency structure generation failed:", err);
+                return res.status(400).json({ error: "Não foi possível recuperar a estrutura automaticamente. O projeto pode estar muito corrompido." });
+            }
+        }
+
+        // 2. Fill missing content with placeholders if absolutely necessary, but prioritize real content
+        project.structure = project.structure.map((ch: any) => ({
+            ...ch,
+            isGenerated: true,
+            content: ch.content || `[CONTEÚDO NÃO GERADO]\n\nO sistema não conseguiu gerar este capítulo automaticamente. Recomendamos que o administrador ou o cliente revise este trecho.`
+        }));
+
+        // 3. Mark as Auto-Generate to trigger the full pipeline
+        project.metadata.autoGenerate = true;
+        project.metadata.status = 'GENERATING_MARKETING';
+        project.metadata.statusMessage = "Finalização forçada iniciada. Gerando kit completo...";
+        
+        await setVal(`/projects/${id}`, project);
+
+        // 4. Trigger the REAL finalization logic (Marketing -> Docx -> Email)
+        // We use the internal logic from ProjectController
+        const { finalizeProjectLogic } = require('./project.controller');
+        
+        res.json({ success: true, message: "Recuperação iniciada! O kit completo (marketing + livro) está sendo gerado agora." });
+
+        (async () => {
+            try {
+                // We need to pass through the full pipeline
+                await finalizeProjectLogic(id, project.metadata.language || 'pt');
+                console.log(`[Admin] Smart-Force Finalize COMPLETED for ${id}`);
+            } catch (finalizeErr) {
+                console.error("[Admin] Finalize Pipeline Error:", finalizeErr);
+            }
+        })();
+
+    } catch (e: any) {
+        console.error("Force Finalize Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+};

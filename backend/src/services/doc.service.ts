@@ -168,8 +168,8 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     // Let's return the local filesystem path for now, controller can handle it.
     let finalArtifactPath = outputPath;
 
-    // 4. Generate Extras & Zip (If Marketing exists)
-    if (project.marketing) {
+    // 4. Generate Extras & Zip (Always generate at least the book zip for consistency)
+    if (true) {
         try {
             const zipName = `${tr.kitName}_${safeEmail}_${project.id}.zip`;
             const zipPath = path.join(outputDir, zipName);
@@ -189,13 +189,15 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
             };
 
             const m = project.marketing;
-            if (m.salesSynopsis) await addDoc(`${tr.originalAmazonSynopsisFile}.docx`, tr.amazonSynopsis, m.salesSynopsis);
-            if (m.backCover) await addDoc(`${tr.backCoverFile}.docx`, tr.backCover, m.backCover);
-            if (m.flapCopy) await addDoc(`${tr.flapCopyFile}.docx`, tr.flapCopy, m.flapCopy);
-            if (m.backFlapCopy) await addDoc(`${tr.backFlapCopyFile}.docx`, tr.backFlapCopy, m.backFlapCopy);
-            if (m.youtubeDescription) await addDoc(`${tr.youtubeDescFile}.docx`, tr.youtubeDesc, m.youtubeDescription);
-            if (m.keywords && m.keywords.length > 0) await addDoc(`${tr.keywordsFile}.docx`, tr.keywords, m.keywords.join(', '));
-            if (content.marketing && content.marketing.description) await addDoc(`${tr.professionalSynopsisFile}.docx`, tr.professionalSynopsis, content.marketing.description);
+            if (m) {
+                if (m.salesSynopsis) await addDoc(`${tr.originalAmazonSynopsisFile}.docx`, tr.amazonSynopsis, m.salesSynopsis);
+                if (m.backCover) await addDoc(`${tr.backCoverFile}.docx`, tr.backCover, m.backCover);
+                if (m.flapCopy) await addDoc(`${tr.flapCopyFile}.docx`, tr.flapCopy, m.flapCopy);
+                if (m.backFlapCopy) await addDoc(`${tr.backFlapCopyFile}.docx`, tr.backFlapCopy, m.backFlapCopy);
+                if (m.youtubeDescription) await addDoc(`${tr.youtubeDescFile}.docx`, tr.youtubeDesc, m.youtubeDescription);
+                if (m.keywords && m.keywords.length > 0) await addDoc(`${tr.keywordsFile}.docx`, tr.keywords, m.keywords.join(', '));
+                if (content.marketing && content.marketing.description) await addDoc(`${tr.professionalSynopsisFile}.docx`, tr.professionalSynopsis, content.marketing.description);
+            }
 
             // Close archive
             await archive.finalize();

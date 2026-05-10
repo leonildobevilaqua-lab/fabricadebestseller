@@ -826,8 +826,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
     };
 
-    const handleImpersonate = async (email: string) => {
-        if (!confirm(`Entrar na Área VIP do cliente ${email}?\n\nIsso redirecionará você para a visão do cliente.`)) return;
+    const handleImpersonate = async (email: string, name?: string) => {
+        if (!email || email === "N/A" || email === "n/a") {
+            alert("❌ E-mail do cliente não encontrado para este projeto. Procure pelo nome na aba 'Vendas/Leads' ou aguarde a sincronização.");
+            return;
+        }
+        if (!confirm(`Entrar na Área VIP do cliente ${name || email}?\n\nIsso redirecionará você para a visão do cliente.`)) return;
         
         try {
             const res = await fetch(`${getAdminUrl()}/impersonate`, {
@@ -850,8 +854,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 localStorage.setItem('bsf_hasAccess', 'true');
                 localStorage.setItem('bsf_view', 'dashboard');
                 
-                // Redireciona para a raiz (limpa o cache do app)
-                window.location.href = '/?new_session=true';
+                // Redireciona para o dashboard principal (visão do cliente)
+                window.location.href = '/?impersonate=true';
             } else {
                 alert("Erro ao gerar acesso: " + (data.error || "Usuário não encontrado em /users"));
             }
@@ -1565,17 +1569,62 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             <h4 className="font-bold text-slate-800 text-sm md:text-base truncate max-w-[400px]" translate="no">
                                                                 {isProject ? (order.title || "Geração sem Título") : (order.name || order.customerEmail || item.email || "N/A")}
                                                             </h4>
-                                                            <div className="flex items-center gap-3 mt-0.5">
+                                                            <div className="flex flex-col gap-1 mt-1">
                                                                 <span className="text-[11px] text-slate-500 font-medium flex items-center gap-1">
-                                                                    <User size={12} className="opacity-40" /> {isProject ? (order.customerName || "-") : (order.email || "-")}
+                                                                    <User size={12} className="opacity-40" /> {isProject ? (order.customerName || "-") : (order.name || order.email || "-")}
                                                                 </span>
+                                                                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                                                                    <span>📧 {isProject ? order.customerEmail : (order.email || "-")}</span>
+                                                                </span>
+                                                                {(isProject ? order.customerPhone : (order.fullPhone || order.phone)) && (isProject ? order.customerPhone : (order.fullPhone || order.phone)) !== '-' && (
+                                                                    <div className="flex items-center gap-1">
+                                                                        <span className="text-[11px] text-slate-400 font-medium">📱 {isProject ? order.customerPhone : (order.fullPhone || order.phone)}</span>
+                                                                        <a
+                                                                            href={`https://wa.me/${(isProject ? order.customerPhone : (order.fullPhone || order.phone)).replace(/\D/g, '')}`}
+                                                                            target="_blank"
+                                                                            rel="noreferrer"
+                                                                            className="p-0.5 bg-green-500 text-white rounded hover:bg-green-600 transition flex items-center justify-center shadow-sm"
+                                                                            title="Abrir no WhatsApp"
+                                                                        >
+                                                                            <MessageCircle size={10} />
+                                                                        </a>
+                                                                    </div>
+                                                                )}
                                                                 {isProject && (
                                                                     <span className="text-[11px] text-slate-400 italic">
                                                                         by {order.authorName || "-"}
                                                                     </span>
                                                                 )}
-                                                            </div>
-                                                        </div>
+
+                                                             {isProject && !(['READY_TO_DOWNLOAD', 'COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS'].includes((order.status || '').toUpperCase())) && (
+                                                                 <button
+                                                                     onClick={async () => {
+                                                                         if (!confirm("⚠️ FORÇAR FINALIZAÇÃO?\n\nIsso marcará todos os capítulos como gerados (com texto de aviso) e permitirá o download do ZIP imediatamente.\n\nUse apenas se a geração estiver travada.")) return;
+                                                                         try {
+                                                                             const res = await fetch(`${getAdminUrl()}/force-finalize/${order.projectId || order.id}`, {
+                                                                                 method: 'POST',
+                                                                                 headers: { Authorization: `Bearer ${token}` }
+                                                                             });
+                                                                             if (res.ok) {
+                                                                                 alert("✅ Projeto finalizado! Atualize a página e baixe o ZIP.");
+                                                                                 refreshAll();
+                                                                             } else {
+                                                                                 const data = await res.json();
+                                                                                 alert("❌ Erro: " + (data.error || "Erro desconhecido"));
+                                                                             }
+                                                                         } catch (e: any) {
+                                                                             alert("❌ Erro de conexão: " + e.message);
+                                                                         }
+                                                                     }}
+                                                                     className="mt-2 h-8 px-3 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95 w-fit"
+                                                                     title="Forçar Finalização (Recuperação)"
+                                                                 >
+                                                                     <Zap size={14} />
+                                                                     <span className="text-[10px] font-black uppercase tracking-tighter">FORÇAR FINALIZAÇÃO</span>
+                                                                 </button>
+                                                             )}
+                                                             </div>
+                                                         </div>
 
                                                         <div className="flex items-center gap-2">
                                                             <div className="hidden lg:flex flex-col items-end mr-4 text-right">
@@ -1598,7 +1647,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                                             )}
 
                                                             <button
-                                                                onClick={() => handleImpersonate(isProject ? order.customerEmail : order.email)}
+                                                                onClick={() => handleImpersonate(isProject ? order.customerEmail : order.email, isProject ? order.customerName : order.name)}
                                                                 className="w-10 h-10 bg-white border border-slate-200 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl flex items-center justify-center transition-all shadow-sm"
                                                                 title="Visualizar como Cliente"
                                                             >

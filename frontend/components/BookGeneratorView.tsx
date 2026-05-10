@@ -191,39 +191,42 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                     <div className="divide-y divide-slate-100">
                         {displayOrders.map((order: any, idx: number) => (
                             <div key={order.id || `book-${idx}`} className="p-4 md:p-6 hover:bg-slate-50/20 transition group relative overflow-hidden">
-                                    <div className="flex flex-col xl:flex-row items-center justify-between gap-8">
-                                    <div className="flex items-center gap-6 w-full xl:w-auto">
-                                        <div className="w-14 h-16 md:w-16 md:h-20 bg-white rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl shadow-md border border-slate-100 group-hover:scale-110 transition-transform duration-500">
-                                            📚
-                                        </div>
-                                        <div translate="no" className="min-w-0">
-                                            <span className="text-[10px] text-indigo-500 font-black uppercase tracking-[0.3em] mb-1 block leading-none">{(t as any).dashboard.bookTitleLabel}</span>
-                                            <h4 className="font-black text-slate-900 text-lg md:text-xl uppercase tracking-tighter italic leading-none truncate">
-                                                {order.title || (t as any).dashboard.bookTitleFallback}
-                                            </h4>
-                                            
-                                            <div className="flex flex-wrap items-center gap-y-2 gap-x-6 mt-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none">{(t as any).dashboard.authorLabel}</span>
-                                                    <span className="text-sm font-bold text-slate-600 tracking-tight">{order.authorName || 'Autor'}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none">{(t as any).dashboard.creationDate}</span>
-                                                    <span className="text-sm font-bold text-slate-500 tracking-tight">{order.date ? new Date(order.date).toLocaleDateString() : (t as any).dashboard.dateUnknown}</span>
+                                    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                                        <div className="flex items-center gap-4 md:gap-6 flex-1 min-w-0 w-full">
+                                            <div className="w-14 h-16 md:w-16 md:h-20 bg-white rounded-2xl flex-shrink-0 flex items-center justify-center text-3xl shadow-md border border-slate-100 group-hover:scale-110 transition-transform duration-500">
+                                                📚
+                                            </div>
+                                            <div translate="no" className="flex-1 min-w-0">
+                                                <span className="text-[10px] text-indigo-500 font-black uppercase tracking-[0.3em] mb-1 block leading-none">{(t as any).dashboard.bookTitleLabel}</span>
+                                                <h4 className="font-black text-slate-900 text-base md:text-lg uppercase tracking-tighter italic leading-tight line-clamp-2 pr-4">
+                                                    {order.title || (t as any).dashboard.bookTitleFallback}
+                                                </h4>
+                                                
+                                                <div className="flex flex-wrap items-center gap-y-2 gap-x-4 mt-2">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none">{(t as any).dashboard.authorLabel}</span>
+                                                        <span className="text-xs font-bold text-slate-600 tracking-tight truncate max-w-[120px]">{order.authorName || 'Autor'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest leading-none">{(t as any).dashboard.creationDate}</span>
+                                                        <span className="text-xs font-bold text-slate-500 tracking-tight">{order.date ? new Date(order.date).toLocaleDateString() : (t as any).dashboard.dateUnknown}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto justify-end">
+    
+                                        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end shrink-0">
                                         <span className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase())) 
                                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                            ((order.status || '').toUpperCase() === 'IN_PROGRESS' || (order.status || '').toUpperCase() === 'WRITING_CHAPTERS') 
+                                            ((order.status || '').toUpperCase() === 'IN_PROGRESS' || (order.status || '').toUpperCase() === 'WRITING_CHAPTERS' || (order.status || '').toUpperCase() === 'GENERATING_STRUCTURE') 
                                             ? 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse' :
+                                            ((order.status || '').toUpperCase() === 'FAILED')
+                                            ? 'bg-red-50 text-red-700 border-red-200' :
                                             'bg-amber-50 text-amber-700 border-amber-200'
                                             }`}>
                                             {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase())) ? (t as any).dashboard.statusGenerated :
-                                                ((order.status || '').toUpperCase() === 'IN_PROGRESS' || (order.status || '').toUpperCase() === 'WRITING_CHAPTERS') ? (t as any).dashboard.statusProcessing :
+                                                ((order.status || '').toUpperCase() === 'IN_PROGRESS' || (order.status || '').toUpperCase() === 'WRITING_CHAPTERS' || (order.status || '').toUpperCase() === 'GENERATING_STRUCTURE') ? (t as any).dashboard.statusProcessing :
+                                                    ((order.status || '').toUpperCase() === 'FAILED') ? (lang === 'en' ? 'FAILED (CLICK TO RESUME)' : 'FALHOU (CLIQUE PARA RETOMAR)') :
                                                     (t as any).dashboard.statusWaiting}
                                         </span>
 
@@ -242,7 +245,11 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                                         {(!(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase()))) && (
                                             <button
                                                 onClick={async () => {
-                                                    if (!window.confirm("O livro travou? Clique em OK para forçar a inteligência artificial a retomar de onde parou.")) return;
+                                                    const msg = lang === 'en' 
+                                                        ? "Book stuck? Click OK to force the AI to detect where it stopped and resume automatically." 
+                                                        : "O livro travou? Clique em OK para forçar a inteligência artificial a detectar onde parou e retomar automaticamente.";
+                                                    if (!window.confirm(msg)) return;
+                                                    
                                                     const token = localStorage.getItem('bsf_token');
                                                     try {
                                                         const res = await fetch(`${getApiBase()}/api/projects/${order.id}/resume`, {
@@ -250,18 +257,22 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                                                             headers: { 'Authorization': `Bearer ${token}` }
                                                         });
                                                         if(res.ok) {
-                                                            alert("Sinal de retomada enviado! A inteligência artificial assumiu o controle novamente. Atualize a página em alguns instantes.");
+                                                            const successMsg = lang === 'en'
+                                                                ? "Resumption signal sent! AI is back in control. Refresh the page in a few moments."
+                                                                : "Sinal de retomada enviado! A IA assumiu o controle novamente. Atualize a página em alguns instantes.";
+                                                            alert(successMsg);
+                                                            window.location.reload();
                                                         } else {
-                                                            alert("Erro ao enviar sinal de retomada.");
+                                                            alert(lang === 'en' ? "Error sending resumption signal." : "Erro ao enviar sinal de retomada.");
                                                         }
                                                     } catch (e) {
                                                         console.error(e);
                                                     }
                                                 }}
                                                 className="flex items-center gap-2 px-6 py-3.5 bg-amber-500 text-white rounded-2xl hover:bg-amber-600 transition-all font-black text-[10px] shadow-lg shadow-amber-100 uppercase tracking-widest hover:scale-105 active:scale-95"
-                                                title="Retomar Geração de Onde Parou"
+                                                title={lang === 'en' ? "Resume Generation from where it stopped" : "Retomar Geração de Onde Parou"}
                                             >
-                                                <span>▶️ Continuar Geração</span>
+                                                <span>▶️ {lang === 'en' ? 'RESUME GENERATION' : 'RETOMAR GERAÇÃO'}</span>
                                             </button>
                                         )}
                                         

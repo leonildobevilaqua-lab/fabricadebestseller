@@ -196,13 +196,13 @@ export const setVal = async (pathStr: string, value: any) => {
             }
         } else {
             // SUPABASE LOGIC
-            supabase.from('kv_store').upsert({
+            const { error } = await supabase.from('kv_store').upsert({
                 key: normalized,
                 value: value,
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'key' }).then(({ error }) => {
-                if (error) console.error(`[DB] Supabase Sync Error:`, error.message);
-            });
+            }, { onConflict: 'key' });
+            
+            if (error) console.error(`[DB] Supabase Sync Error:`, error.message);
         }
 
         // 3. DISK BACKUP

@@ -106,7 +106,9 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
       btnManual: 'INFORMAR TÍTULO MANUALMENTE',
       btnAI: 'DEIXAR A FBS GERAR OS TÍTULOS',
       manualTitleLabel: 'Digite o Título do seu Livro',
-      manualTitlePlaceholder: 'Ex: O Poder Oculto da IA no Seu Bolso'
+      manualTitlePlaceholder: 'Ex: O Poder Oculto da IA no Seu Bolso',
+      manualSubTitleLabel: 'Digite o Subtítulo do seu Livro (Opcional)',
+      manualSubTitlePlaceholder: 'Ex: Como dominar as ferramentas mais poderosas do mundo'
     },
     en: {
       welcome: 'WELCOME TO THE BEST SELLER FACTORY',
@@ -131,7 +133,9 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
       btnManual: 'PROVIDE TITLE MANUALLY',
       btnAI: 'LET FBS GENERATE TITLES',
       manualTitleLabel: 'Type your Book Title',
-      manualTitlePlaceholder: 'Ex: The Hidden Power of AI in Your Pocket'
+      manualTitlePlaceholder: 'Ex: The Hidden Power of AI in Your Pocket',
+      manualSubTitleLabel: 'Type your Book Subtitle (Optional)',
+      manualSubTitlePlaceholder: 'Ex: How to master the most powerful tools in the world'
     },
     es: {
       welcome: '¡BIENVENIDO(A) A LA FÁBRICA DE BEST SELLER!',
@@ -156,7 +160,9 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
       btnManual: 'INFORMAR TÍTULO MANUALMENTE',
       btnAI: 'DEJAR QUE FBS GENERE LOS TÍTULOS',
       manualTitleLabel: 'Escribe el Título de tu Libro',
-      manualTitlePlaceholder: 'Ej: El Poder Oculto de la IA en tu Bolsillo'
+      manualTitlePlaceholder: 'Ej: El Poder Oculto de la IA en tu Bolsillo',
+      manualSubTitleLabel: 'Escribe el Subtítulo de tu Libro (Opcional)',
+      manualSubTitlePlaceholder: 'Ej: Cómo dominar as herramientas más poderosas del mundo'
     }
   };
 
@@ -391,15 +397,27 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
               </div>
 
               {titleMode === 'manual' && (
-                <div className="animate-in slide-in-from-top-2 duration-300">
-                  <label className="block text-sm font-bold text-slate-700 mb-2">{L.manualTitleLabel}</label>
-                  <input
-                    name="bookTitle"
-                    value={metadata.bookTitle || ''}
-                    onChange={handleChange}
-                    placeholder={L.manualTitlePlaceholder}
-                    className="w-full px-5 py-4 rounded-xl border-2 border-amber-200 bg-white focus:ring-4 focus:ring-amber-100 focus:border-amber-400 outline-none transition-all text-lg font-black text-slate-800 shadow-inner"
-                  />
+                <div className="animate-in slide-in-from-top-2 duration-300 space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">{L.manualTitleLabel}</label>
+                    <input
+                      name="bookTitle"
+                      value={metadata.bookTitle || ''}
+                      onChange={handleChange}
+                      placeholder={L.manualTitlePlaceholder}
+                      className="w-full px-5 py-4 rounded-xl border-2 border-amber-200 bg-white focus:ring-4 focus:ring-amber-100 focus:border-amber-400 outline-none transition-all text-lg font-black text-slate-800 shadow-inner"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">{L.manualSubTitleLabel}</label>
+                    <input
+                      name="subTitle"
+                      value={metadata.subTitle || ''}
+                      onChange={handleChange}
+                      placeholder={L.manualSubTitlePlaceholder}
+                      className="w-full px-5 py-4 rounded-xl border-2 border-slate-100 bg-white focus:ring-4 focus:ring-slate-50 focus:border-slate-200 outline-none transition-all text-base font-medium text-slate-700 shadow-inner"
+                    />
+                  </div>
                 </div>
               )}
             </div>

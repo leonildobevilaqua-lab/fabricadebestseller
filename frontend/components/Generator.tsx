@@ -1107,7 +1107,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
           <button
             onClick={() => {
-              const checkoutUrl = `https://payment.ticto.app/O6CE296D4?email=${encodeURIComponent(userContact?.email || '')}`;
+              const checkoutUrl = `https://checkout.ticto.app/O6F5202E7?email=${encodeURIComponent(userContact?.email || '')}`;
               window.open(checkoutUrl, '_blank');
             }}
             className="w-full sm:w-auto bg-[#0ea5e9] text-white px-10 py-5 rounded-2xl font-black shadow-2xl shadow-[#0ea5e9]/40 hover:bg-[#0284c7] hover:scale-105 transition-all text-lg uppercase tracking-tighter"
@@ -1398,8 +1398,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           <h3 className="text-xl font-bold text-slate-800 mb-2 font-serif flex items-center justify-center min-h-[3.5rem] px-4">
             {status === 'FAILED' ? (
               <div className="flex flex-col items-center">
-                <span>{t.processInterrupted}</span>
-                <span className="text-xs font-normal text-rose-500 mt-1 max-w-xs">{statusMessage}</span>
+                <span className="text-rose-600">⚠️ {t.processInterrupted}</span>
+                <span className="text-[10px] font-mono text-rose-400 mt-1 max-w-xs uppercase overflow-hidden whitespace-nowrap overflow-ellipsis">{statusMessage || "Erro desconhecido"}</span>
               </div>
             ) : (statusMessage || t.startingIntelligence)}
           </h3>
@@ -1472,7 +1472,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         </div>
 
         <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden mb-8 max-w-lg mx-auto shadow-inner">
-          <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#0ea5e9] to-[#7dd3fc] transition-all duration-700 ease-out shadow-lg" style={{ width: `${progress}%` }}></div>
+          <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-[#0ea5e9] to-[#7dd3fc] transition-all duration-700 ease-out shadow-lg" style={{ width: `${Number(progress || 0) || 0}%` }}></div>
         </div>
 
         {/* FAILSAFE BUTTON */}
@@ -1501,7 +1501,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
           <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2 flex justify-between">
             <span>{t.statusTitle}</span>
-            <span>{Math.round(progress)}%</span>
+            <span>{Math.round(Number(progress || 0) || 0)}%</span>
           </h4>
           <div className="space-y-4 font-medium text-sm">
 
@@ -1529,7 +1529,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 {t.status3}
                 {progress < 95 && progress >= 45 && (
                   <span className="ml-2 text-[10px] text-brand-400 font-bold bg-brand-50 px-2 py-0.5 rounded-full animate-pulse tracking-tighter uppercase whitespace-nowrap">
-                    {Math.round(progress)}%
+                    {Math.round(Number(progress || 0) || 0)}%
                   </span>
                 )}
               </span>

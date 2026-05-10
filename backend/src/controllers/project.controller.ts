@@ -811,9 +811,10 @@ export const generateBookContent = async (req: Request, res: Response) => {
             }
 
             // Update Pulse & Progress
+            const progressValue = total > 0 ? 41 + Math.floor(((i) / total) * 40) : 41;
             await QueueService.updateMetadata(id, {
                 statusMessage: `Escrevendo Capítulo ${chapter.id}: ${chapter.title}...`,
-                progress: 41 + Math.floor(((i) / total) * 40), // 41% to 81%
+                progress: progressValue, // 41% to 81%
                 lastWorkerPulse: new Date().toISOString()
             });
 
@@ -933,23 +934,98 @@ export const resumeGeneration = async (req: Request, res: Response) => {
     const project = await QueueService.getProject(id);
     if (!project) return res.status(404).json({ error: "Not found" });
 
-    console.log(`[RESUME] Forcing unlock for project ${id} to resume generation.`);
-    
-    // Force unlock by resetting the pulse
-    await QueueService.updateMetadata(id, {
-        status: 'WRITING_CHAPTERS',
-        lastWorkerPulse: new Date(0).toISOString(),
-        currentWorkerId: '' // Clear stale worker
-    });
+    const status = project.metadata.status;
+    const hasStructure = project.structure && project.structure.length > 0;
+    const hasResearch = project.researchContext && project.researchContext.length > 500;
+    const hasTitle = !!(project.metadata.bookTitle || project.metadata.title);
 
-    // Call the generator again
+    console.log(`[RESUME] Smart Resume for ${id}. Status: ${status}, Structure: ${hasStructure}, Research: ${hasResearch}, Title: ${hasTitle}`);
+
+    // Force unlock for new worker
+    const updates: any = {
+        lastWorkerPulse: new Date(0).toISOString(),
+        currentWorkerId: '',
+        statusMessage: "Retomando geração..."
+    };
+
+    // LOGIC: Where did it stop?
+    
+    // 1. If it's finished but stuck in a weird state, just finalize it properly
+    if (status === 'COMPLETED' || status === 'READY_TO_DOWNLOAD' || status === 'LIVRO ENTREGUE') {
+        console.log(`[RESUME] Project ${id} already finished. Regenerating files to be sure.`);
+        await finalizeProjectLogic(id, project.metadata.language || 'pt');
+        return res.json({ message: "Projeto finalizado e arquivos regerados.", status: 'COMPLETED' });
+    }
+
+    // 2. If it has no research context, it probably stopped at the beginning
+    if (!hasResearch && (status === 'IDLE' || status === 'RESEARCHING' || status === 'FAILED')) {
+        console.log(`[RESUME] Resuming from Research for ${id}`);
+        return startResearch(req, res);
+    }
+
+    // 3. If it has research but no title selected (and not auto-generating)
+    if (hasResearch && !hasTitle) {
+        console.log(`[RESUME] Resuming from Title Selection for ${id}`);
+        await QueueService.updateMetadata(id, { ...updates, status: 'WAITING_TITLE', statusMessage: "Aguardando escolha do título." });
+        return res.json({ message: "Aguardando escolha do título", status: 'WAITING_TITLE' });
+    }
+
+    // 4. If it has title but NO STRUCTURE
+    if (hasTitle && !hasStructure) {
+        console.log(`[RESUME] Missing Structure for ${id}. Generating it now...`);
+        await QueueService.updateMetadata(id, { ...updates, status: 'GENERATING_STRUCTURE', statusMessage: "Recuperando estrutura do livro..." });
+        
+        // Trigger structure generation manually
+        res.json({ message: "Recuperando estrutura do livro...", status: 'GENERATING_STRUCTURE' });
+        
+        (async () => {
+            try {
+                const lang = project.metadata.language || 'pt';
+                const structure = await AIService.generateStructure(
+                    project.metadata.bookTitle || project.metadata.title || "Livro", 
+                    project.metadata.subTitle || "", 
+                    project.researchContext, 
+                    lang, 
+                    project.metadata.genre || project.metadata.contentStyle, 
+                    project.metadata.isFiction
+                );
+                await QueueService.updateProject(id, { structure });
+                await QueueService.updateMetadata(id, { status: 'REVIEW_STRUCTURE', progress: 40, statusMessage: "Estrutura recuperada." });
+                
+                // If auto-generate is on, continue to content
+                if (project.metadata.autoGenerate) {
+                    req.params.id = id;
+                    return generateBookContent(req, {} as any);
+                }
+            } catch (e) {
+                console.error("[RESUME] Failed to recover structure", e);
+                await QueueService.updateMetadata(id, { status: 'FAILED', statusMessage: "Erro ao recuperar estrutura." });
+            }
+        })();
+        return;
+    }
+
+    // 5. If it has structure but is stuck in writing or failed writing
+    if (hasStructure) {
+        console.log(`[RESUME] Resuming Content Generation for ${id}`);
+        await QueueService.updateMetadata(id, { 
+            ...updates, 
+            status: 'WRITING_CHAPTERS', 
+            statusMessage: "Retomando escrita dos capítulos..." 
+        });
+        return generateBookContent(req, res);
+    }
+
+    // Default Fallback
+    console.log(`[RESUME] Default fallback for ${id}`);
+    await QueueService.updateMetadata(id, updates);
     return generateBookContent(req, res);
 };
 
 /**
  * Perform final steps: Marketing Assets -> PDF/Docx -> Email
  */
-async function finalizeProjectLogic(id: string, targetLang: string) {
+export async function finalizeProjectLogic(id: string, targetLang: string) {
     try {
         const project = await QueueService.getProject(id);
         if (!project) return;

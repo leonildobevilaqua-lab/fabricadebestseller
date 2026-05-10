@@ -9,10 +9,10 @@ export class GeminiProvider implements LLMProvider {
     // UPDATED: Prioritizing Gemini 2.5 Flash as requested and verified in AI Studio.
     // This model provides the best balance of speed, cost and quality for this project.
     private models = [
-        "gemini-2.5-flash",  // PRIMARY: Confirmed active in User AI Studio
-        "gemini-2.5-pro",    // SECONDARY: Confirmed active in User AI Studio
-        "gemini-2-flash",    // TERTIARY: Confirmed active in User AI Studio
-        "gemini-1.5-flash",  // LEGACY FALLBACK
+        "gemini-2.5-flash",  // PRIMARY: User confirmed active
+        "gemini-2.5-pro",    // SECONDARY: User confirmed active
+        "gemini-2.0-flash",  // GA STABLE: High performance
+        "gemini-1.5-flash",  // LEGACY STABLE
     ];
 
 
@@ -40,13 +40,17 @@ export class GeminiProvider implements LLMProvider {
                 });
 
                 const resultFn = generativeModel.generateContent(finalPrompt);
-                const timeoutPromise = new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 120000));
+                const timeoutPromise = new Promise<any>((_, reject) => setTimeout(() => reject(new Error(`Timeout after 300s on ${modelName}`)), 300000));
                 const result = await Promise.race([resultFn, timeoutPromise]);
 
                 const response = await result.response;
-                return response.text();
+                const text = response.text();
+                if (!text) throw new Error(`Empty response from ${modelName}`);
+                
+                console.log(`[GEMINI] Success using ${modelName} (${text.length} chars)`);
+                return text;
             } catch (error: any) {
-                console.warn(`[GEMINI] Model ${modelName} failed:`, error.message);
+                console.error(`[GEMINI] Model ${modelName} CRITICAL FAILURE:`, error.message);
                 lastError = error;
                 // Wait 1s before next model to avoid hitting rate limits too fast
                 await new Promise(resolve => setTimeout(resolve, 1000));
@@ -71,10 +75,11 @@ export class GeminiProvider implements LLMProvider {
                 });
 
                 const resultFn = generativeModel.generateContent(prompt);
-                const timeoutPromise = new Promise<any>((_, reject) => setTimeout(() => reject(new Error("Timeout")), 120000));
+                const timeoutPromise = new Promise<any>((_, reject) => setTimeout(() => reject(new Error(`Timeout JSON after 300s on ${modelName}`)), 300000));
                 const result = await Promise.race([resultFn, timeoutPromise]) as any;
                 const response = await result.response;
                 let text = response.text();
+                console.log(`[GEMINI_JSON] Success using ${modelName}`);
 
                 // Robust JSON extraction for experimental models (like 2.5/3.0)
                 // They might add conversational chatter even with responseMimeType

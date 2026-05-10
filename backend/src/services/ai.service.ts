@@ -531,39 +531,61 @@ export const writeChapter = async (
 
     // 2.2 Sections
     for (const subtopic of subtopics) {
-      const sectionPrompt = `
-            ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
+      let subSuccess = false;
+      let subAttempts = 0;
+      
+      while (!subSuccess && subAttempts < 3) {
+        try {
+          subAttempts++;
+          console.log(`[IA] Writing subtopic "${subtopic}" (Attempt ${subAttempts}/3) for chapter: ${chapter.title}`);
+          
+          const sectionPrompt = `
+                ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
+                
+                ${metadata.isFiction ? `GENRE: ${metadata.genre}\nCHARACTERS: ${JSON.stringify(metadata.characters)}` : `
+                CONTEXTO DE PESQUISA (Use isso como base, não invente):
+                ${researchContext.substring(0, 5000)}
+                `}
+                
+                Book: ${metadata.bookTitle}
+                Chapter: ${chapter.title}
+                
+                Current Section: "${subtopic}"
+                
+                TAREFA: Escreva o conteúdo desta seção.
+                
+                FASE DE EXECUÇÃO HUMANIZADA:
+                1. Aplique VARIABILIDADE RADICAL (Burstiness) nas frases.
+                2. Injete PERPLEXIDADE com vocabulário rico e analogias raras.
+                
+                REGRAS:
+                - Use tom conversacional e prático.
+                ${metadata.isFiction ? '- Use prosa imersiva, foco em diálogos e ação.' : ''}
+                - TAMANHO: Escreva rigorosamente entre 450 e 500 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos.
+                
+                Previous Context:
+                ${fullChapterContent.slice(-800)}
+                
+                LANGUAGE: ${langName}.
+            `;
             
-            ${metadata.isFiction ? `GENRE: ${metadata.genre}\nCHARACTERS: ${JSON.stringify(metadata.characters)}` : `
-            CONTEXTO DE PESQUISA (Use isso como base, não invente):
-            ${researchContext.substring(0, 3000)}
-            `}
-            
-            Book: ${metadata.bookTitle}
-            Chapter: ${chapter.title}
-            
-            Current Section: "${subtopic}"
-            
-            TAREFA: Escreva o conteúdo desta seção.
-            
-            FASE DE EXECUÇÃO HUMANIZADA:
-            1. Aplique VARIABILIDADE RADICAL (Burstiness) nas frases.
-            2. Injete PERPLEXIDADE com vocabulário rico e analogias raras.
-            3. Use o filtro REVISÃO DOUBLE-BLIND: se o parágrafo parecer robótico, desconstrua-o e reescreva com "Alma Humana".
-            
-            REGRAS:
-            - Use tom conversacional e prático.
-            - Foco total em resolver as dores listadas acima.
-            ${metadata.isFiction ? '- Use prosa imersiva, foco em diálogos e ação.' : ''}
-            - TAMANHO: Escreva rigorosamente entre 450 e 500 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos para atingir o volume total de páginas exigido do livro (mínimo 170 páginas).
-            
-            Previous Context:
-            ${fullChapterContent.slice(-500)}
-            
-            LANGUAGE: ${langName}.
-        `;
-      const content = await llm.generateText(sectionPrompt);
-      fullChapterContent += `### ${subtopic}\n\n${content}\n\n`;
+          const content = await llm.generateText(sectionPrompt);
+          if (!content || content.length < 100) throw new Error("Content too short or empty");
+          
+          fullChapterContent += `### ${subtopic}\n\n${content}\n\n`;
+          subSuccess = true;
+          console.log(`[IA] Subtopic "${subtopic}" completed (${content.length} chars).`);
+        } catch (e: any) {
+          console.warn(`[IA] Subtopic "${subtopic}" failed (Attempt ${subAttempts}/3):`, e.message);
+          if (subAttempts >= 3) {
+            fullChapterContent += `### ${subtopic}\n\n[O conteúdo desta seção não pôde ser gerado automaticamente devido a uma instabilidade temporária. Sugerimos revisar este tópico manualmente.]\n\n`;
+            subSuccess = true; // Move to next to avoid infinite loop
+          } else {
+            await new Promise(r => setTimeout(r, 2000)); // Wait before retry
+          }
+        }
+      }
+      
       if (onPulse) await onPulse();
     }
 

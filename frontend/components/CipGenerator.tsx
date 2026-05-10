@@ -156,6 +156,18 @@ const CipGenerator: React.FC = () => {
           <p>Envie o manuscrito do seu livro e nossa IA gerará a ficha oficial no padrão profissional em segundos.</p>
         </header>
 
+        <div className="video-section-cip">
+          <div className="video-container-cip">
+            <iframe
+              src="https://www.youtube.com/embed/qSRTerJCeNo"
+              title="Passo a passo Geração de Ficha Catalográfica"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            ></iframe>
+          </div>
+        </div>
+
         {isCheckingCredits ? (
            <div className="flex justify-center items-center py-12">
              <Loader2 className="icon spin" size={32} />
