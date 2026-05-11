@@ -844,12 +844,6 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             });
             const data = await res.json();
             if (res.ok && data.success) {
-                // Configura a sessão do usuário
-                localStorage.setItem('bsf_token', data.token);
-                localStorage.setItem('bsf_userContact', JSON.stringify({
-                    name: data.user.name,
-                    email: data.user.email,
-                    phone: ''
                 // Open in new tab with query parameters to avoid polluting the Admin tab's localStorage
                 const impersonateUrl = `/?impersonate_email=${encodeURIComponent(data.user.email)}&impersonate_name=${encodeURIComponent(data.user.name)}&impersonate_token=${encodeURIComponent(data.token)}`;
                 window.open(impersonateUrl, '_blank');
