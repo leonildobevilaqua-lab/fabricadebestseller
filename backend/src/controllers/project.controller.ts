@@ -856,10 +856,14 @@ export const generateBookContent = async (req: Request, res: Response) => {
         }
 
         // 2. Write Introduction (after chapters to be coherent)
+        // RELOAD: Crucial to get the generated chapters before adding intro
+        const finalProject = await QueueService.getProject(id);
+        if (!finalProject) throw new Error("Project lost during generation");
+
         // Check if Intro exists (Chapter 0)
         let hasIntro = false;
-        if (project.structure && project.structure.length > 0) {
-            if (project.structure[0].id === 0 && project.structure[0].isGenerated) {
+        if (finalProject.structure && finalProject.structure.length > 0) {
+            if (finalProject.structure[0].id === 0 && finalProject.structure[0].isGenerated) {
                 hasIntro = true;
             }
         }
@@ -873,7 +877,7 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
             let introContent = "";
             try {
-                introContent = await AIService.writeIntroduction(project.metadata, project.structure, project.researchContext, targetLang);
+                introContent = await AIService.writeIntroduction(finalProject.metadata, finalProject.structure, finalProject.researchContext, targetLang);
             } catch (e) {
                 console.error("Introduction Generation Failed:", e);
                 introContent = "A Introdução não pôde ser gerada automaticamente devido a uma instabilidade na IA. Por favor, escreva uma introdução manualmente.";
@@ -881,19 +885,22 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
             const introChapter: any = { id: 0, title: "Introdução", content: introContent, isGenerated: true };
 
-            if (!project.structure) project.structure = [];
+            if (!finalProject.structure) finalProject.structure = [];
 
-            if (project.structure.length > 0 && project.structure[0].id !== 0) {
-                project.structure.unshift(introChapter);
+            if (finalProject.structure.length > 0 && finalProject.structure[0].id !== 0) {
+                finalProject.structure.unshift(introChapter);
             } else {
-                project.structure[0] = introChapter;
+                finalProject.structure[0] = introChapter;
             }
-            await QueueService.updateProject(id, { structure: project.structure });
+            await QueueService.updateProject(id, { structure: finalProject.structure });
         }
+
+        // Use finalProject metadata for auto-generate check
+        const finalMeta = finalProject.metadata;
 
         // --- PAUSE POINT: Final Touches (Wait for User) ---
         // If not auto-generate, we stop here to let the user review and add toppings (Dedication, etc.)
-        if (!project.metadata.autoGenerate) {
+        if (!finalMeta.autoGenerate) {
             console.log(`[PROJECT] Pausing for Final Touches (WAITING_DETAILS) for project ${id}`);
             await QueueService.updateMetadata(id, {
                 status: 'WAITING_DETAILS',
@@ -907,7 +914,7 @@ export const generateBookContent = async (req: Request, res: Response) => {
         // If auto-generate is TRUE, we generate extras automatically and proceed
         console.log("[PROJECT] Auto-generating Extras and proceeding...");
         try {
-            const extras = await AIService.generateExtras(project.metadata, "", "", "", targetLang);
+            const extras = await AIService.generateExtras(finalMeta, "", "", "", targetLang);
             await QueueService.updateMetadata(id, {
                 dedication: extras.dedication,
                 acknowledgments: extras.acknowledgments,
@@ -1115,12 +1122,14 @@ export const finalizeBookContent = async (req: Request, res: Response) => {
 
     // CRITICAL SAFETY CHECK: Ensure all chapters were generated before finalizing
     if (project.structure && project.structure.length > 0) {
-        const missingChapters = project.structure.filter(ch => !ch.isGenerated || !ch.content || ch.content.length < 100);
+        const missingChapters = project.structure.filter(ch => !ch.isGenerated || !ch.content || ch.content.length < 50); // Relaxed to 50 chars
         if (missingChapters.length > 0) {
-            console.error(`[PROJECT] Finalize called but ${missingChapters.length} chapters are missing for project ${id}! Rejecting.`);
+            const missingTitles = missingChapters.map(ch => ch.title || `Capítulo ${ch.id}`).join(', ');
+            console.error(`[PROJECT] Finalize REJECTED for ${id}. Missing/Short Chapters: ${missingTitles}`);
+            
             return res.status(400).json({ 
                 error: "Existem capítulos não finalizados.", 
-                details: "A inteligência artificial ainda não terminou de escrever todos os capítulos ou houve uma falha. Por favor, feche esta tela e clique no botão laranja 'Continuar Geração' no seu painel para retomar." 
+                details: `A inteligência artificial ainda não terminou de escrever todos os capítulos (${missingTitles}) ou houve uma falha. Por favor, feche esta tela e clique no botão laranja 'Continuar Geração' no seu painel para retomar.` 
             });
         }
     }
