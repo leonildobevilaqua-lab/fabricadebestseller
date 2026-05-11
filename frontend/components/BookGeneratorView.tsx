@@ -66,7 +66,7 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                         </h2>
                         <p className="text-slate-400 text-lg max-w-xl leading-relaxed">
                             {hasCredits ? (
-                                (t as any).dashboard.creditAvailable
+                                stats?.credits > 0 ? (t as any).dashboard.creditAvailable : (lang === 'en' ? 'You have an active project in progress! Click below to resume and finish your book.' : 'Você possui um projeto em andamento! Clique abaixo para retomar e concluir seu livro.')
                             ) : (
                                 <>
                                     {(t as any).dashboard.currentMode} <strong>{planStatus === 'ACTIVE' ? planName : (t as any).dashboard.modeAvulso}</strong>.

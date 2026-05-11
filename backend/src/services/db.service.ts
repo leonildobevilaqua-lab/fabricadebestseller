@@ -205,10 +205,12 @@ export const setVal = async (pathStr: string, value: any) => {
             if (error) console.error(`[DB] Supabase Sync Error:`, error.message);
         }
 
-        // 3. DISK BACKUP
-        fs.writeFile(DB_PATH, JSON.stringify(db), (err) => {
-            if (err) console.error("[DB] Disk Backup Error:", err);
-        });
+        // 3. DISK BACKUP (Synchronous to ensure integrity during rapid updates)
+        try {
+            fs.writeFileSync(DB_PATH, JSON.stringify(db));
+        } catch (err) {
+            console.error("[DB] Disk Backup Error:", err);
+        }
 
     } catch (e) {
         console.error("setVal error:", e);

@@ -50,10 +50,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const handleVerifyAndEnter = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${getApiBase()}/api/payment/access?email=${encodeURIComponent(user.email)}`);
+            const res = await fetch(`${getApiBase()}/api/payment/access?email=${encodeURIComponent(user.email)}&forceSync=true`);
             const data = await res.json();
             if (data.hasAccess && (data.credits > 0 || data.hasActiveProject)) {
-                setHasCredits(data.credits > 0);
+                setHasCredits(data.credits > 0 || data.hasActiveProject);
                 onNewBook();
             } else {
                 alert(lang === 'en' ? '⚠️ No available credits found.' : '⚠️ Não identificamos créditos disponíveis.');
@@ -91,7 +91,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             if (meRes.ok) setStats(await meRes.json());
             if (resPayment.ok) {
                 const payData = await resPayment.json();
-                setHasCredits(payData.credits > 0);
+                setHasCredits(payData.credits > 0 || payData.hasActiveProject);
                 if (payData.latestInvoiceStatus === 'PENDING' || payData.latestInvoiceStatus === 'OVERDUE') {
                     setPendingInvoice(true);
                     setInvoiceUrl(payData.invoiceUrl);

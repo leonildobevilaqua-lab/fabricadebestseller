@@ -850,12 +850,9 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     name: data.user.name,
                     email: data.user.email,
                     phone: ''
-                }));
-                localStorage.setItem('bsf_hasAccess', 'true');
-                localStorage.setItem('bsf_view', 'dashboard');
-                
-                // Redireciona para o dashboard principal (visão do cliente) em uma nova aba
-                window.open('/?impersonate=true', '_blank');
+                // Open in new tab with query parameters to avoid polluting the Admin tab's localStorage
+                const impersonateUrl = `/?impersonate_email=${encodeURIComponent(data.user.email)}&impersonate_name=${encodeURIComponent(data.user.name)}&impersonate_token=${encodeURIComponent(data.token)}`;
+                window.open(impersonateUrl, '_blank');
             } else {
                 alert("Erro ao gerar acesso: " + (data.error || "Usuário não encontrado em /users"));
             }

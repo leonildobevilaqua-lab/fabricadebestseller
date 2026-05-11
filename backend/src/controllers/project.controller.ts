@@ -768,7 +768,7 @@ export const generateBookContent = async (req: Request, res: Response) => {
     // 1. LOCK CHECK: Prevent multiple workers from processing the same project
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 600000); // 10 min grace (600s)
+    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 180000); // 3 min grace (180s) - Reduced from 10m for better responsiveness
 
     if (isActuallyRunning) {
         console.log(`[PROJECT] Generation already active for ${id} (Pulse: ${now - lastPulse}ms ago). Skipping new worker.`);
@@ -844,15 +844,12 @@ export const generateBookContent = async (req: Request, res: Response) => {
                 } catch (e: any) {
                     console.error(`Error writing chapter ${chapter.id} (Attempt ${attempts}/3):`, e);
                     if (attempts >= 3) {
-                        const latest = await QueueService.getProject(id);
-                        if (latest && latest.metadata.currentWorkerId === workerId) {
-                           latest.structure[i].content = `[ERRO NA GERAÇÃO DESTE CAPÍTULO]\n\nTema: ${chapter.title}.\nSugerimos regenerar este trecho manualmente.`;
-                           latest.structure[i].isGenerated = true; 
-                           await QueueService.updateProject(id, { structure: latest.structure });
-                        }
-                        success = true; 
+                        console.error(`[PROJECT] Chapter ${chapter.id} PERSISTENT FAILURE after 3 attempts. Stopping generation.`);
+                        throw new Error(`Falha persistente no Capítulo ${chapter.id}: ${e.message}`);
                     } else {
-                        await new Promise(r => setTimeout(r, 2000));
+                        // Exponential backoff
+                        const delay = attempts * 3000;
+                        await new Promise(r => setTimeout(r, delay));
                     }
                 }
             }
@@ -923,9 +920,12 @@ export const generateBookContent = async (req: Request, res: Response) => {
         // Proceed to final steps
         await finalizeProjectLogic(id, targetLang);
 
-    } catch (error) {
-        console.error(error);
-        await QueueService.updateMetadata(id, { status: 'FAILED', statusMessage: "Erro na geração do conteúdo." });
+    } catch (error: any) {
+        console.error(`[GENERATION_CRITICAL_ERROR] Project ${id}:`, error);
+        await QueueService.updateMetadata(id, { 
+            status: 'FAILED', 
+            statusMessage: `⚠️ Erro na geração: ${error.message || "Falha técnica na IA"}. Tente retomar clicando em GERAR LIVRO.` 
+        });
     }
 };
 

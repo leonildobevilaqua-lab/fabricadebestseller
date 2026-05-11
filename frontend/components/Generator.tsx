@@ -636,8 +636,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     if (!projectId || !project || error) return;
     const { status } = project.metadata;
     const now = Date.now();
-    const isStuck = (now - lastProgressTime > 300000); // 5 minutes without progress or pulse update
-
+    const isStuck = (now - lastProgressTime > 240000); // 4 minutes (240s) without progress or pulse update
+    
     if (isStuck && (status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' || status === 'GENERATING_MARKETING')) {
        console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Retrying...`);
        setLastProgressTime(now); // Reset timer to avoid spamming
@@ -1537,16 +1537,20 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
             {project.structure && project.structure.length > 0 && progress >= 45 && progress < 95 && (
               <div className="ml-8 mt-1 space-y-1 pl-4 border-l-2 border-brand-200" translate="no">
-                {project.structure.map((c, idx) => (
-                  <div key={`chapter-${c?.id || idx}`} className="text-xs flex items-center gap-2 transition-colors duration-300">
-                    {c?.isGenerated ?
-                      <span className="text-green-600 font-bold flex items-center gap-1">✓ <span className="truncate max-w-[200px]">{c.title}</span></span> :
-                      <span className={(c?.id === project.structure.findIndex(x => !x.isGenerated) + 1) ? "text-brand-600 font-bold animate-pulse" : "text-slate-300"}>
-                        {c?.id || (idx + 1)}. {c?.title || "Carregando..."}
-                      </span>
-                    }
-                  </div>
-                ))}
+                {project.structure.map((c, idx) => {
+                  const chapterId = c?.id || idx + 1;
+                  const isCurrent = (c?.id === project.structure.findIndex(x => !x.isGenerated) + 1);
+                  return (
+                    <div key={`chapter-v5-stable-${projectId}-${chapterId}-${idx}`} className="text-xs flex items-center gap-2 transition-colors duration-300">
+                      {c?.isGenerated ?
+                        <span className="text-green-600 font-bold flex items-center gap-1">✓ <span className="truncate max-w-[200px]">{c.title}</span></span> :
+                        <span className={isCurrent ? "text-brand-600 font-bold animate-pulse" : "text-slate-300"}>
+                          {chapterId}. {c?.title || "Carregando..."}
+                        </span>
+                      }
+                    </div>
+                  );
+                })}
               </div>
             )}
 

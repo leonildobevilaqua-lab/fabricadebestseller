@@ -509,24 +509,39 @@ export const writeChapter = async (
   const style = metadata.contentStyle || 'Profissional';
   const tone = metadata.writingTone || 'Natural';
 
-  try {
-    const introPrompt = `
-        ${getHumanizationInstructions(lang, style, tone)}
-        
-        CONTEXTO DE PESQUISA (Use isso como base, não invente):
-        ${researchContext.substring(0, 3000)}
-        
-        Context: ${researchContext}
-        Chapter: ${chapter.title}
-        Objective: ${chapter.intro}
-        
-        TASK: Write the INTRODUCTION for this chapter (approx 250 words).
-        Hook the reader, explain what will be covered, and set the stage.
-        Make cross-references ("Como vimos anteriormente...").
-        Start directly with the content.
-        LANGUAGE: ${langName}.
-    `;
-    fullChapterContent += (await llm.generateText(introPrompt)) + "\n\n";
+    // 2.1 Intro of Chapter (With Retries)
+    const style = metadata.contentStyle || 'Profissional';
+    const tone = metadata.writingTone || 'Natural';
+
+    let introSuccess = false;
+    let introAttempts = 0;
+    while (!introSuccess && introAttempts < 3) {
+      try {
+        introAttempts++;
+        const introPrompt = `
+            ${getHumanizationInstructions(lang, style, tone)}
+            
+            CONTEXTO DE PESQUISA (Use isso como base, não invente):
+            ${researchContext.substring(0, 3000)}
+            
+            Context: ${researchContext}
+            Chapter: ${chapter.title}
+            Objective: ${chapter.intro}
+            
+            TASK: Write the INTRODUCTION for this chapter (approx 250 words).
+            Hook the reader, explain what will be covered, and set the stage.
+            Make cross-references ("Como vimos anteriormente...").
+            Start directly with the content.
+            LANGUAGE: ${langName}.
+        `;
+        fullChapterContent += (await llm.generateText(introPrompt)) + "\n\n";
+        introSuccess = true;
+      } catch (e: any) {
+        console.warn(`[IA] Chapter Intro failed (Attempt ${introAttempts}/3):`, e.message);
+        if (introAttempts >= 3) throw e;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
     if (onPulse) await onPulse();
 
     // 2.2 Sections
@@ -589,17 +604,29 @@ export const writeChapter = async (
       if (onPulse) await onPulse();
     }
 
-    // 2.3 Conclusion
-    const conclusionPrompt = `
-        ${getHumanizationInstructions(lang, style, tone)}
-        Chapter: ${chapter.title}
-        
-        TASK: Write a powerful CONCLUSION for this chapter (approx 150 words).
-        Summarize key points and transition to the next idea.
-        
-        LANGUAGE: ${langName}.
-    `;
-    fullChapterContent += (await llm.generateText(conclusionPrompt));
+    // 2.3 Conclusion (With Retries)
+    let conclSuccess = false;
+    let conclAttempts = 0;
+    while (!conclSuccess && conclAttempts < 3) {
+      try {
+        conclAttempts++;
+        const conclusionPrompt = `
+            ${getHumanizationInstructions(lang, style, tone)}
+            Chapter: ${chapter.title}
+            
+            TASK: Write a powerful CONCLUSION for this chapter (approx 150 words).
+            Summarize key points and transition to the next idea.
+            
+            LANGUAGE: ${langName}.
+        `;
+        fullChapterContent += (await llm.generateText(conclusionPrompt));
+        conclSuccess = true;
+      } catch (e: any) {
+        console.warn(`[IA] Chapter Conclusion failed (Attempt ${conclAttempts}/3):`, e.message);
+        if (conclAttempts >= 3) throw e;
+        await new Promise(r => setTimeout(r, 2000));
+      }
+    }
 
   } catch (error) {
     console.error("Error in iterative writing, falling back to single shot", error);

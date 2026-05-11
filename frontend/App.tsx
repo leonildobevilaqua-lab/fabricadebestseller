@@ -109,6 +109,31 @@ const App: React.FC = () => {
       resetApp();
       window.history.replaceState({}, document.title, window.location.pathname);
     }
+
+    // Handle Impersonation from Admin
+    const impEmail = params.get('impersonate_email');
+    const impName = params.get('impersonate_name');
+    const impToken = params.get('impersonate_token');
+
+    if (impEmail && impName && impToken) {
+        console.log("👤 Impersonation Session Active:", impEmail);
+        localStorage.setItem('bsf_token', impToken);
+        localStorage.setItem('bsf_hasAccess', 'true');
+        localStorage.setItem('bsf_view', 'dashboard');
+        localStorage.setItem('bsf_userContact', JSON.stringify({
+            name: impName,
+            email: impEmail,
+            phone: ''
+        }));
+        
+        // Update local state
+        setUserContact({ name: impName, email: impEmail, phone: '' });
+        setHasAccess(true);
+        setCurrentView('dashboard');
+        
+        // Clean URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   const nextStep = () => setStep(prev => prev + 1);
