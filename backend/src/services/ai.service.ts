@@ -505,13 +505,11 @@ export const writeChapter = async (
   // 2. Iterative Generation
   let fullChapterContent = "";
 
-  // 2.1 Intro of Chapter
   const style = metadata.contentStyle || 'Profissional';
   const tone = metadata.writingTone || 'Natural';
 
+  try {
     // 2.1 Intro of Chapter (With Retries)
-    const style = metadata.contentStyle || 'Profissional';
-    const tone = metadata.writingTone || 'Natural';
 
     let introSuccess = false;
     let introAttempts = 0;
