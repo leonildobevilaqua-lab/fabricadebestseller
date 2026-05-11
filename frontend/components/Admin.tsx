@@ -854,8 +854,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 localStorage.setItem('bsf_hasAccess', 'true');
                 localStorage.setItem('bsf_view', 'dashboard');
                 
-                // Redireciona para o dashboard principal (visão do cliente)
-                window.location.href = '/?impersonate=true';
+                // Redireciona para o dashboard principal (visão do cliente) em uma nova aba
+                window.open('/?impersonate=true', '_blank');
             } else {
                 alert("Erro ao gerar acesso: " + (data.error || "Usuário não encontrado em /users"));
             }

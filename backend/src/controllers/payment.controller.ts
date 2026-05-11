@@ -591,16 +591,26 @@ export const checkAccess = async (req: Request, res: Response) => {
         if (!email) return res.status(400).json({ error: "Email required" });
 
         const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+        
+        // --- FORCE SYNC: Ensure we get fresh data from Remote DB (Supabase/Appwrite) ---
+        let credits = Number((await getVal(`/credits/${safeEmail}`, { forceSync: true })) || 0);
+        let userPlan: any = await getVal(`/users/${safeEmail}/plan`, { forceSync: true });
+        
+        // Resilience: Check alternative path (bookCredits inside user object) if /credits is 0
+        if (credits <= 0) {
+            const userObj = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            if (userObj && userObj.bookCredits) {
+                credits = Number(userObj.bookCredits);
+            }
+        }
 
-        let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-        let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
         let latestInvoiceStatus: any = null;
         let latestInvoiceNumber: any = null;
         let asaasPayments: any[] = [];
 
-        const rawOrders = await getVal('/orders') || [];
+        const rawOrders = await getVal('/orders', { forceSync: true }) || [];
         const orders = Array.isArray(rawOrders) ? rawOrders : Object.values(rawOrders);
-        const rawLeads = await getVal('/leads') || [];
+        const rawLeads = await getVal('/leads', { forceSync: true }) || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
         // Fetch truth from Asaas

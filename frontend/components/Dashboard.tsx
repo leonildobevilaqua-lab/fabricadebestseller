@@ -50,7 +50,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
     const handleVerifyAndEnter = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${getApiBase()}/api/payment/access?email=${user.email}`);
+            const res = await fetch(`${getApiBase()}/api/payment/access?email=${encodeURIComponent(user.email)}`);
             const data = await res.json();
             if (data.hasAccess && (data.credits > 0 || data.hasActiveProject)) {
                 setHasCredits(data.credits > 0);
@@ -84,8 +84,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             if (token) headers['Authorization'] = `Bearer ${token}`;
 
             const [meRes, resPayment] = await Promise.all([
-                fetch(`${getApiBase()}/api/user/me?email=${user.email}`, { headers }),
-                fetch(`${getApiBase()}/api/payment/access?email=${user.email}`)
+                fetch(`${getApiBase()}/api/user/me?email=${encodeURIComponent(user.email)}`, { headers }),
+                fetch(`${getApiBase()}/api/payment/access?email=${encodeURIComponent(user.email)}`)
             ]);
 
             if (meRes.ok) setStats(await meRes.json());
