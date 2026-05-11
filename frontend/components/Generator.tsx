@@ -1395,7 +1395,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             )}
           </div>
 
-          <h3 className="text-xl font-bold text-slate-800 mb-2 font-serif flex items-center justify-center min-h-[3.5rem] px-4">
+          <h3 className="text-xl font-bold text-slate-800 mb-2 font-serif flex items-center justify-center min-h-[3.5rem] px-4" translate="no">
             {status === 'FAILED' ? (
               <div className="flex flex-col items-center">
                 <span className="text-rose-600">⚠️ {t.processInterrupted}</span>
@@ -1499,7 +1499,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         <div className="text-left bg-slate-50 rounded-xl p-6 border border-slate-100 shadow-sm relative">
           {/* If stuck for too long, maybe show a hint? (Not implemented yet to avoid clutter) */}
 
-          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2 flex justify-between">
+          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 border-b border-slate-200 pb-2 flex justify-between" translate="no">
             <span>{t.statusTitle}</span>
             <span>{Math.round(Number(progress || 0) || 0)}%</span>
           </h4>
@@ -1536,13 +1536,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             </div>
 
             {project.structure && project.structure.length > 0 && progress >= 45 && progress < 95 && (
-              <div className="ml-8 mt-1 space-y-1 pl-4 border-l-2 border-brand-200">
-                {project.structure.map(c => (
-                  <div key={c?.id || Math.random()} className="text-xs flex items-center gap-2 transition-colors duration-300">
-                    {c.isGenerated ?
+              <div className="ml-8 mt-1 space-y-1 pl-4 border-l-2 border-brand-200" translate="no">
+                {project.structure.map((c, idx) => (
+                  <div key={`chapter-${c?.id || idx}`} className="text-xs flex items-center gap-2 transition-colors duration-300">
+                    {c?.isGenerated ?
                       <span className="text-green-600 font-bold flex items-center gap-1">✓ <span className="truncate max-w-[200px]">{c.title}</span></span> :
-                      <span className={c.id === project.structure.findIndex(x => !x.isGenerated) + 1 ? "text-brand-600 font-bold animate-pulse" : "text-slate-300"}>
-                        {c.id}. {c.title}
+                      <span className={(c?.id === project.structure.findIndex(x => !x.isGenerated) + 1) ? "text-brand-600 font-bold animate-pulse" : "text-slate-300"}>
+                        {c?.id || (idx + 1)}. {c?.title || "Carregando..."}
                       </span>
                     }
                   </div>

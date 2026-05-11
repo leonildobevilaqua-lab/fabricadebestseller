@@ -266,7 +266,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                             <div className="w-10 h-10 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/20">
                                 <User size={20} />
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0" translate="no">
                                 <p className="text-xs font-black truncate">{user.name}</p>
                                 <p className="text-[10px] text-slate-500 truncate">{user.email}</p>
                             </div>
