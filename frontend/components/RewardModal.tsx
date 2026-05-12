@@ -45,7 +45,7 @@ export const RewardModal: React.FC<RewardModalProps> = ({ isOpen, onClose, onCla
     const price = offer?.price ? `R$ ${offer.price.toFixed(2)}` : null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in" translate="no">
             <div className="relative w-full max-w-lg mx-4">
                 {/* Glow Effect */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-purple-600 rounded-2xl blur opacity-30 animate-pulse"></div>

@@ -45,7 +45,7 @@ const RotatingMessage = ({ messages }: { messages: string[] }) => {
   }, [messages]);
 
   return (
-    <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in">
+    <p className="text-slate-400 text-sm italic min-h-[1.5em] animate-fade-in" translate="no">
       "{messages[index] || messages[0]}"
     </p>
   );
@@ -679,7 +679,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   if (isLoadingAccess) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8">
+      <div key="view-v5-stable-loading-access" className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8" translate="no">
         <Spinner />
         <p className="mt-4 text-slate-500">Conectando aos servidores de criação...</p>
       </div>
@@ -703,7 +703,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         ];
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8">
+      <div key="view-v5-stable-manufacturing" className="flex flex-col items-center justify-center min-h-[60vh] animate-fade-in text-center p-8" translate="no">
         <div className="mb-12 relative w-32 h-32 flex items-center justify-center">
           {/* Gear Animation */}
           <svg className="w-32 h-32 text-slate-800 animate-spin-slow absolute opacity-20" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" /></svg>
@@ -728,39 +728,38 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   if (showReward) {
     return (
-      <RewardModal
-        isOpen={true}
-        onClose={() => setShowReward(false)}
-        onClaim={() => {
-          if (upsellOffer?.link) {
-            window.location.href = upsellOffer.link;
-          } else {
-            setShowReward(false);
-            if (!projectId) initProject();
-          }
-        }}
-        offer={{
-          level: upsellOffer?.level || 4,
-          price: upsellOffer?.price || 16.90,
-          planName: upsellOffer?.planName || "BLACK"
-        }}
-      />
-    )
+      <div key="view-v5-stable-reward-modal" translate="no">
+        <RewardModal
+          isOpen={true}
+          onClose={() => setShowReward(false)}
+          onClaim={() => {
+            if (upsellOffer?.link) {
+              window.location.href = upsellOffer.link;
+            } else {
+              setShowReward(false);
+              if (!projectId) initProject();
+            }
+          }}
+          offer={{
+            level: upsellOffer?.level || 4,
+            price: upsellOffer?.price || 16.90,
+            planName: upsellOffer?.planName || "BLACK"
+          }}
+        />
+      </div>
+    );
   }
 
   if (showPaymentGate) {
     return (
-      <PaymentGate
-        isOpen={true}
-        planName={upsellOffer?.planName || "STARTER"}
-        bookPrice={upsellOffer?.price || 39.90}
-        subscriptionPrice={upsellOffer?.subscriptionPrice || 49.90}
-        checkoutUrl={upsellOffer?.subscriptionLink || "https://pay.kiwify.com.br/SpCDp2q"} // FIX: Ensure this is the PLAN Link not Book Link? 
-        // Logic: If user is Pending Sub, they need PLAN link. If they are Sub but no credits, they need BOOK link.
-        // Usually Admin sets Plan Link in backend 'payment.controller'.
-        userEmail={userContact?.email}
-        onConfirmPayment={checkAccessStatus}
-      />
+      <div key="view-v5-stable-payment-gate" translate="no">
+        <PaymentGate 
+          onClose={() => setShowPaymentGate(false)} 
+          offer={upsellOffer}
+          language={language}
+          userContact={userContact}
+        />
+      </div>
     );
   }
 
@@ -771,13 +770,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
 
 
-  if (error) return <div className="text-red-500 text-center p-10 bg-red-50 rounded-xl m-10 border border-red-200">{error}</div>;
+  if (error) return <div key="view-v5-stable-error-state" className="text-red-500 text-center p-10 bg-red-50 rounded-xl m-10 border border-red-200 font-bold shadow-sm animate-shake" translate="no">{error}</div>;
   if (!project || !project.metadata) return <div className="text-center p-20 flex flex-col items-center"><Spinner /> <span className="mt-4 text-slate-500">{t.startingIntelligence}</span></div>;
 
   // Refine UI (Moved here to take precedence over status checks)
   if (isRefining) {
     return (
-      <div className="max-w-xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-lg border border-slate-200 animate-fade-in-up">
+      <div key="view-v5-stable-refining" className="max-w-xl mx-auto mt-10 p-8 bg-white rounded-xl shadow-lg border border-slate-200 animate-fade-in-up" translate="no">
         <h2 className="text-2xl font-bold mb-4 text-slate-800">Refinar Pesquisa 🧐</h2>
         <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-blue-800 border border-blue-100">
           <p>A inteligência artificial pode ter interpretado mal seu tema. Use o campo abaixo para ser <strong>mais específico</strong>.</p>
@@ -813,7 +812,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   if (status === 'WAITING_TITLE') {
     return (
-      <div className="max-w-4xl mx-auto animate-fade-in-up pb-20">
+      <div key="view-v5-stable-waiting-title" className="max-w-4xl mx-auto animate-fade-in-up pb-20" translate="no">
         <h2 className="text-3xl font-bold text-slate-800 mb-2 text-center font-serif">{t.marketAnalysisComplete}</h2>
         <p className="text-center text-slate-500 mb-8 text-lg">{t.selectTitle}</p>
 
@@ -821,7 +820,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           {project.titleOptions && project.titleOptions.length > 0 ? (
             project.titleOptions.map((opt, idx) => (
               <button
-                key={idx}
+                key={`title-opt-v5-stable-${idx}-${opt.title.substring(0,10)}`}
                 onClick={() => handleTitleSelect(opt)}
                 className={`text-left p-4 md:p-5 rounded-2xl border transition-all bg-white group relative overflow-hidden ${opt.isTopChoice ? 'border-[#0ea5e9] shadow-xl ring-2 ring-[#e0f2fe]' : 'border-gray-100 hover:border-[#0ea5e9] hover:shadow-lg'}`}
               >
@@ -896,7 +895,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     // Logic moved to handleApproveStructure hoisted above
 
     return (
-      <div className="max-w-3xl mx-auto animate-fade-in-up pb-20">
+      <div key="view-v5-stable-review-structure" className="max-w-3xl mx-auto animate-fade-in-up pb-20" translate="no">
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-slate-800 mb-2 font-serif">{t.viralStructureGenerated}</h2>
           <p className="text-slate-500">{t.reviewChapters}</p>
@@ -949,7 +948,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
 
     return (
-      <div className="max-w-2xl mx-auto animate-fade-in-up pb-20">
+      <div key="view-v5-stable-waiting-details" className="max-w-2xl mx-auto animate-fade-in-up pb-20" translate="no">
         <h2 className="text-3xl font-bold text-slate-800 mb-6 text-center font-serif">{t.finalTouches}</h2>
         <div className="bg-white p-8 rounded-xl shadow-xl border border-slate-200">
 
@@ -1051,7 +1050,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     };
 
     return (
-      <div className="text-center py-12 max-w-4xl mx-auto">
+      <div key="view-v5-stable-completed" className="text-center py-12 max-w-4xl mx-auto" translate="no">
         <div className="mb-6 inline-flex bg-green-100 p-4 rounded-full text-green-600 shadow-sm animate-bounce-slow">
           <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </div>
@@ -1090,7 +1089,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             <h3 className="font-bold mb-3 text-slate-800 uppercase text-xs tracking-wider">{t.viralKeywords}</h3>
             <div className="flex flex-wrap gap-2">
               {(marketing.keywords || []).slice(0, 10).map((k, i) => (
-                <span key={i} className="text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-md text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition cursor-default">{k}</span>
+                <span key={`keyword-v5-stable-${i}-${k}`} className="text-xs bg-slate-50 border border-slate-200 px-2 py-1 rounded-md text-slate-600 hover:bg-brand-50 hover:text-brand-600 transition cursor-default">{k}</span>
               ))}
             </div>
           </div>
@@ -1344,7 +1343,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   // PROGRESS VIEW
   return (
-    <div className="max-w-3xl mx-auto pb-20">
+    <div key="view-v5-stable-progress" className="max-w-3xl mx-auto pb-20" translate="no">
       <div className="bg-white rounded-2xl shadow-xl border border-slate-100 p-8 text-center relative overflow-hidden">
 
         <div className="mb-8 mt-4 relative z-10 transition-all duration-500">

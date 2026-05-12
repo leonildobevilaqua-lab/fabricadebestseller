@@ -23,7 +23,7 @@ export const PaymentGate: React.FC<PaymentGateProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900 animate-fade-in p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900 animate-fade-in p-4" translate="no">
             <div className="max-w-xl w-full bg-[#1e293b] rounded-2xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col items-center">
 
                 {/* Yellow Top Bar */}

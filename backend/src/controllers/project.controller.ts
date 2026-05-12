@@ -805,8 +805,8 @@ export const generateBookContent = async (req: Request, res: Response) => {
             const chapter = chapters[i];
 
             // RESUME LOGIC: Skip if already generated
-            if (chapter.isGenerated && chapter.content && chapter.content.length > 100) {
-                console.log(`[PROJECT] Skipping Chapter ${chapter.id} (Already exists)`);
+            if (chapter.isGenerated && chapter.content && chapter.content.length >= 50) {
+                console.log(`[PROJECT] Skipping Chapter ${chapter.id} (Already exists and long enough)`);
                 continue;
             }
 
@@ -1120,9 +1120,24 @@ export const finalizeBookContent = async (req: Request, res: Response) => {
     const project = await QueueService.getProject(id);
     if (!project) return res.status(404).json({ error: "Not found" });
 
-    // CRITICAL SAFETY CHECK: Ensure all chapters were generated before finalizing
+    // CRITICAL SAFETY CHECK & AUTO-HEALING: Ensure all chapters were generated before finalizing
     if (project.structure && project.structure.length > 0) {
-        const missingChapters = project.structure.filter(ch => !ch.isGenerated || !ch.content || ch.content.length < 50); // Relaxed to 50 chars
+        let needsSave = false;
+        const missingChapters = project.structure.filter(ch => {
+            // Auto-heal: If has content but not marked generated, fix it
+            if (!ch.isGenerated && ch.content && ch.content.length >= 50) {
+                ch.isGenerated = true;
+                needsSave = true;
+                return false;
+            }
+            return !ch.isGenerated || !ch.content || ch.content.length < 50;
+        });
+
+        if (needsSave) {
+            console.log(`[PROJECT] Auto-healed 'isGenerated' flags for project ${id}`);
+            await QueueService.updateProject(id, { structure: project.structure });
+        }
+
         if (missingChapters.length > 0) {
             const missingTitles = missingChapters.map(ch => ch.title || `Capítulo ${ch.id}`).join(', ');
             console.error(`[PROJECT] Finalize REJECTED for ${id}. Missing/Short Chapters: ${missingTitles}`);
