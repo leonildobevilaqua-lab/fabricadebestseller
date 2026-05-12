@@ -222,7 +222,7 @@ const QrCodeGenerator: React.FC<QrCodeGeneratorProps> = ({ credits, userEmail, o
                                 <p className="text-slate-400 text-sm mb-8">Escaneie com a câmera do seu celular para testar.</p>
                                 
                                 <button
-                                    onClick={handleDownload}
+                                    onClick={() => handleDownload()}
                                     className="w-full py-4 bg-white text-slate-900 font-black rounded-2xl hover:bg-slate-100 transition-all flex items-center justify-center gap-2 group"
                                 >
                                     <Download size={20} className="group-hover:translate-y-0.5 transition-transform" />

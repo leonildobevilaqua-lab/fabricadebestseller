@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { IconBook, IconStar, IconDownload, IconTrash } from './Icons'; // I'll move icons to a separate file or keep them here
-import { CheckCircle, Clock, MessageCircle, ExternalLink } from 'lucide-react';
+import { CheckCircle, Clock, MessageCircle, ExternalLink, AlertCircle } from 'lucide-react';
 import { SocialShare } from './SocialShare';
 import { useLanguage } from '../i18n/context';
 

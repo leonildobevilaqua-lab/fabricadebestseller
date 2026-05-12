@@ -754,10 +754,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     return (
       <div key="view-v5-stable-payment-gate" translate="no">
         <PaymentGate 
-          onClose={() => setShowPaymentGate(false)} 
-          offer={upsellOffer}
-          language={language}
-          userContact={userContact}
+          isOpen={true}
+          planName={upsellOffer?.planName || "BLACK"}
+          bookPrice={upsellOffer?.price || 16.90}
+          subscriptionPrice={49.90}
+          checkoutUrl={upsellOffer?.link || `https://checkout.ticto.app/O6F5202E7?email=${encodeURIComponent(userContact?.email || '')}`}
+          onConfirmPayment={checkAccessStatus}
+          userEmail={userContact?.email || ""}
         />
       </div>
     );
