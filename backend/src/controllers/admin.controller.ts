@@ -467,11 +467,8 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const getProjectHistory = async (req: Request, res: Response) => {
     try {
-        // 1. Get projects (LITE version via optimized getVal) - Force Sync for Admin
-        const projects = await getVal('/projects', { 
-            fields: 'key, updated_at, metadata:value->metadata',
-            forceSync: true 
-        }) || [];
+        // 1. Get projects (Hybrid version)
+        const projects = await getVal('/projects') || [];
 
         // 2. Enhance projects with latest credits and metadata
         const allCredits = await getVal('/credits', { forceSync: true }) || {};

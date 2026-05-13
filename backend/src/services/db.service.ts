@@ -70,6 +70,9 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
         }
 
         // 2. REMOTE FETCH (PROVIDER BASED)
+        let remoteData: any = null;
+        let remoteSuccess = false;
+
         if (DB_PROVIDER === 'appwrite') {
             try {
                 if (isCollectionRoot) {
@@ -79,19 +82,14 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         [Query.startsWith('key', `${normalized}/`), Query.limit(2000)]
                     );
                     
-                    const syncedResults = response.documents.map(doc => {
+                    remoteData = response.documents.map(doc => {
                         let val = doc.value;
                         if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) val = JSON.parse(val);
                         const parsed = { ...val, id: val.id || doc.key.split('/').pop(), key: doc.key, updated_at: doc.$updatedAt };
                         localDB[doc.key] = parsed;
                         return parsed;
                     });
-                    cachedLocalDB = localDB;
-                    return syncedResults.sort((a: any, b: any) => {
-                        const da = new Date(a?.updated_at || 0).getTime();
-                        const db = new Date(b?.updated_at || 0).getTime();
-                        return db - da;
-                    });
+                    remoteSuccess = true;
                 } else {
                     const response = await databases.listDocuments(
                         APPWRITE_CONFIG.databaseId,
@@ -103,8 +101,8 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         let parsed = doc.value;
                         if (typeof parsed === 'string' && (parsed.startsWith('{') || parsed.startsWith('['))) parsed = JSON.parse(parsed);
                         localDB[normalized] = parsed;
-                        cachedLocalDB = localDB;
-                        return parsed;
+                        remoteData = parsed;
+                        remoteSuccess = true;
                     }
                 }
             } catch (e) {
@@ -112,41 +110,68 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
             }
         } else {
             // SUPABASE LOGIC (Original)
-            if (isCollectionRoot) {
-                let selectFields = options.fields || 'key, value, updated_at';
-                if (!options.fields) {
-                    if (normalized === '/projects') selectFields = 'key, updated_at, metadata:value->metadata';
-                    else if (normalized === '/leads') selectFields = 'key, updated_at, value';
-                }
+            try {
+                if (isCollectionRoot) {
+                    let selectFields = options.fields || 'key, value, updated_at';
+                    if (!options.fields) {
+                        if (normalized === '/projects') selectFields = 'key, updated_at, metadata:value->metadata';
+                        else if (normalized === '/leads') selectFields = 'key, updated_at, value';
+                    }
 
-                const { data: rawItems, error } = await supabase.from('kv_store').select(selectFields).like('key', `${normalized}/%`).limit(2000);
-                if (!error && rawItems) {
-                    const syncedResults = rawItems.map((item: any) => {
-                        let val = item.value;
-                        if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) val = JSON.parse(val);
-                        else if (typeof val === 'string') val = { value: val };
-                        val = val || (item.metadata || {});
-                        
-                        const parsed = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
-                        localDB[item.key] = parsed;
-                        return parsed;
-                    });
-                    cachedLocalDB = localDB;
-                    return syncedResults;
+                    const { data: rawItems, error } = await supabase.from('kv_store').select(selectFields).like('key', `${normalized}/%`).limit(2000);
+                    if (!error && rawItems && rawItems.length > 0) {
+                        remoteData = rawItems.map((item: any) => {
+                            let val = item.value;
+                            if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) val = JSON.parse(val);
+                            else if (typeof val === 'string') val = { value: val };
+                            val = val || (item.metadata || {});
+                            
+                            const parsed = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
+                            localDB[item.key] = parsed;
+                            return parsed;
+                        });
+                        remoteSuccess = true;
+                    }
+                } else {
+                    const { data, error } = await supabase.from('kv_store').select('value').eq('key', normalized).maybeSingle();
+                    if (!error && data) {
+                        let parsed = data.value;
+                        if (typeof parsed === 'string' && (parsed.startsWith('{') || parsed.startsWith('['))) parsed = JSON.parse(parsed);
+                        localDB[normalized] = parsed;
+                        remoteData = parsed;
+                        remoteSuccess = true;
+                    }
                 }
-            } else {
-                const { data, error } = await supabase.from('kv_store').select('value').eq('key', normalized).maybeSingle();
-                if (!error && data) {
-                    let parsed = data.value;
-                    if (typeof parsed === 'string' && (parsed.startsWith('{') || parsed.startsWith('['))) parsed = JSON.parse(parsed);
-                    localDB[normalized] = parsed;
-                    cachedLocalDB = localDB;
-                    return parsed;
-                }
+            } catch (e) {
+                console.error("[DB] Supabase Fetch Error:", e);
             }
         }
 
-        return isCollectionRoot ? [] : null;
+        if (remoteSuccess && remoteData) {
+            cachedLocalDB = localDB;
+            return remoteData;
+        }
+
+        // 3. FALLBACK TO LOCAL IF REMOTE FAILED OR RETURNED EMPTY
+        if (isCollectionRoot) {
+            const results: any[] = [];
+            for (const [k, v] of Object.entries(localDB)) {
+                if (k && k.startsWith(`${normalized}/`)) {
+                    try {
+                        const val = typeof v === 'string' ? JSON.parse(v) : v;
+                        if (val) results.push(val);
+                    } catch (e) {}
+                }
+            }
+            return results.sort((a: any, b: any) => {
+                const da = new Date(a?.updated_at || a?.date || a?.createdAt || 0).getTime();
+                const db = new Date(b?.updated_at || b?.date || b?.createdAt || 0).getTime();
+                return db - da;
+            });
+        } else {
+            const val = localDB[normalized];
+            return val ? (typeof val === 'string' ? JSON.parse(val) : val) : null;
+        }
     } catch (e) {
         console.error("getVal error:", e);
         return null;

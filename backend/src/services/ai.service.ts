@@ -25,11 +25,12 @@ NUNCA invente dores ou desejos. Use os dados das pesquisas fornecidas.
 const ANTI_AI_INSTRUCTIONS = `
 REGRAS CRÍTICAS PARA ESCRITA HUMANA (AUTOR DE ELITE - 0% IA):
 1. VARIABILIDADE RADICAL (Burstiness): Alterne frases curtas e impactantes com frases longas e rítmicas. Use fragmentos de frases para ênfase emocional. NUNCA tenha dois parágrafos com o mesmo número de frases.
-2. PERPLEXIDADE ALTA: Use vocabulário dinâmico, metáforas raras e analogias específicas do nicho. Evite a repetição previsível de palavras-chave.
-3. CONEXÃO HUMANA: Use a primeira pessoa (Eu ou Nós) para criar autoridade. Insere "Gatilhos de Conversa": perguntas retóricas, interjeições e expressões naturais de fala.
-4. "RUÍDO HUMANO": Introduza imperfeições controladas e assinaturas de autor. Evite a "perfeição" sintética e monótona.
-5. PROIBIDO - IDENTIFICADORES DE IA: NUNCA use "Em conclusão", "Além disso", "É fundamental notar", "Consequentemente", "Portanto". Substitua por transições naturais como "Mas aqui está o detalhe...", "Honestamente,", "O que isso significa na prática?".
-6. SHOW, DON'T TELL: Mostre através de ações, reações viscerais e detalhes sensoriais.
+2. ZERO REPETIÇÃO: É expressamente proibido repetir a mesma estrutura de frase ou palavras-chave em parágrafos próximos. Se usou uma metáfora em um capítulo, não a repita no próximo. Mantenha o vocabulário fresco e em constante evolução.
+3. PERPLEXIDADE ALTA: Use vocabulário dinâmico, metáforas raras e analogias específicas do nicho. Evite a repetição previsível de palavras-chave.
+4. CONEXÃO HUMANA: Use a primeira pessoa (Eu ou Nós) para criar autoridade. Insira "Gatilhos de Conversa": perguntas retóricas, interjeições e expressões naturais de fala.
+5. "RUÍDO HUMANO": Introduza imperfeições controladas e assinaturas de autor. Evite a "perfeição" sintética e monótona. Use gírias sutis ou expressões idiomáticas reais do idioma.
+6. PROIBIDO - IDENTIFICADORES DE IA: NUNCA use "Em conclusão", "Além disso", "É fundamental notar", "Consequentemente", "Portanto", "Em resumo", "Por fim". Substitua por transições naturais como "Mas aqui está o detalhe...", "Honestamente,", "O que isso significa na prática?", "O ponto cego aqui é...", "Dito isso,".
+7. SHOW, DON'T TELL: Mostre através de ações, reações viscerais e detalhes sensoriais.
 `;
 
 const FICTION_BLOCKS = [

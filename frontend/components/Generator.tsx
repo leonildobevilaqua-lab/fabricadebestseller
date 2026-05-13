@@ -816,8 +816,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
   if (status === 'WAITING_TITLE') {
     return (
       <div key="view-v5-stable-waiting-title" className="max-w-4xl mx-auto animate-fade-in-up pb-20" translate="no">
-        <h2 className="text-3xl font-bold text-slate-800 mb-2 text-center font-serif">{t.marketAnalysisComplete}</h2>
-        <p className="text-center text-slate-500 mb-8 text-lg">{t.selectTitle}</p>
+        <h2 className="text-3xl font-bold text-slate-800 mb-2 text-center font-serif"><span>{t.marketAnalysisComplete}</span></h2>
+        <p className="text-center text-slate-500 mb-8 text-lg"><span>{t.selectTitle}</span></p>
 
         <div className="grid gap-6 md:grid-cols-3 mt-8">
           {project.titleOptions && project.titleOptions.length > 0 ? (
@@ -831,10 +831,10 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                   <svg className="w-20 h-20" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                 </div>
                 {opt.isTopChoice && (
-                  <span className="absolute top-0 right-0 bg-[#0ea5e9] text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-20">{t.bestChoice}</span>
+                  <span className="absolute top-0 right-0 bg-[#0ea5e9] text-white text-xs font-bold px-3 py-1 rounded-bl-lg z-20"><span>{t.bestChoice}</span></span>
                 )}
-                <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-[#0284c7] relative z-10">{opt.title}</h3>
-                <p className="text-sm text-slate-600 italic mb-4 relative z-10">{opt.subtitle}</p>
+                <h3 className="font-bold text-lg text-slate-800 mb-2 group-hover:text-[#0284c7] relative z-10"><span>{opt.title}</span></h3>
+                <p className="text-sm text-slate-600 italic mb-4 relative z-10"><span>{opt.subtitle}</span></p>
                 <div className="text-xs bg-slate-50 p-3 rounded text-slate-500 border border-slate-100 relative z-10 flex items-start gap-2">
                   <span className="text-yellow-500 text-base">★</span>
                   <span>{opt.reason}</span>
@@ -844,8 +844,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           ) : (
             <div className="md:col-span-2 text-center p-10 bg-slate-50 rounded-xl border border-dashed border-slate-300 animate-fade-in-up">
               <div className="text-4xl mb-4">🤔</div>
-              <h3 className="text-xl font-bold text-slate-700 mb-2">Ops! Precisamos de mais detalhes.</h3>
-              <p className="text-slate-500 mb-6 max-w-md mx-auto">A Inteligência Artificial não conseguiu criar títulos virais com o tema atual. Tente ser mais específico sobre o nicho.</p>
+              <h3 className="text-xl font-bold text-slate-700 mb-2"><span>Ops! Precisamos de mais detalhes.</span></h3>
+              <p className="text-slate-500 mb-6 max-w-md mx-auto"><span>A Inteligência Artificial não conseguiu criar títulos virais com o tema atual. Tente ser mais específico sobre o nicho.</span></p>
               <button
                 onClick={() => {
                   setRefineTopic(project?.metadata.topic || "");
@@ -853,15 +853,15 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 }}
                 className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-blue-700 transition transform hover:-translate-y-1"
               >
-                🔄 Refinar Pesquisa Agora
+                <span>🔄 Refinar Pesquisa Agora</span>
               </button>
             </div>
           )}
         </div>
         {project.titleOptions && project.titleOptions.length > 0 && (
           <div className="mt-8 bg-blue-50/50 p-6 rounded-xl border border-blue-100 max-w-2xl mx-auto shadow-sm">
-            <label className="block text-sm font-bold text-slate-700 mb-2">Sugestões de Alteração (Opcional):</label>
-            <p className="text-xs text-slate-500 mb-3">Se os títulos não ficaram como esperado, dê uma instrução para a IA gerar novamente.</p>
+            <label className="block text-sm font-bold text-slate-700 mb-2"><span>Sugestões de Alteração (Opcional):</span></label>
+            <p className="text-xs text-slate-500 mb-3"><span>Se os títulos não ficaram como esperado, dê uma instrução para a IA gerar novamente.</span></p>
             <textarea
               value={titleInstruction}
               onChange={(e) => setTitleInstruction(e.target.value)}
@@ -877,14 +877,14 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                 }}
                 className="text-slate-500 hover:text-slate-800 text-sm font-medium underline transition-colors"
               >
-                Alterar Tema Principal
+                <span>Alterar Tema Principal</span>
               </button>
 
               <button
                 onClick={handleRefineTitles}
                 className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white font-bold py-2 px-6 rounded-lg shadow-md transition whitespace-nowrap"
               >
-                🔄 Gerar Novos Títulos
+                <span>🔄 Gerar Novos Títulos</span>
               </button>
             </div>
           </div>
@@ -895,27 +895,25 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   // Handle Structure Review
   if (status === 'REVIEW_STRUCTURE' || (status === 'IDLE' && project.structure.length > 0 && progress === 40)) {
-    // Logic moved to handleApproveStructure hoisted above
-
     return (
       <div key="view-v5-stable-review-structure" className="max-w-3xl mx-auto animate-fade-in-up pb-20" translate="no">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-slate-800 mb-2 font-serif">{t.viralStructureGenerated}</h2>
-          <p className="text-slate-500">{t.reviewChapters}</p>
+          <h2 className="text-3xl font-bold text-slate-800 mb-2 font-serif"><span>{t.viralStructureGenerated}</span></h2>
+          <p className="text-slate-500"><span>{t.reviewChapters}</span></p>
         </div>
 
         <div className="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden mb-8">
           <div className="p-6 bg-slate-50 border-b border-slate-200">
-            <h3 className="font-bold text-lg text-slate-700">{project.metadata.bookTitle}</h3>
-            <p className="text-sm text-slate-500">{project.metadata.subTitle}</p>
+            <h3 className="font-bold text-lg text-slate-700"><span>{project.metadata.bookTitle}</span></h3>
+            <p className="text-sm text-slate-500"><span>{project.metadata.subTitle}</span></p>
           </div>
           <div className="divide-y divide-slate-100">
             {project.structure.map((chapter) => (
               <div key={chapter.id} className="p-4 hover:bg-slate-50 flex gap-4">
                 <span className="font-bold text-slate-300 text-lg w-8">{chapter.id}.</span>
                 <div>
-                  <h4 className="font-bold text-slate-800">{chapter.title}</h4>
-                  <p className="text-sm text-slate-500 mt-1">{chapter.intro}</p>
+                  <h4 className="font-bold text-slate-800"><span>{chapter.title}</span></h4>
+                  <p className="text-sm text-slate-500 mt-1"><span>{chapter.intro}</span></p>
                 </div>
               </div>
             ))}
@@ -927,7 +925,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             onClick={handleApproveStructure}
             className="bg-[#0284c7] text-white text-xl px-12 py-4 rounded-xl font-bold shadow-xl shadow-[#0ea5e9]/30 hover:bg-[#0369a1] hover:scale-105 transition-all"
           >
-            {t.approveAndWrite}
+            <span>{t.approveAndWrite}</span>
           </button>
         </div>
         <div className="text-center mt-6">
@@ -938,7 +936,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             }}
             className="text-slate-400 hover:text-red-500 text-sm font-medium underline transition-colors"
           >
-            ❌ Estrutura incorreta? Refazer Pesquisa
+            <span>❌ Estrutura incorreta? Refazer Pesquisa</span>
           </button>
         </div>
       </div>
@@ -952,17 +950,17 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
     return (
       <div key="view-v5-stable-waiting-details" className="max-w-2xl mx-auto animate-fade-in-up pb-20" translate="no">
-        <h2 className="text-3xl font-bold text-slate-800 mb-6 text-center font-serif">{t.finalTouches}</h2>
-        <div className="bg-white p-8 rounded-xl shadow-xl border border-slate-200">
+        <h2 className="text-3xl font-bold text-slate-800 mb-6 text-center font-serif"><span>{t.finalTouches}</span></h2>
+        <div className="bg-white p-8 rounded-xl shadow-xl border border-slate-200" translate="no">
 
           <div className="bg-blue-50 p-4 rounded-lg mb-6 text-sm text-blue-800 border border-blue-100 flex items-start gap-2">
-            <span>💡</span>
-            <p>{t.aiCanWrite}</p>
+            <span role="img" aria-label="lightbulb">💡</span>
+            <p><span>{t.aiCanWrite}</span></p>
           </div>
 
           <div className="flex gap-4 mb-6">
             <div className="flex-1">
-              <label className="block font-bold text-slate-700 mb-2 text-sm">{t.dedicationToLabel}</label>
+              <label className="block font-bold text-slate-700 mb-2 text-sm"><span>{t.dedicationToLabel}</span></label>
               <input
                 className="w-full p-3 border border-slate-300 rounded-lg text-sm"
                 placeholder="Ex: Meus pais, meu cônjuge..."
@@ -971,7 +969,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               />
             </div>
             <div className="flex-1">
-              <label className="block font-bold text-slate-700 mb-2 text-sm">{t.ackToLabel}</label>
+              <label className="block font-bold text-slate-700 mb-2 text-sm"><span>{t.ackToLabel}</span></label>
               <input
                 className="w-full p-3 border border-slate-300 rounded-lg text-sm"
                 placeholder="Ex: Deus, mentores, amigos..."
@@ -981,7 +979,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             </div>
           </div>
           <div className="mb-6">
-            <label className="block font-bold text-slate-700 mb-2 text-sm">Contexto Biografia do Autor</label>
+            <label className="block font-bold text-slate-700 mb-2 text-sm"><span>Contexto Biografia do Autor</span></label>
             <input
               className="w-full p-3 border border-slate-300 rounded-lg text-sm"
               placeholder="Ex: Empreendedor há 20 anos, especialista em marketing, pai de 2 filhos..."
@@ -995,12 +993,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             disabled={generatingExtras}
             className="w-full mb-8 bg-indigo-600 text-white py-3 rounded-lg font-bold text-sm hover:bg-indigo-700 transition disabled:opacity-50 flex justify-center items-center gap-2"
           >
-            {generatingExtras ? <span className="animate-spin">⚙️</span> : "✨"}
-            {generatingExtras ? t.writing : t.generateWithAI}
+            {generatingExtras ? <span key="icon-gen-extras" className="animate-spin">⚙️</span> : <span key="icon-gen-extras-default">✨</span>}
+            <span key="text-gen-extras">{generatingExtras ? t.writing : t.generateWithAI}</span>
           </button>
 
           <div className="mb-6 relative">
-            <label className="block font-bold text-slate-700 mb-2">{t.dedication}</label>
+            <label className="block font-bold text-slate-700 mb-2"><span>{t.dedication}</span></label>
             <textarea
               className="w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
               rows={4}
@@ -1010,7 +1008,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             />
           </div>
           <div className="mb-8 relative">
-            <label className="block font-bold text-slate-700 mb-2">{t.acknowledgments}</label>
+            <label className="block font-bold text-slate-700 mb-2"><span>{t.acknowledgments}</span></label>
             <textarea
               className="w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 outline-none"
               rows={4}
@@ -1020,7 +1018,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             />
           </div>
           <div className="mb-8 relative">
-            <label className="block font-bold text-slate-700 mb-2">Sobre o Autor</label>
+            <label className="block font-bold text-slate-700 mb-2"><span>Sobre o Autor</span></label>
             <textarea
               className="w-full p-4 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#0ea5e9] outline-none"
               rows={4}
@@ -1034,7 +1032,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
             disabled={sending}
             className="w-full bg-green-600 text-white text-lg py-4 rounded-xl font-bold shadow-lg hover:bg-green-700 transition"
           >
-            {t.finalizeAndGenerate}
+            <span>{t.finalizeAndGenerate}</span>
           </button>
         </div>
       </div>

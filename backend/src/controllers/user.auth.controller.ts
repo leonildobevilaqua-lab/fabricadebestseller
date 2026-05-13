@@ -1,4 +1,3 @@
-
 import { Request, Response } from 'express';
 import { getVal, setVal, reloadDB } from '../services/db.service';
 import { supabase } from '../services/supabase';
@@ -139,7 +138,6 @@ export const UserAuthController = {
             if (!user) return res.status(404).json({ error: "User not found" });
 
             // --- 2. RESILIENCE SYNC (ASAAS TRUTH) ---
-            // Se o plano não estiver ativo, ou se for o e-mail master, vamos forçar uma checagem no Asaas
             const isMaster = cleanUser === 'contato@leonildobevilaqua.com.br' || 
                            cleanUser === 'leonildo.fbs@gmail.com' || 
                            cleanUser === 'leonildobevilaquaoficial@gmail.com' ||
@@ -176,7 +174,6 @@ export const UserAuthController = {
                         }
                     }
                     else if (isMaster) {
-                        // Se for master e nem tiver no asaas ainda (teste local), ativa mesmo assim
                         user.plan = { status: 'ACTIVE', name: 'BLACK', billing: 'monthly' };
                     }
                 } catch (asaasErr) {
@@ -188,36 +185,21 @@ export const UserAuthController = {
             const strUser = String(email || '').toLowerCase().trim();
             const isAdmin = cleanUser.includes('leonildo');
 
-            // 3.1 Fetch Leads (Only if Admin or for usage count)
-            // Still fast because we fetch lite
-            const { data: dbLeads, error: leadsErr } = await supabase
-                .from('kv_store')
-                .select('key, updated_at, value')
-                .like('key', '/leads/%')
-                .limit(isAdmin ? 1000 : 1); 
+            // 3.1 Fetch Projects (Optimized Hybrid)
+            const allProjects = await getVal('/projects') || [];
+            const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
 
-            const leads = (dbLeads || []).map((l: any) => l.value);
-
-            // 3.2 Fetch Projects (Optimized)
-            // Use targeted JSONB search instead of expensive full-text scan
-            const { data: dbProjects, error: dbErr } = await supabase
-                .from('kv_store')
-                .select('key, updated_at, metadata:value->metadata')
-                .like('key', '/projects/%')
-                .or(`value->metadata->>email.ilike.%${strUser}%,value->metadata->contact->>email.ilike.%${strUser}%,value->metadata->>userEmail.ilike.%${strUser}%,value->metadata->>authorEmail.ilike.%${strUser}%`)
-                .limit(isAdmin ? 500 : 100); 
-
-            if (dbErr) console.error(`[AUTH_ME] DB Filter Error for ${cleanUser}:`, dbErr);
-
-            const userProjects = (dbProjects || []).map((item: any) => {
-                const val = item.metadata || {};
-                return {
-                    metadata: val,
-                    ...val,
-                    id: item.key.split('/').pop(),
-                    key: item.key,
-                    updated_at: item.updated_at
-                };
+            const userProjects = projectsArray.filter((p: any) => {
+                const metadata = p.metadata || p || {};
+                const contact = metadata.contact || p.contact || {};
+                const emails = [
+                    String(metadata.email || '').toLowerCase(),
+                    String(metadata.userEmail || '').toLowerCase(),
+                    String(metadata.authorEmail || '').toLowerCase(),
+                    String(contact.email || '').toLowerCase(),
+                    String(p.userEmail || '').toLowerCase()
+                ];
+                return emails.some(e => e.includes(strUser));
             });
 
             const usageCount = userProjects.length;
