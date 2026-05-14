@@ -21,6 +21,7 @@ import LandingPageEnglish from './components/LandingPageEnglish';
 import LandingPageSpanish from './components/LandingPageSpanish';
 import Promocao from './components/Promocao';
 import { SalesLandingV5 } from './components/SalesLandingV5';
+import { SalesLandingV6 } from './components/SalesLandingV6';
 import { ProfessionalCoverLanding } from './components/ProfessionalCoverLanding';
 import CipGenerator from './components/CipGenerator';
 
@@ -204,7 +205,8 @@ const App: React.FC = () => {
     if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
 
     if (path === '/promocao') return <Promocao />;
-    if (path === '/venda' || path === '/vsl') return <SalesLandingV5 onLoginClick={() => setCurrentView('login')} />;
+    if (path === '/venda' || path === '/vsl' || path === '/v5') return <SalesLandingV5 onLoginClick={() => setCurrentView('login')} />;
+    if (path === '/oficial' || path === '/v6') return <SalesLandingV6 onLoginClick={() => setCurrentView('login')} />;
     if (path === '/capa_profissional') return <ProfessionalCoverLanding />;
     if (path === '/ficha-catalografica' || path === '/cip') return <CipGenerator />;
 
@@ -351,7 +353,7 @@ const App: React.FC = () => {
 
     return (
       <ErrorBoundary>
-        <SalesLandingV5 
+        <SalesLandingV6 
           onLoginClick={() => setCurrentView('login')}
         />
       </ErrorBoundary>
