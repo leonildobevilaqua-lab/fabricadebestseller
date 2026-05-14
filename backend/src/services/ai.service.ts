@@ -24,13 +24,16 @@ NUNCA invente dores ou desejos. Use os dados das pesquisas fornecidas.
 
 const ANTI_AI_INSTRUCTIONS = `
 REGRAS CRÍTICAS PARA ESCRITA HUMANA (AUTOR DE ELITE - 0% IA):
-1. VARIABILIDADE RADICAL (Burstiness): Alterne frases curtas e impactantes com frases longas e rítmicas. Use fragmentos de frases para ênfase emocional. NUNCA tenha dois parágrafos com o mesmo número de frases.
-2. ZERO REPETIÇÃO: É expressamente proibido repetir a mesma estrutura de frase ou palavras-chave em parágrafos próximos. Se usou uma metáfora em um capítulo, não a repita no próximo. Mantenha o vocabulário fresco e em constante evolução.
-3. PERPLEXIDADE ALTA: Use vocabulário dinâmico, metáforas raras e analogias específicas do nicho. Evite a repetição previsível de palavras-chave.
-4. CONEXÃO HUMANA: Use a primeira pessoa (Eu ou Nós) para criar autoridade. Insira "Gatilhos de Conversa": perguntas retóricas, interjeições e expressões naturais de fala.
-5. "RUÍDO HUMANO": Introduza imperfeições controladas e assinaturas de autor. Evite a "perfeição" sintética e monótona. Use gírias sutis ou expressões idiomáticas reais do idioma.
-6. PROIBIDO - IDENTIFICADORES DE IA: NUNCA use "Em conclusão", "Além disso", "É fundamental notar", "Consequentemente", "Portanto", "Em resumo", "Por fim". Substitua por transições naturais como "Mas aqui está o detalhe...", "Honestamente,", "O que isso significa na prática?", "O ponto cego aqui é...", "Dito isso,".
-7. SHOW, DON'T TELL: Mostre através de ações, reações viscerais e detalhes sensoriais.
+1. VARIABILIDADE RADICAL (Burstiness): Alterne frases curtas e impactantes com frases longas e rítmicas. Use fragmentos de frases para ênfase emocional. NUNCA tenha dois parágrafos seguidos com a mesma estrutura gramatical ou número similar de frases.
+2. ZERO REPETIÇÃO E SUPRESSÃO DE ECOS: É expressamente proibido repetir a mesma estrutura de frase, conectivos ou palavras-chave em parágrafos próximos. Se usou um adjetivo ou metáfora forte, não a repita em pelo menos 10 páginas. Mantenha o vocabulário em constante expansão.
+3. PERPLEXIDADE ALTA: Use vocabulário dinâmico, metáforas raras e analogias específicas do nicho. Evite termos genéricos. Se o assunto é técnico, use a gíria do especialista.
+4. CONEXÃO HUMANA E "VOZ": Escreva como se estivesse em uma conversa privada e intensa com o leitor. Use a primeira pessoa (Eu ou Nós). Insira "Gatilhos de Conversa": perguntas retóricas provocativas, interjeições e expressões naturais de fala ("Olha só...", "Na verdade,", "Convenhamos:").
+5. "RUÍDO HUMANO": Introduza imperfeições controladas, hesitações e assinaturas de autor. Evite a "perfeição" sintética e monótona. Use expressões idiomáticas reais do idioma.
+6. LISTA NEGRA DE TRANSIÇÕES IA (TERMINANTEMENTE PROIBIDO): 
+   - NUNCA use: "Em conclusão", "Além disso", "É importante notar", "Consequentemente", "Portanto", "Em resumo", "Por fim", "Dito isso", "Vale ressaltar", "Neste capítulo", "Como mencionado anteriormente".
+   - SUBSTITUA POR: "Mas aqui está o pulo do gato...", "Honestamente,", "O que isso muda na sua vida?", "O ponto cego aqui é...", "Pense comigo:", "A verdade nua e crua é...".
+7. SHOW, DON'T TELL: NUNCA descreva uma emoção ou resultado de forma abstrata. Use cenas, reações viscerais e detalhes sensoriais.
+8. SEM RESUMOS ROBÓTICOS: Não termine seções ou capítulos resumindo o que acabou de ser dito de forma escolar. Termine com um gancho emocional ou uma provocação que force o leitor a agir.
 `;
 
 const FICTION_BLOCKS = [
@@ -403,15 +406,18 @@ const cleanText = (text: string): string => {
 const getHumanizationInstructions = (lang: string, style: string = 'Profissional', tone: string = 'Natural', isFiction: boolean = false) => `
     DIRETRIZES DE ESCRITA DE ELITE (MODO INDETECTÁVEL):
     ${isFiction ? ANTI_AI_INSTRUCTIONS : `
-    1. **ALMA HUMANA**: Escreva com imperfeição controlada, nuances e emoção. Use "Burstiness" (variação rítmica radical) e "Perplexidade" (vocabulário rico e inesperado).
-    2. **ESTILO E CONEXÃO**:
-       - Use a PRIMEIRA PESSOA (Eu ou Nós) para gerar proximidade.
-       - Use gatilhos de conversa: perguntas retóricas e interjeições naturais.
+    1. **ALMA HUMANA E VARIABILIDADE**: Escreva com imperfeição controlada, nuances e emoção. Alterne o ritmo das frases (Burstiness). Use vocabulário rico e inesperado (Perplexidade).
+    2. **ESTILO E CONEXÃO REAL**:
+       - Use a PRIMEIRA PESSOA (Eu ou Nós) para gerar proximidade e autoridade.
+       - Use gatilhos de conversa: perguntas retóricas, interjeições naturais e quebras de fluxo.
        - **Estilo**: ${style} | **Tom**: ${tone}
-    3. **BANIMENTO DE MARCADORES IA**: 
-       - EXTREMAMENTE PROIBIDO: "Em conclusão", "É importante notar", "Em resumo", "Além disso", "Consequentemente".
-       - SUBSTITUA POR: "Sendo sincero,", "O detalhe é que...", "Na real,", "Onde isso nos leva?".
-       - SEM separadores robóticos (___, ---, ###).
+    3. **BANIMENTO DE MARCADORES IA (EXTREMAMENTE PROIBIDO)**: 
+       - NUNCA use transições robóticas: "Em conclusão", "É importante notar", "Em resumo", "Além disso", "Consequentemente", "Dito isso", "Portanto", "Neste capítulo", "Vale ressaltar".
+       - SUBSTITUA POR TRANSIÇÕES NATURAIS: "Sendo sincero,", "O detalhe é que...", "Na real,", "Onde isso nos leva?", "Mas aqui está a verdade:", "Pense comigo:".
+       - PROIBIDO o uso de separadores robóticos (___, ---, ###) dentro do corpo do texto.
+    4. **ZERO REPETIÇÃO SEMÂNTICA**: Não repita a mesma ideia ou estrutura de frase em parágrafos sequenciais. Mantenha a leitura fresca.
+    5. **SHOW, DON'T TELL**: Não descreva apenas a teoria; mostre a aplicação prática com detalhes sensoriais e resultados viscerais.
+    6. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "previsível", reescreva para injetar caos e humanidade.
     `}
     4. **FORMATAÇÃO**: Retorne PARÁGRAFOS LIMPOS e fluidos. Use transições naturais em vez de headers excessivos.
     5. **SHOW, DON'T TELL**: Não diga que algo é emocionante, faça o coração do leitor disparar com a descrição.

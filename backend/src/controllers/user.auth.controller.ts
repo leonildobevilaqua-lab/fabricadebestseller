@@ -185,29 +185,47 @@ export const UserAuthController = {
             const strUser = String(email || '').toLowerCase().trim();
             const isAdmin = cleanUser.includes('leonildo');
 
-            // 3.1 Fetch Projects (Optimized Hybrid)
-            const allProjects = await getVal('/projects') || [];
+            // 3.1 Fetch Projects & Leads (Optimized Hybrid)
+            const [allProjects, allLeads] = await Promise.all([
+                getVal('/projects') || [],
+                getVal('/leads') || []
+            ]);
+            
             const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
+            const leadsArray = Array.isArray(allLeads) ? allLeads : Object.values(allLeads);
 
-            const userProjects = projectsArray.filter((p: any) => {
-                const metadata = p.metadata || p || {};
+            // Merge everything that looks like a book/project
+            const combinedProjects = [...projectsArray];
+            
+            // Add leads that are actually projects (have a projectId or are book types)
+            leadsArray.forEach((l: any) => {
+                const isBookLead = l.type === 'BOOK' || l.bookTitle || l.topic || l.projectId;
+                const alreadyInProjects = combinedProjects.some((p: any) => (p.id || p.projectId) === (l.id || l.projectId));
+                if (isBookLead && !alreadyInProjects) {
+                    combinedProjects.push(l);
+                }
+            });
+
+            const userProjects = combinedProjects.filter((p: any) => {
+                const metadata = (p.metadata && typeof p.metadata === 'object') ? p.metadata : p;
                 const contact = metadata.contact || p.contact || {};
                 const emails = [
                     String(metadata.email || '').toLowerCase(),
                     String(metadata.userEmail || '').toLowerCase(),
                     String(metadata.authorEmail || '').toLowerCase(),
                     String(contact.email || '').toLowerCase(),
-                    String(p.userEmail || '').toLowerCase()
+                    String(p.userEmail || '').toLowerCase(),
+                    String(p.email || '').toLowerCase()
                 ];
                 return emails.some(e => e.includes(strUser));
             });
 
             const usageCount = userProjects.length;
 
-            console.log(`[AUTH_ME] User: ${cleanUser} | Total Projects Found: ${userProjects.length} | Identity: ${user.profile?.name || 'Unknown'}`);
+            console.log(`[AUTH_ME] User: ${cleanUser} | Total Projects (Combined): ${userProjects.length} | Identity: ${user.profile?.name || 'Unknown'}`);
             
             if (userProjects.length === 0 && cleanUser.includes('leonildo')) {
-                console.warn(`[AUTH_ME] WARNING: No projects found for Leonildo identity (${cleanUser}). Possible DB fetch failure or fragmentation.`);
+                console.warn(`[AUTH_ME] WARNING: No projects found for Leonildo identity (${cleanUser}).`);
             }
 
             // Final usage count for stats
@@ -228,20 +246,24 @@ export const UserAuthController = {
             else if (pNameStr.includes('STARTER')) nextBookPrice = isAnnual ? 24.90 : 28.90;
 
             const mappedOrders = userProjects.map((p: any) => {
-                const metadata = p.metadata || {};
+                const metadata = (p.metadata && typeof p.metadata === 'object') ? p.metadata : p;
                 const contact = metadata.contact || p.contact || {};
+                
+                // Robust title selection
+                const bookTitle = metadata.bookTitle || p.bookTitle || metadata.title || p.title || metadata.topic || p.topic || 'Livro Gerado';
+                const safeTitle = (bookTitle.length > 150) ? bookTitle.substring(0, 150) + "..." : bookTitle;
+
                 return {
-                    id: p.id || metadata.id,
-                    projectId: p.id || metadata.id, // For Admin.tsx compatibility
-                    title: metadata.bookTitle || metadata.title || metadata.topic || p.title || 'Livro Gerado',
-                    authorName: metadata.authorName || contact?.name || p.authorName || 'Autor',
-                    customerName: contact.name || p.name || 'Cliente',
-                    customerEmail: contact.email || p.email || p.userEmail || '-',
-                    customerPhone: contact.phone || p.phone || '-',
-                    date: p.createdAt || metadata.createdAt || p.date || new Date(),
+                    id: p.id || metadata.id || p.projectId,
+                    projectId: p.id || metadata.id || p.projectId,
+                    title: safeTitle,
+                    authorName: metadata.authorName || p.authorName || contact?.name || 'Autor',
+                    customerName: contact.name || p.name || p.customerName || 'Cliente',
+                    customerEmail: contact.email || p.email || p.userEmail || metadata.email || '-',
+                    customerPhone: contact.phone || p.phone || p.customerPhone || '-',
+                    date: p.createdAt || metadata.createdAt || p.date || p.updated_at || new Date(),
                     status: (metadata.status || p.status || 'PROCESSING').toUpperCase(),
-                    // Prioritize KIT download URL, fallback to DOCX or generic API
-                    downloadUrl: metadata.kitUrl || metadata.kitLink || metadata.downloadUrl || p.kitUrl || p.downloadUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id}/download`
+                    downloadUrl: metadata.kitUrl || metadata.kitLink || metadata.downloadUrl || p.kitUrl || p.downloadUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id || p.projectId}/download`
                 };
             }).sort((a: any, b: any) => {
                 const dateA = new Date(a.date || 0).getTime();

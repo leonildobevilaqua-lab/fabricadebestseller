@@ -467,26 +467,41 @@ export const getOrders = async (req: Request, res: Response) => {
 
 export const getProjectHistory = async (req: Request, res: Response) => {
     try {
-        // 1. Get projects (Hybrid version)
-        const projects = await getVal('/projects') || [];
+        // 1. Get projects & Leads (Hybrid version)
+        const [allProjects, allLeadsData] = await Promise.all([
+            getVal('/projects') || [],
+            getVal('/leads', { forceSync: true }) || []
+        ]);
+        
+        const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
+        const leadsArray = Array.isArray(allLeadsData) ? allLeadsData : Object.values(allLeadsData);
 
-        // 2. Enhance projects with latest credits and metadata
+        // Merge everything that looks like a book/project
+        const combined = [...projectsArray];
+        leadsArray.forEach((l: any) => {
+            const isBookLead = l.type === 'BOOK' || l.bookTitle || l.topic || l.projectId;
+            const alreadyIn = combined.some((p: any) => (p.id || p.projectId) === (l.id || l.projectId));
+            if (isBookLead && !alreadyIn) {
+                combined.push(l);
+            }
+        });
+
+        // 2. Enhance projects with latest credits
         const allCredits = await getVal('/credits', { forceSync: true }) || {};
-        const allLeads = await getVal('/leads', { forceSync: true }) || [];
-        const leads = Array.isArray(allLeads) ? allLeads : Object.values(allLeads);
         const allOrders = await getVal('/orders', { forceSync: true }) || [];
         const orders = Array.isArray(allOrders) ? allOrders : Object.values(allOrders);
+        const leads = leadsArray; 
         
-        const projectHistory = projects
+        const projectHistory = combined
             .filter((p: any) => p && (p.projectId || p.id || (p.metadata && p.metadata.id))) 
             .map((p: any) => {
                 // If getVal already returned the metadata as the object (due to field optimization), use p
                 const metadata = (p.metadata && typeof p.metadata === 'object') ? p.metadata : p;
                 const projectId = p.projectId || p.id || metadata.id || `unknown_${Math.random().toString(36).substring(7)}`;
                 
-                const bookTitle = metadata.bookTitle || metadata.title || metadata.topic || p.title || "Geração de IA";
-                const authorName = metadata.authorName || metadata.contact?.name || p.authorName || "Autor";
-                const customerName = metadata.contact?.name || metadata.customerName || p.customerName || authorName || "Cliente";
+                const bookTitle = metadata.bookTitle || p.bookTitle || metadata.title || p.title || metadata.topic || p.topic || "Geração de IA";
+                const authorName = metadata.authorName || p.authorName || metadata.contact?.name || p.contact?.name || "Autor";
+                const customerName = metadata.contact?.name || p.contact?.name || metadata.customerName || p.customerName || authorName || "Cliente";
                 
                 let customerEmail = 
                     (p.customerEmail || p.email || p.userEmail || 
