@@ -1055,14 +1055,21 @@ export const deleteLead = async (req: Request, res: Response) => {
 
             // CRITICAL: Delete the individual key from Supabase
             if (leadId) {
-                const { deleteVal } = require('../services/db.service');
+                const { deleteVal, setVal } = require('../services/db.service');
                 await deleteVal(`/leads/${leadId}`);
+                
+                // If it has a projectId, delete that too
+                if (leadToDelete.projectId) {
+                    await setVal(`/projects/${leadToDelete.projectId}`, null);
+                    console.log(`[DELETE_LEAD] Also removed associated project: ${leadToDelete.projectId}`);
+                }
             }
 
             // SYNC: IF USER DELETES SUBSCRIPTION LEAD, REMOVE ACCESS
             if (email) {
                 const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
                 const hasActiveSub = leads.some((l: any) =>
+                    l.id !== id && // Check other leads
                     l.email?.toLowerCase().trim() === email.toLowerCase().trim() &&
                     (l.status === 'SUBSCRIBER' || (l.plan && l.plan.status === 'ACTIVE'))
                 );
@@ -1073,9 +1080,13 @@ export const deleteLead = async (req: Request, res: Response) => {
                 }
             }
 
-            res.json({ success: true });
+            return res.json({ success: true, message: "Lead excluído com sucesso." });
         } else {
-            res.status(404).json({ error: "Lead not found" });
+            // Fallback: If not found in index, try to delete by key directly just in case
+            const { deleteVal, setVal } = require('../services/db.service');
+            await deleteVal(`/leads/${id}`);
+            await setVal(`/projects/${id}`, null); // Also try project
+            return res.json({ success: true, message: "Registro processado." });
         }
     } catch (e: any) {
         res.status(500).json({ error: e.message });

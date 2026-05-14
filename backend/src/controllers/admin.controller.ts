@@ -469,7 +469,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
     try {
         // 1. Get projects & Leads (Hybrid version)
         const [allProjects, allLeadsData] = await Promise.all([
-            getVal('/projects') || [],
+            getVal('/projects', { forceSync: true }) || [],
             getVal('/leads', { forceSync: true }) || []
         ]);
         

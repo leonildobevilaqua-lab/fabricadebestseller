@@ -1800,22 +1800,75 @@ const performResearch = async (projectId: string, language: string) => {
 export const remove = async (req: Request, res: Response) => {
     try {
         const id = req.params.id;
-        const project = await QueueService.getProject(id);
+        console.log(`[PROJECT] Attempting to delete record with ID: ${id}`);
 
-        if (!project) return res.status(404).json({ error: "Projeto não encontrado." });
+        let deletedCount = 0;
 
-        // Remover do banco
-        await setVal(`/projects/${id}`, null);
-
-        // Remover da lista geral de leads/orders associados se aplicável
-        const rawLeads = await getVal('/leads') || [];
-        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
-        const leadIndex = leads.findIndex((l: any) => l.projectId === id);
-        if (leadIndex !== -1) {
-            await setVal(`/leads[${leadIndex}]/status`, 'DELETED');
+        // 1. Try to remove from /projects
+        const project = await getVal(`/projects/${id}`);
+        if (project) {
+            await setVal(`/projects/${id}`, null);
+            deletedCount++;
+            console.log(`[PROJECT] Removed from /projects/${id}`);
         }
 
-        console.log(`[PROJECT] Projeto ${id} deletado com sucesso.`);
+        // 2. Try to remove from /leads (either by key or by projectId field)
+        const leadByKey = await getVal(`/leads/${id}`);
+        if (leadByKey) {
+            await setVal(`/leads/${id}`, null);
+            deletedCount++;
+            console.log(`[PROJECT] Removed from /leads/${id} (Key match)`);
+        }
+
+        // Search in leads array for projectId match
+        const rawLeads = await getVal('/leads') || [];
+        const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        
+        for (let i = 0; i < leads.length; i++) {
+            const l = leads[i] as any;
+            if (l.projectId === id || l.id === id) {
+                // If it's a direct key match we already handled it, but if it's a field match in an array-style list:
+                // Note: DB service for leads usually uses /leads/ID, so setVal(/leads/ID, null) is better
+                const leadId = l.id || l.key?.split('/').pop();
+                if (leadId) {
+                    await setVal(`/leads/${leadId}`, null);
+                    deletedCount++;
+                    console.log(`[PROJECT] Removed lead ${leadId} by field match.`);
+                }
+            }
+        }
+
+        // 3. Clean up from any user's orders list
+        try {
+            const rawUsers = await getVal('/users') || [];
+            const users = Array.isArray(rawUsers) ? rawUsers : Object.values(rawUsers);
+            for (const user of users as any[]) {
+                if (user.email) {
+                    const safeEmail = user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+                    const userOrders = await getVal(`/users/${safeEmail}/orders`) || [];
+                    if (Array.isArray(userOrders)) {
+                        const originalLen = userOrders.length;
+                        const filtered = userOrders.filter(o => o.projectId !== id && o.id !== id);
+                        if (filtered.length !== originalLen) {
+                            await setVal(`/users/${safeEmail}/orders`, filtered);
+                            deletedCount++;
+                            console.log(`[PROJECT] Removed from orders for user ${user.email}`);
+                        }
+                    }
+                }
+            }
+        } catch (orderErr) {
+            console.error("[PROJECT] Error cleaning up user orders:", orderErr);
+        }
+
+        if (deletedCount === 0) {
+            // Check if maybe it's a "lead" without a project entry
+            console.warn(`[PROJECT] No records found to delete for ID: ${id}`);
+            // Return success anyway to clear the UI if the frontend thinks it exists
+            return res.json({ success: true, message: "Registro processado." });
+        }
+
+        console.log(`[PROJECT] Project ${id} deleted (Operations: ${deletedCount}).`);
         res.json({ success: true, message: "Projeto excluído com sucesso." });
 
     } catch (error: any) {
