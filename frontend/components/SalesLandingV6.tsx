@@ -82,10 +82,10 @@ export const SalesLandingV6: React.FC<SalesLandingProps> = ({ onLoginClick }) =>
       <div className="fixed bottom-6 left-6 right-6 z-50 md:hidden">
         <a 
           href="https://payment.ticto.app/O6CE296D4"
-          className="flex items-center justify-center gap-3 bg-gradient-to-r from-cyan-500 to-blue-600 p-4 rounded-xl font-bold text-lg shadow-[0_10px_30px_rgba(34,211,238,0.4)] active:scale-95 transition-transform"
+          className="flex items-center justify-center gap-2 sm:gap-3 bg-gradient-to-r from-cyan-500 to-blue-600 p-4 rounded-xl font-black text-sm sm:text-lg shadow-[0_10px_30px_rgba(34,211,238,0.4)] active:scale-95 transition-transform"
         >
-          <Zap className="w-5 h-5 fill-white" />
-          ATIVAR MINHA FÁBRICA
+          <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
+          ATIVAR MEU CRÉDITO
         </a>
       </div>
 
@@ -96,35 +96,35 @@ export const SalesLandingV6: React.FC<SalesLandingProps> = ({ onLoginClick }) =>
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 1 }}
-                className="text-left"
+                className="text-center lg:text-left flex flex-col items-center lg:items-start"
             >
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-[10px] font-bold uppercase tracking-[0.2em] mb-6">
-                    <Activity className="w-3 h-3 animate-pulse" />
-                    SISTEMA DE PRODUÇÃO 100% AUTOMATIZADO
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/5 text-cyan-400 text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em] mb-6">
+                    <Activity className="w-3 h-3 animate-pulse flex-shrink-0" />
+                    <span className="truncate">SISTEMA 100% AUTOMATIZADO</span>
                 </div>
 
-                <h1 className="text-6xl md:text-8xl font-black mb-8 leading-[0.9] tracking-tighter">
-                    A PRIMEIRA <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">FÁBRICA</span> DE BEST SELLERS <span className="italic">AI-DRIVEN</span>
+                <h1 className="text-5xl sm:text-6xl md:text-8xl font-black mb-8 leading-[0.9] tracking-tighter">
+                    A PRIMEIRA <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 block sm:inline">FÁBRICA</span> DE BEST SELLERS <span className="italic">AI-DRIVEN</span>
                 </h1>
 
-                <p className="text-xl md:text-2xl text-slate-400 font-medium mb-10 max-w-xl leading-relaxed">
+                <p className="text-lg sm:text-xl md:text-2xl text-slate-400 font-medium mb-10 max-w-xl leading-relaxed mx-auto lg:mx-0">
                     Transformamos nichos em livros de <span className="text-white font-bold italic">170+ páginas</span> com diagramação profissional em apenas 30 minutos. 
                     <span className="block mt-4 text-cyan-400 font-bold">Sem escrever uma única linha.</span>
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col xl:flex-row gap-4 w-full">
                     <a 
                         href="https://payment.ticto.app/O6CE296D4"
-                        className="group flex items-center justify-center gap-4 bg-white text-black px-10 py-5 rounded-2xl font-black text-xl hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.2)]"
+                        className="group flex items-center justify-center gap-4 bg-white text-black px-6 sm:px-10 py-5 rounded-2xl font-black text-lg sm:text-xl hover:bg-cyan-400 transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.2)] w-full xl:w-auto"
                     >
-                        INICIAR PRODUÇÃO AGORA
+                        INICIAR PRODUÇÃO
                         <ArrowRight className="group-hover:translate-x-2 transition-transform" />
                     </a>
-                    <div className="flex items-center gap-4 px-6 py-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
+                    <div className="flex items-center justify-center gap-4 px-6 py-5 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm w-full xl:w-auto">
                         <div className="flex -space-x-2">
                             {[1,2,3].map(i => <div key={i} className="w-8 h-8 rounded-full border-2 border-[#020617] bg-slate-800" />)}
                         </div>
-                        <div className="text-xs">
+                        <div className="text-xs text-left">
                             <div className="font-bold text-white">+1.200 LIVROS</div>
                             <div className="text-slate-500 italic uppercase tracking-tighter">Gerados este mês</div>
                         </div>
@@ -136,27 +136,17 @@ export const SalesLandingV6: React.FC<SalesLandingProps> = ({ onLoginClick }) =>
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 1.2, ease: "easeOut" }}
-                className="relative"
+                className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(34,211,238,0.3)] border border-white/10 z-20"
             >
-                <div className="absolute inset-0 bg-cyan-500/20 blur-[100px] rounded-full animate-pulse" />
-                <img 
-                    src="/assets/digital_book_scan.png" 
-                    alt="Processo de Escaneamento" 
-                    className="relative z-10 w-full max-w-lg mx-auto drop-shadow-[0_0_50px_rgba(34,211,238,0.3)] animate-float"
+                <div className="absolute inset-0 bg-cyan-500/20 animate-pulse pointer-events-none" />
+                <iframe 
+                    className="w-full h-full relative z-10"
+                    src="https://www.youtube.com/embed/U9tLQR9XKrY?start=17&autoplay=0&rel=0&modestbranding=1" 
+                    title="Como a Fábrica Funciona"
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowFullScreen
                 />
-                
-                {/* Tech Badges */}
-                <div className="absolute top-1/4 -right-4 z-20 bg-white/5 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl animate-float-delayed">
-                    <Cpu className="w-6 h-6 text-cyan-400 mb-2" />
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Protocolo</div>
-                    <div className="text-sm font-black italic">BIO-AUTORAL 12X</div>
-                </div>
-
-                <div className="absolute bottom-1/4 -left-4 z-20 bg-white/5 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl animate-float">
-                    <Award className="w-6 h-6 text-blue-500 mb-2" />
-                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Padrão</div>
-                    <div className="text-sm font-black italic">AMAZON BEST SELLER</div>
-                </div>
             </motion.div>
         </div>
 
@@ -175,9 +165,9 @@ export const SalesLandingV6: React.FC<SalesLandingProps> = ({ onLoginClick }) =>
                 <div className="absolute inset-0 bg-blue-600/20 blur-[80px] rounded-full" />
                 <div className="relative rounded-[40px] overflow-hidden border border-white/10 shadow-2xl">
                     <img 
-                        src="/assets/authority.png" 
+                        src="/assets/leonildo_real.png" 
                         alt="Leonildo Bevilaqua" 
-                        className="w-full h-auto"
+                        className="w-full h-auto object-cover object-top max-h-[600px]"
                     />
                     <div className="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-black via-black/80 to-transparent">
                         <div className="text-3xl font-black italic">Leonildo Bevilaqua</div>
@@ -258,36 +248,37 @@ export const SalesLandingV6: React.FC<SalesLandingProps> = ({ onLoginClick }) =>
       </section>
 
       {/* Pricing Section (The Activate Module) */}
-      <section className="relative z-10 py-32 px-4 text-center">
+      <section className="relative z-10 py-20 md:py-32 px-4 text-center">
         <div className="max-w-4xl mx-auto">
             <motion.div 
                 {...fadeInUp}
-                className="relative p-16 rounded-[4rem] bg-gradient-to-b from-white/10 to-transparent border border-white/10 backdrop-blur-2xl shadow-[0_0_100px_rgba(34,211,238,0.1)] overflow-hidden"
+                className="relative p-8 sm:p-12 md:p-16 rounded-[2rem] md:rounded-[4rem] bg-gradient-to-b from-white/10 to-transparent border border-white/10 backdrop-blur-2xl shadow-[0_0_100px_rgba(34,211,238,0.1)] overflow-hidden"
             >
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
                 
-                <p className="text-slate-500 font-bold uppercase tracking-[0.3em] mb-6">OFERTA DE ATIVAÇÃO IMEDIATA</p>
+                <p className="text-slate-500 font-bold uppercase tracking-[0.1em] sm:tracking-[0.3em] mb-4 text-xs sm:text-base">CRÉDITO DE GERAÇÃO AUTORAL</p>
                 
                 <div className="flex items-center justify-center gap-4 mb-2">
-                    <span className="text-slate-500 line-through text-2xl">R$ 97,00</span>
-                    <div className="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded text-[10px] font-black uppercase">OFERTA LIMITADA</div>
+                    <span className="text-slate-500 line-through text-lg sm:text-2xl">R$ 97,00</span>
+                    <div className="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded text-[10px] font-black uppercase">OFERTA DE ATIVAÇÃO</div>
                 </div>
 
-                <div className="text-8xl md:text-[10rem] font-black leading-none mb-8 tracking-tighter italic">
+                <div className="text-6xl sm:text-8xl md:text-[10rem] font-black leading-none mb-6 tracking-tighter italic">
                     R$ <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-500">39,90</span>
                 </div>
 
-                <p className="text-xl md:text-2xl text-slate-400 mb-12 font-medium max-w-2xl mx-auto italic">
-                    Toda a tecnologia da Fábrica de Best Seller à sua disposição por menos do que um almoço.
+                <p className="text-lg md:text-2xl text-slate-300 mb-10 font-bold max-w-2xl mx-auto italic">
+                    Esse valor equivale a <span className="text-cyan-400">1 Crédito</span>. Com ele você tem o direito de gerar <span className="text-white">1 Livro Inédito</span> com diagramação completa.
                 </p>
 
                 <a 
                     href="https://payment.ticto.app/O6CE296D4"
-                    className="inline-flex items-center justify-center gap-4 bg-cyan-500 text-[#020617] px-16 py-8 rounded-full font-black text-3xl shadow-[0_20px_50px_rgba(34,211,238,0.4)] hover:scale-105 active:scale-95 transition-all duration-300"
+                    className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 bg-cyan-500 text-[#020617] px-6 sm:px-16 py-6 sm:py-8 rounded-full font-black text-xl sm:text-3xl shadow-[0_20px_50px_rgba(34,211,238,0.4)] hover:scale-105 active:scale-95 transition-all duration-300 w-full sm:w-auto"
                 >
-                    ATIVAR MINHA LICENÇA
-                    <ArrowRight className="w-10 h-10" />
+                    <span className="text-center">ATIVAR MEU CRÉDITO</span>
+                    <ArrowRight className="w-8 h-8 sm:w-10 sm:h-10" />
                 </a>
+
 
                 <div className="mt-12 flex flex-wrap justify-center gap-8 text-xs font-bold text-slate-500 uppercase tracking-widest">
                     <div className="flex items-center gap-2"><ShieldCheck className="text-cyan-500 w-4 h-4" /> 7 Dias de Garantia</div>
