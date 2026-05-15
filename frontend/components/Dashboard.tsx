@@ -134,7 +134,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
         { id: 'capa-ebook', label: 'Capa Ebook (Digital)', icon: Smartphone, isPreparation: true },
         { id: 'amazon', label: 'Publicação Amazon', icon: Cloud, isPreparation: true },
-        { id: 'uiclap', label: 'Publicação UICLAP', icon: Upload, isPreparation: true },
+        { id: 'uiclap', label: 'Publicação UICLAP', icon: Upload, price: 'R$ 97,90', externalLink: 'https://checkout.ticto.app/OED0004AF' },
         { id: 'ticto', label: 'Publicação TICTO', icon: Zap, isPreparation: true },
     ];
 
@@ -254,7 +254,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 label={item.label}
                                 icon={item.icon}
                                 active={activeTab === item.id}
-                                onClick={(id) => { setActiveTab(id); setSidebarOpen(false); }}
+                                onClick={(id) => { 
+                                    if (item.externalLink) {
+                                        window.open(item.externalLink, '_blank');
+                                    } else {
+                                        setActiveTab(id); 
+                                        setSidebarOpen(false); 
+                                    }
+                                }}
                                 isPreparation={item.isPreparation}
                                 price={item.price}
                             />
