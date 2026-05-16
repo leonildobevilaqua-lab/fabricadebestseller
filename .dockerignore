@@ -8,6 +8,10 @@ dist/
 backend/dist/
 frontend/dist/
 *.zip
+*.docx
+*.xlsx
+*.png
+*.jpg
 *.log
 .env
 backend/.env
@@ -16,3 +20,5 @@ database.json
 backend/database.json
 backups/
 RESTORE_POINTS/
+optimize_landing.js
+manifest_temp.json
