@@ -29,22 +29,23 @@ export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = React.mem
         loading="eager"
       />
       
-      {/* Botão de Login Flutuante Opcional (Caso o bundle não tenha um fácil de clicar) */}
+      {/* Botão de Login Flutuante Opcional - Reposicionado para não atrapalhar o checkout */}
       <button 
         onClick={onLoginClick}
         style={{
           position: 'fixed',
-          top: '20px',
-          right: '20px',
+          top: '15px',
+          left: '15px',
           zIndex: 9999,
-          background: 'rgba(255,255,255,0.1)',
+          background: 'rgba(0,0,0,0.5)',
           color: 'white',
           border: '1px solid rgba(255,255,255,0.2)',
-          padding: '8px 16px',
-          borderRadius: '20px',
+          padding: '6px 12px',
+          borderRadius: '15px',
           cursor: 'pointer',
-          fontSize: '14px',
-          backdropFilter: 'blur(5px)'
+          fontSize: '11px',
+          backdropFilter: 'blur(10px)',
+          fontWeight: 'bold'
         }}
       >
         Área de Membros
