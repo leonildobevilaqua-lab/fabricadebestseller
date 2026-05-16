@@ -4,7 +4,7 @@ import React, { useEffect } from 'react';
  * SalesLandingV7 - A nova Landing Page Profissional Oficial.
  * Carrega o bundle HTML original mantendo 100% da fidelidade visual.
  */
-export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = ({ onLoginClick }) => {
+export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = React.memo(({ onLoginClick }) => {
   
   useEffect(() => {
     // Escuta mensagens vindas de dentro do iframe (para o botão de Login)
@@ -21,9 +21,12 @@ export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = ({ onLogi
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', margin: 0, padding: 0, background: '#000' }}>
       <iframe 
+        id="v7-iframe"
+        key="static-v7-iframe"
         src="/landing.html" 
         style={{ width: '100%', height: '100%', border: 'none' }}
         title="Fábrica de Best Seller - Landing Page"
+        loading="eager"
       />
       
       {/* Botão de Login Flutuante Opcional (Caso o bundle não tenha um fácil de clicar) */}

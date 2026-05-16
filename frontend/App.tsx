@@ -71,6 +71,10 @@ const App: React.FC = () => {
     }
   });
 
+  const handleLoginClick = React.useCallback(() => {
+    setCurrentView('login');
+  }, []);
+
   // PERSISTENCE EFFECTS
   useEffect(() => localStorage.setItem('bsf_lang', lang), [lang]);
   useEffect(() => {
@@ -355,7 +359,7 @@ const App: React.FC = () => {
     return (
       <ErrorBoundary>
         <SalesLandingV7 
-          onLoginClick={() => setCurrentView('login')}
+          onLoginClick={handleLoginClick}
         />
       </ErrorBoundary>
     );
