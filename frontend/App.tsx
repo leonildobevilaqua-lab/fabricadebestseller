@@ -22,6 +22,7 @@ import LandingPageSpanish from './components/LandingPageSpanish';
 import Promocao from './components/Promocao';
 import { SalesLandingV5 } from './components/SalesLandingV5';
 import { SalesLandingV6 } from './components/SalesLandingV6';
+import { SalesLandingV7 } from './components/SalesLandingV7';
 import { ProfessionalCoverLanding } from './components/ProfessionalCoverLanding';
 import CipGenerator from './components/CipGenerator';
 
@@ -353,7 +354,7 @@ const App: React.FC = () => {
 
     return (
       <ErrorBoundary>
-        <SalesLandingV6 
+        <SalesLandingV7 
           onLoginClick={() => setCurrentView('login')}
         />
       </ErrorBoundary>
