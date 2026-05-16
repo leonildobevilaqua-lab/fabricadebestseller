@@ -52,4 +52,4 @@ export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = React.mem
       </button>
     </div>
   );
-};
+});
