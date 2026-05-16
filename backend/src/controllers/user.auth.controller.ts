@@ -199,7 +199,8 @@ export const UserAuthController = {
             
             // Add leads that are actually projects (have a projectId or are book types)
             leadsArray.forEach((l: any) => {
-                const isBookLead = l.type === 'BOOK' || l.bookTitle || l.topic || l.projectId;
+                const hasProjectData = l.bookTitle || l.topic || l.projectId;
+                const isBookLead = (l.type === 'BOOK' && hasProjectData) || hasProjectData;
                 const alreadyInProjects = combinedProjects.some((p: any) => (p.id || p.projectId) === (l.id || l.projectId));
                 if (isBookLead && !alreadyInProjects) {
                     combinedProjects.push(l);

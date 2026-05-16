@@ -199,35 +199,50 @@ export const setVal = async (pathStr: string, value: any) => {
                     [Query.equal('key', normalized), Query.limit(1)]
                 );
 
-                const stringifiedValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
-
-                if (existing.documents.length > 0) {
-                    await databases.updateDocument(
-                        APPWRITE_CONFIG.databaseId,
-                        APPWRITE_CONFIG.collectionId,
-                        existing.documents[0].$id,
-                        { value: stringifiedValue, key: normalized }
-                    );
+                if (value === null) {
+                    if (existing.documents.length > 0) {
+                        await databases.deleteDocument(
+                            APPWRITE_CONFIG.databaseId,
+                            APPWRITE_CONFIG.collectionId,
+                            existing.documents[0].$id
+                        );
+                    }
                 } else {
-                    await databases.createDocument(
-                        APPWRITE_CONFIG.databaseId,
-                        APPWRITE_CONFIG.collectionId,
-                        ID.unique(),
-                        { key: normalized, value: stringifiedValue }
-                    );
+                    const stringifiedValue = typeof value === 'object' ? JSON.stringify(value) : String(value);
+
+                    if (existing.documents.length > 0) {
+                        await databases.updateDocument(
+                            APPWRITE_CONFIG.databaseId,
+                            APPWRITE_CONFIG.collectionId,
+                            existing.documents[0].$id,
+                            { value: stringifiedValue, key: normalized }
+                        );
+                    } else {
+                        await databases.createDocument(
+                            APPWRITE_CONFIG.databaseId,
+                            APPWRITE_CONFIG.collectionId,
+                            ID.unique(),
+                            { key: normalized, value: stringifiedValue }
+                        );
+                    }
                 }
             } catch (e: any) {
                 console.error("[DB] Appwrite Set Error:", e.message);
             }
         } else {
             // SUPABASE LOGIC
-            const { error } = await supabase.from('kv_store').upsert({
-                key: normalized,
-                value: value,
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'key' });
-            
-            if (error) console.error(`[DB] Supabase Sync Error:`, error.message);
+            if (value === null) {
+                const { error } = await supabase.from('kv_store').delete().eq('key', normalized);
+                if (error) console.error(`[DB] Supabase Delete Error:`, error.message);
+            } else {
+                const { error } = await supabase.from('kv_store').upsert({
+                    key: normalized,
+                    value: value,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'key' });
+                
+                if (error) console.error(`[DB] Supabase Sync Error:`, error.message);
+            }
         }
 
         // 3. DISK BACKUP (Synchronous to ensure integrity during rapid updates)

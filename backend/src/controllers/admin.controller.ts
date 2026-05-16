@@ -479,7 +479,8 @@ export const getProjectHistory = async (req: Request, res: Response) => {
         // Merge everything that looks like a book/project
         const combined = [...projectsArray];
         leadsArray.forEach((l: any) => {
-            const isBookLead = l.type === 'BOOK' || l.bookTitle || l.topic || l.projectId;
+            const hasProjectData = l.bookTitle || l.topic || l.projectId;
+            const isBookLead = (l.type === 'BOOK' && hasProjectData) || hasProjectData;
             const alreadyIn = combined.some((p: any) => (p.id || p.projectId) === (l.id || l.projectId));
             if (isBookLead && !alreadyIn) {
                 combined.push(l);

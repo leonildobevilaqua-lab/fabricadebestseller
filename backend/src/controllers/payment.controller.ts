@@ -559,7 +559,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                             date: new Date(),
                             email: email,
                             name: payerName,
-                            type: 'BOOK',
+                            type: 'SUBSCRIPTION',
                             status: 'SUBSCRIBER',
                             plan: { name: detectedPlan, billing },
                             paymentInfo,
@@ -1428,7 +1428,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                         date: new Date(),
                         email,
                         name: payerName,
-                        type: isCIP ? 'FICHA_CATALOGRAFICA' : 'BOOK',
+                        type: isCIP ? 'FICHA_CATALOGRAFICA' : 'CREDIT',
                         status: 'APPROVED',
                         paymentInfo,
                         tag: isCIP ? 'TICTO_CIP_PURCHASE' : 'TICTO_AUTO_PURCHASE'
