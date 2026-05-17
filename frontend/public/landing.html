@@ -97,23 +97,14 @@ document.addEventListener('DOMContentLoaded', async function() {
           const buf = await res.arrayBuffer();
           let bytes = new Uint8Array(buf);
           if (typeof DecompressionStream !== 'undefined') {
-            const ds = new DecompressionStream('gzip');
-            const writer = ds.writable.getWriter();
-            const reader = ds.readable.getReader();
-            writer.write(bytes);
-            writer.close();
-            const chunks = [];
-            let totalLen = 0;
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              chunks.push(value);
-              totalLen += value.length;
+            try {
+              const ds = new DecompressionStream('gzip');
+              const decompressedStream = new Response(bytes).body.pipeThrough(ds);
+              const decompressedArrayBuffer = await new Response(decompressedStream).arrayBuffer();
+              bytes = new Uint8Array(decompressedArrayBuffer);
+            } catch (decompError) {
+              console.error('DecompressionStream failed for remote asset ' + uuid + ':', decompError);
             }
-            const finalBytes = new Uint8Array(totalLen);
-            let offset = 0;
-            for (const chunk of chunks) { finalBytes.set(chunk, offset); offset += chunk.length; }
-            bytes = finalBytes;
           }
           blobUrls[uuid] = URL.createObjectURL(new Blob([bytes], { type: entry.mime }));
         } catch (err) {
@@ -130,22 +121,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         let finalBytes = bytes;
         if (entry.compressed) {
           if (typeof DecompressionStream !== 'undefined') {
-            const ds = new DecompressionStream('gzip');
-            const writer = ds.writable.getWriter();
-            const reader = ds.readable.getReader();
-            writer.write(bytes);
-            writer.close();
-            const chunks = [];
-            let totalLen = 0;
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              chunks.push(value);
-              totalLen += value.length;
+            try {
+              const ds = new DecompressionStream('gzip');
+              const decompressedStream = new Response(bytes).body.pipeThrough(ds);
+              const decompressedArrayBuffer = await new Response(decompressedStream).arrayBuffer();
+              finalBytes = new Uint8Array(decompressedArrayBuffer);
+            } catch (decompError) {
+              console.error('DecompressionStream failed for inline asset ' + uuid + ':', decompError);
             }
-            finalBytes = new Uint8Array(totalLen);
-            let offset = 0;
-            for (const chunk of chunks) { finalBytes.set(chunk, offset); offset += chunk.length; }
           } else {
             console.warn('DecompressionStream not available, asset ' + uuid + ' may not render');
           }
