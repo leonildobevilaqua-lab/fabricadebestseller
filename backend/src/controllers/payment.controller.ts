@@ -1342,13 +1342,27 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
 
                 // Detect Product Type (BOOK, CIP, BARCODE, QR, COMPLETE_PACKAGE)
                 const pNameUpper = productName.toUpperCase();
-                const productId = String(payload.item?.product_id || tx.product?.id || "");
+                
+                // Collect all possible identifiers for the product/checkout
+                const identifiers = new Set<string>();
+                if (payload.item?.product_id) identifiers.add(String(payload.item.product_id).trim());
+                if (tx.product?.id) identifiers.add(String(tx.product.id).trim());
+                if (payload.product_id) identifiers.add(String(payload.product_id).trim());
+                if (payload.product?.id) identifiers.add(String(payload.product.id).trim());
+                if (payload.order?.checkout_id) identifiers.add(String(payload.order.checkout_id).trim());
+                if (payload.checkout_id) identifiers.add(String(payload.checkout_id).trim());
+                if (payload.checkout_hash) identifiers.add(String(payload.checkout_hash).trim());
+                if (tx.checkout_id) identifiers.add(String(tx.checkout_id).trim());
+                if (tx.checkout_hash) identifiers.add(String(tx.checkout_hash).trim());
+                if (payload.item?.checkout_id) identifiers.add(String(payload.item.checkout_id).trim());
+
+                console.log(`[TICTO WEBHOOK] Extracted product identifiers:`, Array.from(identifiers));
                 
                 // --- SPECIAL PROMO RESTRICTION (R$ 9,99 / R$ 5,99) ---
-                if (productId === 'O01C5F91D' || productId === 'O6F5202E7') {
+                if (identifiers.has('O01C5F91D') || identifiers.has('O6F5202E7') || identifiers.has('111296')) {
                     const alreadyUsed = await getVal(`/users/${safeEmail}/promo_599_used`) === true;
                     if (alreadyUsed) {
-                        console.log(`[TICTO WEBHOOK] BLOCKED: ${email} tried to reuse promo O01C5F91D.`);
+                        console.log(`[TICTO WEBHOOK] BLOCKED: ${email} tried to reuse promo O6F5202E7/111296.`);
                         await setVal(`/users/${safeEmail}/promo_blocked`, true);
                         // We do NOT increment credits here
                         if (!res.headersSent) {
@@ -1359,53 +1373,133 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     await setVal(`/users/${safeEmail}/promo_599_used`, true);
                 }
 
-                const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA') || productId === 'O89DB6739';
-                const isBarcode = pNameUpper.includes('BARRAS') || productId === 'O77037442';
-                const isQR = pNameUpper.includes('QR CODE') || productId === 'O8B28DD61';
-                const isCompletePackage = pNameUpper.includes('PACOTE COMPLETO') || productId === 'OAE19BCE4';
+                // Define credit counters to increment
+                let bookCreditsToAdd = 0;
+                let cipCreditsToAdd = 0;
+                let barcodeCreditsToAdd = 0;
+                let qrCreditsToAdd = 0;
 
-                if (isCompletePackage) {
-                    // Grant 1 of each credit
-                    const currentCip = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
-                    const currentBarcode = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
-                    const currentQr = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+                const matchesIdentifier = (idsOrHashes: string[]) => {
+                    return idsOrHashes.some(id => identifiers.has(id));
+                };
 
-                    await setVal(`/cipCredits/${safeEmail}`, currentCip + 1);
-                    await setVal(`/users/${safeEmail}/cipCredits`, currentCip + 1);
-                    
-                    await setVal(`/barcodeCredits/${safeEmail}`, currentBarcode + 1);
-                    await setVal(`/users/${safeEmail}/barcodeCredits`, currentBarcode + 1);
+                // ID 111296 / O6F5202E7 (Oferta Especial 1ª Compra - 1 Livro)
+                if (matchesIdentifier(['111296', 'O6F5202E7'])) {
+                    bookCreditsToAdd = 1;
+                }
+                // ID 111114 / OAE19BCE4 (PRC - Pacote de Registro Completo - 1 de cada)
+                else if (matchesIdentifier(['111114', 'OAE19BCE4'])) {
+                    cipCreditsToAdd = 1;
+                    barcodeCreditsToAdd = 1;
+                    qrCreditsToAdd = 1;
+                }
+                // ID 111112 / O8B28DD61 (Gerador Automático de QR Codes - 1 QR)
+                else if (matchesIdentifier(['111112', 'O8B28DD61'])) {
+                    qrCreditsToAdd = 1;
+                }
+                // ID 110881 / O9012A440 (Crédito para Código de Barras - 1 Barcode)
+                else if (matchesIdentifier(['110881', 'O9012A440'])) {
+                    barcodeCreditsToAdd = 1;
+                }
+                // ID 110774 / O89DB6739 (Crédito para Ficha Catalográfica - 1 Ficha)
+                else if (matchesIdentifier(['110774', 'O89DB6739'])) {
+                    cipCreditsToAdd = 1;
+                }
+                // ID 110633 / O1234F079 (Pacote 12 Livros)
+                else if (matchesIdentifier(['110633', 'O1234F079'])) {
+                    bookCreditsToAdd = 12;
+                }
+                // ID 110631 / OFD92B07B (Pacote 9 Livros)
+                else if (matchesIdentifier(['110631', 'OFD92B07B'])) {
+                    bookCreditsToAdd = 9;
+                }
+                // ID 110634 / O276DFB4A (Pacote 6 Livros)
+                else if (matchesIdentifier(['110634', 'O276DFB4A'])) {
+                    bookCreditsToAdd = 6;
+                }
+                // ID 110628 / OFEE31960 (Pacote 3 Livros)
+                else if (matchesIdentifier(['110628', 'OFEE31960'])) {
+                    bookCreditsToAdd = 3;
+                }
+                // ID 108488 / O6CE296D4 (Gerador de Livros Profissionais - 1 Livro)
+                else if (matchesIdentifier(['108488', 'O6CE296D4'])) {
+                    bookCreditsToAdd = 1;
+                }
+                // Fallbacks using text matches on product name
+                else {
+                    if (pNameUpper.includes('REGISTRO COMPLETO') || pNameUpper.includes('PRC')) {
+                        cipCreditsToAdd = 1;
+                        barcodeCreditsToAdd = 1;
+                        qrCreditsToAdd = 1;
+                    } else if (pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA')) {
+                        cipCreditsToAdd = 1;
+                    } else if (pNameUpper.includes('BARRAS') || pNameUpper.includes('BARCODE')) {
+                        barcodeCreditsToAdd = 1;
+                    } else if (pNameUpper.includes('QR CODE') || pNameUpper.includes('QRCODE')) {
+                        qrCreditsToAdd = 1;
+                    } else if (pNameUpper.includes('12 LIVROS') || pNameUpper.includes('12 CRÉDITOS') || pNameUpper.includes('12 CREDITOS')) {
+                        bookCreditsToAdd = 12;
+                    } else if (pNameUpper.includes('9 LIVROS') || pNameUpper.includes('9 CRÉDITOS') || pNameUpper.includes('9 CREDITOS')) {
+                        bookCreditsToAdd = 9;
+                    } else if (pNameUpper.includes('6 LIVROS') || pNameUpper.includes('6 CRÉDITOS') || pNameUpper.includes('6 CREDITOS')) {
+                        bookCreditsToAdd = 6;
+                    } else if (pNameUpper.includes('3 LIVROS') || pNameUpper.includes('3 CRÉDITOS') || pNameUpper.includes('3 CREDITOS')) {
+                        bookCreditsToAdd = 3;
+                    } else {
+                        // Standard fallback: 1 book credit
+                        bookCreditsToAdd = 1;
+                    }
+                }
 
-                    await setVal(`/qrCredits/${safeEmail}`, currentQr + 1);
-                    await setVal(`/users/${safeEmail}/qrCredits`, currentQr + 1);
-
-                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} received COMPLETE PACKAGE (CIP, Barcode, QR).`);
-                } else if (isCIP) {
-                    const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
-                    const newCipCredits = currentCipCredits + 1;
-                    await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
-                    await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
-                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCipCredits} CIP credits.`);
-                } else if (isBarcode) {
-                    const currentBarcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
-                    const newBarcodeCredits = currentBarcodeCredits + 1;
-                    await setVal(`/barcodeCredits/${safeEmail}`, newBarcodeCredits);
-                    await setVal(`/users/${safeEmail}/barcodeCredits`, newBarcodeCredits);
-                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newBarcodeCredits} Barcode credits.`);
-                } else if (isQR) {
-                    const currentQrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
-                    const newQrCredits = currentQrCredits + 1;
-                    await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
-                    await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
-                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newQrCredits} QR credits.`);
-                } else {
+                // Apply credits to database
+                if (bookCreditsToAdd > 0) {
                     const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-                    const newCredits = currentCredits + 1;
-
+                    const newCredits = currentCredits + bookCreditsToAdd;
                     await setVal(`/credits/${safeEmail}`, newCredits);
                     await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
                     await setVal(`/users/${safeEmail}/lastBookPayment`, new Date());
-                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCredits} book credits.`);
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCredits} book credits (added +${bookCreditsToAdd}).`);
+                }
+
+                if (cipCreditsToAdd > 0) {
+                    const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+                    const newCipCredits = currentCipCredits + cipCreditsToAdd;
+                    await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
+                    await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCipCredits} CIP credits (added +${cipCreditsToAdd}).`);
+                }
+
+                if (barcodeCreditsToAdd > 0) {
+                    const currentBarcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+                    const newBarcodeCredits = currentBarcodeCredits + barcodeCreditsToAdd;
+                    await setVal(`/barcodeCredits/${safeEmail}`, newBarcodeCredits);
+                    await setVal(`/users/${safeEmail}/barcodeCredits`, newBarcodeCredits);
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newBarcodeCredits} Barcode credits (added +${barcodeCreditsToAdd}).`);
+                }
+
+                if (qrCreditsToAdd > 0) {
+                    const currentQrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+                    const newQrCredits = currentQrCredits + qrCreditsToAdd;
+                    await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
+                    await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newQrCredits} QR credits (added +${qrCreditsToAdd}).`);
+                }
+
+                // Determine Lead type & tag
+                let leadType = 'CREDIT';
+                let leadTag = 'TICTO_AUTO_PURCHASE';
+                if (cipCreditsToAdd > 0 && bookCreditsToAdd === 0) {
+                    leadType = 'FICHA_CATALOGRAFICA';
+                    leadTag = 'TICTO_CIP_PURCHASE';
+                } else if (barcodeCreditsToAdd > 0 && bookCreditsToAdd === 0) {
+                    leadType = 'CODIGO_BARRAS';
+                    leadTag = 'TICTO_BARCODE_PURCHASE';
+                } else if (qrCreditsToAdd > 0 && bookCreditsToAdd === 0) {
+                    leadType = 'QR_CODE';
+                    leadTag = 'TICTO_QR_PURCHASE';
+                } else if (cipCreditsToAdd > 0 && barcodeCreditsToAdd > 0 && qrCreditsToAdd > 0) {
+                    leadType = 'PACOTE_REGISTRO_COMPLETO';
+                    leadTag = 'TICTO_PRC_PURCHASE';
                 }
 
                 // Update/Create Lead
@@ -1428,10 +1522,10 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                         date: new Date(),
                         email,
                         name: payerName,
-                        type: isCIP ? 'FICHA_CATALOGRAFICA' : 'CREDIT',
+                        type: leadType,
                         status: 'APPROVED',
                         paymentInfo,
-                        tag: isCIP ? 'TICTO_CIP_PURCHASE' : 'TICTO_AUTO_PURCHASE'
+                        tag: leadTag
                     });
                 }
             }
