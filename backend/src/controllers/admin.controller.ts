@@ -705,7 +705,8 @@ export const getCredits = async (req: Request, res: Response) => {
         const cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`, { forceSync: true }) || 0);
         const barcodeCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true }) || 0);
         const qrCredits = Number(await getVal(`/qrCredits/${safeEmail}`, { forceSync: true }) || 0);
-        res.json({ email, credits, cipCredits, barcodeCredits, qrCredits });
+        const coverCredits = Number(await getVal(`/coverCredits/${safeEmail}`, { forceSync: true }) || 0);
+        res.json({ email, credits, cipCredits, barcodeCredits, qrCredits, coverCredits });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -768,6 +769,22 @@ export const manageCredits = async (req: Request, res: Response) => {
 
             console.log(`[ADMIN] Manual QR Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
             return res.json({ success: true, email, previousTotal: currentCredits, newTotal, type: 'qr' });
+        }
+
+        if (type === 'cover') {
+            const currentCredits = Number(await getVal(`/coverCredits/${safeEmail}`, { forceSync: true }) || 0);
+            const base = Math.max(0, currentCredits);
+            const newTotal = Math.max(0, base + Number(amount));
+            await setVal(`/coverCredits/${safeEmail}`, newTotal);
+
+            const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            if (user) {
+                user.coverCredits = newTotal;
+                await setVal(`/users/${safeEmail}`, user);
+            }
+
+            console.log(`[ADMIN] Manual Cover Credit Adjustment for ${email}: ${amount > 0 ? '+' : ''}${amount}. New Total: ${newTotal}`);
+            return res.json({ success: true, email, previousTotal: currentCredits, newTotal, type: 'cover' });
         }
 
         // 1. Update /credits/ (Primary Source of truth for Generator)
