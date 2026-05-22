@@ -13,6 +13,7 @@ import { PlaceholderView, ExternalProductView } from './DashboardViews';
 import CipGenerator from './CipGenerator';
 import BarcodeGenerator from './BarcodeGenerator';
 import QrCodeGenerator from './QrCodeGenerator';
+import CoverGenerator from './CoverGenerator/CoverGenerator';
 
 interface DashboardProps {
     user: any;
@@ -22,7 +23,12 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout }) => {
     const { t, lang } = useLanguage();
-    const [activeTab, setActiveTab] = useState('livro');
+    const [activeTab, setActiveTab] = useState(() => {
+        if (window.location.pathname === '/capas-profissionais' || window.location.pathname === '/capa-profissional') {
+            return 'capas-profissionais';
+        }
+        return 'livro';
+    });
     const [sidebarOpen, setSidebarOpen] = useState(false);
     
     const [stats, setStats] = useState<any>(null);
@@ -126,6 +132,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
     const menuItems = [
         { id: 'livro', label: 'Gerador de Livros', icon: BookOpen, price: 'R$ 39,90' },
+        { id: 'capas-profissionais', label: 'Capa Profissional (IA)', icon: Palette, price: 'R$ 87,00' },
         { id: 'cbl-tutorial', label: 'Registro CBL (Tutorial)', icon: FileText, price: 'R$ 19,90' },
         { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 27,90' },
         { id: 'barras', label: 'Código de Barras', icon: Barcode, price: 'R$ 19,90' },
@@ -195,6 +202,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 return (
                     <QrCodeGenerator 
                         credits={stats?.qrCredits || 0}
+                        userEmail={user.email}
+                        onRefresh={fetchMe}
+                    />
+                );
+            case 'capas-profissionais':
+                return (
+                    <CoverGenerator 
+                        credits={stats?.coverCredits || 0}
                         userEmail={user.email}
                         onRefresh={fetchMe}
                     />

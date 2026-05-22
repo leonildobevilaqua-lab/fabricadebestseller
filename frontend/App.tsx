@@ -57,6 +57,10 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState(() => {
     if (window.location.pathname === '/login') return 'login';
     if (window.location.pathname === '/factory') return 'generator';
+    if (window.location.pathname === '/capas-profissionais' || window.location.pathname === '/capa-profissional') {
+      if (localStorage.getItem('bsf_hasAccess') === 'true') return 'dashboard';
+      return 'login';
+    }
     const savedView = localStorage.getItem('bsf_view');
     if (savedView) return savedView;
     if (localStorage.getItem('bsf_hasAccess') === 'true') return 'dashboard';
@@ -214,6 +218,19 @@ const App: React.FC = () => {
     if (path === '/oficial' || path === '/v6') return <SalesLandingV6 onLoginClick={() => setCurrentView('login')} />;
     if (path === '/capa_profissional') return <ProfessionalCoverLanding />;
     if (path === '/ficha-catalografica' || path === '/cip') return <CipGenerator />;
+    if (path === '/capas-profissionais' || path === '/capa-profissional') {
+      if (hasAccess && userContact) {
+        // Fall through to dashboard rendering
+      } else {
+        return (
+          <Login
+            onLogin={handleLoginSuccess}
+            onBack={() => setCurrentView('landing')}
+            onForgotPassword={() => alert("Entre em contato com o suporte para recuperar sua senha.")}
+          />
+        );
+      }
+    }
 
     // NEW LANDING CATCHES
     if (path === '/english' || path === '/en' || path === '/us') {

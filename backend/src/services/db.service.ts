@@ -40,7 +40,7 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
         const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
         const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
         
-        const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders', '/cipCredits', '/barcodeCredits', '/qrCredits'];
+        const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders', '/cipCredits', '/barcodeCredits', '/qrCredits', '/coverCredits'];
         const isCollectionRoot = collections.includes(normalized);
 
         // 1. LOCAL CACHE FIRST
@@ -260,7 +260,7 @@ export const setVal = async (pathStr: string, value: any) => {
 export const pushVal = async (pathStr: string, value: any) => {
     const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
     const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
-    const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders', '/cipCredits', '/barcodeCredits', '/qrCredits'];
+    const collections = ['/projects', '/leads', '/users', '/credits', '/orders', '/extra_orders', '/cipCredits', '/barcodeCredits', '/qrCredits', '/coverCredits'];
 
     if (collections.includes(normalized)) {
         const id = value.id || value.email?.replace(/[^a-zA-Z0-9]/g, '_') || Math.random().toString(36).substring(2, 11);

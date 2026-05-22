@@ -1378,6 +1378,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 let cipCreditsToAdd = 0;
                 let barcodeCreditsToAdd = 0;
                 let qrCreditsToAdd = 0;
+                let coverCreditsToAdd = 0;
 
                 const matchesIdentifier = (idsOrHashes: string[]) => {
                     return idsOrHashes.some(id => identifiers.has(id));
@@ -1386,6 +1387,10 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 // ID 111296 / O6F5202E7 (Oferta Especial 1ª Compra - 1 Livro)
                 if (matchesIdentifier(['111296', 'O6F5202E7'])) {
                     bookCreditsToAdd = 1;
+                }
+                // ID Capa Profissional - OE1970B27 (R$ 87,00 por geração)
+                else if (matchesIdentifier(['OE1970B27'])) {
+                    coverCreditsToAdd = 1;
                 }
                 // ID 111114 / OAE19BCE4 (PRC - Pacote de Registro Completo - 1 de cada)
                 else if (matchesIdentifier(['111114', 'OAE19BCE4'])) {
@@ -1431,6 +1436,8 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                         cipCreditsToAdd = 1;
                         barcodeCreditsToAdd = 1;
                         qrCreditsToAdd = 1;
+                    } else if (pNameUpper.includes('CAPA PROFISSIONAL') || pNameUpper.includes('CAPA_PROFISSIONAL') || pNameUpper.includes('CAPAS PROFISSIONAIS')) {
+                        coverCreditsToAdd = 1;
                     } else if (pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA')) {
                         cipCreditsToAdd = 1;
                     } else if (pNameUpper.includes('BARRAS') || pNameUpper.includes('BARCODE')) {
@@ -1483,6 +1490,14 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
                     await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
                     console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newQrCredits} QR credits (added +${qrCreditsToAdd}).`);
+                }
+
+                if (coverCreditsToAdd > 0) {
+                    const currentCoverCredits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
+                    const newCoverCredits = currentCoverCredits + coverCreditsToAdd;
+                    await setVal(`/coverCredits/${safeEmail}`, newCoverCredits);
+                    await setVal(`/users/${safeEmail}/coverCredits`, newCoverCredits);
+                    console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCoverCredits} Cover credits (added +${coverCreditsToAdd}).`);
                 }
 
                 // Determine Lead type & tag
