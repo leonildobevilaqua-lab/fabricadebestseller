@@ -132,7 +132,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
 
     const menuItems = [
         { id: 'livro', label: 'Gerador de Livros', icon: BookOpen, price: 'R$ 39,90' },
-        { id: 'capas-profissionais', label: 'Capa Profissional (IA)', icon: Palette, price: 'R$ 87,00' },
+        { id: 'capas-profissionais', label: 'Capa Profissional (IA)', icon: Palette, isPreparation: true },
         { id: 'cbl-tutorial', label: 'Registro CBL (Tutorial)', icon: FileText, price: 'R$ 19,90' },
         { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 27,90' },
         { id: 'barras', label: 'Código de Barras', icon: Barcode, price: 'R$ 19,90' },
@@ -208,10 +208,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 );
             case 'capas-profissionais':
                 return (
-                    <CoverGenerator 
-                        credits={stats?.coverCredits || 0}
-                        userEmail={user.email}
-                        onRefresh={fetchMe}
+                    <PlaceholderView 
+                        title="Gerador Automático de Capas Profissionais (IA)"
+                        description="Estamos trabalhando duro para liberar esta funcionalidade o mais rápido possível. Fique atento às novidades!"
                     />
                 );
             case 'pacote-completo':

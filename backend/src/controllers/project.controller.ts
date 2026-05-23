@@ -1968,3 +1968,237 @@ export const downloadProjectZip = async (req: Request, res: Response) => {
     res.status(404).json({ error: "Arquivo ZIP não encontrado para este projeto." });
 };
 
+export const extractCoverMetadata = async (req: Request, res: Response) => {
+    try {
+        const file = req.file;
+        if (!file) return res.status(400).json({ error: "File required" });
+
+        const path = require('path');
+        const ext = path.extname(file.originalname).toLowerCase();
+        let rawText = "";
+
+        if (ext === '.docx') {
+            const mammoth = require('mammoth');
+            const result = await mammoth.extractRawText({ buffer: file.buffer });
+            rawText = result.value;
+        } else if (ext === '.pdf') {
+            const pdfParse = require('pdf-parse');
+            const data = await pdfParse(file.buffer);
+            rawText = data.text;
+        } else {
+            return res.status(400).json({ error: "Formato de arquivo não suportado. Envie .docx ou .pdf" });
+        }
+
+        if (!rawText || rawText.trim().length < 50) {
+            return res.status(400).json({ error: "Não foi possível extrair texto do arquivo." });
+        }
+
+        const textSample = rawText.substring(0, 10000);
+
+        const prompt = `
+            Você é um assistente especialista em publicação de livros.
+            Vou te fornecer as primeiras páginas de um manuscrito (texto cru).
+            Sua tarefa é extrair os seguintes metadados principais do livro:
+            1. title (Título Principal)
+            2. subtitle (Subtítulo, se houver)
+            3. author (Nome do Autor)
+            4. niche (Nicho principal, ex: Negócios & Marketing, Romance, etc)
+            5. subniche (Sub-nicho, ex: Vendas, Escrita Criativa, etc)
+
+            Retorne APENAS um objeto JSON no seguinte formato, sem nenhum outro texto ao redor:
+            {
+                "title": "...",
+                "subtitle": "...",
+                "author": "...",
+                "niche": "...",
+                "subniche": "..."
+            }
+
+            TEXTO DO MANUSCRITO:
+            ${textSample}
+        `;
+
+        const { getLLMProvider } = require('../services/llm.factory');
+        const llm = await getLLMProvider();
+        const extracted = await llm.generateJSON(prompt);
+
+        res.json({
+            success: true,
+            data: extracted
+        });
+    } catch (e: any) {
+        console.error("Extract Cover Metadata Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+};
+
+export const consumeCoverCredit = async (req: Request, res: Response) => {
+    try {
+        const email = (req as any).user?.email || req.body?.email;
+        if (!email) return res.status(401).json({ error: "Unauthorized" });
+
+        const safeEmail = email.replace(/[^a-zA-Z0-9]/g, '_');
+        const ledgerKey = `/credits/${safeEmail}`;
+        const userKey = `/users/${safeEmail}`;
+
+        const { getVal, setVal } = require('../services/firebase.service');
+        const ledgerCredits = await getVal(ledgerKey);
+        const userObj = await getVal(userKey);
+        
+        let credits = Number(ledgerCredits) || 0;
+        if (!credits && userObj?.bookCredits) {
+            credits = Number(userObj.bookCredits);
+        }
+
+        if (credits <= 0) {
+            return res.status(403).json({ error: "Créditos insuficientes para gerar a capa." });
+        }
+
+        const newCredits = credits - 1;
+        await setVal(ledgerKey, newCredits);
+        if (userObj) {
+            userObj.bookCredits = newCredits;
+            await setVal(userKey, userObj);
+        }
+
+        return res.json({ success: true, newCredits });
+    } catch (error: any) {
+        console.error("Consume Cover Credit Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+export const researchCoverMarket = async (req: Request, res: Response) => {
+    try {
+        const { niche } = req.body;
+        if (!niche) return res.status(400).json({ error: "Niche is required" });
+
+        const { ResearchService } = require('../services/research.service');
+        const amazonBooks = await ResearchService.searchAmazon(niche, 'pt');
+
+        const { getLLMProvider } = require('../services/llm.factory');
+        const llm = await getLLMProvider();
+
+        let prompt = "";
+
+        if (!amazonBooks || amazonBooks.length === 0) {
+            console.log("[PROJECT] Search failed, falling back to LLM knowledge.");
+            prompt = `
+            Você é um estrategista de publicações best-sellers.
+            Preciso que você atue como uma pesquisa de mercado na Amazon pelos livros mais vendidos no nicho: "${niche}".
+            Como não conseguimos acessar a web agora, use seu vasto conhecimento para gerar os dados.
+
+            Sua tarefa:
+            1. Liste até 10 livros reais e famosos que são best-sellers no nicho de "${niche}" retornando um array \`topBooks\` com objetos contendo:
+               - title: Título limpo do livro
+               - author: Nome do autor
+               - rating: Uma nota realista (ex: "4.8")
+               - reviews: Uma contagem de reviews realista em k (ex: "32.5k")
+               - bg: Um background de gradiente CSS escuro/elegante que combine com a identidade do livro (ex: "linear-gradient(135deg,#0a0a0a,#3a2c10)")
+            `;
+        } else {
+            prompt = `
+            Você é um estrategista de publicações best-sellers.
+            Fizemos uma busca na Amazon pelos livros mais vendidos no nicho: "${niche}".
+            Aqui estão os resultados brutos da busca:
+            ${JSON.stringify(amazonBooks, null, 2)}
+
+            Sua tarefa:
+            1. Analise esses resultados e limpe os dados. Extraia até 10 livros (ou o máximo que conseguir desses resultados) retornando um array \`topBooks\` com objetos contendo:
+               - title: Título limpo (sem "Amazon.com.br", etc)
+               - author: Nome do autor
+               - rating: Uma nota simulada/estimada realista (ex: "4.8")
+               - reviews: Uma contagem simulada de reviews realista em k (ex: "32.5k")
+               - bg: Um background de gradiente CSS escuro/elegante que combine com o livro (ex: "linear-gradient(135deg,#0a0a0a,#3a2c10)")
+            `;
+        }
+
+        prompt += `
+            2. Crie um \`framework\` de design baseado EXATAMENTE NAS CORES REAIS DAS CAPAS FÍSICAS dos livros que você acabou de listar. O objeto \`framework\` deve conter:
+               - colors: Array com as 3 cores exatas mais dominantes nas capas originais desses best-sellers famosos (em código HEX, ex: "#4B0082" para o roxo do Pai Rico Pai Pobre, ou "#FFD700" para o dourado). Não invente cores genéricas, use seu conhecimento das capas REAIS.
+               - typography: Descrição curta da tipografia ideal (ex: "Fontes Serifadas robustas com alto contraste").
+               - structure: Descrição de 1 ou 2 frases sobre como estruturar a capa (ex: "Título grande no topo, autor na base, contraste escuro").
+
+            Responda APENAS com um objeto JSON neste formato, sem marcações ou texto adicional:
+            {
+                "topBooks": [
+                    { "title": "...", "author": "...", "rating": "...", "reviews": "...", "bg": "..." }
+                ],
+                "framework": {
+                    "colors": ["#...", "#...", "#..."],
+                    "typography": "...",
+                    "structure": "..."
+                }
+            }
+        `;
+
+        const data = await llm.generateJSON(prompt);
+
+        if (data && data.topBooks && Array.isArray(data.topBooks)) {
+            const fetch = require('node-fetch');
+            const cheerio = require('cheerio');
+            data.topBooks = await Promise.all(data.topBooks.map(async (bk: any) => {
+                try {
+                    const q = encodeURIComponent(`${bk.title} ${bk.author} capa comum`);
+                    const url = `https://www.amazon.com.br/s?k=${q}`;
+                    const fetchPromise = fetch(url, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+                            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                            'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+                        }
+                    }).then((res: any) => res.text());
+                    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000));
+                    const html: any = await Promise.race([fetchPromise, timeoutPromise]);
+                    
+                    const $ = cheerio.load(html);
+                    let firstImage = $('.s-image').first().attr('src');
+                    if (firstImage && firstImage.includes('images/I/')) {
+                        // Clean Amazon URL to get high resolution (remove ._AC_UL320_ etc)
+                        firstImage = firstImage.replace(/\._AC_[a-zA-Z0-9_]+_\./, '.');
+                        bk.imageUrl = firstImage;
+                    }
+
+                    // Extract real Amazon data
+                    const ratingMatch = html.match(/([0-9,]+) de 5 estrelas/);
+                    if (ratingMatch) bk.rating = ratingMatch[1].replace(',', '.');
+
+                    const reviewMatch = html.match(/aria-label="([0-9.,]+) avalia/);
+                    if (reviewMatch) {
+                        const rnum = reviewMatch[1].replace(/\./g, '');
+                        if (parseInt(rnum) > 1000) {
+                            bk.reviews = (parseInt(rnum) / 1000).toFixed(1) + 'k';
+                        } else {
+                            bk.reviews = rnum;
+                        }
+                    }
+
+                    const boughtMatch = html.match(/([0-9.,]+) compras no m.s passado/i) || html.match(/Mais de ([0-9]+) compras/i);
+                    if (boughtMatch) {
+                        bk.sales = boughtMatch[0].replace(' no mês passado', '/mês');
+                    } else {
+                        // Estimate daily sales dynamically if not shown
+                        const parsedReviews = parseFloat(bk.reviews) || 1;
+                        bk.sales = `~${Math.floor(parsedReviews * 3.5)} vendas diárias`;
+                    }
+
+                } catch (err) {
+                    console.log("[AMAZON] Failed to fetch cover/stats for", bk.title);
+                }
+                return bk;
+            }));
+        }
+
+        if (data && data.framework) {
+            data.framework.backgrounds = await AIService.generateCoverBackgrounds(niche, data.framework);
+        }
+
+        res.json({
+            success: true,
+            data
+        });
+    } catch (e: any) {
+        console.error("Research Cover Market Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+};

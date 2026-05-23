@@ -953,3 +953,48 @@ export const structureBookFromText = async (fullText: string): Promise<any> => {
 
   return await llm.generateJSON<any>(prompt);
 };
+
+export const generateCoverBackgrounds = async (niche: string, framework: any): Promise<string[]> => {
+  if (!process.env.OPENAI_API_KEY) {
+    console.log("[DALL-E] No OPENAI_API_KEY found, skipping image generation.");
+    return [];
+  }
+
+  try {
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    
+    // We will generate 3 base concepts: Premium/Minimalist, Editorial/Authority, Vibrant/Energetic
+    const concepts = [
+      `A highly aesthetic, minimalist premium book cover background for a best-selling book about "${niche}". Pure art, no text, no title. Mood: Luxurious, clean, abstract geometric or subtle textures. Colors: ${framework?.colors?.slice(0,2)?.join(',') || 'dark, gold'}. Cinematic lighting.`,
+      `A bold, authoritative book cover background for a technical/academic book about "${niche}". Pure art, no text, no title. Mood: Solid, trustworthy, professional. Colors: ${framework?.colors?.slice(1,3)?.join(',') || 'navy, white'}. Sharp contrast, sophisticated.`,
+      `A vibrant, energetic and emotional book cover background for an aspirational book about "${niche}". Pure art, no text, no title. Mood: Warm, human, inspiring, dynamic gradients or sunset lighting. Colors: ${framework?.colors?.slice(0,3)?.join(',') || 'warm, orange, purple'}.`
+    ];
+
+    console.log(`[DALL-E] Generating 3 parallel backgrounds for niche: ${niche}...`);
+
+    const imagePromises = concepts.map(async (promptText) => {
+      try {
+        const response = await openai.images.generate({
+          model: "dall-e-3",
+          prompt: promptText,
+          n: 1,
+          size: "1024x1792",
+          quality: "standard",
+        });
+        return response?.data?.[0]?.url as string;
+      } catch (err) {
+        console.error("[DALL-E] Error generating individual image:", err);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(imagePromises);
+    const validUrls = results.filter(url => url !== null) as string[];
+    console.log(`[DALL-E] Successfully generated ${validUrls.length} backgrounds.`);
+    return validUrls;
+
+  } catch (error) {
+    console.error("[DALL-E] Error in generateCoverBackgrounds:", error);
+    return [];
+  }
+};

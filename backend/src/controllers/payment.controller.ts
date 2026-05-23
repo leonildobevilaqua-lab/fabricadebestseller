@@ -463,6 +463,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA');
                     const isBarcode = pNameUpper.includes('BARRAS');
                     const isQR = pNameUpper.includes('QR CODE');
+                    const isCover = pNameUpper.includes('CAPA PROFISSIONAL') || pNameUpper.includes('CAPA_PROFISSIONAL') || pNameUpper.includes('CAPAS PROFISSIONAIS');
 
                     if (isCIP) {
                         const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
@@ -482,6 +483,12 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                         await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
                         await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
                         console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newQrCredits} QR credits.`);
+                    } else if (isCover) {
+                        const currentCoverCredits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
+                        const newCoverCredits = currentCoverCredits + 1;
+                        await setVal(`/coverCredits/${safeEmail}`, newCoverCredits);
+                        await setVal(`/users/${safeEmail}/coverCredits`, newCoverCredits);
+                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newCoverCredits} Cover credits.`);
                     } else {
                         // DEFAULT: BOOK CREDIT
                         const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
@@ -868,6 +875,22 @@ export const useCredit = async (req: Request, res: Response) => {
         res.json({ success: true, remaining: credits - 1 });
     } else {
         return res.status(403).json({ error: "No credits available" });
+    }
+};
+
+export const useCoverCredit = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Email required" });
+
+    const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
+    const credits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
+
+    if (credits > 0) {
+        await setVal(`/coverCredits/${safeEmail}`, credits - 1);
+        await setVal(`/users/${safeEmail}/coverCredits`, credits - 1);
+        res.json({ success: true, remaining: credits - 1 });
+    } else {
+        return res.status(403).json({ error: "No cover credits available" });
     }
 };
 

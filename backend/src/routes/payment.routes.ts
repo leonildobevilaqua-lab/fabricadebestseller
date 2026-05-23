@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { handleKiwifyWebhook, checkAccess, useCredit, createLead, getLeads, approveLead, updateLead, deleteLead, createCharge, createBookGenerationCharge, createExtraServiceCharge } from '../controllers/payment.controller';
+import { handleKiwifyWebhook, checkAccess, useCredit, useCoverCredit, createLead, getLeads, approveLead, updateLead, deleteLead, createCharge, createBookGenerationCharge, createExtraServiceCharge } from '../controllers/payment.controller';
 import { simulateWebhook } from '../controllers/simulation.controller';
 
 const router = Router();
@@ -9,6 +9,7 @@ router.post('/simulate-webhook', simulateWebhook); // NEW: Local Simulation
 router.get('/access', checkAccess);
 router.get('/check-access', checkAccess);
 router.post('/use', useCredit);
+router.post('/use-cover', useCoverCredit);
 router.post('/create-charge', createCharge);
 router.post('/extra-service', createExtraServiceCharge); // Serviços Extras (Tradução, ISBN, Capa etc)
 

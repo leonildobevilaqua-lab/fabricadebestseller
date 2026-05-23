@@ -79,6 +79,7 @@ export interface CoverBookData {
   backCTA?: string;
   flapHook?: string;
   flapBody?: string;
+  flapBackBody?: string;
   authorBio?: string;
 }
 
@@ -103,6 +104,7 @@ export interface StyleVars {
   titleWeight: number;
   titleCase: string;
   bodyFamily: string;
+  bgImg?: string;
 }
 
 export interface CoverStyleConfig {
@@ -347,7 +349,7 @@ const FrontPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData }> = ({ s, 
 
   if (styleId === STYLES.premium.name) {
     return (
-      <div className="cc-pane" style={{ background: s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
+      <div className="cc-pane" style={{ background: s.vars.bgImg ? `linear-gradient(to bottom, rgba(8,8,6,0.3) 0%, rgba(8,8,6,0.8) 100%), url(${s.vars.bgImg}) center/cover no-repeat` : s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
         <MazePattern />
         <div style={{ position: "relative", textAlign: "center" }}>
           <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 600, letterSpacing: "0.32em", fontSize: "4.6em", color: s.vars.accent, textTransform: "uppercase" }}>
@@ -382,7 +384,7 @@ const FrontPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData }> = ({ s, 
 
   if (styleId === STYLES.editorial.name) {
     return (
-      <div className="cc-pane" style={{ background: s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
+      <div className="cc-pane" style={{ background: s.vars.bgImg ? `linear-gradient(to bottom, rgba(14,42,87,0.3) 0%, rgba(14,42,87,0.85) 100%), url(${s.vars.bgImg}) center/cover no-repeat` : s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
         <BlueprintPattern />
         <div style={{ position: "relative", textAlign: "right" }}>
           <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 700, letterSpacing: "0.32em", fontSize: "4.4em", textTransform: "uppercase" }}>
@@ -412,7 +414,7 @@ const FrontPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData }> = ({ s, 
 
   // vibrant
   return (
-    <div className="cc-pane" style={{ background: s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
+    <div className="cc-pane" style={{ background: s.vars.bgImg ? `linear-gradient(to bottom, rgba(40,15,5,0.1) 0%, rgba(40,15,5,0.7) 100%), url(${s.vars.bgImg}) center/cover no-repeat` : s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
       <div style={{ position: "relative", textAlign: "center" }}>
         <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 700, letterSpacing: "0.32em", fontSize: "4.6em", color: s.vars.accent, textTransform: "uppercase" }}>
           {book.author}
@@ -422,9 +424,11 @@ const FrontPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData }> = ({ s, 
         <TitleStacked title={book.title} accent={s.vars.accent} ink={s.vars.ink} family={s.vars.titleFamily} weight={s.vars.titleWeight} case={s.vars.titleCase} />
       </div>
       <div style={{ flex: 1, display: "grid", placeItems: "center", marginTop: "4em" }}>
-        <div style={{ width: "82%", height: "54em", borderRadius: "2em", background: "repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 2em, transparent 2em 6em), rgba(0,0,0,0.18)", border: `max(1px,0.3em) solid rgba(255,255,255,0.18)`, display: "grid", placeItems: "center", color: "rgba(255,255,255,0.45)", fontFamily: "monospace", fontSize: "3em", letterSpacing: "0.16em", textTransform: "uppercase" }}>
-          imagem central — gerada por IA
-        </div>
+        {!s.vars.bgImg && (
+          <div style={{ width: "82%", height: "54em", borderRadius: "2em", background: "repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 2em, transparent 2em 6em), rgba(0,0,0,0.18)", border: `max(1px,0.3em) solid rgba(255,255,255,0.18)`, display: "grid", placeItems: "center", color: "rgba(255,255,255,0.45)", fontFamily: "monospace", fontSize: "3em", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+            imagem central — gerada por IA
+          </div>
+        )}
       </div>
       <div style={{ position: "relative", textAlign: "center", marginTop: "6em" }}>
         <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 600, fontSize: "4.2em", lineHeight: 1.35, opacity: 0.95 }}>
@@ -488,8 +492,16 @@ const BackPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData; assets: Cov
       </div>
       <div style={{ flex: 1 }} />
       <div style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "4em" }}>
-        <Barcode isbn={book.isbn} />
-        <QRBox label="" />
+        {assets.barcode ? (
+          <img src={assets.barcode} style={{ height: "12em", objectFit: "contain", background: "#fff", padding: "1.2em", borderRadius: "0.5em" }} alt="Barcode" />
+        ) : (
+          <Barcode isbn={book.isbn} />
+        )}
+        {assets.qrcode ? (
+          <img src={assets.qrcode} style={{ height: "14em", width: "14em", objectFit: "contain", background: "#fff", padding: "1.2em", borderRadius: "0.5em" }} alt="QR Code" />
+        ) : (
+          <QRBox label="" />
+        )}
       </div>
     </div>
   );
@@ -572,6 +584,7 @@ export interface CoverRenderProps {
   pxPerMM?: number;
   showGuides?: boolean;
   assets?: CoverAssets;
+  customBgImg?: string;
 }
 
 export const CoverRender: React.FC<CoverRenderProps> = ({
@@ -581,9 +594,11 @@ export const CoverRender: React.FC<CoverRenderProps> = ({
   mode = "full",
   pxPerMM = 1.4,
   showGuides = false,
-  assets = {}
+  assets = {},
+  customBgImg
 }) => {
-  const s = STYLES[styleKey] || STYLES.premium;
+  const baseS = STYLES[styleKey] || STYLES.premium;
+  const s = customBgImg ? { ...baseS, vars: { ...baseS.vars, bgImg: customBgImg } } : baseS;
   const safe = 10;
   const bleed = dims.bleed;
   const flap = dims.flap;

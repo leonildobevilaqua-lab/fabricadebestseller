@@ -39,12 +39,14 @@
         "node-json-db": "^2.4.2",
         "nodemailer": "^7.0.12",
         "openai": "^4.24.1",
+        "pdf-parse": "^2.4.5",
         "ts-node-dev": "^2.0.0",
         "typescript": "^5.3.3",
         "uuid": "^9.0.1",
         "youtube-search-api": "^2.0.1"
     },
     "devDependencies": {
-        "@types/bwip-js": "^3.2.3"
+        "@types/bwip-js": "^3.2.3",
+        "@types/pdf-parse": "^1.1.5"
     }
 }

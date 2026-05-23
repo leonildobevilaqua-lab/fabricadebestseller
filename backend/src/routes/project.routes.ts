@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as ProjectController from '../controllers/project.controller';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 import * as TranslationController from '../controllers/translation.controller';
 
@@ -21,6 +22,9 @@ router.post('/:id/finalize', ProjectController.finalizeBookContent);
 router.post('/:id/send-email', upload.single('file'), ProjectController.sendBookEmail);
 router.post('/:id/generate-extras', ProjectController.generateExtras);
 router.post('/upload-existing', upload.single('file'), ProjectController.uploadExistingBook);
+router.post('/extract-cover-metadata', upload.single('file'), ProjectController.extractCoverMetadata);
+router.post('/consume-cover-credit', ProjectController.consumeCoverCredit);
+router.post('/research-cover-market', ProjectController.researchCoverMarket);
 router.post('/process-diagram-lead', ProjectController.processDiagramLead);
 router.post('/:id/regenerate-docx', ProjectController.regenerateDocx);
 router.post('/find-id-by-email', ProjectController.findIdByEmail);

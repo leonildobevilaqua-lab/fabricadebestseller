@@ -19,6 +19,68 @@ const MARKET_TOP10 = [
   { title: "A Coragem de Ser Imperfeito", author: "Brené Brown", publisher: "Sextante", rating: "4.7", reviews: "15.8k", bg: "linear-gradient(135deg,#b8860c,#5a4108)" },
 ];
 
+function BookCoverCard({ bk, i }: { bk: any, i: number }) {
+  const [imgUrl, setImgUrl] = useState(bk.imageUrl);
+  const [triedGoogle, setTriedGoogle] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (!imgUrl && !triedGoogle) {
+      setTriedGoogle(true);
+      const q = encodeURIComponent(`${bk.title} ${bk.author}`);
+      fetch(`https://www.googleapis.com/books/v1/volumes?q=${q}&maxResults=1`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.items?.[0]?.volumeInfo?.imageLinks?.thumbnail) {
+            setImgUrl(d.items[0].volumeInfo.imageLinks.thumbnail.replace('http:', 'https:'));
+          } else {
+            setFailed(true);
+          }
+        })
+        .catch(() => setFailed(true));
+    }
+  }, [bk, imgUrl, triedGoogle]);
+
+  const handleImageError = () => {
+    if (imgUrl === bk.imageUrl && !triedGoogle) {
+      // If OpenLibrary failed, try Google Books
+      setImgUrl(null);
+    } else {
+      // Both failed
+      setFailed(true);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden border border-slate-800 shadow-md bg-slate-900 group">
+        {imgUrl && !failed ? (
+          <img src={imgUrl} alt={bk.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onError={handleImageError} />
+        ) : (
+          <div className="w-full h-full flex flex-col p-3 justify-center" style={{ background: bk.bg || '#0a0a0a' }}>
+            <h5 className="font-bold text-[11px] text-[#F5F0E5] line-clamp-4 text-center drop-shadow-md">{bk.title}</h5>
+            <p className="text-[9px] text-slate-300 mt-2 text-center drop-shadow-md">{bk.author}</p>
+          </div>
+        )}
+        <div className="absolute top-2 left-2 w-6 h-6 rounded bg-slate-950/80 text-amber-400 border border-slate-700/50 text-[10px] font-bold flex items-center justify-center shadow-lg backdrop-blur-sm">
+          #{i+1}
+        </div>
+      </div>
+      <div className="flex flex-col px-1 mt-1 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] text-amber-400 font-mono font-bold flex items-center gap-1">⭐ {bk.rating}</span>
+          <span className="text-[9px] text-slate-500 font-medium">({bk.reviews} av)</span>
+        </div>
+        {bk.sales && (
+          <span className="text-[9px] text-emerald-400/90 font-medium bg-emerald-950/30 border border-emerald-500/20 px-1.5 py-0.5 rounded inline-flex w-fit items-center gap-1">
+            📈 {bk.sales}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface CoverGeneratorProps {
   credits: number;
   userEmail: string;
@@ -28,11 +90,14 @@ interface CoverGeneratorProps {
 export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverGeneratorProps) {
   const [activeStep, setActiveStep] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
+  const [isResearchingMarket, setIsResearchingMarket] = useState(false);
 
   // ---- Default initial project data ----
   const [projectData, setProjectData] = useState<{
+    bookFileObj: File | null;
     bookFile: string | null;
-    pages: number;
+    pages: number | '';
     paper: string;
     format: string;
     flap: number;
@@ -52,12 +117,20 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
       backCTA: string;
       flapHook: string;
       flapBody: string;
+      flapBackBody: string;
       authorBio: string;
+      barcodeImage: string;
+      qrcodeImage: string;
     };
     selectedStyle: string;
+    marketResearch: {
+      topBooks: any[];
+      framework: any;
+    } | null;
   }>(() => {
     const defaultDims = calcDims({ pages: 150, paper: "bw-cream", flap: 70 });
     return {
+      bookFileObj: null,
       bookFile: null,
       pages: 150,
       paper: "bw-cream",
@@ -65,12 +138,12 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
       flap: 70,
       dims: defaultDims,
       analysis: {
-        title: "O Segredo da Escrita Ágil",
-        subtitle: "Como escrever e publicar seu primeiro best-seller usando o método estruturado da Fábrica",
-        author: "Jonas Silva",
-        publisher: "Editora 360° Express",
-        niche: "Negócios & Marketing",
-        subniche: "Escrita Criativa / Produtividade",
+        title: "",
+        subtitle: "",
+        author: "",
+        publisher: "Independente",
+        niche: "",
+        subniche: "",
       },
       assets: {
         authorPhoto: "",
@@ -82,24 +155,103 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           "DESCUBRA o segredo do posicionamento de títulos stacked que convertem cliques.",
           "APRENDA a estruturar a quarta capa perfeita para impulsionar suas vendas online."
         ],
-        backCTA: "ABRA ESTE LIVRO E CONQUISTE SEU LEGADO AUTORAL.",
+        backCTA: "PREPARE-SE PARA DOMINAR O JOGO E ESCALAR OS RANKINGS DA AMAZON.",
         flapHook: "Domine a arte de prender leitores à primeira vista.",
         flapBody: "Em 'O Segredo da Escrita Ágil', Jonas Silva entrega um roteiro de aplicação imediata para destravar sua mente e criar capas profissionais que vendem sem esforço.",
-        authorBio: "Jonas Silva é especialista em marketing literário, mentor de mais de 300 autores independentes e colaborador da Editora 360° Express.",
+        flapBackBody: "O sucesso não acontece por acaso. A cada página, você descobre novos modelos e estruturas focadas puramente na conversão em vendas.",
+        authorBio: "Jonas Silva é estrategista digital, autor best-seller e consultor em publicações independentes.",
+        barcodeImage: "",
+        qrcodeImage: ""
       },
       selectedStyle: "premium",
+      marketResearch: null,
     };
   });
 
   // Recalculate dimensions when parameters change
   useEffect(() => {
+    const getTrim = (fmt: string) => {
+      if (fmt === "14x21") return { w: 140, h: 210 };
+      if (fmt === "16x23") return { w: 160, h: 230 };
+      if (fmt === "5x8") return { w: 127, h: 203.2 };
+      return { w: 152.4, h: 228.6 }; // 6x9 default
+    };
+
     const computed = calcDims({
-      pages: projectData.pages,
+      pages: typeof projectData.pages === 'number' ? projectData.pages : 150,
       paper: projectData.paper,
-      flap: projectData.flap
+      flap: projectData.flap,
+      trim: getTrim(projectData.format)
     });
     setProjectData(prev => ({ ...prev, dims: computed }));
-  }, [projectData.pages, projectData.paper, projectData.flap]);
+  }, [projectData.pages, projectData.paper, projectData.flap, projectData.format]);
+
+  // Handle API extraction in background during step 1
+  useEffect(() => {
+    if (activeStep === 1 && projectData.bookFileObj) {
+      console.log("Iniciando extração de metadados...");
+      const formData = new FormData();
+      formData.append('file', projectData.bookFileObj);
+      
+      // @ts-ignore
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005';
+      
+      setIsExtractingMetadata(true);
+      fetch(`${API_URL}/api/projects/extract-cover-metadata`, {
+        method: 'POST',
+        body: formData
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
+          setProjectData(prev => ({
+            ...prev,
+            analysis: {
+              ...prev.analysis,
+              title: res.data.title || prev.analysis.title,
+              subtitle: res.data.subtitle || prev.analysis.subtitle,
+              author: res.data.author || prev.analysis.author,
+              niche: res.data.niche || prev.analysis.niche,
+              subniche: res.data.subniche || prev.analysis.subniche,
+            }
+          }));
+        }
+      })
+      .catch(err => console.error("Error extracting metadata:", err))
+      .finally(() => setIsExtractingMetadata(false));
+    }
+  }, [activeStep, projectData.bookFileObj]);
+
+  // Handle market research at step 3
+  useEffect(() => {
+    if (activeStep === 3 && projectData.analysis.niche && !projectData.marketResearch) {
+      console.log("Iniciando pesquisa de mercado...");
+      // @ts-ignore
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005';
+      const token = localStorage.getItem('token') || '';
+
+      setIsResearchingMarket(true);
+      fetch(`${API_URL}/api/projects/research-cover-market`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        body: JSON.stringify({ niche: projectData.analysis.niche })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (res.success && res.data) {
+          setProjectData(prev => ({
+            ...prev,
+            marketResearch: res.data
+          }));
+        }
+      })
+      .catch(err => console.error("Error researching market:", err))
+      .finally(() => setIsResearchingMarket(false));
+    }
+  }, [activeStep, projectData.analysis.niche, projectData.marketResearch]);
 
   const handleRefreshCredits = async () => {
     setRefreshing(true);
@@ -211,8 +363,56 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
     backCTA: projectData.assets.backCTA,
     flapHook: projectData.assets.flapHook,
     flapBody: projectData.assets.flapBody,
+    flapBackBody: projectData.assets.flapBackBody,
     authorBio: projectData.assets.authorBio,
   });
+
+  const getRenderAssets = (): CoverAssets => ({
+    ...projectData.assets,
+    barcode: projectData.assets.barcodeImage,
+    qrcode: projectData.assets.qrcodeImage,
+  });
+
+  const handleRestart = () => {
+    if (window.confirm("Deseja realmente sair? Seu progresso atual não será perdido.")) {
+      setActiveStep(0);
+      setProjectData(prev => ({
+        ...prev,
+        bookFileObj: null,
+        bookFile: null,
+      }));
+      const fileInput = document.getElementById('manuscript-file') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+    }
+  };
+
+  const handleFinalizeAndConsumeCredit = async () => {
+    try {
+      // @ts-ignore
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3005';
+      const token = localStorage.getItem('token');
+      
+      const res = await fetch(`${API_URL}/api/projects/consume-cover-credit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ email: userEmail })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert(data.error || "Você não possui créditos suficientes para gerar a capa.");
+        return;
+      }
+      // Success, advance to step 7 (index 6)
+      setActiveStep(7);
+      handleRefreshCredits();
+    } catch (e) {
+      console.error(e);
+      alert("Erro ao debitar crédito. Tente novamente.");
+    }
+  };
 
   return (
     <div className="cover-generator-wrapper cover-generator-container bg-[#080808] border border-slate-900 shadow-2xl p-6 md:p-8 rounded-3xl">
@@ -230,7 +430,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
             Créditos: <span className="text-amber-400 font-bold">{credits}</span>
           </span>
           <button 
-            onClick={() => { if (window.confirm("Deseja realmente sair? Seu progresso atual não será perdido.")) setActiveStep(0); }} 
+            onClick={handleRestart} 
             className="btn btn-sm btn-outline text-slate-400 hover:text-white"
           >
             Reiniciar
@@ -280,7 +480,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      setProjectData(prev => ({ ...prev, bookFile: file.name }));
+                      setProjectData(prev => ({ ...prev, bookFile: file.name, bookFileObj: file }));
                     }
                   }}
                 />
@@ -301,7 +501,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                   <input 
                     type="number" 
                     value={projectData.pages} 
-                    onChange={e => setProjectData(prev => ({ ...prev, pages: Math.max(10, parseInt(e.target.value) || 120) }))}
+                    onChange={e => setProjectData(prev => ({ ...prev, pages: e.target.value === '' ? '' : parseInt(e.target.value) }))}
                     className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2"
                   />
                   <span className="text-[10px] text-slate-500 mt-1">Calcula a largura da lombada KDP</span>
@@ -328,8 +528,10 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                     onChange={e => setProjectData(prev => ({ ...prev, format: e.target.value }))}
                     className="select bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2"
                   >
-                    <option value="6x9">15.24 x 22.86 cm (6x9 in)</option>
-                    <option value="5x8">12.7 x 20.32 cm (5x8 in)</option>
+                    <option value="6x9">15,24 x 22,86 cm (6x9 in)</option>
+                    <option value="5x8">12,7 x 20,32 cm (5x8 in)</option>
+                    <option value="14x21">14 x 21 cm</option>
+                    <option value="16x23">16 x 23 cm</option>
                   </select>
                 </div>
                 <div className="field">
@@ -396,6 +598,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
             "Identificando nome do autor...",
             "Ajustando layout para o padrão Editora 360 Express...",
           ]}
+          isWaitingForData={isExtractingMetadata}
           onComplete={() => setActiveStep(2)}
         />
       )}
@@ -477,28 +680,56 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           label="Etapa 3 de 7 · Padrão de Ouro de Mercado" 
           messages={[
             "Pesquisando na biblioteca da Amazon pelos best-sellers em " + projectData.analysis.niche + "...",
-            "Analisando paleta de cores dominante nos 10 livros mais vendidos...",
+            "Analisando paleta de cores dominante nos livros mais vendidos...",
             "Analisando fontes e padrões tipográficos do nicho...",
-            "Mapeando contrastes e pesos estruturais de capas com mais de 10k reviews...",
-            "Simulando renderização competitiva nas prateleiras digitais...",
+            "Mapeando contrastes e pesos estruturais de capas de alta conversão...",
+            "Sintetizando framework de design competitivo...",
           ]}
-          renderDetails={() => (
-            <div className="mt-8 space-y-4">
-              <h4 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest">Capas de Alta Conversão no Nicho</h4>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {MARKET_TOP10.slice(0, 4).map((bk, i) => (
-                  <div key={i} className="p-3 bg-slate-900/60 border border-slate-800 rounded-xl flex flex-col justify-between min-h-[120px]">
-                    <div>
-                      <div className="w-5 h-5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold flex items-center justify-center mb-2">#{i+1}</div>
-                      <h5 className="font-bold text-xs text-[#F5F0E5] line-clamp-1">{bk.title}</h5>
-                      <p className="text-[10px] text-slate-500">{bk.author}</p>
-                    </div>
-                    <span className="text-[10px] text-amber-400 font-mono font-bold mt-2">⭐ {bk.rating} ({bk.reviews})</span>
+          isWaitingForData={isResearchingMarket || !projectData.marketResearch}
+          manualAdvance={true}
+          renderDetails={() => {
+            if (!projectData.marketResearch) return null;
+            const top = projectData.marketResearch.topBooks || [];
+            const fw = projectData.marketResearch.framework;
+            return (
+              <div className="mt-8 space-y-6 animate-fadeIn">
+                <div className="space-y-4">
+                  <h4 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest">Capas de Alta Conversão no Nicho (Amazon Real-time)</h4>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                    {top.slice(0, 6).map((bk: any, i: number) => (
+                      <BookCoverCard key={i} bk={bk} i={i} />
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                {fw && (
+                  <div className="bg-slate-900/40 border border-amber-500/20 rounded-xl p-5 mt-6">
+                    <h4 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                      <Palette size={14} /> Framework de Design Gerado
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-slate-300">
+                      <div>
+                        <strong className="block text-slate-400 text-xs mb-1 uppercase font-mono tracking-wider">Cores</strong>
+                        <div className="flex gap-2 mb-2">
+                          {fw.colors && fw.colors.map((c: string, idx: number) => (
+                            <div key={idx} className="w-6 h-6 rounded-full border border-slate-700" style={{ backgroundColor: c }} title={c}></div>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <strong className="block text-slate-400 text-xs mb-1 uppercase font-mono tracking-wider">Tipografia</strong>
+                        <p className="text-xs leading-relaxed">{fw.typography}</p>
+                      </div>
+                      <div>
+                        <strong className="block text-slate-400 text-xs mb-1 uppercase font-mono tracking-wider">Estrutura</strong>
+                        <p className="text-xs leading-relaxed">{fw.structure}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          }}
           onComplete={() => setActiveStep(4)}
         />
       )}
@@ -534,39 +765,27 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
               </div>
 
               <div className="field">
-                <label className="text-xs text-slate-400">Código de Barras / ISBN (Opcional)</label>
-                <input 
-                  type="text" 
-                  value={projectData.assets.isbn} 
-                  placeholder="Ex: 978-65-01-48854-7"
-                  onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, isbn: e.target.value } }))}
-                  className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5"
+                <label className="text-xs text-slate-400">Texto da Orelha da Capa</label>
+                <textarea 
+                  value={projectData.assets.flapBody} 
+                  onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, flapBody: e.target.value } }))}
+                  className="textarea bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5 h-20"
+                />
+              </div>
+
+              <div className="field">
+                <label className="text-xs text-slate-400">Texto da Orelha da Contra Capa</label>
+                <textarea 
+                  value={projectData.assets.flapBackBody} 
+                  onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, flapBackBody: e.target.value } }))}
+                  className="textarea bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5 h-20"
                 />
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="field">
-                <label className="text-xs text-slate-400">Gancho da Orelha do Livro (Flap Hook)</label>
-                <input 
-                  type="text" 
-                  value={projectData.assets.flapHook} 
-                  onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, flapHook: e.target.value } }))}
-                  className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5"
-                />
-              </div>
-
-              <div className="field">
-                <label className="text-xs text-slate-400">Texto da Orelha do Livro</label>
-                <textarea 
-                  value={projectData.assets.flapBody} 
-                  onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, flapBody: e.target.value } }))}
-                  className="textarea bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5 h-24"
-                />
-              </div>
-
-              <div className="field">
-                <label className="text-xs text-slate-400">Foto do Autor (Opcional)</label>
+                <label className="text-xs text-slate-400">Imagem - Foto do Autor (Opcional)</label>
                 <div className="flex gap-4 items-center">
                   <label htmlFor="author-photo-upload" className="uploader dense flex-1 py-3 px-4 rounded-xl border-dashed border-slate-800 bg-slate-900/50 cursor-pointer">
                     <input 
@@ -600,6 +819,79 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                   )}
                 </div>
               </div>
+
+              <div className="field">
+                <label className="text-xs text-slate-400">Imagem - Código de Barras (Opcional)</label>
+                <div className="flex gap-4 items-center">
+                  <label htmlFor="barcode-upload" className="uploader dense flex-1 py-3 px-4 rounded-xl border-dashed border-slate-800 bg-slate-900/50 cursor-pointer">
+                    <input 
+                      type="file" 
+                      id="barcode-upload" 
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setProjectData(prev => ({ ...prev, assets: { ...prev.assets, barcodeImage: reader.result as string } }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <div className="ico text-amber-500 mr-2 shrink-0">
+                      <UploadCloud size={16} />
+                    </div>
+                    <span className="text-xs font-bold text-[#F5F0E5]">
+                      {projectData.assets.barcodeImage ? 'Código Carregado!' : 'Selecionar Imagem'}
+                    </span>
+                  </label>
+                  
+                  {projectData.assets.barcodeImage && (
+                    <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center p-1 bg-white">
+                      <img src={projectData.assets.barcodeImage} alt="Barcode" className="max-w-full max-h-full object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="field">
+                <label className="text-xs text-slate-400">Imagem - QR Code (Opcional)</label>
+                <div className="flex gap-4 items-center">
+                  <label htmlFor="qrcode-upload" className="uploader dense flex-1 py-3 px-4 rounded-xl border-dashed border-slate-800 bg-slate-900/50 cursor-pointer">
+                    <input 
+                      type="file" 
+                      id="qrcode-upload" 
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            setProjectData(prev => ({ ...prev, assets: { ...prev.assets, qrcodeImage: reader.result as string } }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <div className="ico text-amber-500 mr-2 shrink-0">
+                      <UploadCloud size={16} />
+                    </div>
+                    <span className="text-xs font-bold text-[#F5F0E5]">
+                      {projectData.assets.qrcodeImage ? 'QR Code Carregado!' : 'Selecionar Imagem'}
+                    </span>
+                  </label>
+                  
+                  {projectData.assets.qrcodeImage && (
+                    <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center p-1 bg-white">
+                      <img src={projectData.assets.qrcodeImage} alt="QR Code" className="max-w-full max-h-full object-contain" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -623,43 +915,49 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {Object.keys(STYLES).map((key) => {
+          <div className="flex flex-col gap-12 max-w-3xl mx-auto">
+            {Object.keys(STYLES).map((key, index) => {
               const s = STYLES[key];
               const isSelected = projectData.selectedStyle === key;
+              const aiBackground = projectData.marketResearch?.framework?.backgrounds?.[index];
+
               return (
                 <div 
                   key={key}
                   onClick={() => setProjectData(prev => ({ ...prev, selectedStyle: key }))}
-                  className={`card cursor-pointer border-slate-900 flex flex-col justify-between text-left p-6 transition-all duration-200 ${
-                    isSelected ? 'ring-2 ring-amber-500 border-transparent bg-slate-900/60 shadow-lg' : 'bg-slate-950/20 hover:border-slate-800'
+                  className={`card cursor-pointer border-slate-900 flex flex-col items-center text-center p-8 transition-all duration-200 ${
+                    isSelected ? 'ring-4 ring-amber-500 border-transparent bg-slate-900/80 shadow-2xl scale-[1.02]' : 'bg-slate-950/20 hover:border-slate-800 hover:bg-slate-900/40'
                   }`}
                 >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-black text-sm text-[#F5F0E5]">{s.name}</h4>
-                      {isSelected && <span className="p-1 rounded-full bg-amber-500 text-slate-950"><Check size={12} /></span>}
+                  <div className="w-full">
+                    <div className="flex flex-col items-center mb-6">
+                      <div className="flex items-center gap-3 justify-center mb-2">
+                        <h4 className="font-black text-xl text-[#F5F0E5]">{s.name}</h4>
+                        {isSelected && <span className="p-1.5 rounded-full bg-amber-500 text-slate-950"><Check size={16} /></span>}
+                      </div>
+                      <p className="text-sm text-slate-400 leading-relaxed max-w-md">{s.note}</p>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-amber-500/80 mt-2 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Arte Original Exclusiva (IA)</span>
                     </div>
-                    <p className="text-xs text-slate-500 leading-relaxed mb-6">{s.note}</p>
                     
                     {/* Embedded Cover Canvas Miniature Preview */}
-                    <div className="flex justify-center scale-90 origin-top">
-                      <div className="pointer-events-none rounded overflow-hidden shadow-lg border border-slate-800/50 bg-[#0e0e0e] max-w-full overflow-x-auto">
+                    <div className="flex justify-center w-full my-8">
+                      <div className="pointer-events-none rounded-xl overflow-hidden shadow-2xl border border-slate-800/80 bg-[#0e0e0e]">
                         <CoverRender 
                           book={buildBook()} 
                           dims={projectData.dims} 
                           styleKey={key} 
                           mode="ebook" 
-                          pxPerMM={0.5} 
+                          pxPerMM={0.8} 
                           showGuides={false}
-                          assets={projectData.assets}
+                          assets={getRenderAssets()}
+                          customBgImg={aiBackground}
                         />
                       </div>
                     </div>
                   </div>
 
-                  <button className={`btn btn-sm w-full font-bold uppercase tracking-widest text-[10px] mt-6 ${isSelected ? 'btn-gold' : 'btn-outline'}`}>
-                    {isSelected ? 'Selecionado' : 'Escolher Modelo'}
+                  <button className={`btn w-full md:w-auto md:min-w-[280px] font-bold uppercase tracking-widest text-xs py-4 ${isSelected ? 'btn-gold shadow-[0_0_20px_rgba(245,158,11,0.3)]' : 'btn-outline border-slate-700 text-slate-300'}`}>
+                    {isSelected ? 'Capa Selecionada' : 'Escolher Esta Capa'}
                   </button>
                 </div>
               );
@@ -682,7 +980,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           data={projectData} 
           setData={(d) => setProjectData(d)}
           onBack={() => setActiveStep(5)}
-          onNext={() => setActiveStep(7)}
+          onNext={handleFinalizeAndConsumeCredit}
           buildBook={buildBook}
         />
       )}
@@ -763,11 +1061,13 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
 // ============================================================
 // SIMULATED LOG PROGRESS COMPONENT
 // ============================================================
-function SimulatedLogStep({ label, messages, renderDetails, onComplete }: {
+function SimulatedLogStep({ label, messages, renderDetails, onComplete, isWaitingForData, manualAdvance }: {
   label: string;
   messages: string[];
   renderDetails?: () => React.ReactNode;
-  onComplete: () => void;
+  onComplete?: () => void;
+  isWaitingForData?: boolean;
+  manualAdvance?: boolean;
 }) {
   const [visibleLines, setVisibleLines] = useState<string[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -779,13 +1079,13 @@ function SimulatedLogStep({ label, messages, renderDetails, onComplete }: {
         setCurrentIdx(prev => prev + 1);
       }, 700);
       return () => clearTimeout(timer);
-    } else {
+    } else if (!isWaitingForData && !manualAdvance && onComplete) {
       const timer = setTimeout(() => {
         onComplete();
       }, 1200);
       return () => clearTimeout(timer);
     }
-  }, [currentIdx]);
+  }, [currentIdx, isWaitingForData, manualAdvance, onComplete]);
 
   return (
     <div className="space-y-6 text-left animate-fadeIn">
@@ -799,19 +1099,32 @@ function SimulatedLogStep({ label, messages, renderDetails, onComplete }: {
           <div key={i} className="line flex gap-3 text-slate-400">
             <span className="t text-slate-600 font-bold shrink-0">[{new Date().toLocaleTimeString()}]</span>
             <span className="m text-amber-500/90">{line}</span>
-            {i === visibleLines.length - 1 && currentIdx < messages.length && (
-              <span className="spinner text-amber-500 font-bold shrink-0 inline-block animate-spin" />
-            )}
           </div>
         ))}
-        {currentIdx === messages.length && (
+        {currentIdx === messages.length && isWaitingForData && (
+          <div className="line text-amber-500 font-bold pt-2 flex items-center gap-2">
+             <span className="spinner text-amber-500 font-bold shrink-0 inline-block animate-spin" /> Finalizando compilação via IA...
+          </div>
+        )}
+        {currentIdx === messages.length && !isWaitingForData && (
           <div className="line text-emerald-500 font-bold pt-2 flex items-center gap-2">
-            <CheckCircle2 size={14} /> Análise concluída com sucesso! Redirecionando...
+            <CheckCircle2 size={14} /> Análise concluída com sucesso!
           </div>
         )}
       </div>
 
-      {renderDetails && renderDetails()}
+      {currentIdx === messages.length && !isWaitingForData && renderDetails && (
+        <div className="animate-fadeIn">
+          {renderDetails()}
+          {manualAdvance && onComplete && (
+             <div className="flex justify-end mt-6">
+                <button onClick={onComplete} className="btn btn-gold px-8 py-3 text-slate-950 font-bold uppercase tracking-widest text-xs">
+                  Continuar <ArrowRight size={14} className="ml-1" />
+                </button>
+             </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -926,7 +1239,12 @@ function Step6Editor({ data, setData, onBack, onNext, buildBook }: {
               mode={outputMode} 
               pxPerMM={0.8} 
               showGuides={showGuides}
-              assets={data.assets}
+              assets={{
+                ...data.assets,
+                barcode: data.assets.barcodeImage,
+                qrcode: data.assets.qrcodeImage
+              }}
+              customBgImg={data.marketResearch?.framework?.backgrounds?.[Object.keys(STYLES).indexOf(data.selectedStyle)]}
             />
           </div>
         </div>
