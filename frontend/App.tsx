@@ -1,30 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { StepWizard } from './components/StepWizard';
-import { InputForm } from './components/InputForm';
-import { Generator } from './components/Generator';
-import { Admin } from './components/Admin';
-import LandingPage from './components/LandingPage';
-import { Login } from './components/Login';
-import { Dashboard } from './components/Dashboard';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LanguageContext } from './i18n/context';
 import { pt, en, es } from './i18n/locales';
 import { BookMetadata } from './types';
 import { trackPageView } from './services/meta-pixel';
 
-import { WelcomeModal } from './components/WelcomeModal';
-import { PrivacyPolicy } from './components/PrivacyPolicy';
-import { TermsOfUse } from './components/TermsOfUse';
-import { RegistrationUpsell } from './components/RegistrationUpsell';
-import { AffiliationUpsell } from './components/AffiliationUpsell';
-import LandingPageEnglish from './components/LandingPageEnglish';
-import LandingPageSpanish from './components/LandingPageSpanish';
-import Promocao from './components/Promocao';
-import { SalesLandingV5 } from './components/SalesLandingV5';
-import { SalesLandingV6 } from './components/SalesLandingV6';
+// CRITICAL PATH (Static)
 import { SalesLandingV7 } from './components/SalesLandingV7';
-import { ProfessionalCoverLanding } from './components/ProfessionalCoverLanding';
-import CipGenerator from './components/CipGenerator';
+
+// LAZY LOADED COMPONENTS
+const StepWizard = lazy(() => import('./components/StepWizard').then(m => ({ default: m.StepWizard })));
+const InputForm = lazy(() => import('./components/InputForm').then(m => ({ default: m.InputForm })));
+const Generator = lazy(() => import('./components/Generator').then(m => ({ default: m.Generator })));
+const Admin = lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
+const LandingPage = lazy(() => import('./components/LandingPage'));
+const Login = lazy(() => import('./components/Login').then(m => ({ default: m.Login })));
+const Dashboard = lazy(() => import('./components/Dashboard').then(m => ({ default: m.Dashboard })));
+const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
+const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const TermsOfUse = lazy(() => import('./components/TermsOfUse').then(m => ({ default: m.TermsOfUse })));
+const RegistrationUpsell = lazy(() => import('./components/RegistrationUpsell').then(m => ({ default: m.RegistrationUpsell })));
+const AffiliationUpsell = lazy(() => import('./components/AffiliationUpsell').then(m => ({ default: m.AffiliationUpsell })));
+const LandingPageEnglish = lazy(() => import('./components/LandingPageEnglish'));
+const LandingPageSpanish = lazy(() => import('./components/LandingPageSpanish'));
+const Promocao = lazy(() => import('./components/Promocao'));
+const SalesLandingV5 = lazy(() => import('./components/SalesLandingV5').then(m => ({ default: m.SalesLandingV5 })));
+const SalesLandingV6 = lazy(() => import('./components/SalesLandingV6').then(m => ({ default: m.SalesLandingV6 })));
+const ProfessionalCoverLanding = lazy(() => import('./components/ProfessionalCoverLanding').then(m => ({ default: m.ProfessionalCoverLanding })));
+const CipGenerator = lazy(() => import('./components/CipGenerator'));
 
 
 
@@ -384,13 +387,15 @@ const App: React.FC = () => {
 
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] }}>
-      {renderContent()}
-      {showWelcome && userContact && (
-        <WelcomeModal
-          onClose={() => setShowWelcome(false)}
-          userEmail={userContact.email}
-        />
-      )}
+      <Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#000', color: '#fff' }}>Carregando...</div>}>
+        {renderContent()}
+        {showWelcome && userContact && (
+          <WelcomeModal
+            onClose={() => setShowWelcome(false)}
+            userEmail={userContact.email}
+          />
+        )}
+      </Suspense>
     </LanguageContext.Provider>
   );
 };

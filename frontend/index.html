@@ -5,46 +5,66 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fábrica de Best Sellers</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link rel="preconnect" href="https://connect.facebook.net">
   <link
     href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&family=Inter:wght@300;400;500;600&display=swap"
     rel="stylesheet">
-  <!-- Meta Pixel Code -->
+  <!-- Meta Pixel Code (Deferred) -->
   <script>
-    !function (f, b, e, v, n, t, s) {
-      if (f.fbq) return; n = f.fbq = function () {
-        n.callMethod ?
-          n.callMethod.apply(n, arguments) : n.queue.push(arguments)
-      };
-      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
-      n.queue = []; t = b.createElement(e); t.async = !0;
-      t.src = v; s = b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t, s)
-    }(window, document, 'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-    // Advanced Matching Logic
-    var advancedMatching = undefined;
-    try {
-        var userStr = localStorage.getItem('user');
-        if (userStr) {
-            var user = JSON.parse(userStr);
-            if (user && user.email) {
-                advancedMatching = { em: user.email.toLowerCase().trim() };
-                if (user.phone) {
-                    advancedMatching.ph = user.phone.replace(/\D/g, '');
-                }
-            }
-        }
-    } catch(e) {}
-
-    if (advancedMatching) {
-        fbq('init', '3000632083435824', advancedMatching);
-    } else {
-        fbq('init', '3000632083435824');
+    function initFBPixel() {
+      if(window.fbq) return;
+      !function (f, b, e, v, n, t, s) {
+        if (f.fbq) return; n = f.fbq = function () {
+          n.callMethod ?
+            n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+        };
+        if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0';
+        n.queue = []; t = b.createElement(e); t.async = !0;
+        t.src = v; s = b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t, s)
+      }(window, document, 'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+      // Advanced Matching Logic
+      var advancedMatching = undefined;
+      try {
+          var userStr = localStorage.getItem('user');
+          if (userStr) {
+              var user = JSON.parse(userStr);
+              if (user && user.email) {
+                  advancedMatching = { em: user.email.toLowerCase().trim() };
+                  if (user.phone) {
+                      advancedMatching.ph = user.phone.replace(/\D/g, '');
+                  }
+              }
+          }
+      } catch(e) {}
+  
+      if (advancedMatching) {
+          fbq('init', '3000632083435824', advancedMatching);
+      } else {
+          fbq('init', '3000632083435824');
+      }
+      
+      fbq('track', 'PageView');
     }
     
-    fbq('track', 'PageView');
+    // Defer execution until user interaction or 3.5s timeout
+    var fbInitialized = false;
+    function triggerFBPixel() {
+      if(fbInitialized) return;
+      fbInitialized = true;
+      initFBPixel();
+      window.removeEventListener('scroll', triggerFBPixel);
+      window.removeEventListener('mousemove', triggerFBPixel);
+      window.removeEventListener('touchstart', triggerFBPixel);
+    }
+    window.addEventListener('scroll', triggerFBPixel, {passive: true});
+    window.addEventListener('mousemove', triggerFBPixel, {passive: true});
+    window.addEventListener('touchstart', triggerFBPixel, {passive: true});
+    setTimeout(triggerFBPixel, 3500);
   </script>
-
   <!-- End Meta Pixel Code -->
 
   <script
