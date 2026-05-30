@@ -139,8 +139,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         { id: 'qr-code', label: 'Gerador QR Code', icon: Smartphone, price: 'R$ 7,00' },
         { id: 'pacote-completo', label: 'Pacote (Ficha Catalog. + Cód. Barras + QR Code)', icon: Package, price: 'R$ 49,90' },
         { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
-        { id: 'capa-ebook', label: 'Capa Ebook (Digital)', icon: Smartphone, isPreparation: true },
-        { id: 'amazon', label: '"DESAFIO P72H" PUBLICAÇÃO NA AMAZON', icon: Cloud, externalLink: 'https://checkout.ticto.app/O32C21B1D' },
+        { id: 'amazon', label: '"DESAFIO P72H" PUBLICAÇÃO NA AMAZON', icon: Cloud, price: 'R$ 97,90', externalLink: 'https://checkout.ticto.app/O32C21B1D' },
         { id: 'uiclap', label: 'Publicação UICLAP', icon: Upload, price: 'R$ 97,90', externalLink: 'https://checkout.ticto.app/OED0004AF' },
         { id: 'ticto', label: 'Publicação TICTO', icon: Zap, isPreparation: true },
     ];
@@ -207,12 +206,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     />
                 );
             case 'capas-profissionais':
+                if (window.location.hostname === 'localhost') {
+                    return (
+                        <CoverGenerator 
+                            credits={stats?.coverCredits || stats?.credits || 0}
+                            userEmail={user.email}
+                            onRefresh={fetchMe}
+                        />
+                    );
+                }
                 return (
-                    <CoverGenerator 
-                        credits={stats?.coverCredits || stats?.credits || 0}
-                        userEmail={user.email}
-                        onRefresh={fetchMe}
-                    />
+                    <div className="flex flex-col items-center justify-center min-h-[50vh] bg-white rounded-3xl p-8 border border-slate-200 shadow-xl text-center">
+                        <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-amber-500 mb-4 animate-pulse">
+                            <Palette size={48} />
+                        </div>
+                        <h3 className="text-xl font-black text-slate-900 uppercase tracking-tight mb-2">Capa Profissional (IA)</h3>
+                        <p className="text-xs text-slate-500 max-w-md font-bold uppercase tracking-wider mb-6 leading-relaxed">
+                            Este aplicativo está em produção e em breve estará disponível para todos os clientes!
+                        </p>
+                        <span className="text-[10px] bg-amber-100 text-amber-700 px-3 py-1.5 rounded-full font-black uppercase tracking-widest">
+                            Em Breve
+                        </span>
+                    </div>
                 );
             case 'pacote-completo':
                 return (

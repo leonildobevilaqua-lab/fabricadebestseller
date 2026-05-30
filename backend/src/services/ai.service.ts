@@ -954,100 +954,10 @@ export const structureBookFromText = async (fullText: string): Promise<any> => {
   return await llm.generateJSON<any>(prompt);
 };
 
-// Smart curated Unsplash backgrounds matching specific niches
-const getNicheCuratedBackgrounds = (niche: string): string[] => {
-  const norm = (niche || "").toLowerCase();
-
-  // Négocios / Finanças / Marketing / Produtividade / Liderança
-  if (
-    norm.includes("finança") || norm.includes("negócio") || norm.includes("marketing") || 
-    norm.includes("produtividade") || norm.includes("liderança") || norm.includes("venda") || 
-    norm.includes("sucesso") || norm.includes("business") || norm.includes("money") || norm.includes("dinheiro")
-  ) {
-    return [
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1024&auto=format&fit=crop", // Premium: abstract gold/dark marble
-      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1024&auto=format&fit=crop", // Editorial: professional glass skyscraper looking up
-      "https://images.unsplash.com/photo-1507679799987-c73779587ccf?q=80&w=1024&auto=format&fit=crop"  // Vibrant: city lights workspace sunset
-    ];
-  }
-
-  // Espiritualidade / Religião / Fé / Mindfulness / Meditação / Filosofia
-  if (
-    norm.includes("espiritual") || norm.includes("religião") || norm.includes("fé") || 
-    norm.includes("mindful") || norm.includes("medita") || norm.includes("filosofia") || 
-    norm.includes("deus") || norm.includes("alma") || norm.includes("zen") || norm.includes("igreja")
-  ) {
-    return [
-      "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?q=80&w=1024&auto=format&fit=crop", // Premium: rays of light through clouds
-      "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?q=80&w=1024&auto=format&fit=crop", // Editorial: majestic mountains under stars
-      "https://images.unsplash.com/photo-1495107334309-fcf20504a5ab?q=80&w=1024&auto=format&fit=crop"  // Vibrant: inspiring golden dawn field
-    ];
-  }
-
-  // Saúde / Bem-estar / Fitness / Nutrição / Emagrecimento / Esportes
-  if (
-    norm.includes("saúde") || norm.includes("bem-estar") || norm.includes("fitness") || 
-    norm.includes("nutri") || norm.includes("emagrece") || norm.includes("esporte") || 
-    norm.includes("corpo") || norm.includes("dieta") || norm.includes("treino") || norm.includes("vida saudável")
-  ) {
-    return [
-      "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1024&auto=format&fit=crop", // Premium: clean beige/white aesthetic backdrop
-      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?q=80&w=1024&auto=format&fit=crop", // Editorial: elegant leaves botanical wellness
-      "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=1024&auto=format&fit=crop"  // Vibrant: climber path through nature
-    ];
-  }
-
-  // Autoajuda / Desenvolvimento Pessoal / Psicologia / Relacionamentos
-  if (
-    norm.includes("autoajuda") || norm.includes("desenvolvimento") || norm.includes("psicolo") || 
-    norm.includes("relaciona") || norm.includes("casal") || norm.includes("mente") || 
-    norm.includes("pessoal") || norm.includes("hábito") || norm.includes("comporta")
-  ) {
-    return [
-      "https://images.unsplash.com/photo-1618005198143-e528346447c2?q=80&w=1024&auto=format&fit=crop", // Premium: abstract waves 3D design
-      "https://images.unsplash.com/photo-1518495973542-4542c06a5843?q=80&w=1024&auto=format&fit=crop", // Editorial: sunlight filtering through beautiful forest
-      "https://images.unsplash.com/photo-1502082553048-f009c37129b9?q=80&w=1024&auto=format&fit=crop"  // Vibrant: sprouting plant in golden light
-    ];
-  }
-
-  // Tecnologia / Programação / Inteligência Artificial / Ciências / Futurismo
-  if (
-    norm.includes("tecnolo") || norm.includes("program") || norm.includes("inteligência artificial") || 
-    norm.includes(" ia ") || norm.includes("ai") || norm.includes("ciência") || 
-    norm.includes("futuro") || norm.includes("digital") || norm.includes("computa") || norm.includes("code")
-  ) {
-    return [
-      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1024&auto=format&fit=crop", // Premium: quantum computing abstract visualization
-      "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1024&auto=format&fit=crop", // Editorial: cyber grid binary code green/blue
-      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1024&auto=format&fit=crop"  // Vibrant: cyberpunk technology smart nodes
-    ];
-  }
-
-  // Ficção / Literatura / Poesia / Fantasia / Suspense / Mistério / Romance
-  if (
-    norm.includes("ficção") || norm.includes("literatura") || norm.includes("poesia") || 
-    norm.includes("fantas") || norm.includes("suspense") || norm.includes("mistério") || 
-    norm.includes("romance") || norm.includes("conto") || norm.includes("novela")
-  ) {
-    return [
-      "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1024&auto=format&fit=crop", // Premium: misty forest path
-      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?q=80&w=1024&auto=format&fit=crop", // Editorial: rustic library bookshelves
-      "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1024&auto=format&fit=crop"  // Vibrant: galaxy starry cosmic space
-    ];
-  }
-
-  // Default Universal beautiful abstract fallbacks
-  return [
-    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1024&auto=format&fit=crop", // Premium
-    "https://images.unsplash.com/photo-1507842217343-583bb7270b66?q=80&w=1024&auto=format&fit=crop", // Editorial
-    "https://images.unsplash.com/photo-1618005198143-e528346447c2?q=80&w=1024&auto=format&fit=crop"  // Vibrant
-  ];
-};
-
 export const generateCoverBackgrounds = async (niche: string, framework: any): Promise<string[]> => {
   if (!process.env.OPENAI_API_KEY) {
-    console.log("[DALL-E] No OPENAI_API_KEY found, skipping image generation. Using premium curated Unsplash fallbacks.");
-    return getNicheCuratedBackgrounds(niche);
+    console.log("[DALL-E] No OPENAI_API_KEY found, skipping image generation.");
+    return [];
   }
 
   try {
@@ -1081,19 +991,10 @@ export const generateCoverBackgrounds = async (niche: string, framework: any): P
     const results = await Promise.all(imagePromises);
     const validUrls = results.filter(url => url !== null) as string[];
     console.log(`[DALL-E] Successfully generated ${validUrls.length} backgrounds.`);
-    
-    // Fill any missing with Unsplash
-    if (validUrls.length < 3) {
-      const unsplashFallbacks = getNicheCuratedBackgrounds(niche);
-      for (let i = validUrls.length; i < 3; i++) {
-        validUrls.push(unsplashFallbacks[i]);
-      }
-    }
-    
     return validUrls;
 
   } catch (error) {
-    console.error("[DALL-E] Error in generateCoverBackgrounds, using curated Unsplash:", error);
-    return getNicheCuratedBackgrounds(niche);
+    console.error("[DALL-E] Error in generateCoverBackgrounds:", error);
+    return [];
   }
 };

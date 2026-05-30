@@ -1,10 +1,10 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import app from './app';
+import dotenv from 'dotenv';
 import fs from 'fs';       // Adicionado para salvar o arquivo
 import bcrypt from 'bcrypt'; // Adicionado para criptografar a senha
 import path from 'path';     // Adicionado para achar a pasta certa
+
+dotenv.config();
 
 // OVERRIDE: Garantir que o ambiente de produção seja mantido a menos que explicitamente sandbox
 process.env.ASAAS_ENV = process.env.ASAAS_ENV || 'production';
