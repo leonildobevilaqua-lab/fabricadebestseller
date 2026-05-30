@@ -140,7 +140,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         { id: 'pacote-completo', label: 'Pacote (Ficha Catalog. + Cód. Barras + QR Code)', icon: Package, price: 'R$ 49,90' },
         { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
         { id: 'capa-ebook', label: 'Capa Ebook (Digital)', icon: Smartphone, isPreparation: true },
-        { id: 'amazon', label: 'Publicação Amazon', icon: Cloud, isPreparation: true },
+        { id: 'amazon', label: '"DESAFIO P72H" PUBLICAÇÃO NA AMAZON', icon: Cloud, externalLink: 'https://checkout.ticto.app/O32C21B1D' },
         { id: 'uiclap', label: 'Publicação UICLAP', icon: Upload, price: 'R$ 97,90', externalLink: 'https://checkout.ticto.app/OED0004AF' },
         { id: 'ticto', label: 'Publicação TICTO', icon: Zap, isPreparation: true },
     ];
@@ -208,9 +208,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                 );
             case 'capas-profissionais':
                 return (
-                    <PlaceholderView 
-                        title="Gerador Automático de Capas Profissionais (IA)"
-                        description="Estamos trabalhando duro para liberar esta funcionalidade o mais rápido possível. Fique atento às novidades!"
+                    <CoverGenerator 
+                        credits={stats?.coverCredits || stats?.credits || 0}
+                        userEmail={user.email}
+                        onRefresh={fetchMe}
                     />
                 );
             case 'pacote-completo':
@@ -225,7 +226,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                     />
                 );
             case 'capa-ebook': return <PlaceholderView title="Capa Profissional (Ebook)" />;
-            case 'amazon': return <PlaceholderView title="Publicação na Amazon" />;
+            case 'amazon': return <PlaceholderView title='"DESAFIO P72H" PUBLICAÇÃO NA AMAZON' />;
             case 'uiclap': return <PlaceholderView title="Publicação na UICLAP" />;
             case 'ticto': return <PlaceholderView title="Publicação na TICTO" />;
             default: return <PlaceholderView title="Seção em Desenvolvimento" />;

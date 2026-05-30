@@ -241,6 +241,105 @@ export const BestAwardSeal: React.FC = () => {
   );
 };
 
+export const LogoIPFPC: React.FC<{ color?: string; textColor?: string }> = ({ color = "#D4A017", textColor = "#fff" }) => {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "0.8em", fontFamily: "'Outfit', system-ui, sans-serif" }}>
+      <svg viewBox="0 0 64 64" style={{ width: "6em", height: "6em", flexShrink: 0 }}>
+        {/* Lâmpada e Cérebro estilizados */}
+        <path d="M32 8 C22 8 16 15 16 24 C16 30 20 35 24 38 L24 48 C24 50 26 52 28 52 L36 52 C38 52 40 50 40 48 L40 38 C44 35 48 30 48 24 C48 15 42 8 32 8 Z" fill="none" stroke={color} strokeWidth="2.5" />
+        <path d="M26 52 L38 52 M28 56 L36 56" stroke={color} strokeWidth="3" strokeLinecap="round" />
+        {/* Linhas internas do cérebro/PNL */}
+        <path d="M32 14 L32 34 M24 20 C28 20 28 28 32 28 M40 20 C36 20 36 28 32 28" stroke={color} strokeWidth="1.5" fill="none" opacity="0.8" />
+        <circle cx="32" cy="28" r="2.5" fill={color} />
+        <circle cx="24" cy="20" r="2" fill={color} />
+        <circle cx="40" cy="20" r="2" fill={color} />
+      </svg>
+      <div style={{ textTransform: "uppercase", lineHeight: 0.9, textAlign: "left" }}>
+        <div style={{ fontWeight: 900, fontSize: "2.8em", color: textColor, letterSpacing: "0.05em" }}>IPFPC</div>
+        <div style={{ fontWeight: 600, fontSize: "0.85em", color: color, letterSpacing: "0.02em", whiteSpace: "nowrap" }}>
+          Instituto Profissional<br/>de Finanças, PNL e Coaching
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const SealOriginalProduct: React.FC<{ color?: string }> = ({ color = "#D4A017" }) => {
+  return (
+    <div style={{
+      width: "18em",
+      height: "18em",
+      borderRadius: "50%",
+      border: `max(1px,0.3em) solid ${color}`,
+      background: "rgba(0, 0, 0, 0.4)",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      color: color,
+      fontFamily: "'Outfit', system-ui, sans-serif",
+      textAlign: "center",
+      lineHeight: 1,
+      padding: "1.5em",
+      position: "relative",
+      boxShadow: "0 0 2em rgba(212,160,23,0.15)"
+    }}>
+      <span style={{ fontSize: "1.4em", fontWeight: 800 }}>★ ★ ★</span>
+      <span style={{ fontSize: "2.4em", fontWeight: 900, margin: "0.2em 0", letterSpacing: "0.05em" }}>100%</span>
+      <span style={{ fontSize: "1.6em", fontWeight: 800, letterSpacing: "0.1em" }}>ORIGINAL</span>
+      <span style={{ fontSize: "1.1em", fontWeight: 600, opacity: 0.8, marginTop: "0.3em" }}>BEST PRODUCT</span>
+    </div>
+  );
+};
+
+export const SealAuthentic: React.FC<{ color?: string }> = ({ color = "#D4A017" }) => {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "0.5em",
+      background: "rgba(0, 0, 0, 0.65)",
+      border: `max(1px, 0.15em) solid ${color}`,
+      borderRadius: "2em",
+      padding: "0.4em 1em",
+      fontFamily: "'Outfit', system-ui, sans-serif",
+      color: color,
+      fontSize: "1.8em",
+      fontWeight: 800,
+      boxShadow: "0 0 1.5em rgba(0,0,0,0.5)"
+    }}>
+      <svg viewBox="0 0 24 24" style={{ width: "1.5em", height: "1.5em", fill: "none", stroke: color, strokeWidth: "4" }}>
+        <polyline points="20 6 9 17 4 12" />
+      </svg>
+      <span style={{ fontSize: "0.85em", letterSpacing: "0.05em", whiteSpace: "nowrap" }}>100% AUTHENTIC</span>
+    </div>
+  );
+};
+
+export const DiagonalRibbon: React.FC<{ color?: string; textColor?: string }> = ({ color = "#D4A017", textColor = "#000" }) => {
+  return (
+    <div style={{
+      position: "absolute",
+      top: "4em",
+      left: "-3em",
+      transform: "rotate(-45deg)",
+      background: `linear-gradient(135deg, ${color}, #B8860C)`,
+      color: textColor,
+      fontFamily: "'Outfit', system-ui, sans-serif",
+      fontWeight: 900,
+      fontSize: "2.8em",
+      padding: "0.4em 3em",
+      boxShadow: "0 0.2em 1em rgba(0,0,0,0.4)",
+      letterSpacing: "0.08em",
+      whiteSpace: "nowrap",
+      zIndex: 10,
+      textTransform: "uppercase"
+    }}>
+      Best Seller
+    </div>
+  );
+};
+
 export const Barcode: React.FC<{ isbn?: string }> = ({ isbn = "978-65-00-00000-0" }) => {
   const bars = useMemo(() => Array.from({ length: 45 }, () => Math.random() > 0.6 ? 2 : 1), []);
   return (
@@ -344,101 +443,115 @@ function splitTitleWords(t: string) {
 const FrontPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData }> = ({ s, book }) => {
   const safe = 10;
   const inSafe = { padding: `${safe + 4}em ${safe}em` };
-  const Logo = <EditoraLogo color={s.vars.ink} />;
   const styleId = s.name;
 
-  if (styleId === STYLES.premium.name) {
+  const baseLayout = (bgContent: React.ReactNode, titleSection: React.ReactNode, subtitleSection: React.ReactNode, mainMiddleElement?: React.ReactNode) => {
     return (
-      <div className="cc-pane" style={{ background: s.vars.bgImg ? `linear-gradient(to bottom, rgba(8,8,6,0.3) 0%, rgba(8,8,6,0.8) 100%), url(${s.vars.bgImg}) center/cover no-repeat` : s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
-        <MazePattern />
-        <div style={{ position: "relative", textAlign: "center" }}>
-          <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 600, letterSpacing: "0.32em", fontSize: "4.6em", color: s.vars.accent, textTransform: "uppercase" }}>
+      <div className="cc-pane" style={{ background: s.vars.bgImg ? `linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.75) 100%), url(${s.vars.bgImg}) center/cover no-repeat` : s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative", overflow: "hidden" }}>
+        {bgContent}
+        
+        {/* Top Left diagonal ribbon 'BEST SELLER' */}
+        <DiagonalRibbon color={s.vars.accent} />
+        
+        {/* Top Right '100% AUTHENTIC' badge */}
+        <div style={{ position: "absolute", top: "4em", right: "4.5em", zIndex: 10 }}>
+          <SealAuthentic color={s.vars.accent} />
+        </div>
+
+        {/* Author Name */}
+        <div style={{ position: "relative", textAlign: "center", zIndex: 5, marginBottom: "4em" }}>
+          <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 700, letterSpacing: "0.32em", fontSize: "4.4em", color: s.vars.ink, textTransform: "uppercase" }}>
             {book.author}
           </div>
         </div>
-        <div style={{ position: "relative", marginTop: "8em", textAlign: "center", lineHeight: 0.92 }}>
-          <TitleStacked title={book.title} accent={s.vars.accent} ink={s.vars.ink} family={s.vars.titleFamily} weight={s.vars.titleWeight} case={s.vars.titleCase} />
-        </div>
-        <div style={{ flex: 1, display: "grid", placeItems: "center", marginTop: "6em" }}>
-          <div style={{ width: "62em", height: "62em", borderRadius: "50%", background: "radial-gradient(circle at 50% 35%, rgba(240,192,64,0.30), transparent 65%)", display: "grid", placeItems: "center", position: "relative" }}>
-            <div style={{ width: "34em", height: "46em", borderRadius: "1em", background: "linear-gradient(180deg, #1a1a1a, #050505)", border: `max(1px,0.4em) solid rgba(240,192,64,0.65)`, display: "grid", placeItems: "center", boxShadow: "0 0 12em rgba(240,192,64,0.35)" }}>
-              <SealBestseller accent={s.vars.accent} />
-            </div>
+
+        {/* Title Area */}
+        {titleSection}
+
+        {/* Main graphics/logo area in middle */}
+        {mainMiddleElement}
+
+        {/* Subtitle Area */}
+        {subtitleSection}
+
+        {/* Golden Bottom Row (Original Product, Editora Logo, Logo IPFPC) */}
+        <div style={{ position: "relative", marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", zIndex: 5, padding: "0 1em" }}>
+          <div style={{ transform: "scale(0.82)", transformOrigin: "left bottom" }}>
+            <SealOriginalProduct color={s.vars.accent} />
+          </div>
+          <div style={{ transform: "scale(0.85)" }}>
+            <EditoraLogo color={s.vars.ink} />
+          </div>
+          <div style={{ transform: "scale(0.88)", transformOrigin: "right bottom" }}>
+            <LogoIPFPC color={s.vars.accent} textColor={s.vars.ink} />
           </div>
         </div>
-        <div style={{ position: "relative", textAlign: "center", marginTop: "4em" }}>
-          <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 700, fontSize: "4.4em", color: s.vars.ink, lineHeight: 1.25, letterSpacing: "0.02em", textTransform: "uppercase" }}>
-            {book.subtitle.split(" ").map((w, i) => (
-              /vendas|sucesso|impacto|lucro|riqueza|melhor|excelente/i.test(w)
-                ? <span key={i} style={{ color: s.vars.accent }}>{w} </span>
-                : <span key={i}>{w} </span>
-            ))}
-          </div>
+      </div>
+    );
+  };
+
+  if (styleId === STYLES.premium.name) {
+    return baseLayout(
+      <MazePattern />,
+      <div style={{ position: "relative", textAlign: "center", lineHeight: 0.92, zIndex: 5, marginTop: "2em" }}>
+        <TitleStacked title={book.title} accent={s.vars.accent} ink={s.vars.ink} family={s.vars.titleFamily} weight={s.vars.titleWeight} case={s.vars.titleCase} />
+      </div>,
+      <div style={{ position: "relative", textAlign: "center", marginTop: "3em", zIndex: 5 }}>
+        <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 700, fontSize: "4.2em", color: s.vars.ink, lineHeight: 1.25, letterSpacing: "0.02em", textTransform: "uppercase" }}>
+          {book.subtitle.split(" ").map((w, i) => (
+            /vendas|sucesso|impacto|lucro|riqueza|melhor|excelente/i.test(w)
+              ? <span key={i} style={{ color: s.vars.accent }}>{w} </span>
+              : <span key={i}>{w} </span>
+          ))}
         </div>
-        <div style={{ position: "relative", marginTop: "6em", display: "flex", alignItems: "center", justifyContent: "center", gap: "6em" }}>
-          {Logo}
+      </div>,
+      <div style={{ flex: 1, display: "grid", placeItems: "center", margin: "2em 0" }}>
+        <div style={{ width: "54em", height: "54em", borderRadius: "50%", background: "radial-gradient(circle at 50% 35%, rgba(240,192,64,0.22), transparent 65%)", display: "grid", placeItems: "center", position: "relative" }}>
+          <div style={{ width: "30em", height: "40em", borderRadius: "1em", background: "linear-gradient(180deg, #1a1a1a, #050505)", border: `max(1px,0.4em) solid rgba(240,192,64,0.65)`, display: "grid", placeItems: "center", boxShadow: "0 0 10em rgba(240,192,64,0.3)" }}>
+            <SealBestseller accent={s.vars.accent} />
+          </div>
         </div>
       </div>
     );
   }
 
   if (styleId === STYLES.editorial.name) {
-    return (
-      <div className="cc-pane" style={{ background: s.vars.bgImg ? `linear-gradient(to bottom, rgba(14,42,87,0.3) 0%, rgba(14,42,87,0.85) 100%), url(${s.vars.bgImg}) center/cover no-repeat` : s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
-        <BlueprintPattern />
-        <div style={{ position: "relative", textAlign: "right" }}>
-          <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 700, letterSpacing: "0.32em", fontSize: "4.4em", textTransform: "uppercase" }}>
-            {book.author}
-          </div>
+    return baseLayout(
+      <BlueprintPattern />,
+      <div style={{ position: "relative", textAlign: "center", zIndex: 5, marginTop: "2em" }}>
+        <div style={{ fontFamily: s.vars.titleFamily, fontWeight: 700, fontSize: "12em", lineHeight: 1.0, letterSpacing: "-0.01em" }}>
+          <span style={{ color: s.vars.ink }}>{splitTitleWords(book.title).pre}</span>{" "}
+          <span style={{ color: s.vars.accent, fontStyle: "italic" }}>{splitTitleWords(book.title).hi}</span>
         </div>
-        <div style={{ position: "relative", marginTop: "10em", textAlign: "right" }}>
-          <div style={{ fontFamily: s.vars.titleFamily, fontWeight: 700, fontSize: "13em", lineHeight: 1.0, letterSpacing: "-0.01em" }}>
-            <span style={{ color: s.vars.ink }}>{splitTitleWords(book.title).pre}</span>{" "}
-            <span style={{ color: s.vars.accent, fontStyle: "italic" }}>{splitTitleWords(book.title).hi}</span>
-          </div>
+      </div>,
+      <div style={{ position: "relative", marginTop: "3em", textAlign: "center", zIndex: 5 }}>
+        <div style={{ fontFamily: s.vars.titleFamily, fontStyle: "italic", fontSize: "4.5em", lineHeight: 1.3, color: s.vars.ink, opacity: 0.95 }}>
+          {book.subtitle}
         </div>
-        <div style={{ position: "relative", marginTop: "4em", marginRight: "2em", textAlign: "right" }}>
-          <div style={{ fontFamily: s.vars.titleFamily, fontStyle: "italic", fontSize: "5em", lineHeight: 1.35, color: s.vars.ink, opacity: 0.95, maxWidth: "70em", marginLeft: "auto" }}>
-            {book.subtitle}
-          </div>
-        </div>
-        <div style={{ flex: 1 }} />
-        <div style={{ position: "relative", marginTop: "6em", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <BestAwardSeal />
-          {Logo}
-          <QRBox />
-        </div>
+      </div>,
+      <div style={{ flex: 1, display: "grid", placeItems: "center", margin: "2em 0" }}>
+        <BestAwardSeal />
       </div>
     );
   }
 
   // vibrant
-  return (
-    <div className="cc-pane" style={{ background: s.vars.bgImg ? `linear-gradient(to bottom, rgba(40,15,5,0.1) 0%, rgba(40,15,5,0.7) 100%), url(${s.vars.bgImg}) center/cover no-repeat` : s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
-      <div style={{ position: "relative", textAlign: "center" }}>
-        <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 700, letterSpacing: "0.32em", fontSize: "4.6em", color: s.vars.accent, textTransform: "uppercase" }}>
-          {book.author}
+  return baseLayout(
+    null,
+    <div style={{ position: "relative", textAlign: "center", zIndex: 5, marginTop: "2em" }}>
+      <TitleStacked title={book.title} accent={s.vars.accent} ink={s.vars.ink} family={s.vars.titleFamily} weight={s.vars.titleWeight} case={s.vars.titleCase} />
+    </div>,
+    <div style={{ position: "relative", textAlign: "center", marginTop: "3em", zIndex: 5 }}>
+      <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 600, fontSize: "4.2em", lineHeight: 1.35, opacity: 0.95 }}>
+        {book.subtitle}
+      </div>
+    </div>,
+    <div style={{ flex: 1, display: "grid", placeItems: "center", margin: "2em 0" }}>
+      {!s.vars.bgImg && (
+        <div style={{ width: "75%", height: "46em", borderRadius: "2em", background: "repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 2em, transparent 2em 6em), rgba(0,0,0,0.18)", border: `max(1px,0.3em) solid rgba(255,255,255,0.18)`, display: "grid", placeItems: "center", color: "rgba(255,255,255,0.45)", fontFamily: "monospace", fontSize: "3em", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+          imagem central — gerada por IA
         </div>
-      </div>
-      <div style={{ position: "relative", marginTop: "10em", textAlign: "center" }}>
-        <TitleStacked title={book.title} accent={s.vars.accent} ink={s.vars.ink} family={s.vars.titleFamily} weight={s.vars.titleWeight} case={s.vars.titleCase} />
-      </div>
-      <div style={{ flex: 1, display: "grid", placeItems: "center", marginTop: "4em" }}>
-        {!s.vars.bgImg && (
-          <div style={{ width: "82%", height: "54em", borderRadius: "2em", background: "repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 2em, transparent 2em 6em), rgba(0,0,0,0.18)", border: `max(1px,0.3em) solid rgba(255,255,255,0.18)`, display: "grid", placeItems: "center", color: "rgba(255,255,255,0.45)", fontFamily: "monospace", fontSize: "3em", letterSpacing: "0.16em", textTransform: "uppercase" }}>
-            imagem central — gerada por IA
-          </div>
-        )}
-      </div>
-      <div style={{ position: "relative", textAlign: "center", marginTop: "6em" }}>
-        <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 600, fontSize: "4.2em", lineHeight: 1.35, opacity: 0.95 }}>
-          {book.subtitle}
-        </div>
-      </div>
-      <div style={{ position: "relative", marginTop: "6em", display: "flex", alignItems: "center", justifyContent: "center", gap: "8em" }}>
-        <BestAwardSeal />
-        {Logo}
-      </div>
+      )}
     </div>
   );
 };
@@ -449,13 +562,13 @@ const BackPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData; assets: Cov
   const headlineColor = s.vars.accent;
   const isPremium = s.name === STYLES.premium.name;
   return (
-    <div className="cc-pane" style={{ background: s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", gap: "4em", position: "relative" }}>
+    <div className="cc-pane" style={{ background: s.vars.bgGrad, color: s.vars.ink, ...inSafe, display: "flex", flexDirection: "column", position: "relative" }}>
       {isPremium && <MazePattern />}
       {s.name === STYLES.editorial.name && <BlueprintPattern />}
       
       {!hasFlap && (
-        <div style={{ position: "relative", display: "flex", gap: "5em", alignItems: "flex-start" }}>
-          <div style={{ width: "30em", height: "38em", borderRadius: "1.5em", background: "#222", border: `max(1px,0.4em) solid ${s.vars.accent}`, overflow: "hidden", flexShrink: 0 }}>
+        <div style={{ position: "relative", display: "flex", gap: "5em", alignItems: "flex-start", marginBottom: "3em" }}>
+          <div style={{ width: "24em", height: "30em", borderRadius: "1.5em", background: "#222", border: `max(1px,0.4em) solid ${s.vars.accent}`, overflow: "hidden", flexShrink: 0 }}>
             {assets.authorPhoto
               ? <img src={assets.authorPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,#3a3a3a,#1a1a1a)", display: "grid", placeItems: "center", color: "#888", fontFamily: "sans-serif", fontSize: "2.8em" }}>foto do autor</div>
@@ -469,36 +582,54 @@ const BackPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData; assets: Cov
           </div>
         </div>
       )}
-      <div style={{ position: "relative" }}>
-        <h2 style={{ fontFamily: s.vars.titleFamily, fontWeight: 700, fontSize: "5.6em", lineHeight: 1.15, color: headlineColor, textTransform: s.vars.titleCase === "uppercase" ? "uppercase" : "none", marginBottom: "3em", textWrap: "balance" } as any}>
+      <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: "2.5em" }}>
+        <h2 style={{ fontFamily: s.vars.titleFamily, fontWeight: 700, fontSize: "5.4em", lineHeight: 1.15, color: headlineColor, textTransform: s.vars.titleCase === "uppercase" ? "uppercase" : "none", marginBottom: "1em", textWrap: "balance" } as any}>
           {book.backHook}
         </h2>
-        <div style={{ fontSize: "3.4em", lineHeight: 1.55, color: s.vars.ink, opacity: 0.92 }}>
+        <div style={{ fontSize: "3.2em", lineHeight: 1.55, color: s.vars.ink, opacity: 0.92 }}>
           {book.backBody}
         </div>
         {book.backBullets && book.backBullets.length > 0 && (
-          <ul style={{ marginTop: "3em", paddingLeft: "4em", display: "flex", flexDirection: "column", gap: "1.6em" }}>
+          <ul style={{ marginTop: "1em", paddingLeft: "4em", display: "flex", flexDirection: "column", gap: "1.6em" }}>
             {book.backBullets.map((b, i) => (
-              <li key={i} style={{ fontSize: "3.2em", lineHeight: 1.45, listStyle: "none", position: "relative" }}>
+              <li key={i} style={{ fontSize: "3em", lineHeight: 1.45, listStyle: "none", position: "relative" }}>
                 <span style={{ color: s.vars.accent, fontWeight: 800, position: "absolute", left: "-4em" }}>{i + 1}.</span>
                 {b}
               </li>
             ))}
           </ul>
         )}
-        <p style={{ marginTop: "4em", fontSize: "3.4em", fontWeight: 700, color: s.vars.accent, textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.3 }}>
+        <p style={{ marginTop: "2.5em", fontSize: "3.2em", fontWeight: 700, color: s.vars.accent, textTransform: "uppercase", letterSpacing: "0.04em", lineHeight: 1.3 }}>
           {book.backCTA}
         </p>
       </div>
+
       <div style={{ flex: 1 }} />
-      <div style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "4em" }}>
+
+      {/* Base Contracapa com Logos e Visitas */}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", zIndex: 5, padding: "0 1em", marginTop: "3em" }}>
+        <div style={{ transform: "scale(0.85)", transformOrigin: "left center" }}>
+          <EditoraLogo color={s.vars.ink} />
+        </div>
+        <div style={{ textAlign: "center", color: s.vars.ink, fontFamily: s.vars.bodyFamily, fontSize: "2.3em", opacity: 0.9, lineHeight: 1.2 }}>
+          <strong>Visite-nos:</strong><br />
+          <span style={{ color: s.vars.accent, fontWeight: 700 }}>www.ipfpc.com.br</span><br />
+          @ipfpc | @leonildobevilaqua
+        </div>
+        <div style={{ transform: "scale(0.88)", transformOrigin: "right center" }}>
+          <LogoIPFPC color={s.vars.accent} textColor={s.vars.ink} />
+        </div>
+      </div>
+
+      {/* Rodapé Absoluto dos Códigos de Barras e QR */}
+      <div style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: "4em", marginTop: "2em", borderTop: `1px solid rgba(255,255,255,0.08)`, paddingTop: "2em" }}>
         {assets.barcode ? (
-          <img src={assets.barcode} style={{ height: "12em", objectFit: "contain", background: "#fff", padding: "1.2em", borderRadius: "0.5em" }} alt="Barcode" />
+          <img src={assets.barcode} style={{ height: "11em", objectFit: "contain", background: "#fff", padding: "1.2em", borderRadius: "0.5em" }} alt="Barcode" />
         ) : (
           <Barcode isbn={book.isbn} />
         )}
         {assets.qrcode ? (
-          <img src={assets.qrcode} style={{ height: "14em", width: "14em", objectFit: "contain", background: "#fff", padding: "1.2em", borderRadius: "0.5em" }} alt="QR Code" />
+          <img src={assets.qrcode} style={{ height: "13em", width: "13em", objectFit: "contain", background: "#fff", padding: "1.2em", borderRadius: "0.5em" }} alt="QR Code" />
         ) : (
           <QRBox label="" />
         )}
@@ -532,7 +663,7 @@ const FlapPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData; assets: Cov
   const safe = 8;
   const fadeFrom = transition === "left" ? "right" : "left";
   return (
-    <div className="cc-pane" style={{ background: s.vars.bgGrad, color: s.vars.flapInk, padding: `${safe + 2}em ${safe}em`, display: "flex", flexDirection: "column", gap: "3em", position: "relative" }}>
+    <div className="cc-pane" style={{ background: s.vars.bgGrad, color: s.vars.flapInk, padding: `${safe + 2}em ${safe}em`, display: "flex", flexDirection: "column", gap: "2.5em", position: "relative" }}>
       {/* fold gradient shadow */}
       <div style={{
         position: "absolute", top: 0, bottom: 0,
@@ -543,18 +674,24 @@ const FlapPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData; assets: Cov
       {kind === "back-flap" && (
         <>
           <div style={{ position: "relative" }}>
-            <div style={{ width: "100%", aspectRatio: "3/4", borderRadius: "1.5em", background: "#222", border: `max(1px,0.4em) solid ${s.vars.accent}`, overflow: "hidden" }}>
-              {assets.authorPhoto
-                ? <img src={assets.authorPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,#3a3a3a,#1a1a1a)", display: "grid", placeItems: "center", color: "#888", fontFamily: "sans-serif", fontSize: "2.6em" }}>foto do autor</div>
-              }
-            </div>
-            <div style={{ marginTop: "3em", textAlign: "center", fontFamily: s.vars.bodyFamily, fontWeight: 700, fontSize: "3.6em", color: s.vars.accent, letterSpacing: "0.10em", textTransform: "uppercase" }}>
+            <div style={{ fontFamily: s.vars.bodyFamily, fontWeight: 700, fontSize: "3.6em", color: s.vars.accent, letterSpacing: "0.10em", textTransform: "uppercase", marginBottom: "0.5em" }}>
               {book.author}
             </div>
           </div>
           <div style={{ position: "relative", fontSize: "2.8em", lineHeight: 1.45, color: s.vars.flapInk, opacity: 0.92 }}>
             {book.authorBio}
+          </div>
+          
+          <div style={{ flex: 1 }} />
+          
+          {/* Orelha Esquerda Base: Selo Redondo Dourado + Logo IPFPC */}
+          <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginTop: "auto", padding: "0 0.5em" }}>
+            <div style={{ transform: "scale(0.85)", transformOrigin: "left bottom" }}>
+              <SealOriginalProduct color={s.vars.accent} />
+            </div>
+            <div style={{ transform: "scale(0.72)", transformOrigin: "right bottom" }}>
+              <LogoIPFPC color={s.vars.accent} textColor={s.vars.flapInk} />
+            </div>
           </div>
         </>
       )}
@@ -565,6 +702,21 @@ const FlapPane: React.FC<{ s: CoverStyleConfig; book: CoverBookData; assets: Cov
           </div>
           <div style={{ position: "relative", fontSize: "2.8em", lineHeight: 1.5, color: s.vars.flapInk, opacity: 0.92 }}>
             {book.flapBody}
+          </div>
+          
+          <div style={{ flex: 1 }} />
+          
+          {/* Orelha Direita Base: Foto do Autor + Logo IPFPC */}
+          <div style={{ position: "relative", display: "flex", flexDirection: "column", alignItems: "center", gap: "2em", marginTop: "auto" }}>
+            <div style={{ width: "16em", height: "21em", borderRadius: "1em", background: "#222", border: `max(1px,0.3em) solid ${s.vars.accent}`, overflow: "hidden", boxShadow: "0 0.5em 2em rgba(0,0,0,0.5)" }}>
+              {assets.authorPhoto
+                ? <img src={assets.authorPhoto} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                : <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg,#3a3a3a,#1a1a1a)", display: "grid", placeItems: "center", color: "#888", fontFamily: "sans-serif", fontSize: "2em" }}>foto do autor</div>
+              }
+            </div>
+            <div style={{ transform: "scale(0.85)", transformOrigin: "bottom center" }}>
+              <LogoIPFPC color={s.vars.accent} textColor={s.vars.flapInk} />
+            </div>
           </div>
         </>
       )}
@@ -585,6 +737,7 @@ export interface CoverRenderProps {
   showGuides?: boolean;
   assets?: CoverAssets;
   customBgImg?: string;
+  colors?: string[];
 }
 
 export const CoverRender: React.FC<CoverRenderProps> = ({
@@ -595,10 +748,54 @@ export const CoverRender: React.FC<CoverRenderProps> = ({
   pxPerMM = 1.4,
   showGuides = false,
   assets = {},
-  customBgImg
+  customBgImg,
+  colors
 }) => {
   const baseS = STYLES[styleKey] || STYLES.premium;
-  const s = customBgImg ? { ...baseS, vars: { ...baseS.vars, bgImg: customBgImg } } : baseS;
+  let s = customBgImg ? { ...baseS, vars: { ...baseS.vars, bgImg: customBgImg } } : baseS;
+
+  if (colors && colors.length > 0) {
+    const primary = colors[0];
+    const secondary = colors[1] || primary;
+    const tertiary = colors[2] || secondary;
+
+    // Helper to convert hex to rgb string for modern gradients
+    const toRgbStr = (hex: string) => {
+      const res = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || "");
+      if (!res) return "0,0,0";
+      return `${parseInt(res[1], 16)},${parseInt(res[2], 16)},${parseInt(res[3], 16)}`;
+    };
+
+    if (styleKey === "premium") {
+      s = {
+        ...s,
+        vars: {
+          ...s.vars,
+          accent: primary.toUpperCase() !== "#000000" && primary.toUpperCase() !== "#FFFFFF" ? primary : s.vars.accent,
+          accent2: secondary.toUpperCase() !== "#000000" && secondary.toUpperCase() !== "#FFFFFF" ? secondary : s.vars.accent2,
+          bgGrad: customBgImg ? s.vars.bgGrad : `radial-gradient(ellipse 80% 110% at 50% 60%, rgba(${toRgbStr(primary)},0.45), transparent 55%), radial-gradient(ellipse at 20% 20%, rgba(${toRgbStr(secondary)},0.18), transparent 50%), #050505`,
+        }
+      };
+    } else if (styleKey === "editorial") {
+      s = {
+        ...s,
+        vars: {
+          ...s.vars,
+          bgGrad: customBgImg ? s.vars.bgGrad : `radial-gradient(ellipse 90% 80% at 80% 20%, rgba(255,255,255,0.10), transparent 60%), linear-gradient(180deg, ${primary} 0%, ${secondary} 100%)`,
+          accent: tertiary,
+        }
+      };
+    } else if (styleKey === "vibrant") {
+      s = {
+        ...s,
+        vars: {
+          ...s.vars,
+          bgGrad: customBgImg ? s.vars.bgGrad : `radial-gradient(ellipse at 50% 85%, ${primary} 0%, ${secondary} 40%, ${tertiary} 100%)`,
+        }
+      };
+    }
+  }
+
   const safe = 10;
   const bleed = dims.bleed;
   const flap = dims.flap;

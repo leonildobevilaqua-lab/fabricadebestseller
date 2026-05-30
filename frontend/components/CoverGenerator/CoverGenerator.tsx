@@ -7,6 +7,34 @@ import {
 import { CoverRender, calcDims, STYLES, CoverBookData, CoverAssets, CoverDims } from './CoverRender';
 import './cover-generator.css';
 
+// ---- Helper to split Hook and Body from a single unified text ----
+export function splitHookAndBody(fullText: string): { hook: string; body: string } {
+  const trimmed = (fullText || "").trim();
+  if (!trimmed) return { hook: "", body: "" };
+
+  // Tenta dividir por parágrafo (quebra de linha dupla ou simples)
+  const paragraphs = trimmed.split(/\r?\n+/).filter(Boolean);
+  if (paragraphs.length >= 2) {
+    const hook = paragraphs[0].trim();
+    const body = paragraphs.slice(1).join("\n\n").trim();
+    return { hook, body };
+  }
+
+  // Tenta dividir na primeira frase longa (terminada por . ? ou !)
+  const match = trimmed.match(/^([^.!?]+[.!?])\s*(.*)$/s);
+  if (match && match[1] && match[2]) {
+    return {
+      hook: match[1].trim(),
+      body: match[2].trim()
+    };
+  }
+
+  return {
+    hook: trimmed,
+    body: ""
+  };
+}
+
 // ---- Top 10 Bestsellers Mock Data ----
 const MARKET_TOP10 = [
   { title: "Pai Rico, Pai Pobre", author: "Robert Kiyosaki", publisher: "Alta Books", rating: "4.8", reviews: "58.2k", bg: "linear-gradient(135deg,#a52929,#5a1212)" },
@@ -148,8 +176,8 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
       assets: {
         authorPhoto: "",
         isbn: "978-65-01-48854-7",
-        backHook: "Seu livro está pronto, mas a sua capa ainda não vende?",
-        backBody: "Muitos autores cometem o erro clássico de julgar que um excelente conteúdo se vende sozinho. A verdade é direta: a capa é o seu principal ponto de conversão física e digital. É ela que fisga o leitor em milésimos de segundo.",
+        backHook: "",
+        backBody: "Seu livro está pronto, mas a sua capa ainda não vende?\n\nMuitos autores cometem o erro clássico de julgar que um excelente conteúdo se vende sozinho. A verdade é direta: a capa é o seu principal ponto de conversão física e digital. É ela que fisga o leitor em milésimos de segundo.",
         backBullets: [
           "ENTENDA as dinâmicas de cores de alta retenção no mercado editorial moderno.",
           "DESCUBRA o segredo do posicionamento de títulos stacked que convertem cliques.",
@@ -350,22 +378,25 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
   // ---- 7-STEP WIZARD ----
   const steps = ["Upload", "Análise", "Nicho", "Assets", "Estilos", "Ajustes", "Pronto!"];
 
-  const buildBook = (): CoverBookData => ({
-    title: projectData.analysis.title,
-    subtitle: projectData.analysis.subtitle,
-    author: projectData.analysis.author.toUpperCase(),
-    publisher: projectData.analysis.publisher,
-    niche: projectData.analysis.niche,
-    isbn: projectData.assets.isbn,
-    backHook: projectData.assets.backHook,
-    backBody: projectData.assets.backBody,
-    backBullets: projectData.assets.backBullets,
-    backCTA: projectData.assets.backCTA,
-    flapHook: projectData.assets.flapHook,
-    flapBody: projectData.assets.flapBody,
-    flapBackBody: projectData.assets.flapBackBody,
-    authorBio: projectData.assets.authorBio,
-  });
+  const buildBook = (): CoverBookData => {
+    const { hook, body } = splitHookAndBody(projectData.assets.backBody);
+    return {
+      title: projectData.analysis.title,
+      subtitle: projectData.analysis.subtitle,
+      author: projectData.analysis.author.toUpperCase(),
+      publisher: projectData.analysis.publisher,
+      niche: projectData.analysis.niche,
+      isbn: projectData.assets.isbn,
+      backHook: hook || projectData.assets.backHook,
+      backBody: body,
+      backBullets: projectData.assets.backBullets,
+      backCTA: projectData.assets.backCTA,
+      flapHook: projectData.assets.flapHook,
+      flapBody: projectData.assets.flapBody,
+      flapBackBody: projectData.assets.flapBackBody,
+      authorBio: projectData.assets.authorBio,
+    };
+  };
 
   const getRenderAssets = (): CoverAssets => ({
     ...projectData.assets,
@@ -746,21 +777,11 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="field">
-                <label className="text-xs text-slate-400">Frase de Efeito Contracapa (Hook)</label>
-                <input 
-                  type="text" 
-                  value={projectData.assets.backHook} 
-                  onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, backHook: e.target.value } }))}
-                  className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5"
-                />
-              </div>
-
-              <div className="field">
-                <label className="text-xs text-slate-400">Texto Principal Contracapa</label>
+                <label className="text-xs text-slate-400">Texto da Contra Capa</label>
                 <textarea 
                   value={projectData.assets.backBody} 
                   onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, backBody: e.target.value } }))}
-                  className="textarea bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5 h-24"
+                  className="textarea bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5 h-44"
                 />
               </div>
 
@@ -947,10 +968,11 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                           dims={projectData.dims} 
                           styleKey={key} 
                           mode="ebook" 
-                          pxPerMM={0.8} 
+                          pxPerMM={2.4} 
                           showGuides={false}
                           assets={getRenderAssets()}
                           customBgImg={aiBackground}
+                          colors={projectData.marketResearch?.framework?.colors}
                         />
                       </div>
                     </div>
@@ -1245,6 +1267,7 @@ function Step6Editor({ data, setData, onBack, onNext, buildBook }: {
                 qrcode: data.assets.qrcodeImage
               }}
               customBgImg={data.marketResearch?.framework?.backgrounds?.[Object.keys(STYLES).indexOf(data.selectedStyle)]}
+              colors={data.marketResearch?.framework?.colors}
             />
           </div>
         </div>
