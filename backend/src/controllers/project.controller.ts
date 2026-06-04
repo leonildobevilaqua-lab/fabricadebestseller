@@ -2070,7 +2070,7 @@ export const consumeCoverCredit = async (req: Request, res: Response) => {
 
 export const researchCoverMarket = async (req: Request, res: Response) => {
     try {
-        const { niche } = req.body;
+        const { niche, title, subtitle, author } = req.body;
         if (!niche) return res.status(400).json({ error: "Niche is required" });
 
         const { ResearchService } = require('../services/research.service');
@@ -2114,8 +2114,12 @@ export const researchCoverMarket = async (req: Request, res: Response) => {
         }
 
         prompt += `
-            2. Crie um \`framework\` de design baseado EXATAMENTE NAS CORES REAIS DAS CAPAS FÍSICAS dos livros que você acabou de listar. O objeto \`framework\` deve conter:
-               - colors: Array com as 3 cores exatas mais dominantes nas capas originais desses best-sellers famosos (em código HEX, ex: "#4B0082" para o roxo do Pai Rico Pai Pobre, ou "#FFD700" para o dourado). Não invente cores genéricas, use seu conhecimento das capas REAIS.
+            2. Crie um \`framework\` de design para a capa do livro com alta conversão comercial. A paleta de cores deve conter exatamente 3 cores ricas e harmoniosas (em código HEX), representando:
+               - Uma cor base predominante (preferencialmente cores fortes, escuras ou ricas como azul imperial escuro #0d1b2a, preto fosco #111111, verde esmeralda profundo #0b3c20 ou vinho escuro #4a0e17)
+               - Uma cor secundária de alto contraste para a tipografia principal (como dourado luxuoso #d4a017, branco linho #f5f0e5 ou creme elegante #eae6df)
+               - Uma cor de acento/destaque vibrante (como amarelo quente #ffb703, laranja queimado #e65f2b ou coral #e76f51)
+               
+               Evite paletas totalmente sem contraste ou sem cor, como múltiplos tons de cinza ou branco. Garanta que a combinação seja de extremo bom gosto e alto impacto comercial.
                - typography: Descrição curta da tipografia ideal (ex: "Fontes Serifadas robustas com alto contraste").
                - structure: Descrição de 1 ou 2 frases sobre como estruturar a capa (ex: "Título grande no topo, autor na base, contraste escuro").
 
@@ -2189,8 +2193,115 @@ export const researchCoverMarket = async (req: Request, res: Response) => {
             }));
         }
 
+        // REAL COLOR ANALYSIS OF EXTRACTED AMAZON COVERS
+        if (data && data.topBooks && data.framework) {
+            try {
+                console.log("[COLOR-ANALYSIS] Starting real pixel color extraction for", data.topBooks.length, "books...");
+                const Jimp = require('jimp');
+                const colorCount: { [hex: string]: number } = {};
+
+                const imageUrls = data.topBooks
+                    .map((bk: any) => bk.imageUrl)
+                    .filter((url: string) => !!url);
+
+                if (imageUrls.length > 0) {
+                    for (const url of imageUrls) {
+                        try {
+                            const image = await Jimp.read(url);
+                            // Reduz a imagem a 12x12 pixels para agrupar tons similares e economizar processamento
+                            image.resize(12, 12);
+                            
+                            for (let x = 0; x < 12; x++) {
+                                for (let y = 0; y < 12; y++) {
+                                    const color = image.getPixelColor(x, y);
+                                    const rgba = Jimp.intToRGBA(color);
+                                    
+                                    // Ignora pretos muito escuros, brancos muito claros e tons neutros de cinza sem saturação
+                                    const max = Math.max(rgba.r, rgba.g, rgba.b);
+                                    const min = Math.min(rgba.r, rgba.g, rgba.b);
+                                    const diff = max - min;
+                                    
+                                    if (diff < 35 || (rgba.r > 215 && rgba.g > 215 && rgba.b > 215) || (rgba.r < 30 && rgba.g < 30 && rgba.b < 30)) {
+                                        continue; // Pula tons sem graça/neutros para pegar apenas as cores vivas e profissionais de destaque
+                                    }
+                                    
+                                    const r = Math.round(rgba.r / 32) * 32;
+                                    const g = Math.round(rgba.g / 32) * 32;
+                                    const b = Math.round(rgba.b / 32) * 32;
+                                    
+                                    const hex = "#" + [r, g, b].map(v => {
+                                        const val = Math.min(255, Math.max(0, v));
+                                        const s = val.toString(16);
+                                        return s.length === 1 ? '0' + s : s;
+                                    }).join('').toUpperCase();
+                                    
+                                    colorCount[hex] = (colorCount[hex] || 0) + 1;
+                                }
+                            }
+                        } catch (err: any) {
+                            console.log("[COLOR-ANALYSIS] Jimp failed to process image:", url, err.message);
+                        }
+                    }
+
+                    // Ordena tons por frequência
+                    const sortedColors = Object.entries(colorCount)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(entry => entry[0]);
+
+                    const finalColors: string[] = [];
+                    
+                    // Helper para converter Hex em RGB
+                    const hexToRgb = (hex: string) => {
+                        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                        return result ? {
+                            r: parseInt(result[1], 16),
+                            g: parseInt(result[2], 16),
+                            b: parseInt(result[3], 16)
+                        } : null;
+                    };
+
+                    for (const color of sortedColors) {
+                        // Evita cores extremamente redundantes (muito próximas visualmente)
+                        const isClose = finalColors.some(existing => {
+                            const c1 = hexToRgb(existing);
+                            const c2 = hexToRgb(color);
+                            if (!c1 || !c2) return false;
+                            const dist = Math.sqrt(Math.pow(c1.r - c2.r, 2) + Math.pow(c1.g - c2.g, 2) + Math.pow(c1.b - c2.b, 2));
+                            return dist < 50; 
+                        });
+
+                        if (!isClose) {
+                            finalColors.push(color);
+                        }
+                        if (finalColors.length >= 3) break;
+                    }
+
+                    if (finalColors.length > 0) {
+                        const originalColors = data.framework.colors || ["#d4a017", "#0d1b2a", "#eae6df"];
+                        let originalIdx = 0;
+                        while (finalColors.length < 3 && originalIdx < originalColors.length) {
+                            const col = originalColors[originalIdx++];
+                            if (!finalColors.includes(col)) {
+                                finalColors.push(col);
+                            }
+                        }
+                        while (finalColors.length < 3) {
+                            finalColors.push("#d4a017");
+                        }
+                        
+                        console.log("[COLOR-ANALYSIS] Successfully combined extracted and rich prompt colors:", finalColors);
+                        data.framework.colors = finalColors;
+                    } else {
+                        console.log("[COLOR-ANALYSIS] No vivid colors extracted, keeping 100% LLM's premium palette.");
+                    }
+                }
+            } catch (err: any) {
+                console.error("[COLOR-ANALYSIS] Error in pixel color analysis workflow:", err);
+            }
+        }
+
         if (data && data.framework) {
-            data.framework.backgrounds = await AIService.generateCoverBackgrounds(niche, data.framework);
+            data.framework.backgrounds = await AIService.generateCoverBackgrounds(niche, data.framework, title, subtitle, author);
         }
 
         res.json({

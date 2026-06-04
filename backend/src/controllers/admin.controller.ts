@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import bcrypt from 'bcrypt';
 import { sendEmail } from '../services/email.service';
-import { getVal, setVal, reloadDB, deleteVal } from '../services/db.service';
+import { getVal, setVal, reloadDB, deleteVal, getDatabasePath } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../services/supabase';
 import * as DocService from '../services/doc.service';
@@ -15,7 +15,7 @@ import * as QueueService from '../services/queue.service';
 
 // ... (Login logic)
 const SECRET_KEY = process.env.JWT_SECRET || "SUPER_SECRET_ADMIN_KEY_CHANGE_ME";
-const DB_PATH = path.resolve(process.cwd(), 'database.json');
+const DB_PATH = getDatabasePath();
 
 // --- CHANGE PASSWORD (AUTHENTICATED) ---
 export const changePassword = async (req: Request, res: Response) => {
@@ -90,7 +90,7 @@ export const login = async (req: Request, res: Response) => {
         if (!isAuthenticated) {
             try {
                 // Caminho absoluto para evitar erros de CWD
-                const dbPath = path.resolve(process.cwd(), 'database.json');
+                const dbPath = getDatabasePath();
                 if (fs.existsSync(dbPath)) {
                     const fileContent = fs.readFileSync(dbPath, 'utf-8');
                     const dbData = JSON.parse(fileContent);

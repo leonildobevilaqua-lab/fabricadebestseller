@@ -12,7 +12,22 @@ import path from 'path';
  */
 
 const DB_PROVIDER = process.env.DB_PROVIDER || 'supabase';
-const DB_PATH = path.resolve(process.cwd(), 'database.json');
+
+export const getDatabasePath = (): string => {
+    let currentDir = __dirname;
+    while (currentDir) {
+        const potentialDb = path.join(currentDir, 'database.json');
+        if (fs.existsSync(potentialDb) && fs.statSync(potentialDb).size > 10000) {
+            return potentialDb;
+        }
+        const parent = path.dirname(currentDir);
+        if (parent === currentDir) break;
+        currentDir = parent;
+    }
+    return path.resolve(process.cwd(), 'database.json');
+};
+
+const DB_PATH = getDatabasePath();
 
 let cachedLocalDB: any = null;
 

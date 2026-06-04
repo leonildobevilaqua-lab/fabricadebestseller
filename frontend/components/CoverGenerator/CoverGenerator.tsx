@@ -7,6 +7,34 @@ import {
 import { CoverRender, calcDims, STYLES, CoverBookData, CoverAssets, CoverDims } from './CoverRender';
 import './cover-generator.css';
 
+// ---- Helper to split Hook and Body from a single unified text ----
+export function splitHookAndBody(fullText: string): { hook: string; body: string } {
+  const trimmed = (fullText || "").trim();
+  if (!trimmed) return { hook: "", body: "" };
+
+  // Tenta dividir por parágrafo (quebra de linha dupla ou simples)
+  const paragraphs = trimmed.split(/\r?\n+/).filter(Boolean);
+  if (paragraphs.length >= 2) {
+    const hook = paragraphs[0].trim();
+    const body = paragraphs.slice(1).join("\n\n").trim();
+    return { hook, body };
+  }
+
+  // Tenta dividir na primeira frase longa (terminada por . ? ou !)
+  const match = trimmed.match(/^([^.!?]+[.!?])\s*(.*)$/s);
+  if (match && match[1] && match[2]) {
+    return {
+      hook: match[1].trim(),
+      body: match[2].trim()
+    };
+  }
+
+  return {
+    hook: trimmed,
+    body: ""
+  };
+}
+
 // ---- Top 10 Bestsellers Mock Data ----
 const MARKET_TOP10 = [
   { title: "Pai Rico, Pai Pobre", author: "Robert Kiyosaki", publisher: "Alta Books", rating: "4.8", reviews: "58.2k", bg: "linear-gradient(135deg,#a52929,#5a1212)" },
@@ -92,6 +120,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
   const [refreshing, setRefreshing] = useState(false);
   const [isExtractingMetadata, setIsExtractingMetadata] = useState(false);
   const [isResearchingMarket, setIsResearchingMarket] = useState(false);
+  const [confirmedPages, setConfirmedPages] = useState(false);
 
   // ---- Default initial project data ----
   const [projectData, setProjectData] = useState<{
@@ -128,11 +157,11 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
       framework: any;
     } | null;
   }>(() => {
-    const defaultDims = calcDims({ pages: 150, paper: "bw-cream", flap: 70 });
+    const defaultDims = calcDims({ pages: 210, paper: "bw-cream", flap: 70 });
     return {
       bookFileObj: null,
       bookFile: null,
-      pages: 150,
+      pages: 210,
       paper: "bw-cream",
       format: "6x9",
       flap: 70,
@@ -148,8 +177,8 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
       assets: {
         authorPhoto: "",
         isbn: "978-65-01-48854-7",
-        backHook: "Seu livro está pronto, mas a sua capa ainda não vende?",
-        backBody: "Muitos autores cometem o erro clássico de julgar que um excelente conteúdo se vende sozinho. A verdade é direta: a capa é o seu principal ponto de conversão física e digital. É ela que fisga o leitor em milésimos de segundo.",
+        backHook: "",
+        backBody: "Seu livro está pronto, mas a sua capa ainda não vende?\n\nMuitos autores cometem o erro clássico de julgar que um excelente conteúdo se vende sozinho. A verdade é direta: a capa é o seu principal ponto de conversão física e digital. É ela que fisga o leitor em milésimos de segundo.",
         backBullets: [
           "ENTENDA as dinâmicas de cores de alta retenção no mercado editorial moderno.",
           "DESCUBRA o segredo do posicionamento de títulos stacked que convertem cliques.",
@@ -163,7 +192,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
         barcodeImage: "",
         qrcodeImage: ""
       },
-      selectedStyle: "premium",
+      selectedStyle: "minimalist",
       marketResearch: null,
     };
   });
@@ -178,7 +207,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
     };
 
     const computed = calcDims({
-      pages: typeof projectData.pages === 'number' ? projectData.pages : 150,
+      pages: typeof projectData.pages === 'number' ? projectData.pages : 210,
       paper: projectData.paper,
       flap: projectData.flap,
       trim: getTrim(projectData.format)
@@ -215,9 +244,15 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
               subniche: res.data.subniche || prev.analysis.subniche,
             }
           }));
+        } else {
+          console.error("Erro na extração de metadados:", res.error || "Resposta inválida");
+          alert("Aviso: A IA encontrou dificuldades para extrair as informações do manuscrito automaticamente. Você poderá preenchê-las ou editá-las manualmente no próximo passo.");
         }
       })
-      .catch(err => console.error("Error extracting metadata:", err))
+      .catch(err => {
+        console.error("Error extracting metadata:", err);
+        alert("Aviso: Não foi possível conectar ao servidor de IA para ler o manuscrito. Você poderá preencher as informações manualmente no próximo passo.");
+      })
       .finally(() => setIsExtractingMetadata(false));
     }
   }, [activeStep, projectData.bookFileObj]);
@@ -237,7 +272,12 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           'Content-Type': 'application/json',
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
-        body: JSON.stringify({ niche: projectData.analysis.niche })
+        body: JSON.stringify({ 
+          niche: projectData.analysis.niche,
+          title: projectData.analysis.title,
+          subtitle: projectData.analysis.subtitle,
+          author: projectData.analysis.author
+        })
       })
       .then(res => res.json())
       .then(res => {
@@ -350,22 +390,25 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
   // ---- 7-STEP WIZARD ----
   const steps = ["Upload", "Análise", "Nicho", "Assets", "Estilos", "Ajustes", "Pronto!"];
 
-  const buildBook = (): CoverBookData => ({
-    title: projectData.analysis.title,
-    subtitle: projectData.analysis.subtitle,
-    author: projectData.analysis.author.toUpperCase(),
-    publisher: projectData.analysis.publisher,
-    niche: projectData.analysis.niche,
-    isbn: projectData.assets.isbn,
-    backHook: projectData.assets.backHook,
-    backBody: projectData.assets.backBody,
-    backBullets: projectData.assets.backBullets,
-    backCTA: projectData.assets.backCTA,
-    flapHook: projectData.assets.flapHook,
-    flapBody: projectData.assets.flapBody,
-    flapBackBody: projectData.assets.flapBackBody,
-    authorBio: projectData.assets.authorBio,
-  });
+  const buildBook = (): CoverBookData => {
+    const { hook, body } = splitHookAndBody(projectData.assets.backBody);
+    return {
+      title: projectData.analysis.title,
+      subtitle: projectData.analysis.subtitle,
+      author: projectData.analysis.author.toUpperCase(),
+      publisher: projectData.analysis.publisher,
+      niche: projectData.analysis.niche,
+      isbn: projectData.assets.isbn,
+      backHook: hook || projectData.assets.backHook,
+      backBody: body,
+      backBullets: projectData.assets.backBullets,
+      backCTA: projectData.assets.backCTA,
+      flapHook: projectData.assets.flapHook,
+      flapBody: projectData.assets.flapBody,
+      flapBackBody: projectData.assets.flapBackBody,
+      authorBio: projectData.assets.authorBio,
+    };
+  };
 
   const getRenderAssets = (): CoverAssets => ({
     ...projectData.assets,
@@ -411,6 +454,94 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
     } catch (e) {
       console.error(e);
       alert("Erro ao debitar crédito. Tente novamente.");
+    }
+  };
+
+  const handleDownloadPDF = (mode: "full" | "no-flaps") => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Por favor, habilite popups no seu navegador para baixar o arquivo PDF.");
+      return;
+    }
+
+    const containerId = mode === "full" ? "export-high-res-canvas-container" : "export-high-res-canvas-kdp-container";
+    const canvasContainer = document.getElementById(containerId);
+    const canvasNode = canvasContainer?.querySelector(".cover-canvas");
+    if (!canvasNode) {
+      alert("Erro ao preparar o arquivo de exportação. Tente novamente.");
+      return;
+    }
+
+    const clone = canvasNode.cloneNode(true) as HTMLElement;
+    clone.style.transform = "none";
+    clone.style.margin = "0";
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Exportação de Capa - Fábrica de Best Seller</title>
+          <link rel="preconnect" href="https://fonts.googleapis.com">
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+          <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;600;700;800;900&family=Montserrat:wght@400;500;600;700;800;900&family=Bebas+Neue&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+          <style>
+            @page {
+              size: ${mode === "full" ? projectData.dims.totalW : projectData.dims.totalW_noFlap}mm ${projectData.dims.totalH}mm;
+              margin: 0;
+            }
+            body {
+              margin: 0;
+              padding: 0;
+              background: #000;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              min-height: 100vh;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            /* Reset Canvas styles for clean vector print output */
+            .cover-canvas {
+              border: none !important;
+              box-shadow: none !important;
+              border-radius: 0 !important;
+            }
+            .ripped-paper-bar {
+              position: absolute !important;
+              bottom: 0 !important;
+              background: #F5F0E5 !important;
+              color: #1A1408 !important;
+              z-index: 10 !important;
+              display: flex !important;
+              align-items: center !important;
+              justify-content: space-between !important;
+              box-shadow: none !important;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-container">
+            ${clone.outerHTML}
+          </div>
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                window.close();
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const handleDownloadImage = () => {
+    const customBg = projectData.marketResearch?.framework?.backgrounds?.[["minimalist", "illustrated", "realist", "typographic", "abstract"].indexOf(projectData.selectedStyle)] || "";
+    if (customBg) {
+      window.open(customBg, "_blank");
+    } else {
+      alert("Ainda não há nenhuma imagem gerada por IA para esta capa.");
     }
   };
 
@@ -565,6 +696,36 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                 </div>
               </div>
 
+              {/* Glowing Page Confirmation Box */}
+              <div className="mt-6 border border-amber-500/20 bg-amber-500/5 rounded-2xl p-4 space-y-3">
+                <div className="flex gap-3 text-xs text-slate-300 leading-relaxed">
+                  <AlertTriangle size={20} className="text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-[#F5F0E5] block mb-0.5">Confirmação Crítica de Páginas</strong>
+                    A largura da lombada depende 100% da quantidade exata de páginas ({projectData.pages || 0} pág.). Se houver qualquer divergência em relação ao arquivo final de miolo, a gráfica ou o KDP rejeitarão a capa!
+                  </div>
+                </div>
+                
+                {projectData.pages && (projectData.pages < 100 || projectData.pages > 350) && (
+                  <div className="text-[11px] text-red-400 bg-red-950/20 border border-red-500/25 rounded-xl p-2.5 flex items-start gap-1.5 leading-normal">
+                    <AlertTriangle size={14} className="shrink-0 mt-0.5" />
+                    Atenção: A média padrão de livros na Fábrica é ~210 páginas. A contagem de {projectData.pages} páginas está muito fora da média esperada! Certifique-se de que está correta.
+                  </div>
+                )}
+
+                <label className="flex items-start gap-2.5 cursor-pointer select-none text-[11px] text-slate-300 pt-1">
+                  <input 
+                    type="checkbox" 
+                    checked={confirmedPages} 
+                    onChange={e => setConfirmedPages(e.target.checked)}
+                    className="mt-0.5 w-3.5 h-3.5 accent-amber-500 rounded bg-slate-950 border-slate-800 cursor-pointer"
+                  />
+                  <span>
+                    Confirmo que a quantidade de páginas está 100% exata e confere com a diagramação final.
+                  </span>
+                </label>
+              </div>
+
               <div className="alert bg-amber-500/5 border-amber-500/10 rounded-2xl p-4 flex gap-3 text-xs text-slate-400 mt-6 leading-relaxed">
                 <Info size={16} className="text-amber-500 shrink-0 mt-0.5" />
                 <p>
@@ -577,7 +738,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           <div className="flex justify-end pt-4 border-t border-slate-900 mt-6">
             <button 
               onClick={() => setActiveStep(1)} 
-              disabled={!projectData.bookFile} 
+              disabled={!projectData.bookFile || !confirmedPages} 
               className="btn btn-gold px-8 py-3 text-slate-950 font-bold uppercase tracking-widest text-xs disabled:opacity-50"
             >
               Iniciar Análise <ArrowRight size={14} className="ml-1" />
@@ -746,21 +907,11 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="field">
-                <label className="text-xs text-slate-400">Frase de Efeito Contracapa (Hook)</label>
-                <input 
-                  type="text" 
-                  value={projectData.assets.backHook} 
-                  onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, backHook: e.target.value } }))}
-                  className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5"
-                />
-              </div>
-
-              <div className="field">
-                <label className="text-xs text-slate-400">Texto Principal Contracapa</label>
+                <label className="text-xs text-slate-400">Texto da Contra Capa</label>
                 <textarea 
                   value={projectData.assets.backBody} 
                   onChange={e => setProjectData(prev => ({ ...prev, assets: { ...prev.assets, backBody: e.target.value } }))}
-                  className="textarea bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5 h-24"
+                  className="textarea bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-4 py-2.5 h-44"
                 />
               </div>
 
@@ -911,7 +1062,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           <div className="max-w-xl">
             <h3 className="text-lg font-bold text-[#F5F0E5] mb-2">Escolha o Estilo Visual da Capa</h3>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Criamos 3 estilos únicos baseados nos best-sellers do nicho comercial do seu livro. Clique no seu favorito para continuar.
+              Criamos 5 estilos de capas profissionais baseados nas tendências mais fortes do mercado comercial. Clique no seu favorito para continuar.
             </p>
           </div>
 
@@ -947,10 +1098,11 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                           dims={projectData.dims} 
                           styleKey={key} 
                           mode="ebook" 
-                          pxPerMM={0.8} 
+                          pxPerMM={2.4} 
                           showGuides={false}
                           assets={getRenderAssets()}
                           customBgImg={aiBackground}
+                          colors={projectData.marketResearch?.framework?.colors}
                         />
                       </div>
                     </div>
@@ -1005,7 +1157,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                 <p className="text-xs text-slate-500 leading-relaxed mt-1.5 mb-6">Perfeito para impressão editorial com orelhas completas de {projectData.flap} mm.</p>
               </div>
               <button 
-                onClick={() => alert("Seu arquivo de alta qualidade está sendo preparado para download...")}
+                onClick={() => handleDownloadPDF("full")}
                 className="btn btn-sm btn-gold font-bold uppercase tracking-widest text-xs w-full mt-auto"
               >
                 <Download size={14} className="mr-1" /> Baixar PDF
@@ -1019,7 +1171,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                 <p className="text-xs text-slate-500 leading-relaxed mt-1.5 mb-6">Ideal para publicação sob demanda na Amazon KDP com lombada exata.</p>
               </div>
               <button 
-                onClick={() => alert("Seu arquivo sem orelhas está sendo preparado para download...")}
+                onClick={() => handleDownloadPDF("no-flaps")}
                 className="btn btn-sm btn-gold font-bold uppercase tracking-widest text-xs w-full mt-auto"
               >
                 <Download size={14} className="mr-1" /> Baixar PDF
@@ -1033,7 +1185,7 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
                 <p className="text-xs text-slate-500 leading-relaxed mt-1.5 mb-6">Projetada especificamente para plataformas digitais e campanhas promocionais.</p>
               </div>
               <button 
-                onClick={() => alert("A imagem da capa frente está sendo preparada para download...")}
+                onClick={handleDownloadImage}
                 className="btn btn-sm btn-gold font-bold uppercase tracking-widest text-xs w-full mt-auto"
               >
                 <Download size={14} className="mr-1" /> Baixar Imagem
@@ -1054,6 +1206,36 @@ export default function CoverGenerator({ credits, userEmail, onRefresh }: CoverG
           </div>
         </div>
       )}
+
+      {/* Hidden high-res canvas elements for high-quality PDF print generation (~300 DPI at pxPerMM=3.54) */}
+      <div style={{ display: 'none' }}>
+        <div id="export-high-res-canvas-container">
+          <CoverRender
+            book={buildBook()}
+            dims={projectData.dims}
+            styleKey={projectData.selectedStyle}
+            mode="full"
+            pxPerMM={3.54}
+            showGuides={false}
+            assets={getRenderAssets()}
+            customBgImg={projectData.marketResearch?.framework?.backgrounds?.[["minimalist", "illustrated", "realist", "typographic", "abstract"].indexOf(projectData.selectedStyle)]}
+            colors={projectData.marketResearch?.framework?.colors}
+          />
+        </div>
+        <div id="export-high-res-canvas-kdp-container">
+          <CoverRender
+            book={buildBook()}
+            dims={projectData.dims}
+            styleKey={projectData.selectedStyle}
+            mode="no-flaps"
+            pxPerMM={3.54}
+            showGuides={false}
+            assets={getRenderAssets()}
+            customBgImg={projectData.marketResearch?.framework?.backgrounds?.[["minimalist", "illustrated", "realist", "typographic", "abstract"].indexOf(projectData.selectedStyle)]}
+            colors={projectData.marketResearch?.framework?.colors}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -1142,115 +1324,396 @@ function Step6Editor({ data, setData, onBack, onNext, buildBook }: {
   const [outputMode, setOutputMode] = useState<"full" | "no-flaps" | "ebook">("full");
   const [showGuides, setShowGuides] = useState(true);
 
+  // OpenAI API Key Management (Loaded from env variables for security)
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
+
+  // Individual generation states for the 3 cover models
+  const [generatingStates, setGeneratingStates] = useState<boolean[]>([false, false, false, false, false]);
+  const [generationLogs, setGenerationLogs] = useState<string[][]>([[], [], [], [], []]);
+
+  const getStyleKeyByIndex = (index: number): string => {
+    const keys = ["minimalist", "illustrated", "realist", "typographic", "abstract"];
+    return keys[index];
+  };
+
+  const getStyleNameByIndex = (index: number): string => {
+    const names = [
+      "Minimalista Elegante",
+      "Ilustrado Vetorial",
+      "Fotográfico Realista",
+      "Tipográfico Expressivo",
+      "Abstrato Conceitual"
+    ];
+    return names[index];
+  };
+
+  const addLog = (index: number, msg: string) => {
+    const timestamp = new Date().toLocaleTimeString();
+    setGenerationLogs(prev => {
+      const copy = [...prev];
+      copy[index] = [...copy[index], `[${timestamp}] ${msg}`];
+      return copy;
+    });
+  };
+
+  const handleGenerateArtwork = async (index: number) => {
+    const styleKey = getStyleKeyByIndex(index);
+    const styleName = getStyleNameByIndex(index);
+    const book = buildBook();
+
+    // Reset log and set generating
+    setGenerationLogs(prev => {
+      const copy = [...prev];
+      copy[index] = [];
+      return copy;
+    });
+    setGeneratingStates(prev => {
+      const copy = [...prev];
+      copy[index] = true;
+      return copy;
+    });
+
+    addLog(index, `Iniciando geração da arte para o modelo: ${styleName}...`);
+    addLog(index, `Identificando essência da obra... Nicho: "${book.niche || 'Geral'}"`);
+
+    // Tailored high-end prompts for widescreen full book covers (ratio ~1.75 matches 1792x1024 perfectly)
+    let prompt = "";
+    if (styleKey === "minimalist") {
+      prompt = `An ultra-minimalist, high-end professional widescreen book cover background. Topic: ${book.niche || 'success and personal development'}. Concept: ${book.title}. Elements: Clean flat off-white paper texture background, minimal thin gold geometric wireframe lines, elegant luxury aesthetic. Less is more, high-end design, aspect ratio 16:9, widescreen, NO text, NO book mockup, NO fonts, NO human figures.`;
+    } else if (styleKey === "illustrated") {
+      prompt = `A modern professional illustrated flat design widescreen book cover background. Topic: ${book.niche || 'young fiction and creative writing'}. Concept: ${book.title}. Elements: Widescreen flat vector graphic illustration, clean solid colors, two-dimensional artwork representing the core concept, bold graphical shapes, contemporary editorial illustration style. 2D illustration, no gradients, aspect ratio 16:9, widescreen, NO text, NO book mockup, NO fonts, NO human figures.`;
+    } else if (styleKey === "realist") {
+      prompt = `A dramatic, high-contrast cinematic professional widescreen photographic book cover background. Topic: ${book.niche || 'biographies, thriller and non-fiction'}. Concept: ${book.title}. Elements: Cinematic realistic high-quality photography, rich atmosphere, mysterious landscape, high-contrast dramatic studio lighting, professional color grade. Aspect ratio 16:9, widescreen, NO text, NO book mockup, NO fonts, NO human figures.`;
+    } else if (styleKey === "typographic") {
+      prompt = `A bold, high-contrast abstract textures widescreen book cover background. Topic: ${book.niche || 'essays and poetry'}. Concept: ${book.title}. Elements: Raw grunge texture, dark concrete plaster walls, vibrant color splash overlay, energetic artistic backdrop designed specifically for large typography overlay. Aspect ratio 16:9, widescreen, NO text, NO book mockup, NO fonts, NO human figures.`;
+    } else {
+      prompt = `A stunning, abstract conceptual widescreen professional book cover background. Topic: ${book.niche || 'science fiction, dystopia and psychology'}. Concept: ${book.title}. Elements: Flowing 3D abstract geometric shapes, organic glowing neon lines, digital artwork showing atmosphere and mood, highly textured depth. Aspect ratio 16:9, widescreen, NO text, NO book mockup, NO fonts, NO human figures.`;
+    }
+
+    addLog(index, "Engenharia de prompt ativa para DALL-E 3.");
+    addLog(index, `Enviando requisição widescreen (1792x1024 px) de alta qualidade...`);
+
+    try {
+      let response = await fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+          model: "dall-e-3",
+          prompt: prompt,
+          n: 1,
+          size: "1792x1024",
+          quality: "standard"
+        })
+      });
+
+      let resJson = await response.json();
+
+      if (resJson.error) {
+        const errorMsg = resJson.error.message || "";
+        if (errorMsg.includes("does not exist") || errorMsg.includes("dall-e-3")) {
+          addLog(index, "⚠️ DALL-E 3 indisponível nesta chave (Nível Gratuito Tier 0 detectado).");
+          addLog(index, "💡 Dica: Deposite $5 na OpenAI Platform para liberar o DALL-E 3 Widescreen.");
+          addLog(index, "🔄 Fazendo fallback automático para DALL-E 2 (1024x1024 px)...");
+
+          response = await fetch("https://api.openai.com/v1/images/generations", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+              model: "dall-e-2",
+              prompt: prompt,
+              n: 1,
+              size: "1024x1024"
+            })
+          });
+          resJson = await response.json();
+          if (resJson.error) {
+            throw new Error(resJson.error.message || "Erro na geração do DALL-E 2.");
+          }
+        } else {
+          throw new Error(errorMsg || "Erro desconhecido retornado pela OpenAI.");
+        }
+      }
+
+      const imageUrl = resJson.data?.[0]?.url;
+      if (!imageUrl) {
+        throw new Error("Nenhuma imagem foi retornada pela API.");
+      }
+
+      addLog(index, "Imagem gerada com sucesso pela IA!");
+      addLog(index, "Atualizando fundo contínuo no sistema...");
+
+      // Update backgrounds array in data.marketResearch.framework.backgrounds
+      const backgroundsSrc = data.marketResearch?.framework?.backgrounds || [];
+      const updatedBackgrounds = [...backgroundsSrc];
+      while (updatedBackgrounds.length < 5) updatedBackgrounds.push("");
+      updatedBackgrounds[index] = imageUrl;
+
+      setData({
+        ...data,
+        selectedStyle: styleKey, // auto-select the style that was just generated!
+        marketResearch: {
+          ...data.marketResearch,
+          framework: {
+            ...(data.marketResearch?.framework || {}),
+            backgrounds: updatedBackgrounds
+          }
+        }
+      });
+
+      addLog(index, "Fundo contínuo incorporado perfeitamente!");
+    } catch (err: any) {
+      console.error(err);
+      addLog(index, `CRITICAL: Falha na geração por IA: ${err.message || err}`);
+      alert(`Falha na geração: ${err.message || err}`);
+    } finally {
+      setGeneratingStates(prev => {
+        const copy = [...prev];
+        copy[index] = false;
+        return copy;
+      });
+    }
+  };
+
+  const getRenderAssets = () => ({
+    ...data.assets,
+    barcode: data.assets.barcodeImage,
+    qrcode: data.assets.qrcodeImage,
+  });
+
   return (
-    <div className="space-y-6 animate-fadeIn">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h3 className="text-lg font-bold text-[#F5F0E5] mb-1">Editor & Ajustes Finos</h3>
-          <p className="text-slate-400 text-xs">Customize textos e selecione guias de corte reais para impressão comercial.</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <button 
-            onClick={() => setOutputMode("full")} 
-            className={`btn btn-sm font-bold text-xs uppercase tracking-widest ${outputMode === 'full' ? 'btn-gold text-slate-950' : 'btn-outline text-slate-400'}`}
-          >
-            Capa Inteira + Orelhas
-          </button>
-          <button 
-            onClick={() => setOutputMode("no-flaps")} 
-            className={`btn btn-sm font-bold text-xs uppercase tracking-widest ${outputMode === 'no-flaps' ? 'btn-gold text-slate-950' : 'btn-outline text-slate-400'}`}
-          >
-            Lombada KDP
-          </button>
-          <button 
-            onClick={() => setOutputMode("ebook")} 
-            className={`btn btn-sm font-bold text-xs uppercase tracking-widest ${outputMode === 'ebook' ? 'btn-gold text-slate-950' : 'btn-outline text-slate-400'}`}
-          >
-            Ebook Frente
-          </button>
+    <div className="space-y-8 animate-fadeIn text-left">
+      {/* Header Panel */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-950/40 p-6 rounded-3xl border border-slate-900 shadow-xl gap-4">
+        <div className="space-y-2">
+          <span className="text-amber-500 font-mono text-xs uppercase tracking-widest flex items-center gap-1.5">
+            <Sparkles size={14} className="animate-pulse" /> Passo 6 de 7 · Ajustes & Geração por IA
+          </span>
+          <h3 className="text-2xl font-black text-[#F5F0E5] tracking-tight">Geração das 5 Capas Alternativas</h3>
+          <p className="text-slate-400 text-sm leading-relaxed max-w-2xl">
+            Ative a inteligência artificial para criar <strong>5 artes de fundos contínuos e sem emendas</strong> exclusivos para cada modelo visual, cobrindo perfeitamente a frente, orelhas, lombada e contra-capa.
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-        {/* Editor Inputs Panel */}
-        <div className="space-y-4">
-          <div className="card border-slate-900 bg-slate-950/20 p-5 rounded-2xl space-y-4">
-            <h4 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest border-b border-slate-900 pb-2">Visual do Título</h4>
-            
-            <div className="field">
-              <label className="text-[10px] text-slate-500">Título</label>
-              <input 
-                type="text" 
-                value={data.analysis.title} 
-                onChange={e => setData({ ...data, analysis: { ...data.analysis, title: e.target.value } })}
-                className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-3 py-2 text-xs"
-              />
-            </div>
+      {/* Grid of the 5 Cover Models (Artes com Orelhas) */}
+      <div>
+        <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-widest mb-4">
+          Modelos de Capas Geradas com Orelhas
+        </h4>
 
-            <div className="field">
-              <label className="text-[10px] text-slate-500">Subtítulo</label>
-              <input 
-                type="text" 
-                value={data.analysis.subtitle} 
-                onChange={e => setData({ ...data, analysis: { ...data.analysis, subtitle: e.target.value } })}
-                className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-3 py-2 text-xs"
-              />
-            </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+          {[0, 1, 2, 3, 4].map(index => {
+            const styleKey = getStyleKeyByIndex(index);
+            const styleName = getStyleNameByIndex(index);
+            const s = STYLES[styleKey];
+            const isSelected = data.selectedStyle === styleKey;
+            const customBg = data.marketResearch?.framework?.backgrounds?.[index];
+            const isGenerating = generatingStates[index];
+            const logs = generationLogs[index];
 
-            <div className="field">
-              <label className="text-[10px] text-slate-500">Autor</label>
-              <input 
-                type="text" 
-                value={data.analysis.author} 
-                onChange={e => setData({ ...data, analysis: { ...data.analysis, author: e.target.value } })}
-                className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-3 py-2 text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="card border-slate-900 bg-slate-950/20 p-5 rounded-2xl space-y-4">
-            <h4 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest border-b border-slate-900 pb-2">Controles das Guias</h4>
-            
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-400">Mostrar guias de corte (Bleed)</span>
-              <button 
-                onClick={() => setShowGuides(prev => !prev)}
-                className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-200 outline-none ${showGuides ? 'bg-amber-500' : 'bg-slate-800'}`}
+            return (
+              <div 
+                key={styleKey}
+                onClick={() => {
+                  if (!isGenerating) {
+                    setData({ ...data, selectedStyle: styleKey });
+                  }
+                }}
+                className={`cover-option-card card cursor-pointer p-5 flex flex-col justify-between border-slate-900/80 transition-all duration-300 ${
+                  isSelected 
+                    ? 'ring-2 ring-amber-500 border-transparent bg-slate-900/60 shadow-2xl scale-[1.01]' 
+                    : 'bg-slate-950/20 hover:border-slate-800 hover:bg-slate-900/30'
+                }`}
               >
-                <div className={`bg-slate-950 w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${showGuides ? 'translate-x-4' : ''}`} />
-              </button>
-            </div>
+                {isSelected && <div className="badge-selected">SELECIONADO</div>}
+
+                {/* Top Info info */}
+                <div className="space-y-1">
+                  <h5 className="font-black text-base text-[#F5F0E5]">{styleName}</h5>
+                  <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed min-h-[32px]">{s.note}</p>
+                </div>
+
+                {/* Miniature Canvas Frame with Flaps */}
+                <div className="flex justify-center w-full my-4 bg-slate-950/50 rounded-xl p-3 border border-slate-900 relative overflow-hidden select-none min-h-[140px] items-center">
+                  <div className="scale-[0.14] md:scale-[0.16] origin-center shrink-0">
+                    <CoverRender 
+                      book={buildBook()} 
+                      dims={data.dims} 
+                      styleKey={styleKey} 
+                      mode="full" 
+                      pxPerMM={1.2} 
+                      showGuides={false}
+                      assets={getRenderAssets()}
+                      customBgImg={customBg}
+                      colors={data.marketResearch?.framework?.colors}
+                    />
+                  </div>
+                </div>
+
+                {/* AI Generation State or Logs */}
+                <div className="space-y-3 mt-2">
+                  {logs.length > 0 && (
+                    <div className="bg-slate-950 border border-slate-900 rounded-lg p-2.5 font-mono text-[9px] max-h-24 overflow-y-auto space-y-1">
+                      {logs.map((logLine, idx) => (
+                        <div key={idx} className="text-slate-400 leading-normal">{logLine}</div>
+                      ))}
+                    </div>
+                  )}
+
+                  {isGenerating ? (
+                    <div className="flex items-center justify-center gap-2 py-2 text-xs font-mono text-amber-500 font-bold bg-amber-500/5 rounded-xl border border-amber-500/10">
+                      <RefreshCw className="animate-spin" size={14} /> GURANDO ARTE COM IA...
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation(); // prevent select click
+                        handleGenerateArtwork(index);
+                      }}
+                      className={`btn btn-sm w-full font-bold uppercase tracking-widest text-[10px] py-2.5 ${
+                        customBg 
+                          ? 'btn-outline border-emerald-500/30 text-emerald-400 hover:text-emerald-300' 
+                          : 'btn-gold shadow-md'
+                      }`}
+                    >
+                      <Sparkles size={12} className="mr-1" />
+                      {customBg ? 'Regerar com IA (Widescreen)' : 'Gerar Arte com IA (DALL-E)'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Tweak Details and Large Interactive Preview */}
+      <div className="border-t border-slate-900 pt-8 space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h4 className="text-lg font-black text-[#F5F0E5]">
+              Ajustes de Texto & Visualização Dinâmica
+            </h4>
+            <p className="text-slate-400 text-xs mt-0.5">
+              Refine a tipografia e visualize a capa em diferentes formatos de exportação.
+            </p>
+          </div>
+
+          {/* Export / Visual Modes toggle */}
+          <div className="flex flex-wrap gap-2">
+            <button 
+              onClick={() => setOutputMode("full")} 
+              className={`btn btn-sm font-bold text-[10px] uppercase tracking-widest py-2 px-4 rounded-xl ${outputMode === 'full' ? 'btn-gold text-slate-950' : 'btn-outline text-slate-400'}`}
+            >
+              Capa Inteira + Orelhas
+            </button>
+            <button 
+              onClick={() => setOutputMode("no-flaps")} 
+              className={`btn btn-sm font-bold text-[10px] uppercase tracking-widest py-2 px-4 rounded-xl ${outputMode === 'no-flaps' ? 'btn-gold text-slate-950' : 'btn-outline text-slate-400'}`}
+            >
+              Lombada KDP (Sem Orelhas)
+            </button>
+            <button 
+              onClick={() => setOutputMode("ebook")} 
+              className={`btn btn-sm font-bold text-[10px] uppercase tracking-widest py-2 px-4 rounded-xl ${outputMode === 'ebook' ? 'btn-gold text-slate-950' : 'btn-outline text-slate-400'}`}
+            >
+              Ebook Frente
+            </button>
           </div>
         </div>
 
-        {/* Live Canvas Preview Panel */}
-        <div className="xl:col-span-2 flex flex-col items-center justify-center p-6 bg-slate-950/30 border border-slate-900 rounded-3xl min-h-[480px] overflow-hidden relative">
-          <div className="absolute top-4 left-4 text-[10px] text-slate-500 uppercase font-mono flex items-center gap-1.5">
-            <Eye size={12} className="text-amber-500" /> Pré-Visualização Dinâmica em Tempo Real
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+          {/* Left Panel: Text Inputs */}
+          <div className="space-y-4">
+            <div className="card border-slate-900 bg-slate-950/20 p-5 rounded-2xl space-y-4">
+              <h5 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest border-b border-slate-900 pb-2">
+                Tipografia da Capa
+              </h5>
+              
+              <div className="field">
+                <label className="text-[10px] text-slate-500">Título Principal</label>
+                <input 
+                  type="text" 
+                  value={data.analysis.title} 
+                  onChange={e => setData({ ...data, analysis: { ...data.analysis, title: e.target.value } })}
+                  className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-3 py-2 text-xs"
+                />
+              </div>
+
+              <div className="field">
+                <label className="text-[10px] text-slate-500">Subtítulo do Livro</label>
+                <input 
+                  type="text" 
+                  value={data.analysis.subtitle} 
+                  onChange={e => setData({ ...data, analysis: { ...data.analysis, subtitle: e.target.value } })}
+                  className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-3 py-2 text-xs"
+                />
+              </div>
+
+              <div className="field">
+                <label className="text-[10px] text-slate-500">Nome do Autor</label>
+                <input 
+                  type="text" 
+                  value={data.analysis.author} 
+                  onChange={e => setData({ ...data, analysis: { ...data.analysis, author: e.target.value } })}
+                  className="input bg-slate-900 border-slate-800 text-[#F5F0E5] rounded-xl px-3 py-2 text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Guides Panel */}
+            <div className="card border-slate-900 bg-slate-950/20 p-5 rounded-2xl space-y-4">
+              <h5 className="text-xs font-mono font-bold text-amber-500 uppercase tracking-widest border-b border-slate-900 pb-2">
+                Guias Técnicos
+              </h5>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">Mostrar guias de corte & dobras</span>
+                <button 
+                  onClick={() => setShowGuides(prev => !prev)}
+                  className={`w-10 h-6 flex items-center rounded-full p-1 transition-colors duration-200 outline-none ${showGuides ? 'bg-amber-500' : 'bg-slate-800'}`}
+                >
+                  <div className={`bg-slate-950 w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${showGuides ? 'translate-x-4' : ''}`} />
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-500 leading-normal">
+                As guias pontilhadas azuis e vermelhas demarcam sangria (bleed), dobras e área de segurança do KDP. Elas desaparecem na exportação final.
+              </p>
+            </div>
           </div>
 
-          {/* Scaled Wrapper to fit within viewport dynamically */}
-          <div className="scale-75 md:scale-[0.85] origin-center max-w-full overflow-x-auto p-4 flex justify-center">
-            <CoverRender 
-              book={buildBook()} 
-              dims={data.dims} 
-              styleKey={data.selectedStyle} 
-              mode={outputMode} 
-              pxPerMM={0.8} 
-              showGuides={showGuides}
-              assets={{
-                ...data.assets,
-                barcode: data.assets.barcodeImage,
-                qrcode: data.assets.qrcodeImage
-              }}
-              customBgImg={data.marketResearch?.framework?.backgrounds?.[Object.keys(STYLES).indexOf(data.selectedStyle)]}
-            />
+          {/* Right Panel: Large Interactive Preview */}
+          <div className="xl:col-span-2 flex flex-col items-center justify-center p-6 bg-slate-950/30 border border-slate-900 rounded-3xl min-h-[500px] overflow-hidden relative">
+            <div className="absolute top-4 left-4 text-[10px] text-slate-500 uppercase font-mono flex items-center gap-1.5">
+              <Eye size={12} className="text-amber-500" /> Pré-Visualização Dinâmica em Tempo Real
+            </div>
+
+            {/* Scaled Wrapper to fit dynamically */}
+            <div className="scale-75 md:scale-[0.85] origin-center max-w-full overflow-x-auto p-4 flex justify-center">
+              <CoverRender 
+                book={buildBook()} 
+                dims={data.dims} 
+                styleKey={data.selectedStyle} 
+                mode={outputMode} 
+                pxPerMM={0.8} 
+                showGuides={showGuides}
+                assets={getRenderAssets()}
+                customBgImg={data.marketResearch?.framework?.backgrounds?.[["minimalist", "illustrated", "realist", "typographic", "abstract"].indexOf(data.selectedStyle)]}
+                colors={data.marketResearch?.framework?.colors}
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="flex justify-between items-center pt-4 border-t border-slate-900 mt-6">
+      {/* Footer Navigation Actions */}
+      <div className="flex justify-between items-center pt-6 border-t border-slate-900 mt-6">
         <button onClick={onBack} className="btn btn-outline text-slate-400">
           <ArrowLeft size={14} className="mr-1" /> Voltar
         </button>
@@ -1261,3 +1724,4 @@ function Step6Editor({ data, setData, onBack, onNext, buildBook }: {
     </div>
   );
 }
+

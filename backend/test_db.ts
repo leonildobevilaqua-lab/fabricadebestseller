@@ -1,6 +1,7 @@
-import { getVal } from './src/services/db.service';
 import dotenv from 'dotenv';
 dotenv.config();
+
+import { getVal } from './src/services/db.service';
 
 async function test() {
     console.log("Testing getVal('/leads')...");

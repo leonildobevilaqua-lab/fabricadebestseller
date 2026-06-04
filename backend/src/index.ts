@@ -1,10 +1,10 @@
-import app from './app';
 import dotenv from 'dotenv';
+dotenv.config();
+// Trigger watch reload to load new API keys from .env
+import app from './app';
 import fs from 'fs';       // Adicionado para salvar o arquivo
 import bcrypt from 'bcrypt'; // Adicionado para criptografar a senha
 import path from 'path';     // Adicionado para achar a pasta certa
-
-dotenv.config();
 
 // OVERRIDE: Garantir que o ambiente de produção seja mantido a menos que explicitamente sandbox
 process.env.ASAAS_ENV = process.env.ASAAS_ENV || 'production';
@@ -12,7 +12,7 @@ process.env.ASAAS_ENV = process.env.ASAAS_ENV || 'production';
 const PORT = process.env.PORT || 3005;
 
 // --- INICIO DO BLOCO SALVA-VIDAS (CHAVEIRO MESTRE) ---
-import { setVal, getVal, pushVal } from './services/db.service';
+import { setVal, getVal, pushVal, getDatabasePath } from './services/db.service';
 
 // Inicializa a configuração do Asaas a partir do DB
 (async () => {
@@ -60,7 +60,7 @@ app.get('/reset-admin-force', async (req, res) => {
 
 app.get('/migrate-full-supabase', async (req, res) => {
     try {
-        const dbPath = path.resolve(process.cwd(), 'database.json');
+        const dbPath = getDatabasePath();
         if (!fs.existsSync(dbPath)) return res.status(404).json({ error: "database.json not found" });
 
         const data = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));

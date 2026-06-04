@@ -1,12 +1,12 @@
 {
   "providers": {
-    "gemini": "AIzaSyBh4hJ7DtY1TMqXDhvKA1wSkehC_rgZZNU",
+    "gemini": "",
     "openai": "",
     "anthropic": "",
     "deepseek": "",
     "llama": ""
   },
-  "activeProvider": "gemini",
+  "activeProvider": "openai",
   "admin": {
     "user": "contato@leonildobevilaqua.com.br",
     "pass": "Leo129520-*-"

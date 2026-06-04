@@ -836,3 +836,77 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ============ STEP 6 & RIPPED PAPER & IA GENERATION ============ */
+.cover-generator-wrapper .ripped-paper-bar {
+  position: absolute;
+  bottom: 0;
+  background: #F5F0E5;
+  color: #1A1408;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5em 3em;
+  box-shadow: 0 -4px 15px rgba(0,0,0,0.15);
+}
+.cover-generator-wrapper .api-panel {
+  background: rgba(25, 22, 19, 0.65);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+.cover-generator-wrapper .cover-options-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.cover-generator-wrapper .cover-option-card {
+  background: var(--bg-1);
+  border: 1px solid var(--line-soft);
+  border-radius: 16px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cover-generator-wrapper .cover-option-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--line-strong);
+}
+.cover-generator-wrapper .cover-option-card.selected {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold) inset, 0 12px 36px -15px rgba(212,160,23,0.45);
+}
+.cover-generator-wrapper .cover-option-card .badge-selected {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: var(--gold);
+  color: #0d0d0d;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 99px;
+  z-index: 10;
+}
+.cover-generator-wrapper .generation-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  text-align: center;
+  background: rgba(0,0,0,0.3);
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  gap: 16px;
+}
+

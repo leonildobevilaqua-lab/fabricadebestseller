@@ -27,13 +27,18 @@ REGRAS CRÍTICAS PARA ESCRITA HUMANA (AUTOR DE ELITE - 0% IA):
 1. VARIABILIDADE RADICAL (Burstiness): Alterne frases curtas e impactantes com frases longas e rítmicas. Use fragmentos de frases para ênfase emocional. NUNCA tenha dois parágrafos seguidos com a mesma estrutura gramatical ou número similar de frases.
 2. ZERO REPETIÇÃO E SUPRESSÃO DE ECOS: É expressamente proibido repetir a mesma estrutura de frase, conectivos ou palavras-chave em parágrafos próximos. Se usou um adjetivo ou metáfora forte, não a repita em pelo menos 10 páginas. Mantenha o vocabulário em constante expansão.
 3. PERPLEXIDADE ALTA: Use vocabulário dinâmico, metáforas raras e analogias específicas do nicho. Evite termos genéricos. Se o assunto é técnico, use a gíria do especialista.
-4. CONEXÃO HUMANA E "VOZ": Escreva como se estivesse em uma conversa privada e intensa com o leitor. Use a primeira pessoa (Eu ou Nós). Insira "Gatilhos de Conversa": perguntas retóricas provocativas, interjeições e expressões naturais de fala ("Olha só...", "Na verdade,", "Convenhamos:").
-5. "RUÍDO HUMANO": Introduza imperfeições controladas, hesitações e assinaturas de autor. Evite a "perfeição" sintética e monótona. Use expressões idiomáticas reais do idioma.
-6. LISTA NEGRA DE TRANSIÇÕES IA (TERMINANTEMENTE PROIBIDO): 
-   - NUNCA use: "Em conclusão", "Além disso", "É importante notar", "Consequentemente", "Portanto", "Em resumo", "Por fim", "Dito isso", "Vale ressaltar", "Neste capítulo", "Como mencionado anteriormente".
-   - SUBSTITUA POR: "Mas aqui está o pulo do gato...", "Honestamente,", "O que isso muda na sua vida?", "O ponto cego aqui é...", "Pense comigo:", "A verdade nua e crua é...".
-7. SHOW, DON'T TELL: NUNCA descreva uma emoção ou resultado de forma abstrata. Use cenas, reações viscerais e detalhes sensoriais.
-8. SEM RESUMOS ROBÓTICOS: Não termine seções ou capítulos resumindo o que acabou de ser dito de forma escolar. Termine com um gancho emocional ou uma provocação que force o leitor a agir.
+4. CONEXÃO HUMANA E "VOZ" COM EQUILÍBRIO: Escreva como se estivesse em uma conversa privada e intensa com o leitor. Use a primeira pessoa (Eu ou Nós) com moderação e equilíbrio, variando as estruturas para evitar que parágrafos seguidos comecem com "Nós..." ou "A gente...".
+5. PONTUAÇÃO NATURAL E SEM TRAÇOS:
+   - TERMINANTEMENTE PROIBIDO o uso de travessões ou traços (-, –, —) para explicações intercaladas ou orações parentéticas (ex: "serotonina – neurotransmissor que te faz sentir bem – é produzida..."). Use vírgulas ou parênteses, ou reescreva a frase de forma contínua e fluida. Hifens são permitidos APENAS para palavras compostas legítimas da língua portuguesa (ex: "bem-estar", "segunda-feira").
+   - EVITE DOIS PONTOS (:): Nunca use dois pontos em títulos, subtítulos ou transições de capítulos. Use-os apenas quando for gramaticalmente indispensável (ex: citações diretas).
+6. BANIMENTO DE TRANSIÇÕES E EXPRESSÕES REPETITIVAS (CLICHÊS IA):
+   - NUNCA use marcadores de IA comuns: "Em conclusão", "Além disso", "Além do mais", "É importante notar", "Consequentemente", "Portanto", "Em resumo", "Por fim", "Dito isso", "Vale ressaltar", "Neste capítulo", "Como mencionado anteriormente".
+   - NUNCA use as expressões repetitivas frequentemente detectadas como marcas de IA: "Sendo sincero", "Na real", "O detalhe é que", "Pense comigo", "Onde isso nos leva", "Onde isso nos leva, então", "Mas aqui está o pulo do gato", "Honestamente", "A verdade nua e crua é", "Segura essa", "Do nada".
+   - SUBSTITUA POR transições narrativas fluidas e elegantes: "A questão central passa a ser...", "O próximo desafio é...", "Existe um ponto ainda mais importante...", "É aqui que surge a pergunta decisiva...", "Com isso em mente, percebemos que...".
+7. FRASES COMPLETAS E SEM FRAGMENTOS: É proibido começar sentenças isoladas com preposições como "A um...", "A uma...", "Ao...", "À...", "De um...", "De uma...". Toda sentença deve ser completa (sujeito + verbo). Substitua construções truncadas por sentenças inteiras (ex: em vez de "A uma compreensão mais profunda...", escreva "Isso nos conduz a uma compreensão mais profunda..." ou "O resultado é uma compreensão mais profunda...").
+8. CORREÇÃO DE ERROS DE IA COMUNS: Evite erros de digitação recorrentes na geração por IA como "om ombros" (escreva "ombros") e erros de separação verbal como "pro age" (escreva "proage" ou "atua de forma proativa").
+9. SHOW, DON'T TELL: NUNCA descreva uma emoção ou resultado de forma abstrata. Use cenas, reações viscerais e detalhes sensoriais.
+10. SEM RESUMOS ROBÓTICOS: Não termine seções ou capítulos resumindo o que acabou de ser dito de forma escolar. Termine com um gancho emocional ou uma provocação que force o leitor a agir.
 `;
 
 const FICTION_BLOCKS = [
@@ -232,6 +237,7 @@ REGRAS MASTER PARA TÍTULOS:
 3. PADRÃO CINEMATOGRÁFICO: Imagine o título em um pôster de cinema ou em uma vitrine de livraria de prestígio.
 4. SONORIDADE: O título deve ser fácil de lembrar e "gostoso" de falar.
 5. ADAPTAÇÃO TOTAL: O título deve se moldar perfeitamente à ideia central do cliente, sem ser fixo ou robótico.
+6. PROIBIDO DOIS PONTOS OU TRAÇOS: Nunca coloque dois pontos (:) ou travessões/traços (-, –, —) dentro do título ou do subtítulo. Mantenha os campos "title" e "subtitle" limpos e sem esses caracteres.
 
 REGRAS MASTER PARA SUBTÍTULOS:
 1. MESTRIA LITERÁRIA: O subtítulo não é um slogan de vendas barato. Ele deve ser uma frase poderosa que dá profundidade e contexto à obra com maestria.
@@ -336,6 +342,9 @@ export const generateStructure = async (title: string, subtitle: string, researc
       For each block, create a compelling Chapter Title and a detailed "intro" (narrative objective).
       IMPORTANT: ALL CONTENT MUST BE IN ${langName}.
       
+      REGRAS DE PONTUAÇÃO DOS TÍTULOS:
+      - É terminantemente proibido usar dois pontos (:) ou travessões/traços (-, –, —) nos títulos dos capítulos. Os títulos devem ser limpos, diretos e sem esses caracteres.
+      
       Return JSON: [{ "id": 1, "title": "...", "intro": "Detailed narrative goal and key events..." }]
     `;
     try {
@@ -360,6 +369,9 @@ export const generateStructure = async (title: string, subtitle: string, researc
     STYLE: "${contentStyle || 'Professional'}".
     
     IMPORTANT: ALL CONTENT MUST BE IN ${langName}.
+    
+    REGRAS DE PONTUAÇÃO DOS TÍTULOS (CRÍTICO):
+    - É terminantemente proibido usar dois pontos (:) ou travessões/traços (-, –, —) nos títulos dos capítulos. Os títulos devem ser limpos, diretos e sem esses caracteres.
     
     Return JSON: [{ "id": 1, "title": "...", "intro": "Detailed description..." }]
     Return ONLY JSON.
@@ -407,21 +419,26 @@ const getHumanizationInstructions = (lang: string, style: string = 'Profissional
     DIRETRIZES DE ESCRITA DE ELITE (MODO INDETECTÁVEL):
     ${isFiction ? ANTI_AI_INSTRUCTIONS : `
     1. **ALMA HUMANA E VARIABILIDADE**: Escreva com imperfeição controlada, nuances e emoção. Alterne o ritmo das frases (Burstiness). Use vocabulário rico e inesperado (Perplexidade).
-    2. **ESTILO E CONEXÃO REAL**:
-       - Use a PRIMEIRA PESSOA (Eu ou Nós) para gerar proximidade e autoridade.
-       - Use gatilhos de conversa: perguntas retóricas, interjeições naturais e quebras de fluxo.
+    2. **ESTILO E CONEXÃO REAL COM EQUILÍBRIO**:
+       - Use a PRIMEIRA PESSOA (Eu ou Nós) com moderação e equilíbrio, variando as estruturas para evitar que parágrafos seguidos comecem com "Nós..." ou "A gente...".
        - **Estilo**: ${style} | **Tom**: ${tone}
-    3. **BANIMENTO DE MARCADORES IA (EXTREMAMENTE PROIBIDO)**: 
-       - NUNCA use transições robóticas: "Em conclusão", "É importante notar", "Em resumo", "Além disso", "Consequentemente", "Dito isso", "Portanto", "Neste capítulo", "Vale ressaltar".
-       - SUBSTITUA POR TRANSIÇÕES NATURAIS: "Sendo sincero,", "O detalhe é que...", "Na real,", "Onde isso nos leva?", "Mas aqui está a verdade:", "Pense comigo:".
+    3. **BANIMENTO DE TRANSIÇÕES E EXPRESSÕES REPETITIVAS (CLICHÊS IA/EXTREMAMENTE PROIBIDO)**: 
+       - NUNCA use marcadores de IA comuns: "Em conclusão", "Além disso", "Além do mais", "É importante notar", "Consequentemente", "Portanto", "Em resumo", "Por fim", "Dito isso", "Vale ressaltar", "Neste capítulo", "Como mencionado anteriormente".
+       - NUNCA use as expressões repetitivas frequentemente detectadas como marcas de IA: "Sendo sincero", "Na real", "O detalhe é que", "Pense comigo", "Onde isso nos leva", "Onde isso nos leva, então", "Mas aqui está o pulo do gato", "Honestamente", "A verdade nua e crua é", "Segura essa", "Do nada".
+       - SUBSTITUA POR transições narrativas fluidas e elegantes: "A questão central passa a ser...", "O próximo desafio é...", "Existe um ponto ainda mais importante...", "É aqui que surge a pergunta decisiva...", "Com isso em mente, percebemos que...".
        - PROIBIDO o uso de separadores robóticos (___, ---, ###) dentro do corpo do texto.
-    4. **ZERO REPETIÇÃO SEMÂNTICA**: Não repita a mesma ideia ou estrutura de frase em parágrafos sequenciais. Mantenha a leitura fresca.
-    5. **SHOW, DON'T TELL**: Não descreva apenas a teoria; mostre a aplicação prática com detalhes sensoriais e resultados viscerais.
-    6. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "previsível", reescreva para injetar caos e humanidade.
+    4. **PONTUAÇÃO NATURAL E SEM TRAÇOS**:
+       - TERMINANTEMENTE PROIBIDO o uso de travessões ou traços (\`-\`, \`–\`, \`—\`) para explicações intercaladas ou orações parentéticas (ex: "serotonina – neurotransmissor que te faz sentir bem – é produzida..."). Use vírgulas ou parênteses, ou reescreva a frase de forma contínua e fluida. Hifens são permitidos APENAS para palavras compostas legítimas da língua portuguesa (ex: "bem-estar", "segunda-feira").
+       - EVITE DOIS PONTOS (\`:\`): Nunca use dois pontos em títulos, subtítulos ou transições de capítulos. Use-os apenas quando for gramaticalmente indispensável (ex: citações diretas).
+    5. **FRASES COMPLETAS E SEM FRAGMENTOS**: É proibido começar sentenças isoladas com preposições como "A um...", "A uma...", "Ao...", "À...", "De um...", "De uma...". Toda sentença deve ser completa (sujeito + verbo). Substitua construções truncadas por sentenças inteiras (ex: em vez de "A uma compreensão mais profunda...", escreva "Isso nos conduz a uma compreensão mais profunda..." ou "O resultado é uma compreensão mais profunda...").
+    6. **CORREÇÃO DE ERROS DE IA COMUNS**: Evite erros de digitação recorrentes na geração por IA como "om ombros" (escreva "ombros") e erros de separação verbal como "pro age" (escreva "proage" ou "atua de forma proativa").
+    7. **ZERO REPETIÇÃO SEMÂNTICA**: Não repita a mesma ideia ou estrutura de frase em parágrafos sequenciais. Mantenha a leitura fresca.
+    8. **SHOW, DON'T TELL**: Não descreva apenas a teoria; mostre a aplicação prática com detalhes sensoriais e resultados viscerais.
+    9. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "previsível", reescreva para injetar caos e humanidade.
     `}
-    4. **FORMATAÇÃO**: Retorne PARÁGRAFOS LIMPOS e fluidos. Use transições naturais em vez de headers excessivos.
-    5. **SHOW, DON'T TELL**: Não diga que algo é emocionante, faça o coração do leitor disparar com a descrição.
-    6. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "robótico", reescreva instantaneamente para injetar caos e humanidade.
+    10. **FORMATAÇÃO**: Retorne PARÁGRAFOS LIMPOS e fluidos. Use transições naturais em vez de headers excessivos.
+    11. **SHOW, DON'T TELL**: Não diga que algo é emocionante, faça o coração do leitor disparar com a descrição.
+    12. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "robótico", reescreva instantaneamente para injetar caos e humanidade.
 `;
 
 export const writeIntroduction = async (
@@ -560,34 +577,37 @@ export const writeChapter = async (
           console.log(`[IA] Writing subtopic "${subtopic}" (Attempt ${subAttempts}/3) for chapter: ${chapter.title}`);
           
           const sectionPrompt = `
-                ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
-                
-                ${metadata.isFiction ? `GENRE: ${metadata.genre}\nCHARACTERS: ${JSON.stringify(metadata.characters)}` : `
-                CONTEXTO DE PESQUISA (Use isso como base, não invente):
-                ${researchContext.substring(0, 5000)}
-                `}
-                
-                Book: ${metadata.bookTitle}
-                Chapter: ${chapter.title}
-                
-                Current Section: "${subtopic}"
-                
-                TAREFA: Escreva o conteúdo desta seção.
-                
-                FASE DE EXECUÇÃO HUMANIZADA:
-                1. Aplique VARIABILIDADE RADICAL (Burstiness) nas frases.
-                2. Injete PERPLEXIDADE com vocabulário rico e analogias raras.
-                
-                REGRAS:
-                - Use tom conversacional e prático.
-                ${metadata.isFiction ? '- Use prosa imersiva, foco em diálogos e ação.' : ''}
-                - TAMANHO: Escreva rigorosamente entre 450 e 500 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos.
-                
-                Previous Context:
-                ${fullChapterContent.slice(-800)}
-                
-                LANGUAGE: ${langName}.
-            `;
+                 ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
+                 
+                 ${metadata.isFiction ? `GENRE: ${metadata.genre}\nCHARACTERS: ${JSON.stringify(metadata.characters)}` : `
+                 CONTEXTO DE PESQUISA (Use isso como base, não invente):
+                 ${researchContext.substring(0, 5000)}
+                 `}
+                 
+                 Book: ${metadata.bookTitle}
+                 Chapter: ${chapter.title}
+                 
+                 Current Section: "${subtopic}"
+                 
+                 TAREFA: Escreva o conteúdo desta seção.
+                 
+                 FASE DE EXECUÇÃO HUMANIZADA:
+                 1. Aplique VARIABILIDADE RADICAL (Burstiness) nas frases.
+                 2. Injete PERPLEXIDADE com vocabulário rico e analogias raras.
+                 
+                 REGRAS DE CONTEXTO E NÃO-REPETIÇÃO:
+                 - Leia atentamente o "Contexto Anterior" (Previous Context) fornecido abaixo.
+                 - É expressamente proibido repetir estruturas de início de frase, termos, conectivos ou metáforas que foram utilizadas no "Contexto Anterior".
+                 - Varie o vocabulário e a cadência para que o texto pareça uma continuação fluida e natural, sem redundâncias.
+                 - Use tom conversacional e prático.
+                 ${metadata.isFiction ? '- Use prosa imersiva, foco em diálogos e ação.' : ''}
+                 - TAMANHO: Escreva rigorosamente entre 450 e 500 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos.
+                 
+                 Previous Context:
+                 ${fullChapterContent.slice(-3000)}
+                 
+                 LANGUAGE: ${langName}.
+             `;
             
           const content = await llm.generateText(sectionPrompt);
           if (!content || content.length < 100) throw new Error("Content too short or empty");
@@ -954,23 +974,169 @@ export const structureBookFromText = async (fullText: string): Promise<any> => {
   return await llm.generateJSON<any>(prompt);
 };
 
-export const generateCoverBackgrounds = async (niche: string, framework: any): Promise<string[]> => {
+// Smart curated Unsplash backgrounds matching specific niches
+const getNicheCuratedBackgrounds = (niche: string): string[] => {
+  const norm = (niche || "").toLowerCase();
+
+  // Négocios / Finanças / Marketing / Produtividade / Liderança
+  if (
+    norm.includes("finança") || norm.includes("negócio") || norm.includes("marketing") || 
+    norm.includes("produtividade") || norm.includes("liderança") || norm.includes("venda") || 
+    norm.includes("sucesso") || norm.includes("business") || norm.includes("money") || norm.includes("dinheiro")
+  ) {
+    return [
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1024&auto=format&fit=crop", // Minimalist: abstract gold/dark marble
+      "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1024&auto=format&fit=crop", // Illustrated: colorful modern fluid shapes
+      "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1024&auto=format&fit=crop", // Realist: skyline glass skyscraper looking up
+      "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1024&auto=format&fit=crop", // Typographic: minimalist clean textured paper
+      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1024&auto=format&fit=crop"  // Abstract: 3D premium geometric glass spheres
+    ];
+  }
+
+  // Espiritualidade / Religião / Fé / Mindfulness / Meditação / Filosofia
+  if (
+    norm.includes("espiritual") || norm.includes("religião") || norm.includes("fé") || 
+    norm.includes("mindful") || norm.includes("medita") || norm.includes("filosofia") || 
+    norm.includes("deus") || norm.includes("alma") || norm.includes("zen") || norm.includes("igreja")
+  ) {
+    return [
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1024&auto=format&fit=crop", // Minimalist: luxury dark/gold texture
+      "https://images.unsplash.com/photo-1618005198143-e528346447c2?q=80&w=1024&auto=format&fit=crop", // Illustrated: premium abstract colorful waves
+      "https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?q=80&w=1024&auto=format&fit=crop", // Realist: rays of inspiring light through clouds
+      "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1024&auto=format&fit=crop", // Typographic: concrete/paper background
+      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1024&auto=format&fit=crop"  // Abstract: cosmic neon lights grid
+    ];
+  }
+
+  // Saúde / Bem-estar / Fitness / Nutrição / Emagrecimento / Esportes
+  if (
+    norm.includes("saúde") || norm.includes("bem-estar") || norm.includes("fitness") || 
+    norm.includes("nutri") || norm.includes("emagrece") || norm.includes("esporte") || 
+    norm.includes("corpo") || norm.includes("dieta") || norm.includes("treino") || norm.includes("vida saudável")
+  ) {
+    return [
+      "https://images.unsplash.com/photo-1556228720-195a672e8a03?q=80&w=1024&auto=format&fit=crop", // Minimalist: clean warm-beige texture
+      "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1024&auto=format&fit=crop", // Illustrated: vibrant organic shapes
+      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1024&auto=format&fit=crop", // Realist: peaceful silhouette meditating in golden dawn
+      "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1024&auto=format&fit=crop", // Typographic: linen paper texture
+      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1024&auto=format&fit=crop"  // Abstract: 3D fluid shape
+    ];
+  }
+
+  // Autoajuda / Desenvolvimento Pessoal / Psicologia / Relacionamentos / Paternagem / Maternagem / Infantil
+  if (
+    norm.includes("autoajuda") || norm.includes("desenvolvimento") || norm.includes("psicolo") || 
+    norm.includes("relaciona") || norm.includes("casal") || norm.includes("mente") || 
+    norm.includes("pessoal") || norm.includes("hábito") || norm.includes("comporta") ||
+    norm.includes("infantil") || norm.includes("filho") || norm.includes("paternagem") || norm.includes("maternagem")
+  ) {
+    return [
+      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1024&auto=format&fit=crop", // Minimalist: premium dark marble and gold
+      "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1024&auto=format&fit=crop", // Illustrated: beautiful vector gradient curves
+      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?q=80&w=1024&auto=format&fit=crop", // Realist: conceptual golden light of mindfulness / connection
+      "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1024&auto=format&fit=crop", // Typographic: clean plaster texture
+      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1024&auto=format&fit=crop"  // Abstract: 3D glass spheres reflecting light (very modern and warm)
+    ];
+  }
+
+  // Tecnologia / Programação / Inteligência Artificial / Ciências / Futurismo
+  if (
+    norm.includes("tecnolo") || norm.includes("program") || norm.includes("inteligência artificial") || 
+    norm.includes(" ia ") || norm.includes("ai") || norm.includes("ciência") || 
+    norm.includes("futuro") || norm.includes("digital") || norm.includes("computa") || norm.includes("code")
+  ) {
+    return [
+      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1024&auto=format&fit=crop", // Minimalist: quantum dark neon threads
+      "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1024&auto=format&fit=crop", // Illustrated: digital fluid circuit wave
+      "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=1024&auto=format&fit=crop", // Realist: cyberpunk technology server matrix
+      "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1024&auto=format&fit=crop", // Typographic: cyber dark plaster texture
+      "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1024&auto=format&fit=crop"  // Abstract: neon neural grid
+    ];
+  }
+
+  // Ficção / Literatura / Poesia / Fantasia / Suspense / Mistério / Romance
+  if (
+    norm.includes("ficção") || norm.includes("literatura") || norm.includes("poesia") || 
+    norm.includes("fantas") || norm.includes("suspense") || norm.includes("mistério") || 
+    norm.includes("romance") || norm.includes("conto") || norm.includes("novela")
+  ) {
+    return [
+      "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1024&auto=format&fit=crop", // Minimalist: deep misty dark blue/green
+      "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1024&auto=format&fit=crop", // Illustrated: abstract vector stars/galaxy
+      "https://images.unsplash.com/photo-1506318137071-a8e063b4bec0?q=80&w=1024&auto=format&fit=crop", // Realist: cosmic night sky double exposure
+      "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1024&auto=format&fit=crop", // Typographic: raw book paper texture
+      "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1024&auto=format&fit=crop"  // Abstract: 3D celestial dreamscape
+    ];
+  }
+
+  // Default Universal beautiful abstract fallbacks
+  return [
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1024&auto=format&fit=crop", // Minimalist
+    "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=1024&auto=format&fit=crop", // Illustrated
+    "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1024&auto=format&fit=crop", // Realist
+    "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?q=80&w=1024&auto=format&fit=crop", // Typographic
+    "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?q=80&w=1024&auto=format&fit=crop"  // Abstract
+  ];
+};
+
+function getVisualMetaphor(title: string, subtitle: string, niche: string): string {
+  const t = ((title || "") + " " + (subtitle || "") + " " + (niche || "")).toLowerCase();
+  
+  if (t.includes("influênc") || t.includes("persua") || t.includes("storytelling") || t.includes("cérebro") || t.includes("neuro") || t.includes("mente") || t.includes("psicolog")) {
+    return "a highly detailed glowing human brain, one half illuminated with electric blue neural network light and the other half with warm gold/orange energy, with a detailed vintage golden key floating right in the center as a majestic cinematic visual metaphor";
+  }
+  if (t.includes("finanç") || t.includes("dinheiro") || t.includes("rico") || t.includes("pobre") || t.includes("invest") || t.includes("negócio") || t.includes("lucro") || t.includes("riqueza")) {
+    return "a leather-bound premium book lying open on a luxury dark wooden table, with stacked gold coins, a small green plant sprouting from a pile of golden soil, a classic gold compass, and a glass jar filled with coins in the background, warm editorial lighting";
+  }
+  if (t.includes("fé") || t.includes("universal") || t.includes("crenç") || t.includes("deus") || t.includes("oração") || t.includes("espirit") || t.includes("alma") || t.includes("bíblia")) {
+    return "a majestic glowing stone archway or doorway opening up to a brilliant, celestial golden sky with soft sunrays, sacred clouds of deep purple and warm gold, floating light particles creating an ethereal, inspiring visual metaphor";
+  }
+  if (t.includes("amor") || t.includes("coração") || t.includes("sentiment") || t.includes("casamento") || t.includes("relaciona")) {
+    return "an abstract cinematic composition featuring glowing red and pink ribbons of light twisting together into a beautiful harmonious knot, surrounded by gold dust on a dark textured background";
+  }
+  if (t.includes("saúde") || t.includes("vida") || t.includes("hábito") || t.includes("atômico") || t.includes("foco") || t.includes("produtiv")) {
+    return "a serene geometric stone sculpture reflecting abstract natural forms, surrounded by water ripples and clean golden sand, representing balance, healthy habits, and atomic progress";
+  }
+  
+  // Default elegant corporate/business or self-help metaphor
+  return "a striking luxury visual metaphor featuring a clean geometric portal of light in the center, with a single traveler silhouette walking towards a brilliant horizon of golden opportunities, deep atmospheric dark blue and gold textures";
+}
+
+export const generateCoverBackgrounds = async (
+  niche: string, 
+  framework: any,
+  title?: string,
+  subtitle?: string,
+  author?: string
+): Promise<string[]> => {
   if (!process.env.OPENAI_API_KEY) {
-    console.log("[DALL-E] No OPENAI_API_KEY found, skipping image generation.");
-    return [];
+    console.log("[DALL-E] No OPENAI_API_KEY found, skipping image generation. Using premium curated Unsplash fallbacks.");
+    return getNicheCuratedBackgrounds(niche);
   }
 
   try {
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     
-    // We will generate 3 base concepts: Premium/Minimalist, Editorial/Authority, Vibrant/Energetic
+    const bookTitle = title || "Sucesso e Liderança";
+    const bookTheme = niche || "Negócios";
+    const bookColors = framework?.colors?.join(', ') || "#0d1b2a, #d4a017, #f5f0e5";
+    
+    // Generate metaphor
+    const metaphor = getVisualMetaphor(bookTitle, subtitle || "", bookTheme);
+
+    // We will generate 3 base concepts following the user's best-selling design assets (No text overlays in image!)
     const concepts = [
-      `A highly aesthetic, minimalist premium book cover background for a best-selling book about "${niche}". Pure art, no text, no title. Mood: Luxurious, clean, abstract geometric or subtle textures. Colors: ${framework?.colors?.slice(0,2)?.join(',') || 'dark, gold'}. Cinematic lighting.`,
-      `A bold, authoritative book cover background for a technical/academic book about "${niche}". Pure art, no text, no title. Mood: Solid, trustworthy, professional. Colors: ${framework?.colors?.slice(1,3)?.join(',') || 'navy, white'}. Sharp contrast, sophisticated.`,
-      `A vibrant, energetic and emotional book cover background for an aspirational book about "${niche}". Pure art, no text, no title. Mood: Warm, human, inspiring, dynamic gradients or sunset lighting. Colors: ${framework?.colors?.slice(0,3)?.join(',') || 'warm, orange, purple'}.`
+      // Concept 0: Premium Black and Gold
+      `Create a premium luxury bestseller book cover wrap background, widescreen 16:9, centered on ${metaphor}. Color theme: deep matte black and glowing 24k metallic gold, highly detailed. Style is sophisticated editorial, highly cinematic, dramatic lighting, clean textures. Extremely professional, 8k resolution. DO NOT include any text, letters, book borders, lines, spine borders, barcodes, or publisher badges. Pure raw artwork.`,
+
+      // Concept 1: Editorial Navy and Silver
+      `Create a professional authority bestseller book cover wrap background, widescreen 16:9, centered on ${metaphor}. Color theme: deep corporate navy blue, polished silver, and sharp white accents. Style is clean technical, corporate authority, modern architecture overlays, high contrast, cinematic soft lighting. DO NOT include any text, letters, book borders, lines, spine borders, barcodes, or publisher badges. Pure raw artwork.`,
+
+      // Concept 2: Vibrant Sunset Purple and Orange
+      `Create an inspiring vibrant bestseller book cover wrap background, widescreen 16:9, centered on ${metaphor}. Color theme: warm spiritual sunset with beautiful gradients of amber, crimson, violet, and glowing orange. Style is warm, aspirational, ethereal landscape, soft glowing clouds, atmospheric and dreamlike. DO NOT include any text, letters, book borders, lines, spine borders, barcodes, or publisher badges. Pure raw artwork.`
     ];
 
-    console.log(`[DALL-E] Generating 3 parallel backgrounds for niche: ${niche}...`);
+    console.log(`[DALL-E] Generating 3 parallel high-fidelity backgrounds for "${bookTitle}" (Niche: ${bookTheme})...`);
 
     const imagePromises = concepts.map(async (promptText) => {
       try {
@@ -991,10 +1157,23 @@ export const generateCoverBackgrounds = async (niche: string, framework: any): P
     const results = await Promise.all(imagePromises);
     const validUrls = results.filter(url => url !== null) as string[];
     console.log(`[DALL-E] Successfully generated ${validUrls.length} backgrounds.`);
+    
+    // Fill up to exactly 5 items using our curated Unsplash backgrounds
+    const unsplashFallbacks = getNicheCuratedBackgrounds(niche);
+    
+    // validUrls holds concepts generated by DALL-E. If some failed, fill them.
+    while (validUrls.length < 3) {
+      validUrls.push(unsplashFallbacks[validUrls.length]);
+    }
+    
+    // Force items 3 (Typographic) and 4 (Abstract) to be highly beautiful, high-contrast Unsplash textures
+    validUrls.push(unsplashFallbacks[3]); // Typographic style texture
+    validUrls.push(unsplashFallbacks[4]); // Abstract style texture
+    
     return validUrls;
 
   } catch (error) {
-    console.error("[DALL-E] Error in generateCoverBackgrounds:", error);
-    return [];
+    console.error("[DALL-E] Error in generateCoverBackgrounds, using curated Unsplash:", error);
+    return getNicheCuratedBackgrounds(niche);
   }
 };
