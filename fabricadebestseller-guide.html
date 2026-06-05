@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guia Fábrica de Best Seller - Por Trás dos Bastidores</title>
+    
+    <!-- Google Fonts: Outfit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Icons (Lucide Icons via CDN) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* Modern Design System - Vanilla CSS */
+        :root {
+            --bg-base: #0B0F19;
+            --bg-surface: #131A2B;
+            --bg-surface-hover: #1E2942;
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --gold: #D4A373;
+            --gold-light: #E9D8A6;
+            --text-main: #F5F0E5;
+            --text-muted: #8E9BAE;
+            --border: #1E293B;
+            --border-glow: rgba(79, 70, 229, 0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Ambient Glow Backgrounds */
+        .glow-orb {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(0,0,0,0) 70%);
+            z-index: -1;
+            filter: blur(40px);
+            pointer-events: none;
+        }
+
+        .glow-1 { top: -100px; left: -100px; }
+        .glow-2 { top: 50%; right: -150px; background: radial-gradient(circle, rgba(212, 163, 115, 0.1) 0%, rgba(0,0,0,0) 70%); }
+        .glow-3 { bottom: -100px; left: 20%; }
+
+        /* Container Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        /* Header Styles */
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+            position: relative;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(212, 163, 115, 0.1) 100%);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-family: var(--font-display);
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            font-weight: 900;
+            line-height: 1.15;
+            background: linear-gradient(135deg, var(--text-main) 30%, var(--gold-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+            max-width: 600px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        /* Main Dashboard Layout */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 40px;
+            align-items: start;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        /* Sidebar Tabs */
+        .sidebar {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 24px 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 40px;
+        }
+
+        .sidebar-title {
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            padding-left: 12px;
+            margin-bottom: 16px;
+        }
+
+        .tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 14px 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-align: left;
+            transition: var(--transition);
+            margin-bottom: 8px;
+        }
+
+        .tab-btn i {
+            font-size: 1.1rem;
+            transition: var(--transition);
+        }
+
+        .tab-btn:hover {
+            background-color: var(--bg-surface-hover);
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, rgba(79, 70, 229, 0.6) 100%);
+            color: #ffffff;
+            box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
+        }
+
+        .tab-btn.active i {
+            color: var(--gold-light);
+        }
+
+        /* Content Area */
+        .content-panel {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            min-height: 600px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(12px);
+            position: relative;
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Section Typography */
+        h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+
+        h2 i {
+            color: var(--gold);
+        }
+
+        h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--gold-light);
+            margin: 28px 0 12px;
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        /* Code Block Container */
+        .code-container {
+            background-color: #060913;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        pre {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.85rem;
+            color: #C3E88D;
+            line-height: 1.5;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-bottom: 1px solid #1E293B;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+            font-family: var(--font-display);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Visual Architecture Flow */
+        .flow-step-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            display: flex;
+            gap: 20px;
+            background-color: rgba(6, 9, 19, 0.4);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px;
+            transition: var(--transition);
+        }
+
+        .flow-step:hover {
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px var(--border-glow);
+        }
+
+        .step-num {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary) 0%, rgba(79, 70, 229, 0.4) 100%);
+            border-radius: 12px;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #ffffff;
+            shrink-0: 0;
+            box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+        }
+
+        .step-body {
+            flex-1: 1;
+        }
+
+        .step-body h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            margin-bottom: 6px;
+        }
+
+        /* Feature Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+
+        .feature-card {
+            background-color: rgba(6, 9, 19, 0.3);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: var(--transition);
+        }
+
+        .feature-card:hover {
+            background-color: var(--bg-surface-hover);
+            border-color: var(--gold);
+            transform: translateY(-4px);
+        }
+
+        .card-icon {
+            display: inline-flex;
+            padding: 12px;
+            background-color: rgba(212, 163, 115, 0.1);
+            border-radius: 12px;
+            color: var(--gold);
+            margin-bottom: 16px;
+        }
+
+        .feature-card h4 {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+        }
+
+        .feature-card p {
+            font-size: 0.85rem;
+            margin-bottom: 0;
+        }
+
+        /* Key Metrics Banner */
+        .metrics-banner {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(212, 163, 115, 0.08) 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px 20px;
+            margin: 30px 0;
+            text-align: center;
+            gap: 20px;
+        }
+
+        .metric-item {
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .metric-val {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--gold-light);
+            line-height: 1.1;
+            margin-bottom: 6px;
+        }
+
+        .metric-lbl {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 992px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                position: relative;
+                top: 0;
+                display: flex;
+                flex-direction: row;
+                overflow-x: auto;
+                gap: 12px;
+                padding: 16px;
+            }
+            .sidebar-title {
+                display: none;
+            }
+            .tab-btn {
+                margin-bottom: 0;
+                white-space: nowrap;
+                width: auto;
+            }
+            h1 {
+                font-size: 2.2rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glow Orbs -->
+    <div class="glow-orb glow-1"></div>
+    <div class="glow-orb glow-2"></div>
+    <div class="glow-orb glow-3"></div>
+
+    <div class="container">
+        
+        <header>
+            <div class="logo-badge">
+                <i data-lucide="sparkles" style="width: 14px; height: 14px;"></i> Sistema de Conhecimento IA
+            </div>
+            <h1>Fábrica de Best Seller</h1>
+            <p>Guia interativo sobre a arquitetura de engenharia, esteiras inteligentes de LLM e compilação editorial automatizada.</p>
+        </header>
+
+        <div class="grid-layout">
+            
+            <!-- Sidebar Navigation Tabs -->
+            <div class="sidebar">
+                <div class="sidebar-title">Arquitetura</div>
+                
+                <button class="tab-btn active" onclick="switchTab(event, 'tab-visao')">
+                    <i data-lucide="layout-grid"></i> Visão Geral
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-backend')">
+                    <i data-lucide="server"></i> Backend & Rotas
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-ia')">
+                    <i data-lucide="cpu"></i> Esteira de LLM
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-doc')">
+                    <i data-lucide="file-text"></i> Compilação DOCX
+                </button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-capas')">
+                    <i data-lucide="image"></i> Gerador de Capas
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-panel">
+                
+                <!-- Tab: Visão Geral -->
+                <div id="tab-visao" class="tab-content active">
+                    <h2><i data-lucide="layout-grid"></i> Visão Geral do Sistema</h2>
+                    <p>A <strong>Fábrica de Best Seller</strong> é um ecossistema SaaS completo projetado para simplificar e automatizar a criação de manuscritos profissionais e artes de capas de alta conversão prontas para impressão digital e autopublicação.</p>
+                    
+                    <div class="metrics-banner">
+                        <div class="metric-item">
+                            <div class="metric-val">12</div>
+                            <div class="metric-lbl">Capítulos por Livro</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-val">4</div>
+                            <div class="metric-lbl">Subseções por Capítulo</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-val">6" x 9"</div>
+                            <div class="metric-lbl">Formato do DOCX</div>
+                        </div>
+                        <div class="metric-item">
+                            <div class="metric-val">300 DPI</div>
+                            <div class="metric-lbl">Resolução de Capas</div>
+                        </div>
+                    </div>
+
+                    <h3>Como Funciona a Esteira Inteligente?</h3>
+                    <div class="flow-step-container">
+                        <div class="flow-step">
+                            <div class="step-num">1</div>
+                            <div class="step-body">
+                                <h4>Mapeamento & Pesquisa Ativa</h4>
+                                <p>O usuário insere um nicho de mercado (ex: "Emagrecimento Saudável"). O sistema executa chamadas para a API do YouTube, Google Search e raspa a Amazon para armazenar dúvidas e lacunas de best-sellers concorrentes.</p>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-num">2</div>
+                            <div class="step-body">
+                                <h4>Geração de Título e Estrutura</h4>
+                                <p>A IA gera 9 opções de títulos literários de alto apelo e constrói uma estrutura lógica de 12 capítulos ordenados por: Fundamentos, Quebra de Mitos, Metodologia Prática e Aplicação Avançada.</p>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-num">3</div>
+                            <div class="step-body">
+                                <h4>Escrita Iterativa Humanizada</h4>
+                                <p>O backend executa a redação em workers assíncronos. Cada seção é escrita usando uma janela de histórico anterior ampliada para garantir zero repetição de palavras e vocabulário ultra-humano.</p>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-num">4</div>
+                            <div class="step-body">
+                                <h4>Compilação & Embalagem</h4>
+                                <p>O conteúdo é compilado no formato Microsoft Word (.docx) rigorosamente formatado para publicação e zipado junto com os ativos de marketing (copys de vendas e tags da Amazon).</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Backend -->
+                <div id="tab-backend" class="tab-content">
+                    <h2><i data-lucide="server"></i> Arquitetura do Backend</h2>
+                    <p>O backend é construído em <strong>Node.js</strong> usando **Express** e **TypeScript** estruturado em camadas de rotas, controllers e services.</p>
+                    
+                    <h3>Banco de Dados de Alta Velocidade</h3>
+                    <p>Para otimizar o tempo de resposta e simplicidade em servidores VPS/Contabo, o sistema utiliza um banco de dados local estruturado em JSON (`database.json`) através de um serviço de banco de dados nativo (`db.service.ts`), sincronizando automaticamente com o **Supabase** para backup e persistência em nuvem.</p>
+
+                    <h3>Controllers Principais</h3>
+                    <div class="cards-grid">
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="folder-git"></i></div>
+                            <h4>project.controller.ts</h4>
+                            <p>Coordena o status da esteira (`RESEARCHING`, `WRITING_CHAPTERS`, `COMPLETED`), gerencia bloqueios de workers via UUID e trata preempção de requisições.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="shield-check"></i></div>
+                            <h4>admin.controller.ts</h4>
+                            <p>Controla credenciais de admin, faturamento manual, concessão de créditos e logs globais do sistema.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="credit-card"></i></div>
+                            <h4>payment.routes.ts</h4>
+                            <p>Intercepta webhooks da Kiwify e Asaas para processar pagamentos e adicionar créditos de escrita automaticamente.</p>
+                        </div>
+                    </div>
+
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Exemplo de Sincronização do DB (db.service.ts)</span>
+                            <span>TypeScript</span>
+                        </div>
+                        <pre>
+export const getVal = async (path: string) => {
+    // Tenta carregar do cache local
+    const val = localDb.getData(path);
+    if (val) return val;
+    
+    // Se falhar, sincroniza e carrega do Supabase
+    return await syncFromSupabase(path);
+};</pre>
+                    </div>
+                </div>
+
+                <!-- Tab: IA -->
+                <div id="tab-ia" class="tab-content">
+                    <h2><i data-lucide="cpu"></i> Esteira de LLM & Humanização</h2>
+                    <p>A Fábrica de Best Seller integra múltiplos provedores de IA (OpenAI GPT-4o, Gemini 1.5/3.5, Anthropic Claude 3) usando uma factory com fallbacks inteligentes. Se um modelo falhar ou atingir o limite de requisições (rate limits), o sistema chaveia automaticamente para o secundário.</p>
+
+                    <h3>Regras Críticas de Humanização (Prompt de Elite)</h3>
+                    <p>Os prompts presentes em `ai.service.ts` instruem o modelo a fugir totalmente da aparência robótica clássica de IA (0% de detecção em ferramentas de varredura). As diretrizes implementadas são:</p>
+                    
+                    <div class="cards-grid">
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="shuffle"></i></div>
+                            <h4>Variabilidade Radical (Burstiness)</h4>
+                            <p>Altera constantemente o ritmo e o tamanho das frases. Parágrafos sequenciais nunca possuem a mesma estrutura gramatical.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="alert-triangle"></i></div>
+                            <h4>Banimento de Termos Repetitivos</h4>
+                            <p>Lista negra de IA que proíbe expressões clichês como: "Sendo sincero", "Na real", "O detalhe é que", "Pense comigo", "Onde isso nos leva", "Além disso", "Em resumo", "Em conclusão".</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="minus"></i></div>
+                            <h4>Ocultação de Pontuação IA</h4>
+                            <p>Proibição absoluta do uso de travessões explicativos parentéticos (–) no meio das sentenças e bloqueio de dois pontos (:) em títulos e subtítulos.</p>
+                        </div>
+                    </div>
+
+                    <div class="code-container">
+                        <div class="code-header">
+                            <span>Regra de Memória do Worker (ai.service.ts)</span>
+                            <span>TypeScript</span>
+                        </div>
+                        <pre>
+// O fatiamento de contexto foi ampliado para 3000 caracteres
+// para que o LLM analise o que acabou de escrever no capítulo e evite ecos sintáticos:
+Previous Context:
+${fullChapterContent.slice(-3000)}
+
+REGRAS DE CONTEXTO E NÃO-REPETIÇÃO:
+- É expressamente proibido repetir estruturas de início de frase, termos, conectivos ou metáforas que foram utilizadas no "Contexto Anterior".</pre>
+                    </div>
+                </div>
+
+                <!-- Tab: DOCX -->
+                <div id="tab-doc" class="tab-content">
+                    <h2><i data-lucide="file-text"></i> Compilação de Livro Físico (.docx)</h2>
+                    <p>A geração do livro é tratada pelo `doc.service.ts`, que cria um documento formatado para submissão imediata em editoras físicas e sob demanda (UICLAP, Amazon KDP).</p>
+
+                    <h3>Mapeamento de Páginas Rígido</h3>
+                    <p>O arquivo compilado obedece a uma estrutura de páginas fixa para manter a diagramação profissional:</p>
+                    <ul>
+                        <li><strong>Página 1 (Direita/Ímpar)</strong>: Folha de Rosto (Half Title) - Apenas o Título.</li>
+                        <li><strong>Página 2 (Esquerda/Par)</strong>: Página em Branco.</li>
+                        <li><strong>Página 3 (Direita/Ímpar)</strong>: Página de Título Completa com Autor e Logotipo da Editora.</li>
+                        <li><strong>Página 4 (Esquerda/Par)</strong>: Ficha Catalográfica e ISBN (reservado).</li>
+                        <li><strong>Página 5 (Direita)</strong>: Agradecimentos.</li>
+                        <li><strong>Página 6 (Esquerda)</strong>: Página em Branco.</li>
+                        <li><strong>Página 7 (Direita)</strong>: Dedicatória.</li>
+                        <li><strong>Página 8 (Esquerda)</strong>: Página em Branco.</li>
+                        <li><strong>Páginas 9 e 10</strong>: Sumário Executivo (TOC) com links internos navegáveis.</li>
+                        <li><strong>Página 11 (Direita)</strong>: Introdução (Aqui a numeração decimal de rodapé é iniciada fisicamente na página 11).</li>
+                    </ul>
+
+                    <h3>Diretrizes de Layout e Margens Editoriais</h3>
+                    <div class="cards-grid">
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="maximize-2"></i></div>
+                            <h4>Tamanho 6" x 9"</h4>
+                            <p>Tamanho padrão internacional de livros físicos comerciais. Convertido em twips exatos no código.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="columns"></i></div>
+                            <h4>Margens Espelhadas</h4>
+                            <p>Margem interna (inside) maior que a externa (outside) para compensar a dobra da encadernação (medianiz/gutter).</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="card-icon"><i data-lucide="align-left"></i></div>
+                            <h4>Evitar Paredes de Texto</h4>
+                            <p>O compilador analisa a densidade de parágrafos. Se detectar uma parede de texto com mais de 300 caracteres sem quebras, ele divide o bloco automaticamente em parágrafos de fácil leitura.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Capas -->
+                <div id="tab-capas" class="tab-content">
+                    <h2><i data-lucide="image"></i> Gerador de Capas e Canvas no Frontend</h2>
+                    <p>O gerador de capas (`CoverGenerator.tsx`) utiliza um canvas interativo que calcula e renderiza as dobras e dimensões físicas do livro de acordo com o número de páginas e gramatura do papel escolhido.</p>
+
+                    <h3>Cálculo da Lombada Dinâmica</h3>
+                    <p>A espessura da lombada (spine) é crucial na impressão física e é calculada automaticamente no frontend com base no tipo de papel:</p>
+                    <ul>
+                        <li><strong>Papel Pólen 80g (Creme)</strong>: Número de páginas &times; 0.06 mm.</li>
+                        <li><strong>Papel Offset 75g (Branco)</strong>: Número de páginas &times; 0.05 mm.</li>
+                    </ul>
+
+                    <h3>Tipos de Capas Prontas para Download</h3>
+                    <div class="flow-step-container">
+                        <div class="flow-step">
+                            <div class="step-num"><i data-lucide="book-open" style="width: 18px;"></i></div>
+                            <div class="step-body">
+                                <h4>PDF Completo com Orelhas</h4>
+                                <p>Renderiza a capa aberta (Orelha Traseira + Contra-capa + Lombada + Capa + Orelha Dianteira) com marcas de sangria, ideal para impressão em gráficas tradicionais.</p>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-num"><i data-lucide="printer" style="width: 18px;"></i></div>
+                            <div class="step-body">
+                                <h4>PDF Sem Orelhas (KDP)</h4>
+                                <p>Calcula a lombada exata e remove as orelhas laterais, exportando no formato preciso exigido pela Amazon KDP.</p>
+                            </div>
+                        </div>
+                        <div class="flow-step">
+                            <div class="step-num"><i data-lucide="tablet" style="width: 18px;"></i></div>
+                            <div class="step-body">
+                                <h4>Ebook Frente (JPG)</h4>
+                                <p>Renderiza apenas a frente da capa em alta resolução (JPG) com foco comercial, ideal para vitrines digitais da Amazon e Hotmart.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Tab switching logic
+        function switchTab(evt, tabId) {
+            // Get all tab content elements
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Get all tab buttons
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show active content and highlight active button
+            document.getElementById(tabId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+</html>
