@@ -373,33 +373,257 @@ export const generateStructure = async (title: string, subtitle: string, researc
     REGRAS DE PONTUAÇÃO DOS TÍTULOS (CRÍTICO):
     - É terminantemente proibido usar dois pontos (:) ou travessões/traços (-, –, —) nos títulos dos capítulos. Os títulos devem ser limpos, diretos e sem esses caracteres.
     
-    Return JSON: [{ "id": 1, "title": "...", "intro": "Detailed description..." }]
+    Return JSON format:
+    [
+      {
+        "id": 1,
+        "title": "Título do Capítulo",
+        "intro": "Descrição detalhada do capítulo...",
+        "subSections": [
+          "Subtópico 1 específico e aprofundado",
+          "Subtópico 2 específico e aprofundado",
+          "Subtópico 3 específico e aprofundado",
+          "Subtópico 4 específico e aprofundado"
+        ]
+      }
+    ]
     Return ONLY JSON.
   `;
 
   try {
     const raw = await llm.generateJSON<any[]>(prompt);
-    return raw.map((c: any) => ({ ...c, content: "", isGenerated: false }));
+    return raw.map((c: any) => ({
+      ...c,
+      content: "",
+      isGenerated: false,
+      subSections: c.subSections || ["Introdução", "Desenvolvimento", "Aprofundamento", "Aplicações Práticas"]
+    }));
   } catch (error) {
     console.error("Error generating structure, using FALLBACK TEMPLATE:", error);
 
     // FALLBACK STRUCTURE TO PREVENT CRASH
     // Enhanced descriptions as requested
     return [
-      { id: 1, title: "Fundamentos Essenciais", intro: "Neste capítulo inicial, vamos estabelecer a base sólida necessária para toda a jornada, definindo os conceitos chave que serão usados ao longo do livro. Sem estes fundamentos, qualquer estratégia avançada tende a falhar. Você aprenderá a terminologia correta e os princípios imutáveis que regem este tema.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 2, title: "História e Contexto", intro: "Faremos uma viagem no tempo para entender como chegamos até o cenário atual, analisando os grandes marcos históricos que moldaram este mercado. Compreender o passado é essencial para prever o futuro e evitar erros cíclicos. Veremos também por que agora é o momento exato para agir.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 3, title: "Ferramentas e Preparação", intro: "Aqui você terá acesso ao arsenal completo necessário para começar, incluindo a lista de softwares, equipamentos e recursos indispensáveis. Discutiremos como organizar seu ambiente para máxima produtividade, evitando que você perca tempo precioso com questões técnicas básicas.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 4, title: "Mentalidade de Sucesso", intro: "Sabemos que 80% do sucesso é psicologia e apenas 20% é mecânica. Vamos blindar sua mente contra a autossabotagem e o medo do fracasso, instalando o mindset dos vencedores. Você aprenderá a pensar como um profissional antes mesmo de ter os primeiros grandes resultados.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 5, title: "Estratégias Iniciais", intro: "É hora de sair da teoria e ir para a prática. Apresentaremos os primeiros passos acionáveis que geram pequenas vitórias rápidas (Quick Wins), essenciais para manter sua motivação. O foco aqui é criar movimento (momentum) e quebrar a inércia inicial.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 6, title: "Técnicas Intermediárias", intro: "Agora que a base está pronta, vamos aprofundar. Sairemos do básico para explorar as nuances que diferenciam os amadores dos profissionais de verdade. O foco deste capítulo é otimização, eficiência e aumento da qualidade dos seus resultados.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 7, title: "Superando Obstáculos Comuns", intro: "Este capítulo serve como um mapa de minas. Identificamos as armadilhas clássicas que derrubam a maioria das pessoas neste estágio e entregamos as soluções prontas. Você saberá exatamente como contornar problemas antes mesmo que eles apareçam.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 8, title: "Segredos dos Especialistas", intro: "Entramos no jogo de alto nível. Revelaremos truques de bastidores, hacks pouco conhecidos e estratégias que apenas a elite do setor utiliza. Estas são as informações que geralmente são guardadas a sete chaves e que geram resultados desproporcionais.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 9, title: "Estudos de Caso Reais", intro: "Nada melhor que a prova na prática. Faremos a desconstrução detalhada de casos de sucesso (e também de fracasso) para ilustrar como a teoria se aplica no mundo real. Veremos números, dados e exemplos concretos para facilitar sua visualização.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 10, title: "O Futuro da Área", intro: "Vamos antecipar tendências. Uma análise preditiva do que vem por aí nos próximos 5 a 10 anos, garantindo que você esteja posicionado na crista da onda. O objetivo é que você não seja pego de surpresa pelas mudanças e continue relevante a longo prazo.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 11, title: "Plano de Ação de 30 Dias", intro: "Chega de dúvidas sobre o que fazer. Aqui você terá um roteiro definitivo, um calendário dia após dia, semana após semana. Ele dirá exatamente qual tarefa executar para implementar tudo o que foi aprendido neste livro de forma organizada e sequencial.", content: "", isGenerated: false, summary: "", isCompleted: false },
-      { id: 12, title: "Conclusão e Próximos Passos", intro: "O fim do livro é apenas o começo da sua nova jornada. Discutiremos como manter os resultados a longo prazo e continuar evoluindo constantemente. Você sairá daqui com um plano claro para se tornar uma referência e consolidar seu legado na área.", content: "", isGenerated: false, summary: "", isCompleted: false }
+      { 
+        id: 1, 
+        title: "Fundamentos Essenciais", 
+        intro: "Neste capítulo inicial, vamos estabelecer a base sólida necessária para toda a jornada, definindo os conceitos chave que serão usados ao longo do livro. Sem estes fundamentos, qualquer estratégia avançada tende a falhar. Você aprenderá a terminologia correta e os princípios imutáveis que regem este tema.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Introdução aos Princípios Clássicos",
+          "Terminologia e Conceitos Indispensáveis",
+          "Os Pilares de Sustentação do Método",
+          "Erros Comuns de Iniciantes que Você Deve Evitar"
+        ]
+      },
+      { 
+        id: 2, 
+        title: "História e Contexto", 
+        intro: "Faremos uma viagem no tempo para entender como chegamos até o cenário atual, analisando os grandes marcos históricos que moldaram este mercado. Compreender o passado é essencial para prever o futuro e evitar erros cíclicos. Veremos também por que agora é o momento exato para agir.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Origem e Evolução Histórica",
+          "Grandes Marcos e Lições do Passado",
+          "O Cenário Atual e Suas Transformações",
+          "Oportunidades de Ouro na Nova Era"
+        ]
+      },
+      { 
+        id: 3, 
+        title: "Ferramentas e Preparação", 
+        intro: "Aqui você terá acesso ao arsenal completo necessário para começar, incluindo a lista de softwares, equipamentos e recursos indispensáveis. Discutiremos como organizar seu ambiente para máxima produtividade, evitando que você perca tempo precioso com questões técnicas básicas.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "O Arsenal de Ferramentas Recomendadas",
+          "Configurações Iniciais e Infraestrutura",
+          "Organização do Ambiente de Trabalho",
+          "Rotinas de Preparação Prévia"
+        ]
+      },
+      { 
+        id: 4, 
+        title: "Mentalidade de Sucesso", 
+        intro: "Sabemos que 80% do sucesso é psicologia e apenas 20% é mecânica. Vamos blindar sua mente contra a autossabotagem e o medo do fracasso, instalando o mindset dos vencedores. Você aprenderá a pensar como um profissional antes mesmo de ter os primeiros grandes resultados.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "A Psicologia do Sucesso e Foco",
+          "Identificando e Eliminando Crenças Limitantes",
+          "Rotinas e Hábitos para Blindagem Mental",
+          "Mantendo a Consistência sob Pressão"
+        ]
+      },
+      { 
+        id: 5, 
+        title: "Estratégias Iniciais", 
+        intro: "É hora de sair da teoria e ir para a prática. Apresentaremos os primeiros passos acionáveis que geram pequenas vitórias rápidas (Quick Wins), essenciais para manter sua motivação. O foco aqui é criar movimento (momentum) e quebrar a inércia inicial.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Primeiros Passos e Quick Wins",
+          "Implementação Prática da Base",
+          "Medição de Resultados Iniciais",
+          "Ajustes de Rota e Correção Rápida"
+        ]
+      },
+      { 
+        id: 6, 
+        title: "Técnicas Intermediárias", 
+        intro: "Agora que a base está pronta, vamos aprofundar. Sairemos do básico para explorar as nuances que diferenciam os amadores dos profissionais de verdade. O foco deste capítulo é otimização, eficiência e aumento da qualidade dos seus resultados.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Explorando Nuances Profissionais",
+          "Técnicas de Otimização e Produtividade",
+          "Garantia de Qualidade nos Resultados",
+          "Superação do Platô de Aprendizado"
+        ]
+      },
+      { 
+        id: 7, 
+        title: "Superando Obstáculos Comuns", 
+        intro: "Este capítulo serve como um mapa de minas. Identificamos as armadilhas clássicas que derrubam a maioria das pessoas neste estágio e entregamos as soluções prontas. Você saberá exatamente como contornar problemas antes mesmo que eles apareçam.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Armadilhas Comuns no Meio do Caminho",
+          "Como Lidar com Falhas Temporárias",
+          "Resolução de Problemas Complexos",
+          "Prevenção contra a Desmotivação"
+        ]
+      },
+      { 
+        id: 8, 
+        title: "Segredos dos Especialistas", 
+        intro: "Entramos no jogo de alto nível. Revelaremos truques de bastidores, hacks pouco conhecidos e estratégias que apenas a elite do setor utiliza. Estas são as informações que geralmente são guardadas a sete chaves e que geram resultados desproporcionais.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Hacks e Atalhos Pouco Divulgados",
+          "A Estratégia dos Grandes Players",
+          "Maximizando o Retorno sobre Esforço",
+          "Casos de Bastidores Exclusivos"
+        ]
+      },
+      { 
+        id: 9, 
+        title: "Estudos de Caso Reais", 
+        intro: "Nada melhor que a prova na prática. Faremos a desconstrução detalhada de casos de sucesso (e também de fracasso) para ilustrar como a teoria se aplica no mundo real. Veremos números, dados e exemplos concretos para facilitar sua visualização.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Análise do Caso Prático de Sucesso A",
+          "Desconstruindo Falhas e Lições do Caso B",
+          "Resultados, Métricas e Aprendizados Chave",
+          "Como Replicar os Resultados no Seu Contexto"
+        ]
+      },
+      { 
+        id: 10, 
+        title: "O Futuro da Área", 
+        intro: "Vamos antecipar tendências. Uma análise preditiva do que vem por aí nos próximos 5 a 10 anos, garantindo que você esteja posicionado na crista da onda. O objetivo é que você não seja pego de surpresa pelas mudanças e continue relevante a longo prazo.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Tendências Emergentes do Mercado",
+          "Inovações Tecnológicas e Impactos",
+          "Preparação para Mudanças Drásticas",
+          "Mantendo a Relevância a Longo Prazo"
+        ]
+      },
+      { 
+        id: 11, 
+        title: "Plano de Ação de 30 Dias", 
+        intro: "Chega de dúvidas sobre o que fazer. Aqui você terá um roteiro definitivo, um calendário dia após dia, semana após semana. Ele dirá exatamente qual tarefa executar para implementar tudo o que foi aprendido neste livro de forma organizada e sequencial.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Metas e Atividades da Semana 1",
+          "Aprofundando os Processos na Semana 2",
+          "Consolidação e Resultados na Semana 3",
+          "Escalonamento e Revisão na Semana 4"
+        ]
+      },
+      { 
+        id: 12, 
+        title: "Conclusão e Próximos Passos", 
+        intro: "O fim do livro é apenas o começo da sua nova jornada. Discutiremos como manter os resultados a longo prazo e continuar evoluindo constantemente. Você sairá daqui com um plano claro para se tornar uma referência e consolidar seu legado na área.", 
+        content: "", 
+        isGenerated: false, 
+        summary: "", 
+        isCompleted: false,
+        subSections: [
+          "Recapitulação da Jornada e Lições",
+          "O Próximo Salto de Evolução",
+          "Construindo o Seu Legado",
+          "Mensagem Final de Incentivo"
+        ]
+      }
     ];
   }
+};
+
+// Helper to extract the most frequently used terms in a text to block them in subsequent sections/chapters
+const extractKeyTerms = (text: string, count: number = 40): string[] => {
+  if (!text) return [];
+  const stopwords = new Set([
+    "a", "o", "e", "que", "do", "da", "em", "um", "uma", "para", "com", "se", "os", "as", 
+    "como", "mais", "mas", "por", "ao", "no", "na", "uma", "um", "dos", "das", "de", "este", 
+    "esta", "isso", "isto", "aquilo", "ela", "ele", "elas", "eles", "nos", "vos", "me", "te", 
+    "lhe", "se", "seu", "sua", "seus", "suas", "meu", "minha", "meus", "minhas", "teu", "tua", 
+    "teus", "tuas", "nosso", "nossa", "nossos", "nossas", "dele", "dela", "deles", "delas", 
+    "este", "esta", "estes", "estas", "aquele", "aquela", "aqueles", "aquelas", "num", "numa", 
+    "neste", "nesta", "nestes", "nestas", "naquele", "naquela", "naqueles", "naquelas", "pelo", 
+    "pela", "pelos", "pelas", "por", "para", "como", "mais", "muito", "todo", "toda", "todos", 
+    "todas", "outro", "outra", "outros", "outras", "sobre", "entre", "sem", "sob", "atrás", 
+    "depois", "antes", "durante", "então", "assim", "portanto", "entretanto", "porém", "todavia", 
+    "contudo", "logo", "pois", "porque", "porquê", "sendo", "tendo", "esta", "está", "estão", 
+    "esteve", "estava", "estavam", "estiveram", "ser", "são", "era", "eram", "foi", "foram", 
+    "será", "serão", "seria", "seriam", "têm", "tinha", "tinham", "teve", "tiveram", "terá", 
+    "terão", "teria", "teriam", "haver", "há", "havia", "haviam", "houve", "houveram", "fazer", 
+    "faz", "fazia", "faziam", "fez", "fizeram", "faria", "fariam", "fará", "farão"
+  ]);
+
+  const words = text
+    .toLowerCase()
+    .replace(/[^\w\sÀ-ÿ-]/g, ' ')
+    .split(/\s+/)
+    .map(w => w.trim())
+    .filter(w => w.length > 3 && !stopwords.has(w) && !/^\d+$/.test(w));
+
+  const freqMap: Record<string, number> = {};
+  for (const w of words) {
+    freqMap[w] = (freqMap[w] || 0) + 1;
+  }
+
+  return Object.keys(freqMap)
+    .sort((a, b) => freqMap[b] - freqMap[a])
+    .slice(0, count);
 };
 
 // Utility to clean AI artifacts
@@ -453,6 +677,19 @@ export const writeIntroduction = async (
   const style = metadata.contentStyle || 'Profissional / Técnico';
   const tone = metadata.writingTone || 'Autoridade e Confiança';
 
+  // Extract the first paragraph/snippet of each generated chapter (skip intro chapter itself if present)
+  let chaptersSnippets = "";
+  if (structure && structure.length > 0) {
+    chaptersSnippets += "\n=== RESUMO DO INÍCIO DE CADA CAPÍTULO DO LIVRO (Use para garantir coerência e citar ideias) ===\n";
+    structure.forEach(c => {
+      if (c.id !== 0 && c.content && c.content.length > 100) {
+        const snippet = c.content.substring(0, 500).trim();
+        chaptersSnippets += `Capítulo ${c.id} ("${c.title}"):\n"${snippet}..."\n\n`;
+      }
+    });
+    chaptersSnippets += "=========================================================================================\n";
+  }
+
   const prompt = `
       ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
       
@@ -463,6 +700,8 @@ export const writeIntroduction = async (
       
       Structure:
       ${structureList}
+      
+      ${chaptersSnippets}
       
       Research Context:
       ${researchContext}
@@ -498,29 +737,33 @@ export const writeChapter = async (
   const lang = metadata.language || 'pt';
   const langName = getLangName(lang);
 
-  // 1. Generate Outline for the Chapter (Agentic Split)
-  const outlinePrompt = `
-    ${SYSTEM_INSTRUCTION}
-    Context: ${researchContext.substring(0, 5000)}...
-    Book: ${metadata.bookTitle}
-    Chapter: ${chapter.title}
-    Chapter Objective: ${chapter.intro}
-
-    TASK: Create a detailed outline for this chapter with exactly 4 distinct sub-sections.
-    Each sub-section must cover a specific aspect of the chapter's topic in EXTREME depth.
-    
-    Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4"]
-    Output ONLY JSON.
-    Language: ${langName}.
-  `;
-
+  // 1. Check if subSections are already defined on the chapter structure, otherwise generate dynamically
   let subtopics: string[] = [];
-  try {
-    subtopics = await llm.generateJSON<string[]>(outlinePrompt);
-  } catch (e) {
-    console.error("Failed to generate outline, using fallback topics", e);
-    // Fallback topics if JSON fails
-    subtopics = ["Fundamentos", "Histórico e Evolução", "Ferramentas e Técnicas", "Estudos de Caso"];
+  if (chapter.subSections && chapter.subSections.length > 0) {
+    subtopics = chapter.subSections;
+  } else {
+    const outlinePrompt = `
+      ${SYSTEM_INSTRUCTION}
+      Context: ${researchContext.substring(0, 5000)}...
+      Book: ${metadata.bookTitle}
+      Chapter: ${chapter.title}
+      Chapter Objective: ${chapter.intro}
+
+      TASK: Create a detailed outline for this chapter with exactly 4 distinct sub-sections.
+      Each sub-section must cover a specific aspect of the chapter's topic in EXTREME depth.
+      
+      Output JSON: ["Subheading 1", "Subheading 2", "Subheading 3", "Subheading 4"]
+      Output ONLY JSON.
+      Language: ${langName}.
+    `;
+
+    try {
+      subtopics = await llm.generateJSON<string[]>(outlinePrompt);
+    } catch (e) {
+      console.error("Failed to generate outline, using fallback topics", e);
+      // Fallback topics if JSON fails
+      subtopics = ["Fundamentos", "Histórico e Evolução", "Ferramentas e Técnicas", "Estudos de Caso"];
+    }
   }
 
   // Ensure we don't go overboard if AI hallucinates 10 topics (4 subtopics fits the 170-200 pages goal better)
@@ -531,6 +774,40 @@ export const writeChapter = async (
 
   const style = metadata.contentStyle || 'Profissional';
   const tone = metadata.writingTone || 'Natural';
+
+  // 2.1 Calculate Accumulated Context and Prohibited Terms from Previous Chapters
+  const currentChapterIndex = structure.findIndex(c => c.id === chapter.id);
+  let previousChaptersContext = "";
+  if (currentChapterIndex > 0) {
+    previousChaptersContext += "\n=== CONTEXTO DE CAPÍTULOS ANTERIORES E JÁ ESCRITOS ===\n";
+    for (let j = 0; j < currentChapterIndex; j++) {
+      const prevCh = structure[j];
+      if (prevCh.content && prevCh.content.length > 100) {
+        const snippet = prevCh.content.substring(0, 600).trim();
+        previousChaptersContext += `Capítulo ${prevCh.id}: "${prevCh.title}"\nInício do Capítulo:\n"${snippet}..."\n\n`;
+      }
+    }
+    previousChaptersContext += "=====================================================\n";
+  }
+
+  let prohibitedWordsList: string[] = [];
+  if (currentChapterIndex > 0) {
+    const prevCh = structure[currentChapterIndex - 1];
+    if (prevCh.content) {
+      prohibitedWordsList = [...prohibitedWordsList, ...extractKeyTerms(prevCh.content, 40)];
+    }
+  }
+  if (currentChapterIndex > 1) {
+    const prevPrevCh = structure[currentChapterIndex - 2];
+    if (prevPrevCh.content) {
+      prohibitedWordsList = [...prohibitedWordsList, ...extractKeyTerms(prevPrevCh.content, 20)];
+    }
+  }
+  prohibitedWordsList = Array.from(new Set(prohibitedWordsList));
+
+  const prohibitedWordsStr = prohibitedWordsList.length > 0
+    ? `\nLISTA DE PALAVRAS E TERMOS PROIBIDOS NESTE CAPÍTULO (já usados excessivamente nos capítulos anteriores, EVITE a todo custo):\n${prohibitedWordsList.map(w => `- "${w}"`).join('\n')}\n`
+    : '';
 
   try {
     // 2.1 Intro of Chapter (With Retries)
@@ -602,6 +879,10 @@ export const writeChapter = async (
                  - Use tom conversacional e prático.
                  ${metadata.isFiction ? '- Use prosa imersiva, foco em diálogos e ação.' : ''}
                  - TAMANHO: Escreva rigorosamente entre 450 e 500 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos.
+                 
+                 ${previousChaptersContext}
+                 
+                 ${prohibitedWordsStr}
                  
                  Previous Context:
                  ${fullChapterContent.slice(-3000)}
