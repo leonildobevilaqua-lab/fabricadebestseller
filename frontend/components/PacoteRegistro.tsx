@@ -51,19 +51,7 @@ export const PacoteRegistro: React.FC = () => {
         </div>
       </div>
 
-      <main className="w-full max-w-4xl px-4 py-8 md:py-12 flex-grow flex flex-col items-center z-10 relative">
-        {/* LOGO */}
-        <div className="mb-6 hover:scale-[1.02] transition-transform duration-300">
-          <img 
-            src="/logo_editora.png" 
-            alt="Fábrica de Best Seller" 
-            className="h-12 md:h-14 object-contain"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </div>
-
+      <main className="w-full max-w-4xl px-4 py-8 md:py-12 flex-grow flex flex-col items-center z-10 relative pt-12 md:pt-16">
         {/* TÍTULO PRINCIPAL DA OFERTA */}
         <div className="text-center space-y-2 mb-8 max-w-3xl">
           <span className="text-xs font-mono font-bold tracking-widest uppercase text-yellow-500 bg-yellow-500/10 border border-yellow-500/20 px-3 py-1 rounded-full">
@@ -199,6 +187,18 @@ export const PacoteRegistro: React.FC = () => {
           <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
             ESTA OFERTA SÓ É VÁLIDA ENQUANTO VOCÊ ESTIVER NESTA PÁGINA. VOCÊ NÃO TERÁ DIREITO A ESTE BENEFÍCIO AO FECHAR ESTA TELA, ENTÃO, GARANTA AGORA ESTA SUPER OPORTUNIDADE.
           </p>
+        </div>
+
+        {/* BOTÃO NÃO TENHO INTERESSE */}
+        <div className="mt-8 animate-fade-in-up">
+          <a 
+            href="https://fabricadebestseller.com.br/obrigado" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center text-xs md:text-sm text-slate-500 hover:text-slate-350 transition-colors duration-200 underline font-semibold tracking-wider uppercase py-2 px-4"
+          >
+            Não Tenho Interesse!
+          </a>
         </div>
       </main>
 

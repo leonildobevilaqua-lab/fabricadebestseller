@@ -54,20 +54,7 @@ export const Obrigado: React.FC = () => {
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="w-full max-w-4xl px-4 py-8 md:py-12 flex-grow flex flex-col items-center z-10 relative">
-        {/* LOGO */}
-        <div className="mb-8 hover:scale-[1.02] transition-transform duration-300">
-          <img 
-            src="/logo_editora.png" 
-            alt="Fábrica de Best Seller" 
-            className="h-14 md:h-16 object-contain"
-            onError={(e) => {
-              // Fallback caso a imagem não carregue
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </div>
-
+      <main className="w-full max-w-4xl px-4 py-8 md:py-12 flex-grow flex flex-col items-center z-10 relative pt-12 md:pt-16">
         {/* TÍTULO PRINCIPAL */}
         <h1 className="text-center font-serif text-3xl md:text-5xl font-bold tracking-tight text-white mb-8 max-w-3xl leading-tight">
           Parabéns pela sua compra! <br />
