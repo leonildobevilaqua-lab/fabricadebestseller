@@ -29,6 +29,7 @@ const SalesLandingV6 = lazy(() => import('./components/SalesLandingV6').then(m =
 const ProfessionalCoverLanding = lazy(() => import('./components/ProfessionalCoverLanding').then(m => ({ default: m.ProfessionalCoverLanding })));
 const CipGenerator = lazy(() => import('./components/CipGenerator'));
 const Obrigado = lazy(() => import('./components/Obrigado').then(m => ({ default: m.Obrigado })));
+const PacoteRegistro = lazy(() => import('./components/PacoteRegistro').then(m => ({ default: m.PacoteRegistro })));
 
 
 
@@ -216,6 +217,14 @@ const App: React.FC = () => {
       return (
         <ErrorBoundary>
           <Obrigado />
+        </ErrorBoundary>
+      );
+    }
+
+    if (path === '/pacote_registro' || path === '/pacote-registro') {
+      return (
+        <ErrorBoundary>
+          <PacoteRegistro />
         </ErrorBoundary>
       );
     }
