@@ -1301,12 +1301,33 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
         await reloadDB();
 
         const tx = payload.transaction || payload.data?.transaction || {};
-        const email = (payload.customer?.email || tx.customer?.email || payload.email || tx.email || '').toLowerCase().trim();
+        const email = (
+            payload.customer?.email || 
+            tx.customer?.email || 
+            payload.email || 
+            tx.email || 
+            payload.customer_email ||
+            payload.data?.customer?.email ||
+            payload.order?.customer?.email ||
+            payload.order?.email ||
+            ''
+        ).toLowerCase().trim();
         const rawStatus = (payload.status || tx.status || tx.order_status || '').toLowerCase();
         
         let status = rawStatus;
         // Ticto status mapping (Expanded for robustness)
-        if (['approved', 'paid', 'completed', 'confirmed', 'paid_out', 'payed', 'complete', 'authorized'].includes(rawStatus) || payload.event === 'transaction_approved') {
+        const event = (payload.event || payload.webhook_event_type || '').toLowerCase();
+        if (
+            ['approved', 'paid', 'completed', 'confirmed', 'paid_out', 'payed', 'complete', 'authorized'].includes(rawStatus) ||
+            event === 'transaction_approved' ||
+            event === 'sale_approved' ||
+            event === 'order_approved' ||
+            event === 'payment_approved' ||
+            event.includes('approved') ||
+            event.includes('paid') ||
+            event.includes('completed') ||
+            event.includes('confirmed')
+        ) {
             status = 'paid';
         }
 
@@ -1378,8 +1399,27 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 if (tx.checkout_id) identifiers.add(String(tx.checkout_id).trim());
                 if (tx.checkout_hash) identifiers.add(String(tx.checkout_hash).trim());
                 if (payload.item?.checkout_id) identifiers.add(String(payload.item.checkout_id).trim());
+                
+                // Add checkout_code and other potential fields from Ticto webhook structure
+                if (payload.checkout_code) identifiers.add(String(payload.checkout_code).trim());
+                if (payload.order?.checkout_code) identifiers.add(String(payload.order.checkout_code).trim());
+                if (tx.checkout_code) identifiers.add(String(tx.checkout_code).trim());
+                if (payload.item?.checkout_code) identifiers.add(String(payload.item.checkout_code).trim());
+                if (payload.item?.checkout_hash) identifiers.add(String(payload.item.checkout_hash).trim());
+                if (payload.data?.checkout_code) identifiers.add(String(payload.data.checkout_code).trim());
+                if (payload.data?.checkout_hash) identifiers.add(String(payload.data.checkout_hash).trim());
+                if (payload.order?.checkout_hash) identifiers.add(String(payload.order.checkout_hash).trim());
 
-                console.log(`[TICTO WEBHOOK] Extracted product identifiers:`, Array.from(identifiers));
+                // Parse checkout URL if present (extremely robust fallback)
+                const checkUrl = payload.checkout_url || payload.order?.checkout_url || tx.checkout_url || payload.item?.checkout_url || '';
+                if (checkUrl) {
+                    const match = checkUrl.match(/checkout\.ticto\.app\/([A-Za-z0-9]+)/);
+                    if (match && match[1]) {
+                        identifiers.add(match[1].trim());
+                    }
+                }
+
+                console.log(`[TICTO] Extracted product identifiers:`, Array.from(identifiers));
                 
                 // --- SPECIAL PROMO RESTRICTION (R$ 9,99 / R$ 5,99) ---
                 if (identifiers.has('O01C5F91D') || identifiers.has('O6F5202E7') || identifiers.has('111296')) {
