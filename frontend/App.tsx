@@ -28,6 +28,7 @@ const SalesLandingV5 = lazy(() => import('./components/SalesLandingV5').then(m =
 const SalesLandingV6 = lazy(() => import('./components/SalesLandingV6').then(m => ({ default: m.SalesLandingV6 })));
 const ProfessionalCoverLanding = lazy(() => import('./components/ProfessionalCoverLanding').then(m => ({ default: m.ProfessionalCoverLanding })));
 const CipGenerator = lazy(() => import('./components/CipGenerator'));
+const Obrigado = lazy(() => import('./components/Obrigado').then(m => ({ default: m.Obrigado })));
 
 
 
@@ -208,6 +209,14 @@ const App: React.FC = () => {
             if (path === '/admin') window.location.href = '/';
           }} />
         </div>
+      );
+    }
+
+    if (path === '/obrigado' || path === '/thank-you') {
+      return (
+        <ErrorBoundary>
+          <Obrigado />
+        </ErrorBoundary>
       );
     }
 
