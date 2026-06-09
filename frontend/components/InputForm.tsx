@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BookMetadata } from '../types';
 import { useLanguage } from '../i18n/context';
 
@@ -7,6 +7,7 @@ interface InputFormProps {
   setMetadata: React.Dispatch<React.SetStateAction<BookMetadata>>;
   onNext: () => void;
   language?: 'pt' | 'en' | 'es'; // UI language of the current user
+  userEmail?: string;
 }
 
 // Book generation language options
@@ -37,10 +38,16 @@ const BOOK_LANGUAGES = [
   }
 ];
 
-export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onNext, language = 'pt' }) => {
+export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onNext, language = 'pt', userEmail }) => {
   const [titleMode, setTitleMode] = React.useState<'ai' | 'manual'>('ai');
   const { t } = useLanguage();
   const F = (t as any).fiction;
+
+  useEffect(() => {
+    if (userEmail !== 'contato@leonildobevilaqua.com.br' && metadata.isFiction) {
+      setMetadata(prev => ({ ...prev, isFiction: false, genre: undefined }));
+    }
+  }, [userEmail, metadata.isFiction, setMetadata]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -228,26 +235,28 @@ export const InputForm: React.FC<InputFormProps> = ({ metadata, setMetadata, onN
         {selectedBookLang && (
           <div className="animate-fade-in">
             {/* NEW SECTION: MODE SELECTION (Fiction vs Non-Fiction) */}
-            <div className="mb-10 p-1 bg-slate-100 rounded-2xl flex gap-1">
-              <button
-                onClick={() => setMetadata(prev => ({ ...prev, isFiction: false, genre: undefined }))}
-                className={`flex-1 py-4 px-4 rounded-xl font-black text-xs transition-all flex flex-col items-center gap-1 ${!metadata.isFiction 
-                  ? 'bg-white text-slate-800 shadow-sm' 
-                  : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                <span className="text-xl">📚</span>
-                {F.nonFiction}
-              </button>
-              <button
-                onClick={() => setMetadata(prev => ({ ...prev, isFiction: true }))}
-                className={`flex-1 py-4 px-4 rounded-xl font-black text-xs transition-all flex flex-col items-center gap-1 ${metadata.isFiction 
-                  ? 'bg-white text-[#0ea5e9] shadow-sm' 
-                  : 'text-slate-400 hover:text-slate-600'}`}
-              >
-                <span className="text-xl">🚀</span>
-                {F.fiction}
-              </button>
-            </div>
+            {userEmail === 'contato@leonildobevilaqua.com.br' && (
+              <div className="mb-10 p-1 bg-slate-100 rounded-2xl flex gap-1 animate-fade-in">
+                <button
+                  onClick={() => setMetadata(prev => ({ ...prev, isFiction: false, genre: undefined }))}
+                  className={`flex-1 py-4 px-4 rounded-xl font-black text-xs transition-all flex flex-col items-center gap-1 ${!metadata.isFiction 
+                    ? 'bg-white text-slate-800 shadow-sm' 
+                    : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  <span className="text-xl">📚</span>
+                  {F.nonFiction}
+                </button>
+                <button
+                  onClick={() => setMetadata(prev => ({ ...prev, isFiction: true }))}
+                  className={`flex-1 py-4 px-4 rounded-xl font-black text-xs transition-all flex flex-col items-center gap-1 ${metadata.isFiction 
+                    ? 'bg-white text-[#0ea5e9] shadow-sm' 
+                    : 'text-slate-400 hover:text-slate-600'}`}
+                >
+                  <span className="text-xl">🚀</span>
+                  {F.fiction}
+                </button>
+              </div>
+            )}
 
             <div className="space-y-10 mb-10">
               

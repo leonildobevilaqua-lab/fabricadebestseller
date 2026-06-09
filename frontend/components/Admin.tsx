@@ -180,7 +180,7 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
         <div className="space-y-6 mb-8">
             {/* Top Cards */}
             {/* Top Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <div className="text-xs text-slate-500 font-bold uppercase">Faturamento Hoje</div>
                     <div className="text-2xl font-bold text-slate-800">R$ {getRevenue('day').toFixed(2)}</div>
@@ -194,59 +194,12 @@ const DashboardCharts = ({ leads = [], orders = [] }: { leads: any[], orders: an
                     <div className="text-2xl font-bold text-slate-800">R$ {getRevenue('month').toFixed(2)}</div>
                 </div>
 
-                {/* SUBSCRIPTION STATS */}
-                <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-sm">
-                    <div className="text-xs text-indigo-500 font-bold uppercase">Assinaturas (MRR Est.)</div>
-                    <div className="text-2xl font-bold text-indigo-800">
-                        R$ {getPaidLeads().filter(l => l.plan).reduce((acc, curr) => {
-                            // Estimate MRR: If Annual, divide by 12? Or just show total contracted?
-                            // User asked for "Faturamento". Let's show Total Collected from Subs.
-                            // Actually, let's show Active Subs Count vs Revenue
-                            return acc + calculateLeadValue(curr);
-                        }, 0).toFixed(2)}
-                    </div>
-                    <div className="text-xs text-indigo-400">
-                        {safeLeads.filter(l => l.status === 'SUBSCRIBER').length} Assinantes Ativos
-                    </div>
-                </div>
-
                 <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                     <div className="text-xs text-slate-500 font-bold uppercase">Solicitações</div>
                     <div className="text-2xl font-bold text-orange-500">{pendingLinks}</div>
                     <div className="text-xs text-slate-400">Aguardando Ação</div>
                 </div>
             </div>
-
-            {/* SUBSCRIPTION DETAILED BREAKDOWN */}
-            <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm mb-6">
-                <h3 className="font-bold text-slate-700 mb-6 flex items-center gap-2">
-                    <span className="text-xl">📊</span> Detalhamento de Assinaturas Ativas
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                    {[
-                        { label: 'Starter Mensal', p: 'STARTER', b: 'monthly', color: 'bg-emerald-50 border-emerald-200 text-emerald-700' },
-                        { label: 'Starter Anual', p: 'STARTER', b: 'annual', color: 'bg-emerald-100 border-emerald-300 text-emerald-800' },
-                        { label: 'Pro Mensal', p: 'PRO', b: 'monthly', color: 'bg-blue-50 border-blue-200 text-blue-700' },
-                        { label: 'Pro Anual', p: 'PRO', b: 'annual', color: 'bg-blue-100 border-blue-300 text-blue-800' },
-                        { label: 'Black Mensal', p: 'BLACK', b: 'monthly', color: 'bg-slate-800 border-slate-600 text-slate-200' },
-                        { label: 'Black Anual', p: 'BLACK', b: 'annual', color: 'bg-slate-900 border-slate-700 text-white' },
-                    ].map((item, idx) => {
-                        const count = safeLeads.filter(l =>
-                            l.status === 'SUBSCRIBER' &&
-                            l.plan?.name === item.p &&
-                            (l.plan?.billing || 'monthly') === item.b
-                        ).length;
-
-                        return (
-                            <div key={idx} className={`p-4 rounded-xl border ${item.color} flex flex-col items-center justify-center text-center shadow-sm`}>
-                                <div className="text-xs font-black uppercase tracking-wider opacity-80 mb-2">{item.label}</div>
-                                <div className="text-3xl font-black">{count}</div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
             {/* Charts Row */}
             {showCharts && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -398,6 +351,8 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [settings, setSettings] = useState<any>(null);
     const [msg, setMsg] = useState('');
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
 
     // Auth Mode State
     const [authMode, setAuthMode] = useState<'login' | 'forgot' | 'reset'>('login');
@@ -1112,10 +1067,19 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     const getCombinedTimeline = () => {
         // PER USER REQUEST: Only show PROJETO entries. Do not show LEAD entries in the timeline.
-        const pList = getFilteredProjects().map(p => ({ ...p, isProject: true }));
+        let pList = [];
+        const q = appliedSearchQuery.toLowerCase().trim();
+        if (q) {
+            // Se houver busca, traz todos os livros (ignora filtro de período)
+            pList = projects.map(p => ({ ...p, isProject: true })).filter(p => 
+                (p.customerName && p.customerName.toLowerCase().includes(q)) ||
+                (p.customerEmail && p.customerEmail.toLowerCase().includes(q))
+            );
+        } else {
+            // Se não houver busca, aplica o filtro de período selecionado
+            pList = getFilteredProjects().map(p => ({ ...p, isProject: true }));
+        }
         
-        // Leads are no longer listed in the history per manual request, but we could keep them for future use (commented out)
-        // const lList = leads.map(l => ({ ...l, isLead: true, isProject: false, date: l.date || l.createdAt }));
         const combined = [...pList]; 
 
         return combined.sort((a, b) => {
@@ -1513,10 +1477,47 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                     </h3>
 
                                     <div className="flex flex-wrap items-center gap-3 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Buscar por nome ou e-mail..."
+                                                    value={searchQuery}
+                                                    onChange={e => setSearchQuery(e.target.value)}
+                                                    onKeyDown={e => {
+                                                        if (e.key === 'Enter') {
+                                                            setAppliedSearchQuery(searchQuery);
+                                                        }
+                                                    }}
+                                                    className="p-2 pl-8 border border-slate-300 rounded-md text-slate-700 font-medium bg-white w-64 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                                />
+                                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                                            </div>
+                                            <button
+                                                onClick={() => setAppliedSearchQuery(searchQuery)}
+                                                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-sm font-bold shadow-sm transition-all"
+                                            >
+                                                Buscar
+                                            </button>
+                                            {appliedSearchQuery && (
+                                                <button
+                                                    onClick={() => {
+                                                        setSearchQuery('');
+                                                        setAppliedSearchQuery('');
+                                                    }}
+                                                    className="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-md text-sm font-bold transition-all"
+                                                >
+                                                    Limpar
+                                                </button>
+                                            )}
+                                        </div>
+
                                         <select
                                             value={salesFilter}
+                                            disabled={!!appliedSearchQuery.trim()}
                                             onChange={e => setSalesFilter(e.target.value as any)}
-                                            className="p-2 border rounded-md text-slate-700 font-medium bg-white"
+                                            className="p-2 border rounded-md text-slate-700 font-medium bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                            title={appliedSearchQuery.trim() ? "Filtro de período desativado durante a busca por cliente" : ""}
                                         >
                                             <option value="all">Todo o Período</option>
                                             <option value="today">Hoje</option>
@@ -1527,9 +1528,21 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
                                         {salesFilter === 'custom' && (
                                             <div className="flex items-center gap-2">
-                                                <input type="date" value={salesStartDate} onChange={e => setSalesStartDate(e.target.value)} className="p-2 border rounded-md" />
+                                                <input 
+                                                    type="date" 
+                                                    value={salesStartDate} 
+                                                    disabled={!!appliedSearchQuery.trim()} 
+                                                    onChange={e => setSalesStartDate(e.target.value)} 
+                                                    className="p-2 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed" 
+                                                />
                                                 <span className="text-slate-500">até</span>
-                                                <input type="date" value={salesEndDate} onChange={e => setSalesEndDate(e.target.value)} className="p-2 border rounded-md" />
+                                                <input 
+                                                    type="date" 
+                                                    value={salesEndDate} 
+                                                    disabled={!!appliedSearchQuery.trim()} 
+                                                    onChange={e => setSalesEndDate(e.target.value)} 
+                                                    className="p-2 border rounded-md disabled:opacity-50 disabled:cursor-not-allowed" 
+                                                />
                                             </div>
                                         )}
                                     </div>
@@ -1538,7 +1551,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                 <div className="divide-y divide-slate-100 bg-white min-h-[100px]">
                                     {getCombinedTimeline().length === 0 ? (
                                         <div className="p-12 text-center text-slate-400 font-medium">
-                                            Nenhum registro encontrado para o período selecionado.
+                                            {appliedSearchQuery ? `Nenhum livro encontrado para "${appliedSearchQuery}".` : "Nenhum registro encontrado para o período selecionado."}
                                         </div>
                                     ) : (
                                         getCombinedTimeline().map((item: any, idx: number) => {

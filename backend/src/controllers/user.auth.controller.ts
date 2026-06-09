@@ -185,14 +185,16 @@ export const UserAuthController = {
             const strUser = String(email || '').toLowerCase().trim();
             const isAdmin = cleanUser.includes('leonildo');
 
-            // 3.1 Fetch Projects & Leads (Optimized Hybrid)
-            const [allProjects, allLeads] = await Promise.all([
+            // 3.1 Fetch Projects, Leads & Orders (Optimized Hybrid)
+            const [allProjects, allLeads, allOrders] = await Promise.all([
                 getVal('/projects') || [],
-                getVal('/leads') || []
+                getVal('/leads') || [],
+                getVal('/orders') || []
             ]);
             
             const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
             const leadsArray = Array.isArray(allLeads) ? allLeads : Object.values(allLeads);
+            const ordersArray = Array.isArray(allOrders) ? allOrders : Object.values(allOrders);
 
             // Merge everything that looks like a book/project
             const combinedProjects = [...projectsArray];
@@ -207,23 +209,79 @@ export const UserAuthController = {
                 }
             });
 
-            const userProjects = combinedProjects.filter((p: any) => {
+            // 3.2 Enrich projects aggressively to find customerEmail and customerPhone
+            const enrichedProjects = combinedProjects.map((p: any) => {
                 const metadata = (p.metadata && typeof p.metadata === 'object') ? p.metadata : p;
+                const projectId = p.projectId || p.id || metadata.id;
                 const contact = metadata.contact || p.contact || {};
-                const emails = [
-                    String(metadata.email || '').toLowerCase(),
-                    String(metadata.userEmail || '').toLowerCase(),
-                    String(metadata.authorEmail || '').toLowerCase(),
-                    String(contact.email || '').toLowerCase(),
-                    String(p.userEmail || '').toLowerCase(),
-                    String(p.email || '').toLowerCase()
-                ];
-                return emails.some(e => e.includes(strUser));
+                const authorName = metadata.authorName || p.authorName || contact?.name || "Autor";
+                const customerName = contact.name || p.customerName || p.name || authorName || "Cliente";
+
+                let customerEmail = (
+                    p.customerEmail || p.email || p.userEmail || 
+                    metadata.contact?.email || 
+                    metadata.email || 
+                    metadata.userEmail || 
+                    ""
+                ).trim().toLowerCase();
+
+                // --- AGGRESSIVE ENRICHMENT ---
+                if (customerEmail === "n/a" || customerEmail === "") {
+                    // 1. Find by Project ID in leads
+                    const foundLeadByPid = leadsArray.find((l: any) => l.projectId === projectId || (l.details && l.details.projectId === projectId));
+                    if (foundLeadByPid && foundLeadByPid.email) {
+                        customerEmail = foundLeadByPid.email.toLowerCase().trim();
+                    } else {
+                        // 2. Find by Project ID in orders
+                        const foundOrderByPid = ordersArray.find((o: any) => o.id === projectId || o.projectId === projectId || (o.paymentInfo && o.paymentInfo.transactionId === projectId));
+                        if (foundOrderByPid && (foundOrderByPid.email || (foundOrderByPid.paymentInfo && foundOrderByPid.paymentInfo.payerEmail))) {
+                            customerEmail = (foundOrderByPid.email || foundOrderByPid.paymentInfo.payerEmail).toLowerCase().trim();
+                        } else if (customerName && customerName !== "Cliente" && customerName !== "Autor") {
+                            // 3. Find by Customer Name in leads
+                            const foundLeadByName = leadsArray.find((l: any) => l.name === customerName || l.authorName === customerName);
+                            if (foundLeadByName && foundLeadByName.email) {
+                                customerEmail = foundLeadByName.email.toLowerCase().trim();
+                            } else {
+                                // 4. Find by Customer Name in orders
+                                const foundOrderByName = ordersArray.find((o: any) => o.name === customerName || (o.paymentInfo && o.paymentInfo.payer === customerName));
+                                if (foundOrderByName && (foundOrderByName.email || (foundOrderByName.paymentInfo && foundOrderByName.paymentInfo.payerEmail))) {
+                                    customerEmail = (foundOrderByName.email || foundOrderByName.paymentInfo.payerEmail).toLowerCase().trim();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                let customerPhone = metadata.contact?.phone || metadata.phone || metadata.customerPhone || p.customerPhone || "";
+                if ((!customerPhone || customerPhone === "-") && (customerEmail || projectId)) {
+                    const foundLead = leadsArray.find((l: any) => (customerEmail && l.email?.toLowerCase().trim() === customerEmail) || l.projectId === projectId);
+                    if (foundLead) {
+                        customerPhone = foundLead.fullPhone || foundLead.phone || "";
+                    } else {
+                        const foundOrder = ordersArray.find((o: any) => (customerEmail && o.paymentInfo?.payerEmail?.toLowerCase().trim() === customerEmail) || o.id === projectId || o.projectId === projectId);
+                        if (foundOrder && foundOrder.paymentInfo?.payerPhone) {
+                            customerPhone = foundOrder.paymentInfo.payerPhone;
+                        }
+                    }
+                }
+                if (!customerPhone) customerPhone = "-";
+
+                return {
+                    ...p,
+                    customerEmail: customerEmail || "N/A",
+                    customerPhone,
+                    customerName
+                };
+            });
+
+            // Filter projects for the logged-in user
+            const userProjects = enrichedProjects.filter((p: any) => {
+                return p.customerEmail === strUser;
             });
 
             const usageCount = userProjects.length;
 
-            console.log(`[AUTH_ME] User: ${cleanUser} | Total Projects (Combined): ${userProjects.length} | Identity: ${user.profile?.name || 'Unknown'}`);
+            console.log(`[AUTH_ME] User: ${cleanUser} | Total Projects (Combined/Enriched): ${userProjects.length} | Identity: ${user.profile?.name || 'Unknown'}`);
             
             if (userProjects.length === 0 && cleanUser.includes('leonildo')) {
                 console.warn(`[AUTH_ME] WARNING: No projects found for Leonildo identity (${cleanUser}).`);
@@ -248,7 +306,6 @@ export const UserAuthController = {
 
             const mappedOrders = userProjects.map((p: any) => {
                 const metadata = (p.metadata && typeof p.metadata === 'object') ? p.metadata : p;
-                const contact = metadata.contact || p.contact || {};
                 
                 // Robust title selection
                 const bookTitle = metadata.bookTitle || p.bookTitle || metadata.title || p.title || metadata.topic || p.topic || 'Livro Gerado';
@@ -258,10 +315,10 @@ export const UserAuthController = {
                     id: p.id || metadata.id || p.projectId,
                     projectId: p.id || metadata.id || p.projectId,
                     title: safeTitle,
-                    authorName: metadata.authorName || p.authorName || contact?.name || 'Autor',
-                    customerName: contact.name || p.name || p.customerName || 'Cliente',
-                    customerEmail: contact.email || p.email || p.userEmail || metadata.email || '-',
-                    customerPhone: contact.phone || p.phone || p.customerPhone || '-',
+                    authorName: metadata.authorName || p.authorName || p.customerName || 'Autor',
+                    customerName: p.customerName || 'Cliente',
+                    customerEmail: p.customerEmail,
+                    customerPhone: p.customerPhone,
                     date: p.createdAt || metadata.createdAt || p.date || p.updated_at || new Date(),
                     status: (metadata.status || p.status || 'PROCESSING').toUpperCase(),
                     downloadUrl: metadata.kitUrl || metadata.kitLink || metadata.downloadUrl || p.kitUrl || p.downloadUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id || p.projectId}/download`

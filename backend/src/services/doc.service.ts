@@ -337,6 +337,13 @@ const createDocxBuffer = async (metadata: BookMetadata, content: BookContent): P
         let clean = text || "";
         clean = clean.replace(/#{1,6}\s?/g, "");
         clean = clean.replace(/^\s*[-_*]{3,}\s*$/gm, "");
+        clean = clean.replace(/\r\n/g, "\n");
+        clean = clean.replace(/[ \t]{2,}/g, " "); // Collapses double spaces
+        clean = clean.replace(/[ \t]+([.,!?;:])/g, "$1"); // Space before punctuation
+        clean = clean.replace(/[ \t]+\)/g, ")"); // Space before closing parenthesis
+        clean = clean.replace(/\([ \t]+/g, "("); // Space after opening parenthesis
+        clean = clean.replace(/(\w|\d|[.,!?;:])\s+([\"'”’])/g, "$1$2"); // Space before closing quotes
+        clean = clean.replace(/([\"'“‘])\s+(\w|\d)/g, "$1$2"); // Space after opening quotes
         clean = clean.replace(/\n{3,}/g, "\n\n"); // Squash excessive whitespace
         return clean;
     };

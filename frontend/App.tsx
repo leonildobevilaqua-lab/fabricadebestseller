@@ -354,6 +354,7 @@ const App: React.FC = () => {
                 setMetadata={setMetadata}
                 onNext={nextStep}
                 language={lang}
+                userEmail={userContact?.email}
               />
             )}
 

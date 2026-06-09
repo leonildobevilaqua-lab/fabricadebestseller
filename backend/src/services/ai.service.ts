@@ -24,21 +24,29 @@ NUNCA invente dores ou desejos. Use os dados das pesquisas fornecidas.
 
 const ANTI_AI_INSTRUCTIONS = `
 REGRAS CRÍTICAS PARA ESCRITA HUMANA (AUTOR DE ELITE - 0% IA):
-1. VARIABILIDADE RADICAL (Burstiness): Alterne frases curtas e impactantes com frases longas e rítmicas. Use fragmentos de frases para ênfase emocional. NUNCA tenha dois parágrafos seguidos com a mesma estrutura gramatical ou número similar de frases.
-2. ZERO REPETIÇÃO E SUPRESSÃO DE ECOS: É expressamente proibido repetir a mesma estrutura de frase, conectivos ou palavras-chave em parágrafos próximos. Se usou um adjetivo ou metáfora forte, não a repita em pelo menos 10 páginas. Mantenha o vocabulário em constante expansão.
+1. VARIABILIDADE RADICAL E ALTERNÂNCIA DE RITMO: Alterne frases curtas e impactantes com frases longas e rítmicas. Mescle parágrafos de tamanhos diferentes. Um parágrafo longo e explicativo deve ser obrigatoriamente seguido por uma frase curta e impactante. Use fragmentos de frases para ênfase emocional. NUNCA tenha dois parágrafos seguidos com a mesma estrutura gramatical ou número similar de frases.
+2. ZERO REPETIÇÃO E SUPRESSÃO DE ECOS: É expressamente proibido repetir a mesma estrutura de frase, conectivos ou palavras-chave em parágrafos próximos. Se usou um adjetivo ou metáfora forte, não a repita em pelo menos 10 páginas. Mantenha o vocabulário em constante expansão e utilize uma ampla riqueza de sinônimos.
 3. PERPLEXIDADE ALTA: Use vocabulário dinâmico, metáforas raras e analogias específicas do nicho. Evite termos genéricos. Se o assunto é técnico, use a gíria do especialista.
 4. CONEXÃO HUMANA E "VOZ" COM EQUILÍBRIO: Escreva como se estivesse em uma conversa privada e intensa com o leitor. Use a primeira pessoa (Eu ou Nós) com moderação e equilíbrio, variando as estruturas para evitar que parágrafos seguidos comecem com "Nós..." ou "A gente...".
-5. PONTUAÇÃO NATURAL E SEM TRAÇOS:
-   - TERMINANTEMENTE PROIBIDO o uso de travessões ou traços (-, –, —) para explicações intercaladas ou orações parentéticas (ex: "serotonina – neurotransmissor que te faz sentir bem – é produzida..."). Use vírgulas ou parênteses, ou reescreva a frase de forma contínua e fluida. Hifens são permitidos APENAS para palavras compostas legítimas da língua portuguesa (ex: "bem-estar", "segunda-feira").
-   - EVITE DOIS PONTOS (:): Nunca use dois pontos em títulos, subtítulos ou transições de capítulos. Use-os apenas quando for gramaticalmente indispensável (ex: citações diretas).
-6. BANIMENTO DE TRANSIÇÕES E EXPRESSÕES REPETITIVAS (CLICHÊS IA):
+5. PONTUAÇÃO E ESPAÇAMENTO HUMANO (EXTREMAMENTE RIGOROSO):
+   - CASAMENTO DE PONTUAÇÃO: Nunca coloque espaços antes de pontos finais, pontos de interrogação (?), exclamação (!), dois pontos (:), ponto e vírgula (;) ou fechamento de parênteses/aspas. A pontuação deve estar colada à última palavra (Ex: escreva "Deus?" e NUNCA "Deus ?").
+   - BANIMENTO DE SINAIS ÓRFÃOS: É terminantemente proibido o uso de travessões (—), travessões médios (–) ou hifens (-) soltos/isolados no meio ou início de frases para criar pausas dramáticas ou intercalações. Use vírgulas, parênteses corretos ou reescreva de forma contínua e fluida.
+   - MODERAÇÃO DE DOIS PONTOS E PONTO E VÍRGULA: Reduza em 80% o uso de dois pontos (:) e pontos e vírgula (;). Prefira o fluxo contínuo do texto usando conjunções naturais da língua portuguesa (como: "visto que", "porque", "já que", "portanto", "com isso").
+6. BLOQUEIO DE PADRÕES DE COMPENSAÇÃO DE IA:
+   - PROIBIDO O ABUSO DE "IMAGINE": É proibido iniciar capítulos, tópicos ou parágrafos abusando de comandos de visualização como "Imagine", "Imaginemos", "Visualize", "Pense". Em vez de pedir para o leitor imaginar, insira-o direto no cenário (Exemplo: Em vez de "Imagine uma cafeteria...", use "Em uma cafeteria movimentada, o fluxo de...").
+   - ADJETIVOS DE CONTROLE BANIDOS/RESTRITOS: Restrinja o uso excessivo e clichê de palavras que a IA usa como muletas intelectuais para parecer complexa: "intrincado", "sintonia/sintonizar", "visceral", "fervilhante", "místico", "alquimia", "maestro". Use substitutos sóbrios e diretos.
+   - TRANSIÇÕES IMPLÍCITAS: Elimine conectivos repetitivos que denunciam a estrutura do texto, como "Primeiramente", "Contudo", "Por outro lado", "Em última análise", quando usados consecutivamente para abrir parágrafos. Varie a abertura das frases usando o próprio sujeito da ação.
+   - LINGUAGEM DIRETA E SEM FLOREIOS EXAGERADOS: Evite floreios exagerados que tornem o texto cansativo ou artificial (ex: "uma verdadeira cornucópia de ferramentas" ou "dar olhos de águia ao seu negócio"). O tom deve ser moderno, ágil, inspirador e direto.
+7. BANIMENTO DE TRANSIÇÕES E EXPRESSÕES REPETITIVAS (CLICHÊS IA / EXTREMAMENTE PROIBIDO):
    - NUNCA use marcadores de IA comuns: "Em conclusão", "Além disso", "Além do mais", "É importante notar", "Consequentemente", "Portanto", "Em resumo", "Por fim", "Dito isso", "Vale ressaltar", "Neste capítulo", "Como mencionado anteriormente".
-   - NUNCA use as expressões repetitivas frequentemente detectadas como marcas de IA: "Sendo sincero", "Na real", "O detalhe é que", "Pense comigo", "Onde isso nos leva", "Onde isso nos leva, então", "Mas aqui está o pulo do gato", "Honestamente", "A verdade nua e crua é", "Segura essa", "Do nada".
-   - SUBSTITUA POR transições narrativas fluidas e elegantes: "A questão central passa a ser...", "O próximo desafio é...", "Existe um ponto ainda mais importante...", "É aqui que surge a pergunta decisiva...", "Com isso em mente, percebemos que...".
-7. FRASES COMPLETAS E SEM FRAGMENTOS: É proibido começar sentenças isoladas com preposições como "A um...", "A uma...", "Ao...", "À...", "De um...", "De uma...". Toda sentença deve ser completa (sujeito + verbo). Substitua construções truncadas por sentenças inteiras (ex: em vez de "A uma compreensão mais profunda...", escreva "Isso nos conduz a uma compreensão mais profunda..." ou "O resultado é uma compreensão mais profunda...").
-8. CORREÇÃO DE ERROS DE IA COMUNS: Evite erros de digitação recorrentes na geração por IA como "om ombros" (escreva "ombros") e erros de separação verbal como "pro age" (escreva "proage" ou "atua de forma proativa").
-9. SHOW, DON'T TELL: NUNCA descreva uma emoção ou resultado de forma abstrata. Use cenas, reações viscerais e detalhes sensoriais.
-10. SEM RESUMOS ROBÓTICOS: Não termine seções ou capítulos resumindo o que acabou de ser dito de forma escolar. Termine com um gancho emocional ou uma provocação que force o leitor a agir.
+   - NUNCA use as expressões repetitivas frequentemente detectadas como marcas de IA: "Sendo sincero", "Na real", "O detalhe é que", "Pense comigo", "Onde isso nos leva", "Onde isso nos leva, então", "Mas aqui está o pulo do gato", "Mas aqui está a verdade", "A verdade é que", "Honestamente", "A verdade nua e crua é", "Segura essa", "Do nada", "Ah,", "Ah, meu amigo", "Ah, o", "pastor querido", "amigo querido", "querido leitor".
+   - SUBSTITUA POR transições narrativas fluidas e elegantes: "A questão central passa a ser...", "O próximo desafio é...", "Existe um ponto ainda mais importante...", "É aqui que surge a pergunta decisiva...", "Com isso em mente, percebemos que...", ou vá direto ao ponto sem introduções.
+   - RIQUEZA DE SINÔNIMOS: Em vez de "Sendo sincero", use: "Para sermos honestos", "A prática nos mostra", "Na rotina de trabalho", "Conversando abertamente", ou vá direto ao ponto. Use uma grande variedade de sinônimos e mude a abordagem para evitar palavras repetidas.
+8. FRASES COMPLETAS E SEM FRAGMENTOS: É proibido começar sentenças isoladas com preposições como "A um...", "A uma...", "Ao...", "À...", "De um...", "De uma...". Toda sentença deve ser completa (sujeito + verbo). Substitua construções truncadas por sentenças inteiras (ex: em vez de "A uma compreensão mais profunda...", escreva "Isso nos conduz a uma compreensão mais profunda..." ou "O resultado é uma compreensão mais profunda...").
+9. DENSIDADE DE VALOR (ZERO LINGUIÇA): Cada parágrafo deve trazer uma informação útil, um insight prático ou um exemplo real. Elimine parágrafos abstratos que apenas repetem o que foi dito no tópico anterior.
+10. CORREÇÃO DE ERROS DE IA COMUNS: Evite erros de digitação recorrentes na geração por IA como "om ombros" (escreva "ombros") e erros de separação verbal como "pro age" (escreva "proage" ou "atua de forma proativa").
+11. SHOW, DON'T TELL: NUNCA descreva uma emoção ou resultado de forma abstrata. Use cenas, reações viscerais e detalhes sensoriais.
+12. SEM CONCLUSÕES ROBÓTICAS OU GANCHOS ARTIFICIAIS: Não termine seções ou capítulos resumindo o que acabou de ser dito de forma escolar ou fazendo perguntas de transição mecânicas (ex: "Vamos começar?", "Preparado para o próximo passo?"). Conclua os pensamentos de forma orgânica e natural, deixando o gancho implicitamente inserido na última afirmação.
 `;
 
 const FICTION_BLOCKS = [
@@ -633,36 +641,51 @@ const cleanText = (text: string): string => {
     .replace(/-{3,}/g, '') // Remove ---
     .replace(/#{2,}/g, '') // Remove ###
     // .replace(/\*{2,}/g, '') // RESTORED: Keep ** for doc.service.ts bold detection
-    .replace(/\s{2,}/g, ' ') // Remove double spaces
+    .replace(/In conclusion,|Em conclusão,|Por fim,|Concluindo,|Além disso,|Ademais,|Além do mais,|Em resumo,|É fundamental notar,|É importante destacar,/gi, '') // Remove typical AI markers
     .replace(/\[.*?\]/g, '') // Remove placeholders like [Insert name]
-    .replace(/In conclusion,|Em conclusão,|Por fim,|Concluindo,|Além disso,|Além do mais,|Em resumo,|É fundamental notar,|É importante destacar,/gi, '') // Remove typical AI markers
+    .replace(/\r\n/g, '\n') // Normalize newlines
+    .replace(/[ \t]{2,}/g, ' ') // Remove double horizontal spaces but keep paragraph newlines
+    .replace(/[ \t]+([.,!?;:])/g, '$1') // Remove space before punctuation
+    .replace(/[ \t]+\)/g, ')') // Remove space before closing parenthesis
+    .replace(/\([ \t]+/g, '(') // Remove space after opening parenthesis
+    .replace(/(\w|\d|[.,!?;:])\s+([\"'”’])/g, '$1$2') // Space before closing quotes
+    .replace(/([\"'“‘])\s+(\w|\d)/g, '$1$2') // Space after opening quotes
+    .replace(/\n{3,}/g, '\n\n') // Collapse 3+ newlines to double newlines
     .trim();
 };
 
 const getHumanizationInstructions = (lang: string, style: string = 'Profissional', tone: string = 'Natural', isFiction: boolean = false) => `
     DIRETRIZES DE ESCRITA DE ELITE (MODO INDETECTÁVEL):
     ${isFiction ? ANTI_AI_INSTRUCTIONS : `
-    1. **ALMA HUMANA E VARIABILIDADE**: Escreva com imperfeição controlada, nuances e emoção. Alterne o ritmo das frases (Burstiness). Use vocabulário rico e inesperado (Perplexidade).
+    1. **ALMA HUMANA E VARIABILIDADE DE RITMO**: Escreva com imperfeição controlada, nuances e emoção. Alterne o ritmo das frases (Burstiness). Mescle parágrafos de tamanhos diferentes. Um parágrafo longo e explicativo deve ser obrigatoriamente seguido por uma frase curta e impactante. Use vocabulário rico e inesperado (Perplexidade).
     2. **ESTILO E CONEXÃO REAL COM EQUILÍBRIO**:
        - Use a PRIMEIRA PESSOA (Eu ou Nós) com moderação e equilíbrio, variando as estruturas para evitar que parágrafos seguidos comecem com "Nós..." ou "A gente...".
        - **Estilo**: ${style} | **Tom**: ${tone}
-    3. **BANIMENTO DE TRANSIÇÕES E EXPRESSÕES REPETITIVAS (CLICHÊS IA/EXTREMAMENTE PROIBIDO)**: 
+    3. **BLOQUEIO DE PADRÕES DE COMPENSAÇÃO DE IA**:
+       - PROIBIDO O ABUSO DE "IMAGINE": É proibido iniciar capítulos, tópicos ou parágrafos abusando de comandos de visualização como "Imagine", "Imaginemos", "Visualize", "Pense". Em vez de pedir para o leitor imaginar, insira-o direto no cenário (Exemplo: Em vez de "Imagine uma cafeteria...", use "Em uma cafeteria movimentada, o fluxo de...").
+       - ADJETIVOS DE CONTROLE BANIDOS/RESTRITOS: Restrinja o uso excessivo e clichê de palavras que a IA usa como muletas intelectuais para parecer complexa: "intrincado", "sintonia/sintonizar", "visceral", "fervilhante", "místico", "alquimia", "maestro". Use substitutos sóbrios e diretos.
+       - TRANSIÇÕES IMPLÍCITAS: Elimine conectivos repetitivos que denunciam a estrutura do texto, como "Primeiramente", "Contudo", "Por outro lado" e "Em última análise", quando usados consecutivamente para abrir parágrafos. Varie a abertura das frases usando o próprio sujeito da ação.
+       - LINGUAGEM DIRETA E SEM FLOREIOS EXAGERADOS: Evite floreios exagerados que tornem o texto cansativo ou artificial (ex: "uma verdadeira cornucópia de ferramentas" ou "dar olhos de águia ao seu negócio"). O tom deve ser moderno, ágil, inspirador e direto.
+    4. **BANIMENTO DE TRANSIÇÕES E EXPRESSÕES REPETITIVAS (CLICHÊS IA/EXTREMAMENTE PROIBIDO)**: 
        - NUNCA use marcadores de IA comuns: "Em conclusão", "Além disso", "Além do mais", "É importante notar", "Consequentemente", "Portanto", "Em resumo", "Por fim", "Dito isso", "Vale ressaltar", "Neste capítulo", "Como mencionado anteriormente".
-       - NUNCA use as expressões repetitivas frequentemente detectadas como marcas de IA: "Sendo sincero", "Na real", "O detalhe é que", "Pense comigo", "Onde isso nos leva", "Onde isso nos leva, então", "Mas aqui está o pulo do gato", "Honestamente", "A verdade nua e crua é", "Segura essa", "Do nada".
-       - SUBSTITUA POR transições narrativas fluidas e elegantes: "A questão central passa a ser...", "O próximo desafio é...", "Existe um ponto ainda mais importante...", "É aqui que surge a pergunta decisiva...", "Com isso em mente, percebemos que...".
+       - NUNCA use as expressões repetitivas frequentemente detectadas como marcas de IA: "Sendo sincero", "Na real", "O detalhe é que", "Pense comigo", "Onde isso nos leva", "Onde isso nos leva, então", "Mas aqui está o pulo do gato", "Mas aqui está a verdade", "A verdade é que", "Honestamente", "A verdade nua e crua é", "Segura essa", "Do nada", "Ah,", "Ah, meu amigo", "Ah, o", "pastor querido", "amigo querido", "querido leitor".
+       - SUBSTITUA POR transições narrativas fluidas e elegantes: "A questão central passa a ser...", "O próximo desafio é...", "Existe um ponto ainda mais importante...", "É aqui que surge a pergunta decisiva...", "Com isso em mente, percebemos que...", ou vá direto ao ponto sem introduções.
+       - RIQUEZA DE SINÔNIMOS: Em vez de "Sendo sincero", use: "Para sermos honestos", "A prática nos mostra", "Na rotina de trabalho", "Conversando abertamente", ou vá direto ao ponto. Use uma grande variedade de sinônimos e mude a abordagem para evitar palavras repetidas.
        - PROIBIDO o uso de separadores robóticos (___, ---, ###) dentro do corpo do texto.
-    4. **PONTUAÇÃO NATURAL E SEM TRAÇOS**:
-       - TERMINANTEMENTE PROIBIDO o uso de travessões ou traços (\`-\`, \`–\`, \`—\`) para explicações intercaladas ou orações parentéticas (ex: "serotonina – neurotransmissor que te faz sentir bem – é produzida..."). Use vírgulas ou parênteses, ou reescreva a frase de forma contínua e fluida. Hifens são permitidos APENAS para palavras compostas legítimas da língua portuguesa (ex: "bem-estar", "segunda-feira").
-       - EVITE DOIS PONTOS (\`:\`): Nunca use dois pontos em títulos, subtítulos ou transições de capítulos. Use-os apenas quando for gramaticalmente indispensável (ex: citações diretas).
-    5. **FRASES COMPLETAS E SEM FRAGMENTOS**: É proibido começar sentenças isoladas com preposições como "A um...", "A uma...", "Ao...", "À...", "De um...", "De uma...". Toda sentença deve ser completa (sujeito + verbo). Substitua construções truncadas por sentenças inteiras (ex: em vez de "A uma compreensão mais profunda...", escreva "Isso nos conduz a uma compreensão mais profunda..." ou "O resultado é uma compreensão mais profunda...").
-    6. **CORREÇÃO DE ERROS DE IA COMUNS**: Evite erros de digitação recorrentes na geração por IA como "om ombros" (escreva "ombros") e erros de separação verbal como "pro age" (escreva "proage" ou "atua de forma proativa").
-    7. **ZERO REPETIÇÃO SEMÂNTICA**: Não repita a mesma ideia ou estrutura de frase em parágrafos sequenciais. Mantenha a leitura fresca.
-    8. **SHOW, DON'T TELL**: Não descreva apenas a teoria; mostre a aplicação prática com detalhes sensoriais e resultados viscerais.
-    9. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "previsível", reescreva para injetar caos e humanidade.
+    5. **PONTUAÇÃO E ESPAÇAMENTO HUMANO (EXTREMAMENTE RIGOROSO)**:
+       - CASAMENTO DE PONTUAÇÃO: Nunca coloque espaços antes de pontos finais, pontos de interrogação (?), exclamação (!), dois pontos (:), ponto e vírgula (;) ou fechamento de parênteses/aspas. A pontuação deve estar colada à última palavra (Ex: escreva "Deus?" e NUNCA "Deus ?").
+       - BANIMENTO DE SINAIS ÓRFÃOS: É terminantemente proibido o uso de travessões (—), travessões médios (–) ou hifens (-) soltos/isolados no meio ou início de frases para criar pausas dramáticas ou intercalações. Use vírgulas, parênteses corretos ou reescreva de forma contínua e fluida.
+       - MODERAÇÃO DE DOIS PONTOS E PONTO E VÍRGULA: Reduza em 80% o uso de dois pontos (:) e pontos e vírgula (;). Prefira o fluxo contínuo do texto usando conjunções naturais da língua portuguesa (como: "visto que", "porque", "já que", "portanto", "com isso").
+    6. **FRASES COMPLETAS E SEM FRAGMENTOS**: É proibido começar sentenças isoladas com preposições como "A um...", "A uma...", "Ao...", "À...", "De um...", "De uma...". Toda sentença deve ser completa (sujeito + verbo). Substitua construções truncadas por sentenças inteiras (ex: em vez de "A uma compreensão mais profunda...", escreva "Isso nos conduz a uma compreensão mais profunda..." ou "O resultado é uma compreensão mais profunda...").
+    7. **DENSIDADE DE VALOR (ZERO LINGUIÇA)**: Cada parágrafo deve trazer uma informação útil, um insight prático ou um exemplo real. Elimine parágrafos abstratos que apenas repetem o que foi dito no tópico anterior.
+    8. **CORREÇÃO DE ERROS DE IA COMUNS**: Evite erros de digitação recorrentes na geração por IA como "om ombros" (escreva "ombros") e erros de separação verbal como "pro age" (escreva "proage" ou "atua de forma proativa").
+    9. **ZERO REPETIÇÃO SEMÂNTICA**: Não repita a mesma ideia ou estrutura de frase em parágrafos sequenciais. Mantenha a leitura fresca.
+    10. **SHOW, DON'T TELL**: Não descreva apenas a teoria; mostre a aplicação prática com detalhes sensoriais e resultados viscerais.
+    11. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "previsível", reescreva para injetar caos e humanidade.
     `}
-    10. **FORMATAÇÃO**: Retorne PARÁGRAFOS LIMPOS e fluidos. Use transições naturais em vez de headers excessivos.
-    11. **SHOW, DON'T TELL**: Não diga que algo é emocionante, faça o coração do leitor disparar com a descrição.
-    12. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "robótico", reescreva instantaneamente para injetar caos e humanidade.
+    12. **FORMATAÇÃO**: Retorne PARÁGRAFOS LIMPOS e fluidos. Use transições naturais em vez de headers excessivos.
+    13. **SHOW, DON'T TELL**: Não diga que algo é emocionante, faça o coração do leitor disparar com a descrição.
+    14. **REVISÃO DOUBLE-BLIND (AUTOCORREÇÃO)**: Ao finalizar, analise seu próprio texto. Se algo parecer "perfeito demais" ou "robótico", reescreva instantaneamente para injetar caos e humanidade.
 `;
 
 export const writeIntroduction = async (
