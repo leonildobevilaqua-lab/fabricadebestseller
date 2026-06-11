@@ -138,6 +138,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         { id: 'barras', label: 'Código de Barras', icon: Barcode, price: 'R$ 19,90' },
         { id: 'qr-code', label: 'Gerador QR Code', icon: Smartphone, price: 'R$ 7,00' },
         { id: 'pacote-completo', label: 'Pacote (Ficha Catalog. + Cód. Barras + QR Code)', icon: Package, price: 'R$ 49,90' },
+        { id: 'diagramacao-formatacao-360', label: 'Diagramação e Formatação 360 Express', icon: FileText, price: 'R$ 97,00', externalLink: 'https://checkout.ticto.app/O2674C7CD', badgeText: 'Novo' },
         { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
         { id: 'amazon', label: '"DESAFIO P72H" PUBLICAÇÃO NA AMAZON', icon: Cloud, price: 'R$ 97,90', externalLink: 'https://checkout.ticto.app/O32C21B1D' },
         { id: 'uiclap', label: 'Publicação UICLAP', icon: Upload, price: 'R$ 97,90', externalLink: 'https://checkout.ticto.app/OED0004AF' },
@@ -240,6 +241,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         originalPrice="R$ 54,80"
                     />
                 );
+            case 'diagramacao-formatacao-360': return <PlaceholderView title="Diagramação e Formatação 360 Express" />;
             case 'capa-ebook': return <PlaceholderView title="Capa Profissional (Ebook)" />;
             case 'amazon': return <PlaceholderView title='"DESAFIO P72H" PUBLICAÇÃO NA AMAZON' />;
             case 'uiclap': return <PlaceholderView title="Publicação na UICLAP" />;
@@ -294,6 +296,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                                 }}
                                 isPreparation={item.isPreparation}
                                 price={item.price}
+                                badgeText={item.badgeText}
                             />
                         ))}
                     </nav>

@@ -163,7 +163,7 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                 <div className="relative w-full aspect-video rounded-2xl overflow-hidden shadow-2xl bg-black border border-slate-200">
                     <iframe
                         className="absolute inset-0 w-full h-full"
-                        src="https://www.youtube.com/embed/uBvagSevkaI"
+                        src="https://www.youtube.com/embed/5IsHzKVmoiY"
                         title={lang === 'en' ? "Instructional Video" : "Vídeo de Instruções"}
                         frameBorder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

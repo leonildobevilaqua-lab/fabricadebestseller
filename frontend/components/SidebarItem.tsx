@@ -10,10 +10,11 @@ interface SidebarItemProps {
     onClick: (id: string) => void;
     isPreparation?: boolean;
     price?: string;
+    badgeText?: string;
 }
 
 export const SidebarItem: React.FC<SidebarItemProps> = ({ 
-    id, label, icon: Icon, active, onClick, isPreparation, price 
+    id, label, icon: Icon, active, onClick, isPreparation, price, badgeText 
 }) => {
     return (
         <button
@@ -35,9 +36,11 @@ export const SidebarItem: React.FC<SidebarItemProps> = ({
                     )}
                 </div>
             </div>
-            {isPreparation && (
-                <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-black uppercase">Em Breve</span>
-            )}
+            {badgeText ? (
+                <span className="text-[8px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-black uppercase shrink-0">{badgeText}</span>
+            ) : isPreparation ? (
+                <span className="text-[8px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-black uppercase shrink-0">Em Breve</span>
+            ) : null}
         </button>
     );
 };
