@@ -240,7 +240,7 @@ Sua missão é criar 9 títulos e subtítulos que não pareçam manuais ou guias
 IDIOMA: ${langName}
 
 REGRAS MASTER PARA TÍTULOS:
-1. VARIABILIDADE E IMPACTO: Gere RIGOROSAMENTE 9 opções distintas. Alterne OBRIGATORIAMENTE entre títulos curtos (apenas 1 palavra impactante) e títulos mais longos e narrativos (entre 3 a 5 palavras). Pelo menos 3 opções devem ser curtas e 3 opções devem ser longas. O restante deve variar para dar opções ao cliente. Seja direto, amigável ou profundamente evocativo. (Exemplos Curtos: "Inabalável", "Gênese", "Impacto", "Essência". Exemplos Longos: "O Longo Caminho para a Liberdade", "Memórias de um Outono Esquecido", "A Última Fronteira do Amanhã").
+1. PALAVRAS COMPOSTAS E VARIABILIDADE: Gere RIGOROSAMENTE 9 opções distintas. Cada título OBRIGATORIAMENTE deve ser composto por múltiplas palavras (palavras compostas). É TERMINANTEMENTE PROIBIDO gerar títulos de uma única palavra (Ex: "Inabalável" ou "Gênese" são proibidos). Todos os títulos devem ter pelo menos duas palavras e variar entre 2 a 6 palavras. (Exemplos permitidos de títulos compostos: "O Verdadeiro Enigma", "A História do Brasil", "Como Vencer e Viver", "A Revolução dos Bichos", "A História da Verdade", "Do Comunismo a Democracia").
 2. NADA DE MANUAIS: Proibido usar "Guia", "Manual", "Tudo sobre", "Como", "Segredos de", "Desvendando" no início do título.
 3. PADRÃO CINEMATOGRÁFICO: Imagine o título em um pôster de cinema ou em uma vitrine de livraria de prestígio.
 4. SONORIDADE: O título deve ser fácil de lembrar e "gostoso" de falar.
@@ -263,7 +263,7 @@ FOCO EM FICÇÃO (PADRÃO BEST-SELLER):
 ` : `
 FOCO EM NÃO FICÇÃO (PADRÃO BEST-SELLER):
 - Foco em AUTORIDADE e TRANSFORMAÇÃO.
-- Títulos de impacto (Ex: "Inabalável", "Essencialismo", "O Poder da Presença").
+- Títulos de impacto compostos por múltiplas palavras (Ex: "Mentalidade Inabalável", "O Foco Essencialista", "O Poder da Presença").
 - Subtítulos que entregam a solução sem parecer um curso de internet.
 `}
 
@@ -278,7 +278,7 @@ RETORNE APENAS JSON LIMPO NA ESTRUTURA EXATA DE UM ARRAY COM EXATAMENTE 9 OPÇÕ
   { "title": "Título 2", "subtitle": "Subtítulo 2" },
   ... (até 9 itens) ...
 ]
-NÃO GERE MARKDOWN FORA DO JSON. GERE EXATAMENTE 9 OPÇÕES (títulos curtos e títulos longos misturados).
+NÃO GERE MARKDOWN FORA DO JSON. GERE EXATAMENTE 9 OPÇÕES (todos com títulos compostos de múltiplas palavras).
 `;
 
   const userPrompt = `TEMA: ${topic}`;
@@ -294,8 +294,17 @@ NÃO GERE MARKDOWN FORA DO JSON. GERE EXATAMENTE 9 OPÇÕES (títulos curtos e t
       throw new Error("A resposta da IA não é um array de títulos.");
     }
 
+    // Validação estrita: filtrar títulos que tenham apenas 1 palavra
+    const validRaw = raw.filter((item: any) => {
+      if (!item || typeof item.title !== 'string') return false;
+      const wordCount = item.title.trim().split(/\s+/).filter(Boolean).length;
+      return wordCount > 1;
+    });
+
+    const processedRaw = validRaw.length > 0 ? validRaw : raw;
+
     // Enriquecer com metadados obrigatórios do frontend
-    const enriched = raw.map((item: any, index: number) => ({
+    const enriched = processedRaw.map((item: any, index: number) => ({
       title: item.title || "Título Indisponível",
       subtitle: item.subtitle || "Subtítulo de alto impacto",
       marketingHook: item.marketingHook || "Promessa de Transformação",
@@ -313,10 +322,15 @@ NÃO GERE MARKDOWN FORA DO JSON. GERE EXATAMENTE 9 OPÇÕES (títulos curtos e t
     console.error("[IA] Titles Deep Analysis Failed. Attempting Minimal Fallback...", error);
     try {
       // LAST RESORT: Try generation without any research context to unblock the user
-      const minimalPrompt = `TEMA: ${topic}. Crie RIGOROSAMENTE 9 títulos virais (alternando entre curtos de 1 palavra e narrativos de 3-5 palavras) e subtítulos master em ${langName}. Retorne apenas JSON: [{ "title": "...", "subtitle": "..." }]`;
+      const minimalPrompt = `TEMA: ${topic}. Crie RIGOROSAMENTE 9 títulos virais (obrigatoriamente compostos por múltiplas palavras, nunca apenas uma única palavra) e subtítulos master em ${langName}. Retorne apenas JSON: [{ "title": "...", "subtitle": "..." }]`;
       const fallbackTitles = await llm.generateJSON<any[]>(minimalPrompt);
       if (Array.isArray(fallbackTitles)) {
-        return fallbackTitles.map((t, idx) => ({
+        const validFallback = fallbackTitles.filter((item: any) => {
+          if (!item || typeof item.title !== 'string') return false;
+          return item.title.trim().split(/\s+/).filter(Boolean).length > 1;
+        });
+        const processedFallback = validFallback.length > 0 ? validFallback : fallbackTitles;
+        return processedFallback.map((t, idx) => ({
           ...t,
           reason: "IA Sugestão Rápida",
           score: 80 - idx,
