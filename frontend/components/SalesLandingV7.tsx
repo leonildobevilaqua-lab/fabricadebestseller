@@ -23,7 +23,7 @@ export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = React.mem
       <iframe 
         id="v7-iframe"
         key="static-v7-iframe"
-        src="/landing.html?v=1.0.8" 
+        src="/landing.html?v=1.0.9" 
         style={{ width: '100%', height: '100%', border: 'none' }}
         title="Fábrica de Best Seller - Landing Page"
         loading="eager"

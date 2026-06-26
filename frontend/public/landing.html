@@ -2538,10 +2538,11 @@ const I18N = {
 let currentHeadlineIndex = 0;
 try {
   let savedIndex = localStorage.getItem('fbs-headline-index');
-  if (savedIndex === null) {
+  let parsed = parseInt(savedIndex, 10);
+  if (isNaN(parsed)) {
     currentHeadlineIndex = 0;
   } else {
-    currentHeadlineIndex = (parseInt(savedIndex) + 1) % 5;
+    currentHeadlineIndex = (parsed + 1) % 5;
   }
   localStorage.setItem('fbs-headline-index', currentHeadlineIndex);
 } catch (e) {
