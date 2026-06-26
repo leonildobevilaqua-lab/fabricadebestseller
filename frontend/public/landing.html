@@ -1429,7 +1429,17 @@
   header, .header { padding: 5px !important; }
   .v7-landing-wrapper iframe { height: 100% !important; }
   body { overflow-x: hidden !important; }
-}</style>
+}
+</style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-466673191"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-466673191');
+</script>
 </head>
 <body>
 
@@ -1457,12 +1467,8 @@
         <span class="dot"></span>
         <span data-i18n="hero.badge">✦ +1.200 Livros Profissionais Gerados nos Últimos 3 Meses</span>
       </div>
-      <h1 class="display h1" style="font-size: 38px">
-        <span data-i18n="hero.h1.part1">O Que Ghostwriters Cobram</span>
-        <span class="accent" data-i18n="hero.h1.part2">R$ 5.000</span>
-        <span data-i18n="hero.h1.part3">Para Fazer, Você Faz em</span>
-        <span class="accent" data-i18n="hero.h1.part4">30 Minutos</span>
-        <span data-i18n="hero.h1.part5">Por R$ 39,90 Com Um Livro Profissional Completo, Pronto Para a Amazon.</span>
+      <h1 class="display h1" style="font-size: 38px" data-i18n="hero.headline">
+        O Que Ghostwriters Cobram <span class="accent">R$ 5.000</span> Para Fazer, Você Faz em <span class="accent">30 Minutos</span> Por R$ 39,90, Com Um Livro Profissional Completo, Pronto Para a Amazon.
       </h1>
       <p class="lede sub" data-i18n="hero.sub" style="font-size: 16px">A Fábrica de Best Seller pesquisa o YouTube, o Google e os 10 livros mais vendidos da Amazon sobre o seu tema e entrega um livro profissional completo, formatado, com Kit de Autopublicação, pronto para vender. Em 30 minutos. Por R$ 39,90.</p>
 
@@ -2011,11 +2017,13 @@ const I18N = {
     /* PT is in HTML by default. We keep this as the explicit source so toggles work. */
     "nav.cta": "Garantir Meu Livro · R$ 39,90",
     "hero.badge": "✦ +1.200 Livros Profissionais Gerados nos Últimos 3 Meses",
-    "hero.h1.part1": "O Que Ghostwriters Cobram",
-    "hero.h1.part2": "R$ 5.000",
-    "hero.h1.part3": "Para Fazer, Você Faz em",
-    "hero.h1.part4": "30 Minutos",
-    "hero.h1.part5": "Por R$ 39,90, Com Um Livro Profissional Completo, Pronto Para a Amazon.",
+    "hero.headline": [
+      "O Que Ghostwriters Cobram <span class=\"accent\">R$ 5.000</span> Para Fazer, Você Faz em <span class=\"accent\">30 Minutos</span> Por R$ 39,90, Com Um Livro Profissional Completo, Pronto Para a Amazon.",
+      "Crie Seu Livro Profissional na Amazon em <span class=\"accent\">30 Minutos</span>: Insira Suas <span class=\"accent\">Orientações</span> e Deixe a Inteligência Fazer a Pesquisa por <span class=\"accent\">R$ 39,90</span>.",
+      "Transforme Suas <span class=\"accent\">Instruções</span> em um Livro Pronto para Vender por Apenas <span class=\"accent\">R$ 39,90</span> — Sem Escrever Nenhuma Linha ou Contratar Ghostwriters.",
+      "Do Tema ao Livro Formatado na Amazon: A Maneira Mais Rápida de Publicar Usando Nossas Pesquisas e Suas <span class=\"accent\">Orientações</span> em <span class=\"accent\">30 Minutos</span>.",
+      "Não Precisa Ser Escritor: Diga o Que Deseja no Livro e Tenha uma Obra Completa no Padrão Amazon por <span class=\"accent\">R$ 39,90</span> e em <span class=\"accent\">30 Minutos</span>."
+    ],
     "hero.sub": "A Fábrica de Best Seller pesquisa o YouTube, o Google e os 10 livros mais vendidos da Amazon sobre o seu tema, e entrega um livro profissional completo, formatado, com Kit de Autopublicação, pronto para vender. Em 30 minutos. Por R$ 39,90.",
     "hero.warn": "Não realiza autobiografias. Especializada em não-ficção e ficção.",
     "hero.stat1": "livros gerados",
@@ -2182,11 +2190,13 @@ const I18N = {
   en: {
     "nav.cta": "Get My Book · $7.99",
     "hero.badge": "✦ +1,200 Professional Books Generated in the Last 3 Months",
-    "hero.h1.part1": "What Ghostwriters Charge",
-    "hero.h1.part2": "$5,000",
-    "hero.h1.part3": "to Write, You Get in",
-    "hero.h1.part4": "30 Minutes",
-    "hero.h1.part5": "for $7.99, A Full Professional Book, Ready for Amazon.",
+    "hero.headline": [
+      "What Ghostwriters Charge <span class=\"accent\">$5,000</span> to Write, You Get in <span class=\"accent\">30 Minutes</span> for $7.99, A Full Professional Book, Ready for Amazon.",
+      "Create Your Professional Amazon Book in <span class=\"accent\">30 Minutes</span>: Insert Your <span class=\"accent\">Guidelines</span> and Let Our AI Do the Research for <span class=\"accent\">$7.99</span>.",
+      "Transform Your <span class=\"accent\">Instructions</span> into a Book Ready to Sell for Only <span class=\"accent\">$7.99</span> — Without Writing a Line or Hiring Ghostwriters.",
+      "From Topic to Formatted Amazon Book: The Fastest Way to Publish Using Our Research and Your <span class=\"accent\">Guidelines</span> in <span class=\"accent">30 Minutes</span>.",
+      "No Need to Be a Writer: Say What You Want in the Book and Get a Complete Amazon-Standard Work for <span class=\"accent\">$7.99</span> in <span class=\"accent">30 Minutes</span>."
+    ],
     "hero.sub": "Best Seller Factory researches YouTube, Google, and Amazon's 10 best-selling books on your topic, and delivers a complete, formatted professional book with a Self-Publishing Kit, ready to sell. In 30 minutes. For $7.99.",
     "hero.warn": "Does not produce autobiographies. Specialized in non-fiction and fiction.",
     "hero.stat1": "books generated",
@@ -2353,11 +2363,13 @@ const I18N = {
   es: {
     "nav.cta": "Garantizar Mi Libro · $7.99",
     "hero.badge": "✦ +1.200 Libros Profesionales Generados en los Últimos 3 Meses",
-    "hero.h1.part1": "Lo Que los Ghostwriters Cobran",
-    "hero.h1.part2": "$5.000",
-    "hero.h1.part3": "Por Hacer, Tú Lo Haces en",
-    "hero.h1.part4": "30 Minutos",
-    "hero.h1.part5": "Por $7.99, Un Libro Profesional Completo, Listo Para Amazon.",
+    "hero.headline": [
+      "Lo Que los Ghostwriters Cobran <span class=\"accent\">$5.000</span> por Hacer, Tú Lo Haces en <span class=\"accent\">30 Minutos</span> por $7.99, Con un Libro Profesional Completo, Listo para Amazon.",
+      "Crea tu Libro Profesional en Amazon en <span class=\"accent\">30 Minutos</span>: Introduce tus <span class=\"accent\">Instrucciones</span> y Deja que la IA Investigue por <span class=\"accent\">$7.99</span>.",
+      "Transforma tus <span class=\"accent\">Directrices</span> en un Libro Listo para Vender por Solo <span class=\"accent\">$7.99</span> — Sin Escribir una Línea ni Contratar Ghostwriters.",
+      "Del Tema al Libro Formateado en Amazon: La Vía Más Rápida para Publicar Usando Nuestra Investigación y tus <span class=\"accent\">Indicaciones</span> en <span class=\"accent\">30 Minutos</span>.",
+      "No Necesitas Ser Escritor: Indica lo que Quieres en el Libro y Ten una Obra Completa en Estándar de Amazon por <span class=\"accent\">$7.99</span> en <span class=\"accent\">30 Minutos</span>."
+    ],
     "hero.sub": "Fábrica de Best Seller investiga YouTube, Google y los 10 libros más vendidos en Amazon sobre tu tema, y entrega un libro profesional completo, formateado, con Kit de Autopublicación, listo para vender. En 30 minutos. Por $7.99.",
     "hero.warn": "No realiza autobiografías. Especializada en no ficción y ficción.",
     "hero.stat1": "libros generados",
@@ -2522,12 +2534,50 @@ const I18N = {
   }
 };
 
+/* ============ HEADLINE ROTATION & TRACKING ============ */
+let currentHeadlineIndex = 0;
+try {
+  let savedIndex = localStorage.getItem('fbs-headline-index');
+  if (savedIndex === null) {
+    currentHeadlineIndex = 0;
+  } else {
+    currentHeadlineIndex = (parseInt(savedIndex) + 1) % 5;
+  }
+  localStorage.setItem('fbs-headline-index', currentHeadlineIndex);
+} catch (e) {
+  currentHeadlineIndex = Math.floor(Math.random() * 5);
+}
+
+function updateTictoLinks() {
+  const code = 'hl' + (currentHeadlineIndex + 1);
+  document.querySelectorAll('a[href*="payment.ticto.app"]').forEach(a => {
+    try {
+      let url = new URL(a.href);
+      url.searchParams.set('src', code);
+      a.href = url.toString();
+    } catch(e) {
+      if (a.href.indexOf('?') > -1) {
+        a.href += '&src=' + code;
+      } else {
+        a.href += '?src=' + code;
+      }
+    }
+  });
+}
+
+// Update Ticto links on startup
+updateTictoLinks();
+
 function applyLang(lang) {
   const dict = I18N[lang] || I18N.pt;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (dict[key] !== undefined) {
-      el.innerHTML = dict[key];
+      if (Array.isArray(dict[key])) {
+        el.innerHTML = dict[key][currentHeadlineIndex];
+      } else {
+        el.innerHTML = dict[key];
+      }
     }
   });
   document.documentElement.setAttribute('lang', lang === 'pt' ? 'pt-BR' : lang);
@@ -2543,8 +2593,14 @@ document.querySelectorAll('.lang-float button, .lang-switch button').forEach(btn
 
 try {
   const saved = localStorage.getItem('fbs-lang');
-  if (saved && I18N[saved]) applyLang(saved);
-} catch(e) {}
+  if (saved && I18N[saved]) {
+    applyLang(saved);
+  } else {
+    applyLang('pt');
+  }
+} catch(e) {
+  applyLang('pt');
+}
 </script>
 
 

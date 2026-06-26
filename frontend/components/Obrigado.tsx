@@ -26,6 +26,13 @@ export const Obrigado: React.FC = () => {
       const purchaseValue = priceStr ? parseFloat(priceStr) : 97.00; // Valor padrão se não vier na URL
       trackPurchase(purchaseValue, 'BRL', 'Acesso Fábrica de Best Seller', transactionId || undefined);
       
+      // 3. Disparar Google Ads Conversion Event
+      if (typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'conversion', {
+          'send_to': 'AW-466673191/pp0hCNLJk8YcEKe8w94B'
+        });
+      }
+
       // Marcar como rastreado nesta sessão
       sessionStorage.setItem('bsf_purchase_tracked', 'true');
     }
