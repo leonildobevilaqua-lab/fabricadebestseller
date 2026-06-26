@@ -2535,18 +2535,16 @@ const I18N = {
 };
 
 /* ============ HEADLINE ROTATION & TRACKING ============ */
+// O índice é lido do parâmetro ?hl= da URL, definido pela página pai (SalesLandingV7.tsx).
+// Isso evita problemas de isolamento de localStorage em contexto de iframe.
 let currentHeadlineIndex = 0;
 try {
-  let savedIndex = localStorage.getItem('fbs-headline-index');
-  let parsed = parseInt(savedIndex, 10);
-  if (isNaN(parsed)) {
-    currentHeadlineIndex = 0;
-  } else {
-    currentHeadlineIndex = (parsed + 1) % 5;
-  }
-  localStorage.setItem('fbs-headline-index', currentHeadlineIndex);
+  const urlParams = new URLSearchParams(window.location.search);
+  const hlParam = urlParams.get('hl');
+  const parsed = parseInt(hlParam ?? '', 10);
+  currentHeadlineIndex = (!isNaN(parsed) && parsed >= 0 && parsed < 5) ? parsed : 0;
 } catch (e) {
-  currentHeadlineIndex = Math.floor(Math.random() * 5);
+  currentHeadlineIndex = 0;
 }
 
 function updateTictoLinks() {

@@ -1,36 +1,55 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+
+// Calcula o índice da headline no contexto DA PÁGINA PAI (não do iframe)
+// para evitar problemas de isolamento de localStorage e cache do iframe.
+function getHeadlineIndex(): number {
+  const TOTAL = 5;
+  const KEY = 'fbs-headline-index';
+  try {
+    const saved = localStorage.getItem(KEY);
+    const parsed = parseInt(saved ?? '', 10);
+    const next = isNaN(parsed) ? 0 : (parsed + 1) % TOTAL;
+    localStorage.setItem(KEY, String(next));
+    return next;
+  } catch {
+    return Math.floor(Math.random() * TOTAL);
+  }
+}
 
 /**
  * SalesLandingV7 - A nova Landing Page Profissional Oficial.
  * Carrega o bundle HTML original mantendo 100% da fidelidade visual.
+ * A rotação de headlines é calculada aqui e passada via ?hl= na URL do iframe.
  */
-export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = React.memo(({ onLoginClick }) => {
-  
+export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = ({ onLoginClick }) => {
+  // Estado inicializado uma única vez por montagem do componente
+  const [headlineIndex] = useState<number>(getHeadlineIndex);
+
   useEffect(() => {
-    // Escuta mensagens vindas de dentro do iframe (para o botão de Login)
     const handleMessage = (event: MessageEvent) => {
       if (event.data === 'open_login') {
         if (onLoginClick) onLoginClick();
       }
     };
-
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, [onLoginClick]);
 
+  // O índice é embutido na URL — o iframe lê via URLSearchParams, sem depender de localStorage interno
+  const iframeSrc = `/landing.html?v=1.1.0&hl=${headlineIndex}`;
+
   return (
     <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', margin: 0, padding: 0, background: '#000' }}>
-      <iframe 
+      <iframe
         id="v7-iframe"
-        key="static-v7-iframe"
-        src="/landing.html?v=1.0.9" 
+        key={iframeSrc}
+        src={iframeSrc}
         style={{ width: '100%', height: '100%', border: 'none' }}
         title="Fábrica de Best Seller - Landing Page"
         loading="eager"
       />
-      
-      {/* Botão de Login Flutuante Opcional - Reposicionado para não atrapalhar o checkout */}
-      <button 
+
+      <button
         onClick={onLoginClick}
         style={{
           position: 'fixed',
@@ -52,4 +71,4 @@ export const SalesLandingV7: React.FC<{ onLoginClick?: () => void }> = React.mem
       </button>
     </div>
   );
-});
+};
