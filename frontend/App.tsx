@@ -31,6 +31,18 @@ const CipGenerator = lazy(() => import('./components/CipGenerator'));
 const Obrigado = lazy(() => import('./components/Obrigado').then(m => ({ default: m.Obrigado })));
 const PacoteRegistro = lazy(() => import('./components/PacoteRegistro').then(m => ({ default: m.PacoteRegistro })));
 
+// Inline component — carrega /diagramacao.html via iframe (mesmo padrão do SalesLandingV7)
+const DiagramacaoLanding: React.FC = () => (
+  <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', margin: 0, padding: 0, background: '#0D0D0D' }}>
+    <iframe
+      src="/diagramacao.html"
+      style={{ width: '100%', height: '100%', border: 'none' }}
+      title="Diagramação e Formatação 360 Express"
+      loading="eager"
+    />
+  </div>
+);
+
 
 
 const App: React.FC = () => {
@@ -239,6 +251,7 @@ const App: React.FC = () => {
     if (path === '/oficial' || path === '/v6') return <SalesLandingV6 onLoginClick={() => setCurrentView('login')} />;
     if (path === '/capa_profissional') return <ProfessionalCoverLanding />;
     if (path === '/ficha-catalografica' || path === '/cip') return <CipGenerator />;
+    if (path === '/diagramacao' || path === '/diagramacao-express') return <DiagramacaoLanding />;
     if (path === '/capas-profissionais' || path === '/capa-profissional') {
       if (hasAccess && userContact) {
         // Fall through to dashboard rendering
