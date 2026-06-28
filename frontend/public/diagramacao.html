@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diagramação e Formatação 360 Express · Do Word ao Livro Publicado em 1 Hora · Fábrica de Best Seller</title>
-<meta name="description" content="O método usado em +50 livros publicados. Diagrame e formate seu e-book ou livro físico no Word em 1 hora. Templates prontos para o KDP. Por R$ 97,00 — garantia de 7 dias.">
+<meta name="description" content="O método usado em +120 livros publicados. Diagrame e formate seu e-book ou livro físico no Word em 1 hora. Templates prontos para o KDP. Por R$ 97,00. Garantia de 7 dias.">
 <meta property="og:title" content="Diagramação e Formatação 360 Express · Do Word ao Livro Publicado em 1 Hora">
-<meta property="og:description" content="O passo a passo de quem já publicou +50 livros e figura entre as autoras mais lidas da Amazon. Templates prontos + bônus exclusivos. R$ 97,00.">
+<meta property="og:description" content="O passo a passo de quem já publicou +120 livros e ajudou mais de 3.000 autores a publicarem na Amazon e UICLAP. Templates prontos e bônus exclusivos. R$ 97,00.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://fabricadebestseller.com.br/diagramacao">
 
@@ -201,38 +201,6 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
   letter-spacing: 0.06em;
 }
 .hero-right { position: relative; }
-.hero-mockup {
-  background: var(--bg-2);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,160,23,0.1);
-  padding: 24px;
-  position: relative;
-}
-.hero-mockup::before {
-  content: 'Word';
-  position: absolute; top: 14px; left: 20px;
-  font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em;
-  color: var(--ink-mute); text-transform: uppercase;
-}
-.mockup-lines { padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
-.mockup-line { height: 2px; background: rgba(255,255,255,0.07); border-radius: 2px; }
-.mockup-line.h { height: 6px; background: rgba(212,160,23,0.35); border-radius: 3px; width: 55%; }
-.mockup-line.full { width: 100%; }
-.mockup-line.mid { width: 80%; }
-.mockup-line.short { width: 55%; }
-.mockup-line.xs { width: 35%; }
-.mockup-badge {
-  position: absolute; bottom: -18px; right: 20px;
-  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-deep) 100%);
-  color: #1A1408;
-  font-weight: 800;
-  font-size: 13px;
-  padding: 8px 18px;
-  border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(212,160,23,0.4);
-}
 
 /* ============ STATS BAR ============ */
 .stats-bar {
@@ -259,7 +227,6 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
 /* ============ SECTIONS ============ */
 .section-alt { background: var(--bg-1); }
 .section-alt-2 { background: var(--bg-2); }
-.divider { border: none; border-top: 1px solid var(--line); }
 
 /* ============ HOW IT WORKS ============ */
 .steps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
@@ -440,33 +407,37 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
 .author-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
 @media(max-width: 768px) { .author-layout { grid-template-columns: 1fr; text-align: center; } }
 .author-photo-frame {
-  background: var(--bg-2);
-  border: 1px solid var(--line);
   border-radius: 20px;
   overflow: hidden;
-  aspect-ratio: 4/3;
-  display: flex; align-items: center; justify-content: center;
   position: relative;
+  box-shadow: 0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(212,160,23,0.15);
 }
-.author-photo-bg {
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(212,160,23,0.08) 0%, transparent 60%);
+.author-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
 }
-.author-initials {
-  font-family: var(--serif); font-size: 80px; font-weight: 900;
-  color: rgba(212,160,23,0.2);
-  position: relative; z-index: 1;
+.author-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 20px 0 24px; }
+@media(max-width: 768px) { .author-tags { justify-content: center; } }
+.author-tag {
+  background: rgba(212,160,23,0.08);
+  border: 1px solid rgba(212,160,23,0.22);
+  color: var(--gold-light);
+  font-size: 12px;
+  font-family: var(--mono);
+  padding: 5px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
 }
-.author-caption {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: linear-gradient(transparent, rgba(13,13,13,0.95));
-  padding: 40px 20px 20px;
-  font-size: 13px; color: var(--ink-dim); text-align: center;
+.author-name {
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold-light);
+  margin-bottom: 14px;
 }
-.author-stats { display: flex; gap: 32px; margin: 28px 0; }
-@media(max-width: 768px) { .author-stats { justify-content: center; } }
-.author-stat .num { font-family: var(--serif); font-size: 32px; font-weight: 700; color: var(--gold-light); }
-.author-stat .label { font-size: 12px; color: var(--ink-mute); }
 
 /* ============ CTA SECTION ============ */
 .cta-final {
@@ -572,15 +543,15 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
       <div class="hero-left fade-in">
         <div class="hero-badge">
           <span class="dot"></span>
-          Método validado · +900 alunos
+          Método validado · +3.000 alunos
         </div>
 
         <h1 class="display h1">
-          Do Manuscrito ao Livro <em class="serif-italic">Publicado na Amazon</em> em <span class="accent">1 Hora</span> — Usando Apenas o Word
+          Do Manuscrito ao Livro <em class="serif-italic">Publicado na Amazon</em> em <span class="accent">1 Hora</span> Usando Apenas o Word
         </h1>
 
         <p class="lede" style="margin-bottom: 32px;">
-          O passo a passo de quem já publicou <strong style="color:#F5F0E5;">+50 livros</strong> — digitais e físicos — e figura entre as autoras mais lidas da Amazon Brasil na última década. Sem designer, sem InDesign, sem curva de aprendizado.
+          O passo a passo de quem já publicou <strong style="color:#F5F0E5;">+120 livros</strong> e figura entre os profissionais que mais ajudam novos Autores a publicarem seus livros em tempo recorde na Amazon e UICLAP. Sem designer, sem InDesign, sem curva de aprendizado.
         </p>
 
         <div class="hero-cta-group">
@@ -597,7 +568,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
             <div class="word-toolbar-dot"></div>
             <div class="word-toolbar-dot"></div>
             <div class="word-toolbar-dot"></div>
-            <div class="word-toolbar-title">Meu_Livro_Formatado.docx — Word</div>
+            <div class="word-toolbar-title">Meu_Livro_Formatado.docx</div>
           </div>
           <div class="word-body">
             <div class="word-page">
@@ -624,7 +595,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
           </div>
         </div>
         <div style="text-align:center;margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--ink-mute);letter-spacing:0.1em;">
-          RESULTADO REAL ↑ LIVRO DIAGRAMADO NO WORD
+          RESULTADO REAL · LIVRO DIAGRAMADO NO WORD
         </div>
       </div>
 
@@ -637,20 +608,20 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
   <div class="container">
     <div class="stats-grid">
       <div>
-        <div class="stat-number">+50</div>
-        <div class="stat-label">livros publicados</div>
+        <div class="stat-number">+120</div>
+        <div class="stat-label">Livros Publicados</div>
       </div>
       <div>
-        <div class="stat-number">+500M</div>
-        <div class="stat-label">páginas lidas</div>
+        <div class="stat-number">+1.200</div>
+        <div class="stat-label">Clientes Satisfeitos</div>
       </div>
       <div>
-        <div class="stat-number">10 anos</div>
-        <div class="stat-label">diagramando livros</div>
+        <div class="stat-number">12 anos</div>
+        <div class="stat-label">Ajudando novos Autores</div>
       </div>
       <div>
-        <div class="stat-number">+900</div>
-        <div class="stat-label">alunos ativos</div>
+        <div class="stat-number">+3.000</div>
+        <div class="stat-label">Alunos Ativos</div>
       </div>
     </div>
   </div>
@@ -662,7 +633,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
     <div class="section-head">
       <span class="eyebrow">O Problema</span>
       <h2 class="display h2">Você Escreveu. <em class="serif-italic">E Agora?</em></h2>
-      <p class="lede">O manuscrito está pronto — mas publicar com aparência profissional parece um labirinto caro e complicado.</p>
+      <p class="lede">O manuscrito está pronto, mas publicar com aparência profissional parece um labirinto caro e complicado.</p>
     </div>
 
     <div class="beneficios-grid">
@@ -684,7 +655,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
         <div class="beneficio-icon">❌</div>
         <div class="beneficio-text">
           <h4>KDP rejeita o arquivo</h4>
-          <p>Margem errada, tamanho incorreto, formatação fora do padrão — o sistema rejeita e você não sabe por quê.</p>
+          <p>Margem errada, tamanho incorreto, formatação fora do padrão. O sistema rejeita e você não sabe por quê.</p>
         </div>
       </div>
       <div class="beneficio-item">
@@ -714,17 +685,17 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
       <div class="step-card">
         <div class="step-num">01</div>
         <h3>Assista as Aulas</h3>
-        <p>Passo a passo em vídeos curtos — você reproduz junto em tempo real, sem enrolação. Aprende uma vez e aplica em todos os seus livros.</p>
+        <p>Passo a passo em vídeos curtos. Você reproduz junto em tempo real, sem enrolação. Aprende uma vez e aplica em todos os seus livros.</p>
       </div>
       <div class="step-card">
         <div class="step-num">02</div>
         <h3>Aplique o Método</h3>
-        <p>Formate e diagrame seu manuscrito no Word exatamente como eu ensino, ou use os templates prontos — já configurados nas medidas exatas do KDP.</p>
+        <p>Formate e diagrame seu manuscrito no Word exatamente como eu ensino, ou use os templates prontos, já configurados nas medidas exatas do KDP.</p>
       </div>
       <div class="step-card">
         <div class="step-num">03</div>
         <h3>Publique na Amazon</h3>
-        <p>Suba o arquivo no KDP sem erro. Como bônus, te ensino a preencher título, categorias, descrição e precificação do jeito certo — do arquivo pronto até o botão publicar.</p>
+        <p>Suba o arquivo no KDP sem erro. Como bônus, te ensino a preencher título, categorias, descrição e precificação do jeito certo. Do arquivo pronto até o botão publicar.</p>
       </div>
     </div>
   </div>
@@ -735,8 +706,8 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">A Solução</span>
-      <h2 class="display h2">O Mesmo Processo dos Meus <em class="serif-italic">+50 Livros</em> — Agora em Formato de Curso</h2>
-      <p class="lede">Usando apenas o Word que você já possui. Em 60 a 90 minutos, do arquivo cru ao livro profissional — digital ou físico — sem designer, sem InDesign, sem curva de aprendizado.</p>
+      <h2 class="display h2">O Mesmo Processo dos Meus <em class="serif-italic">+120 Livros</em> Agora em Formato de Curso</h2>
+      <p class="lede">Usando apenas o Word que você já possui. Em 60 a 90 minutos, do arquivo cru ao livro profissional, digital ou físico, sem designer, sem InDesign, sem curva de aprendizado.</p>
     </div>
 
     <div class="beneficios-grid">
@@ -750,7 +721,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
       <div class="beneficio-item">
         <div class="beneficio-icon">📄</div>
         <div class="beneficio-text">
-          <h4>E-book E livro físico impresso</h4>
+          <h4>E-book e livro físico impresso</h4>
           <p>O método cobre os dois formatos: digital para Kindle e físico para impressão sob demanda.</p>
         </div>
       </div>
@@ -777,8 +748,8 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
   <div class="container">
     <div class="section-head">
       <span class="eyebrow">Bônus Exclusivos</span>
-      <h2 class="display h2">🆕 Bônus Exclusivos — <em class="serif-italic">Só Para Quem Entrar Agora</em></h2>
-      <p class="lede">Três presentes que valem mais do que o curso em si — incluídos sem custo adicional.</p>
+      <h2 class="display h2">🆕 Bônus Exclusivos <em class="serif-italic">Só Para Quem Entrar Agora</em></h2>
+      <p class="lede">Três presentes que valem mais do que o curso em si, incluídos sem custo adicional.</p>
     </div>
 
     <div class="bonus-stack">
@@ -810,7 +781,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
         <div class="bonus-content">
           <div class="price-strike">Valor: R$ 47 — seu de graça</div>
           <h3>Aula Completa: Do Upload ao Livro Publicado na Amazon</h3>
-          <p>A parte que mais trava escritores iniciantes é exatamente essa: subir o arquivo no KDP sem erro, preencher título, categorias, descrição e precificação do jeito certo. Nessa aula você acompanha o processo inteiro na tela — do arquivo pronto até o botão de publicar. Sem achismo, sem tentativa e erro.</p>
+          <p>A parte que mais trava escritores iniciantes é exatamente essa: subir o arquivo no KDP sem erro, preencher título, categorias, descrição e precificação do jeito certo. Nessa aula você acompanha o processo inteiro na tela, do arquivo pronto até o botão de publicar. Sem achismo, sem tentativa e erro.</p>
           <div class="bonus-result">
             <span>✓</span>
             <span>Resultado: arquivo aprovado no KDP sem erro, na primeira tentativa.</span>
@@ -846,33 +817,27 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
 </section>
 
 <!-- ============ QUEM CRIOU ============ -->
-<section id="autora">
+<section id="criador">
   <div class="container">
     <div class="author-layout">
       <div class="author-photo-frame">
-        <div class="author-photo-bg"></div>
-        <div class="author-initials">K</div>
-        <div class="author-caption">Sessão de autógrafos — Bienal do Livro Rio 2025</div>
+        <img
+          src="/assets/landing/f7acb9e3-2a41-4762-9ea4-679816fcb72a.jpeg"
+          alt="Leonildo Bevilaqua — Criador da Diagramação e Formatação 360 Express"
+        >
       </div>
       <div>
-        <span class="eyebrow">Quem Criou o Método</span>
-        <h2 class="display h2" style="margin-bottom: 20px;">Depois de 10 Anos e <em class="serif-italic">50+ Livros</em> Publicados, Transformei Meu Processo em Um Curso</h2>
-        <p class="lede">Sou reconhecida como a 6ª autora mais lida da Amazon Brasil na última década. Tudo começou com o mesmo problema que você tem agora: o manuscrito pronto e sem saber como publicar com aparência profissional.</p>
-        <div class="author-stats">
-          <div class="author-stat">
-            <div class="num">+50</div>
-            <div class="label">livros publicados</div>
-          </div>
-          <div class="author-stat">
-            <div class="num">10 anos</div>
-            <div class="label">de experiência</div>
-          </div>
-          <div class="author-stat">
-            <div class="num">Top 6</div>
-            <div class="label">Amazon Brasil</div>
-          </div>
+        <span class="eyebrow">Quem Criou</span>
+        <h2 class="display h2" style="margin-bottom: 16px;">Criado por Quem Entende de Negócios Digitais <em class="serif-italic">de Verdade.</em></h2>
+        <div class="author-name">Leonildo Bevilaqua</div>
+        <div class="author-tags">
+          <span class="author-tag">Formado pela Digital Marketer · Texas, EUA</span>
+          <span class="author-tag">+15 anos em negócios digitais</span>
+          <span class="author-tag">Criador da Fórmula de Crescimento Online</span>
+          <span class="author-tag">Especialista em renda passiva e recorrente</span>
         </div>
-        <p style="color:var(--ink-dim);font-size:14px;line-height:1.6;">Esse curso é o que eu gostaria de ter tido quando comecei. Passo a passo, sem atalhos, sem softwares caros — só o Word que você já tem.</p>
+        <p class="lede" style="margin-bottom: 20px;">Leonildo criou a Fábrica de Best Seller depois de perceber que o maior obstáculo para quem quer publicar um livro não é falta de ideia — é falta de processo. Em 3 meses, a plataforma já gerou mais de 1.200 livros profissionais e mudou a vida de mais de 500 autores.</p>
+        <p style="color:var(--ink-dim);font-size:14px;line-height:1.6;">Com +120 livros publicados e 12 anos ajudando novos autores, Leonildo condensou tudo que sabe sobre formatação e diagramação neste curso. O objetivo é simples: transformar o seu manuscrito em um livro profissional pronto para vender na Amazon e UICLAP, usando apenas o Word que você já tem.</p>
       </div>
     </div>
   </div>
@@ -893,7 +858,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
       </div>
       <div class="persona-card">
         <div class="persona-icon">📕</div>
-        <p>Quem quer publicar livro físico impresso na Amazon além do digital</p>
+        <p>Quem quer publicar livro físico impresso na Amazon ou UICLAP além do digital</p>
       </div>
       <div class="persona-card">
         <div class="persona-icon">💼</div>
@@ -930,27 +895,27 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
           <div class="testi-avatar">A</div>
           <div>
             <div class="testi-name">Ana Marcelino</div>
-            <div class="testi-role">Aluna Diagramação Express</div>
+            <div class="testi-role">Aluna da Diagramação e Formatação 360 Express</div>
           </div>
         </div>
       </div>
       <div class="testi-card">
-        <p class="testi-text">"Obrigada pelas aulas! Finalmente consegui publicar meu livro com uma aparência profissional — sem contratar designer."</p>
+        <p class="testi-text">"Obrigada pelas aulas! Finalmente consegui publicar meu livro com uma aparência profissional, sem contratar designer."</p>
         <div class="testi-author">
           <div class="testi-avatar">R</div>
           <div>
             <div class="testi-name">Raquel Rangel Cesario</div>
-            <div class="testi-role">Aluna Diagramação Express</div>
+            <div class="testi-role">Aluna da Diagramação e Formatação 360 Express</div>
           </div>
         </div>
       </div>
       <div class="testi-card">
-        <p class="testi-text">"Nunca imaginei que conseguiria formatar meu livro no Word com esse nível de qualidade. O template já vem configurado — é só colar o texto!"</p>
+        <p class="testi-text">"Nunca imaginei que conseguiria formatar meu livro no Word com esse nível de qualidade. O template já vem configurado, é só colar o texto!"</p>
         <div class="testi-author">
           <div class="testi-avatar">M</div>
           <div>
             <div class="testi-name">Marcos Oliveira</div>
-            <div class="testi-role">Aluno Diagramação Express</div>
+            <div class="testi-role">Aluno da Diagramação e Formatação 360 Express</div>
           </div>
         </div>
       </div>
@@ -960,7 +925,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
           <div class="testi-avatar">C</div>
           <div>
             <div class="testi-name">Carla Bezerra</div>
-            <div class="testi-role">Aluna Diagramação Express</div>
+            <div class="testi-role">Aluna da Diagramação e Formatação 360 Express</div>
           </div>
         </div>
       </div>
@@ -1005,7 +970,7 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
         </div>
         <div class="price-inclusion">
           <span class="check">✓</span>
-          <span><strong style="color:#F5F0E5;">BÔNUS:</strong> Aula completa KDP — do upload à publicação (valor: R$ 47)</span>
+          <span><strong style="color:#F5F0E5;">BÔNUS:</strong> Aula completa KDP, do upload à publicação (valor: R$ 47)</span>
         </div>
         <div class="price-inclusion">
           <span class="check">✓</span>
@@ -1023,13 +988,13 @@ section { padding: clamp(56px, 6vw, 96px) 0; position: relative; }
 <!-- ============ FINAL CTA ============ -->
 <section class="cta-final">
   <div class="container">
-    <h2 class="display h2">Seu Próximo Livro — Digital ou Físico — <em class="serif-italic">Está a 1 Hora de Ser Publicado</em></h2>
+    <h2 class="display h2">Seu Próximo Livro, Digital ou Físico, <em class="serif-italic">Está a 1 Hora de Ser Publicado</em></h2>
     <p class="lede">Você já escreveu. A parte mais difícil já passou. Agora só falta o formato certo para chegar à Amazon.</p>
     <a href="https://checkout.ticto.app/O2674C7CD" target="_blank" rel="noopener" class="btn btn-gold btn-xl" id="final-cta-btn">
       Quero Publicar Meu Livro Agora
     </a>
     <div style="margin-top:16px;font-family:var(--mono);font-size:12px;color:var(--ink-mute);">
-      R$ 497 · Hoje por <strong style="color:var(--gold-light);">R$ 97</strong> ou 12x de R$ 10,03
+      R$ 297 · Hoje por <strong style="color:var(--gold-light);">R$ 97</strong> ou 12x de R$ 10,03
     </div>
   </div>
 </section>
@@ -1072,7 +1037,7 @@ document.querySelectorAll('.step-card, .beneficio-item, .bonus-card, .persona-ca
   observer.observe(el);
 });
 
-// GTG conversion tracking on CTA click
+// Conversion tracking on CTA click
 document.querySelectorAll('a[href*="checkout.ticto.app"]').forEach(btn => {
   btn.addEventListener('click', () => {
     if (typeof gtag !== 'undefined') {
