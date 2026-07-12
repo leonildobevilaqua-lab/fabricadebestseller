@@ -1410,6 +1410,12 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 if (payload.data?.checkout_hash) identifiers.add(String(payload.data.checkout_hash).trim());
                 if (payload.order?.checkout_hash) identifiers.add(String(payload.order.checkout_hash).trim());
 
+                // Nested payload.data fallbacks for safety
+                if (payload.data?.product?.id) identifiers.add(String(payload.data.product.id).trim());
+                if (payload.data?.product_id) identifiers.add(String(payload.data.product_id).trim());
+                if (payload.data?.order?.checkout_id) identifiers.add(String(payload.data.order.checkout_id).trim());
+                if (payload.data?.order?.checkout_code) identifiers.add(String(payload.data.order.checkout_code).trim());
+
                 // Parse checkout URL if present (extremely robust fallback)
                 const checkUrl = payload.checkout_url || payload.order?.checkout_url || tx.checkout_url || payload.item?.checkout_url || '';
                 if (checkUrl) {
@@ -1465,8 +1471,8 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 else if (matchesIdentifier(['111112', 'O8B28DD61'])) {
                     qrCreditsToAdd = 1;
                 }
-                // ID 110881 / O9012A440 (Crédito para Código de Barras - 1 Barcode)
-                else if (matchesIdentifier(['110881', 'O9012A440'])) {
+                // ID 110881 / O9012A440 ou O77037442 (Crédito para Código de Barras - 1 Barcode)
+                else if (matchesIdentifier(['110881', 'O9012A440', 'O77037442'])) {
                     barcodeCreditsToAdd = 1;
                 }
                 // ID 110774 / O89DB6739 (Crédito para Ficha Catalográfica - 1 Ficha)
@@ -1495,25 +1501,29 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 }
                 // Fallbacks using text matches on product name
                 else {
-                    if (pNameUpper.includes('REGISTRO COMPLETO') || pNameUpper.includes('PRC')) {
+                    const normalizedPName = pNameUpper
+                        .normalize("NFD")
+                        .replace(/[\u0300-\u036f]/g, ""); // Strip accents/diacritics
+
+                    if (normalizedPName.includes('REGISTRO COMPLETO') || normalizedPName.includes('PRC')) {
                         cipCreditsToAdd = 1;
                         barcodeCreditsToAdd = 1;
                         qrCreditsToAdd = 1;
-                    } else if (pNameUpper.includes('CAPA PROFISSIONAL') || pNameUpper.includes('CAPA_PROFISSIONAL') || pNameUpper.includes('CAPAS PROFISSIONAIS')) {
+                    } else if (normalizedPName.includes('CAPA PROFISSIONAL') || normalizedPName.includes('CAPA_PROFISSIONAL') || normalizedPName.includes('CAPAS PROFISSIONAIS')) {
                         coverCreditsToAdd = 1;
-                    } else if (pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA')) {
+                    } else if (normalizedPName.includes('FICHA') || normalizedPName.includes('CATALOGRAFICA')) {
                         cipCreditsToAdd = 1;
-                    } else if (pNameUpper.includes('BARRAS') || pNameUpper.includes('BARCODE')) {
+                    } else if (normalizedPName.includes('BARRAS') || normalizedPName.includes('BARCODE') || normalizedPName.includes('CODIGO DE BARRAS')) {
                         barcodeCreditsToAdd = 1;
-                    } else if (pNameUpper.includes('QR CODE') || pNameUpper.includes('QRCODE')) {
+                    } else if (normalizedPName.includes('QR CODE') || normalizedPName.includes('QRCODE') || normalizedPName.includes('QR')) {
                         qrCreditsToAdd = 1;
-                    } else if (pNameUpper.includes('12 LIVROS') || pNameUpper.includes('12 CRÉDITOS') || pNameUpper.includes('12 CREDITOS')) {
+                    } else if (normalizedPName.includes('12 LIVROS') || normalizedPName.includes('12 CREDITO') || normalizedPName.includes('12 CRÉDITO') || normalizedPName.includes('12CR')) {
                         bookCreditsToAdd = 12;
-                    } else if (pNameUpper.includes('9 LIVROS') || pNameUpper.includes('9 CRÉDITOS') || pNameUpper.includes('9 CREDITOS')) {
+                    } else if (normalizedPName.includes('9 LIVROS') || normalizedPName.includes('9 CREDITO') || normalizedPName.includes('9 CRÉDITO') || normalizedPName.includes('9CR')) {
                         bookCreditsToAdd = 9;
-                    } else if (pNameUpper.includes('6 LIVROS') || pNameUpper.includes('6 CRÉDITOS') || pNameUpper.includes('6 CREDITOS')) {
+                    } else if (normalizedPName.includes('6 LIVROS') || normalizedPName.includes('6 CREDITO') || normalizedPName.includes('6 CRÉDITO') || normalizedPName.includes('6CR')) {
                         bookCreditsToAdd = 6;
-                    } else if (pNameUpper.includes('3 LIVROS') || pNameUpper.includes('3 CRÉDITOS') || pNameUpper.includes('3 CREDITOS')) {
+                    } else if (normalizedPName.includes('3 LIVROS') || normalizedPName.includes('3 CREDITO') || normalizedPName.includes('3 CRÉDITO') || normalizedPName.includes('3CR')) {
                         bookCreditsToAdd = 3;
                     } else {
                         // Standard fallback: 1 book credit
