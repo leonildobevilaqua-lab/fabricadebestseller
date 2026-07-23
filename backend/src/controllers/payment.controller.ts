@@ -1455,74 +1455,75 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
 
                 // ID 111296 / O6F5202E7 (Oferta Especial 1ª Compra - 1 Livro)
                 if (matchesIdentifier(['111296', 'O6F5202E7'])) {
-                    bookCreditsToAdd = 1;
+                    bookCreditsToAdd += 1;
                 }
                 // ID Capa Profissional - OE1970B27 (R$ 87,00 por geração)
-                else if (matchesIdentifier(['OE1970B27'])) {
-                    coverCreditsToAdd = 1;
+                if (matchesIdentifier(['OE1970B27'])) {
+                    coverCreditsToAdd += 1;
                 }
                 // ID 111114 / OAE19BCE4 (PRC - Pacote de Registro Completo - 1 de cada)
-                else if (matchesIdentifier(['111114', 'OAE19BCE4'])) {
-                    cipCreditsToAdd = 1;
-                    barcodeCreditsToAdd = 1;
-                    qrCreditsToAdd = 1;
+                if (matchesIdentifier(['111114', 'OAE19BCE4'])) {
+                    cipCreditsToAdd += 1;
+                    barcodeCreditsToAdd += 1;
+                    qrCreditsToAdd += 1;
                 }
                 // ID 111112 / O8B28DD61 (Gerador Automático de QR Codes - 1 QR)
-                else if (matchesIdentifier(['111112', 'O8B28DD61'])) {
-                    qrCreditsToAdd = 1;
+                if (matchesIdentifier(['111112', 'O8B28DD61'])) {
+                    qrCreditsToAdd += 1;
                 }
                 // ID 110881 / O9012A440 ou O77037442 (Crédito para Código de Barras - 1 Barcode)
-                else if (matchesIdentifier(['110881', 'O9012A440', 'O77037442'])) {
-                    barcodeCreditsToAdd = 1;
+                if (matchesIdentifier(['110881', 'O9012A440', 'O77037442'])) {
+                    barcodeCreditsToAdd += 1;
                 }
                 // ID 110774 / O89DB6739 (Crédito para Ficha Catalográfica - 1 Ficha)
-                else if (matchesIdentifier(['110774', 'O89DB6739'])) {
-                    cipCreditsToAdd = 1;
+                if (matchesIdentifier(['110774', 'O89DB6739'])) {
+                    cipCreditsToAdd += 1;
                 }
                 // ID 110633 / O1234F079 (Pacote 12 Livros)
-                else if (matchesIdentifier(['110633', 'O1234F079'])) {
-                    bookCreditsToAdd = 12;
+                if (matchesIdentifier(['110633', 'O1234F079'])) {
+                    bookCreditsToAdd += 12;
                 }
                 // ID 110631 / OFD92B07B (Pacote 9 Livros)
-                else if (matchesIdentifier(['110631', 'OFD92B07B'])) {
-                    bookCreditsToAdd = 9;
+                if (matchesIdentifier(['110631', 'OFD92B07B'])) {
+                    bookCreditsToAdd += 9;
                 }
                 // ID 110634 / O276DFB4A (Pacote 6 Livros)
-                else if (matchesIdentifier(['110634', 'O276DFB4A'])) {
-                    bookCreditsToAdd = 6;
+                if (matchesIdentifier(['110634', 'O276DFB4A'])) {
+                    bookCreditsToAdd += 6;
                 }
                 // ID 110628 / OFEE31960 (Pacote 3 Livros)
-                else if (matchesIdentifier(['110628', 'OFEE31960'])) {
-                    bookCreditsToAdd = 3;
+                if (matchesIdentifier(['110628', 'OFEE31960'])) {
+                    bookCreditsToAdd += 3;
                 }
                 // ID 108488 / O6CE296D4 (Gerador de Livros Profissionais - 1 Livro)
-                else if (matchesIdentifier(['108488', 'O6CE296D4'])) {
-                    bookCreditsToAdd = 1;
+                if (matchesIdentifier(['108488', 'O6CE296D4'])) {
+                    bookCreditsToAdd += 1;
                 }
-                // Fallbacks using text matches on product name
-                else {
+
+                // Fallbacks using text matches on product name (only if no explicit ID matched)
+                if (bookCreditsToAdd === 0 && cipCreditsToAdd === 0 && barcodeCreditsToAdd === 0 && qrCreditsToAdd === 0 && coverCreditsToAdd === 0) {
                     const normalizedPName = pNameUpper
                         .normalize("NFD")
                         .replace(/[\u0300-\u036f]/g, ""); // Strip accents/diacritics
 
                     if (normalizedPName.includes('REGISTRO COMPLETO') || normalizedPName.includes('PRC')) {
-                        cipCreditsToAdd = 1;
-                        barcodeCreditsToAdd = 1;
-                        qrCreditsToAdd = 1;
+                        cipCreditsToAdd += 1;
+                        barcodeCreditsToAdd += 1;
+                        qrCreditsToAdd += 1;
                     } else if (normalizedPName.includes('CAPA PROFISSIONAL') || normalizedPName.includes('CAPA_PROFISSIONAL') || normalizedPName.includes('CAPAS PROFISSIONAIS')) {
-                        coverCreditsToAdd = 1;
+                        coverCreditsToAdd += 1;
                     } else if (normalizedPName.includes('FICHA') || normalizedPName.includes('CATALOGRAFICA')) {
-                        cipCreditsToAdd = 1;
+                        cipCreditsToAdd += 1;
                     } else if (normalizedPName.includes('BARRAS') || normalizedPName.includes('BARCODE') || normalizedPName.includes('CODIGO DE BARRAS')) {
-                        barcodeCreditsToAdd = 1;
+                        barcodeCreditsToAdd += 1;
                     } else if (normalizedPName.includes('QR CODE') || normalizedPName.includes('QRCODE') || normalizedPName.includes('QR')) {
-                        qrCreditsToAdd = 1;
+                        qrCreditsToAdd += 1;
                     } else if (normalizedPName.includes('12 LIVROS') || normalizedPName.includes('12 CREDITO') || normalizedPName.includes('12 CRÉDITO') || normalizedPName.includes('12CR')) {
-                        bookCreditsToAdd = 12;
+                        bookCreditsToAdd += 12;
                     } else if (normalizedPName.includes('9 LIVROS') || normalizedPName.includes('9 CREDITO') || normalizedPName.includes('9 CRÉDITO') || normalizedPName.includes('9CR')) {
-                        bookCreditsToAdd = 9;
+                        bookCreditsToAdd += 9;
                     } else if (normalizedPName.includes('6 LIVROS') || normalizedPName.includes('6 CREDITO') || normalizedPName.includes('6 CRÉDITO') || normalizedPName.includes('6CR')) {
-                        bookCreditsToAdd = 6;
+                        bookCreditsToAdd += 6;
                     } else if (normalizedPName.includes('3 LIVROS') || normalizedPName.includes('3 CREDITO') || normalizedPName.includes('3 CRÉDITO') || normalizedPName.includes('3CR')) {
                         bookCreditsToAdd = 3;
                     } else {

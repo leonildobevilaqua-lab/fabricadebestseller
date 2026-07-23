@@ -30,6 +30,7 @@ const ProfessionalCoverLanding = lazy(() => import('./components/ProfessionalCov
 const CipGenerator = lazy(() => import('./components/CipGenerator'));
 const Obrigado = lazy(() => import('./components/Obrigado').then(m => ({ default: m.Obrigado })));
 const PacoteRegistro = lazy(() => import('./components/PacoteRegistro').then(m => ({ default: m.PacoteRegistro })));
+const WebinarLaunch = lazy(() => import('./components/WebinarLaunch').then(m => ({ default: m.WebinarLaunch })));
 
 // Inline component — carrega /diagramacao.html via iframe (mesmo padrão do SalesLandingV7)
 const DiagramacaoLanding: React.FC = () => (
@@ -212,7 +213,7 @@ const App: React.FC = () => {
 
   // RENDER VIEWS
   const renderContent = () => {
-    const path = window.location.pathname;
+    const path = window.location.pathname.replace(/\/$/, '').toLowerCase() || '/';
     if (path === '/admin' || showAdmin) {
       return (
         <div className="min-h-screen bg-slate-50 font-sans">
@@ -247,6 +248,13 @@ const App: React.FC = () => {
     if (path === '/afiliacao' || path === '/afiliado' || path === '/representante') return <AffiliationUpsell />;
 
     if (path === '/promocao') return <Promocao />;
+    if (path === '/lancamento' || path === '/webinar' || path === '/masterclass') {
+      return (
+        <ErrorBoundary>
+          <WebinarLaunch />
+        </ErrorBoundary>
+      );
+    }
     if (path === '/venda' || path === '/vsl' || path === '/v5') return <SalesLandingV5 onLoginClick={() => setCurrentView('login')} />;
     if (path === '/oficial' || path === '/v6') return <SalesLandingV6 onLoginClick={() => setCurrentView('login')} />;
     if (path === '/capa_profissional') return <ProfessionalCoverLanding />;
