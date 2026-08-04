@@ -148,7 +148,7 @@ export const create = async (req: Request, res: Response) => {
         }
         // ---------------------------
 
-        const project = await QueueService.createProject({ authorName, topic, language, contact, contentStyle: genre || contentStyle, writingTone, bookTitle, subTitle, isFiction, genre, characters });
+        const project = await QueueService.createProject({ authorName, topic, language, contact, email: safeEmail || contact.email, customerEmail: contact.email, contentStyle: genre || contentStyle, writingTone, bookTitle, subTitle, isFiction, genre, characters });
 
         // --- CRITICAL FIX: Ensure Lead Exists for Admin Panel Visibility & Separate Sub/Book ---
         if (contact && contact.email) {
@@ -177,12 +177,13 @@ export const create = async (req: Request, res: Response) => {
                 const currentPlan = userInDb?.plan || contact.plan || null;
 
                 if (leadIndex !== -1) {
+                    const existingLead = leads[leadIndex] as any;
                     // Update existing BOOK Lead
-                    await setVal(`/leads[${leadIndex}]`, {
-                        ...(leads[leadIndex] as any),
+                    await setVal(`/leads/${existingLead.id}`, {
+                        ...existingLead,
                         status: 'IN_PROGRESS',
                         topic: topic,
-                        name: authorName || (leads[leadIndex] as any).name,
+                        name: authorName || existingLead.name,
                         date: new Date(), // Bring to top
                         projectId: project.id,
                         plan: currentPlan // Sync latest plan

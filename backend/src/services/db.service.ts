@@ -133,17 +133,31 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         else if (normalized === '/leads') selectFields = 'key, updated_at, value';
                     }
 
-                    const { data: rawItems, error } = await supabase.from('kv_store').select(selectFields).like('key', `${normalized}/%`).limit(2000);
+                    const { data: rawItems, error } = await supabase
+                        .from('kv_store')
+                        .select(selectFields)
+                        .gte('key', `${normalized}/`)
+                        .lt('key', `${normalized}0`)
+                        .limit(2000);
+                        
                     if (!error && rawItems && rawItems.length > 0) {
                         remoteData = rawItems.map((item: any) => {
                             let val = item.value;
-                            if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) val = JSON.parse(val);
-                            else if (typeof val === 'string') val = { value: val };
-                            val = val || (item.metadata || {});
+                            if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
+                                try { val = JSON.parse(val); } catch(e){}
+                            }
                             
-                            const parsed = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
-                            localDB[item.key] = parsed;
-                            return parsed;
+                            // If it's an object, we can spread and add id, key, updated_at
+                            if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+                                val = val || (item.metadata || {});
+                                const parsed = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
+                                localDB[item.key] = parsed;
+                                return parsed;
+                            } else {
+                                // For primitives (numbers, booleans, strings) or arrays, just store as is
+                                localDB[item.key] = val;
+                                return val;
+                            }
                         });
                         remoteSuccess = true;
                     }
