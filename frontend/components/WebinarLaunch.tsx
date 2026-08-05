@@ -49,14 +49,14 @@ export const WebinarLaunch: React.FC = () => {
            {/* Subtle glow behind the author */}
            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-amber-500/10 blur-[120px] rounded-full"></div>
            <img 
-              src="/assets/Leonildo%20Bevilaqua%20Oficial.png" 
+              src="/assets/landing/f7acb9e3-2a41-4762-9ea4-679816fcb72a.jpeg" 
               alt="Leonildo Bevilaqua" 
-              className="object-contain object-bottom h-[95%] lg:h-[110%] w-auto mr-[-5%] lg:mr-0 drop-shadow-[0_0_40px_rgba(0,0,0,0.5)] z-10"
+              className="object-cover object-center w-full h-full z-10"
            />
            {/* Fade at the bottom to blend seamlessly */}
            <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent z-20"></div>
            {/* Fade on the left to blend with text */}
-           <div className="absolute top-0 left-0 w-1/4 h-full bg-gradient-to-r from-[#0a0a0a] to-transparent z-20"></div>
+           <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-[#0a0a0a] to-transparent z-20"></div>
         </div>
         
         <div className="relative max-w-6xl mx-auto flex w-full z-10 py-20 lg:py-28">
@@ -272,27 +272,54 @@ export const WebinarLaunch: React.FC = () => {
       </section>
 
       {/* 7. CASOS DE SUCESSO (SOCIAL PROOF) */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/10 bg-black">
-        <div className="max-w-5xl mx-auto space-y-12">
+      <section className="py-20 border-t border-white/10 bg-black overflow-hidden">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 mb-12">
           <div className="text-center space-y-4">
             <h2 className="text-3xl md:text-4xl font-bold">Autores comuns.<br /><span className="text-amber-500">Resultados fora do comum.</span></h2>
             <p className="text-slate-400 max-w-2xl mx-auto">O que eles têm em comum não é apenas talento, mas acesso à ferramenta e estratégia certas.</p>
           </div>
+        </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {/* Placeholder Testimonials/Books - to be updated with real ones later */}
-            {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="bg-white/5 rounded-2xl overflow-hidden border border-white/10 group">
-                <div className="aspect-[3/4] bg-slate-800 relative flex items-center justify-center">
-                  <BookOpen className="w-12 h-12 text-slate-700 group-hover:scale-110 transition-transform" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                  <div className="absolute bottom-4 left-4 right-4">
-                     <p className="text-xs text-amber-500 font-bold mb-1">Autor(a) FBS</p>
-                     <div className="flex gap-1">
-                       {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
-                     </div>
+        <div className="relative w-full flex overflow-hidden group">
+          <div className="absolute left-0 top-0 bottom-0 w-16 md:w-40 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
+          <div className="absolute right-0 top-0 bottom-0 w-16 md:w-40 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
+          
+          <div className="flex animate-scroll-slow items-center w-max flex-nowrap">
+            {[1, 2].map((loop) => (
+              <div key={`loop-${loop}`} className="flex items-center gap-6 px-3 flex-shrink-0 min-w-max">
+                {[
+                  { img: "1 – A Chama Inextinguível - Ap. Custodio Ignacio.jpg", title: "A Chama Inextinguível", desc: "Ap. Custodio Ignacio" },
+                  { img: "2 – O Campo Magnético das Vendas - Leonildo Bevilaqua.png", title: "O Campo Magnético das Vendas", desc: "Leonildo Bevilaqua" },
+                  { img: "3 – A Ilusão da Cor - Edinaldo Pereira da Silva.png", title: "A Ilusão da Cor", desc: "Edinaldo Pereira da Silva" },
+                  { img: "4 – A Nova Educação – Moisés Allaion Ferreira.jpg", title: "A Nova Educação", desc: "Moisés Allaion Ferreira" },
+                  { img: "5 – O Mapa Secreto da Puberdade – Tânia Garcia.jpg", title: "O Mapa Secreto da Puberdade", desc: "Tânia Garcia" },
+                  { img: "6 – Memorize de Forma Inteligente, Não Árdua! – Prof. Carlos André.png", title: "Memorize de Forma Inteligente, Não Árdua!", desc: "Prof. Carlos André" },
+                  { img: "7 – 3 Minutos de Silêncio – Aline Tanaka.png", title: "3 Minutos de Silêncio", desc: "Aline Tanaka" },
+                  { img: "8 – Autodefesa é para Todos – Flávio Almeida.png", title: "Autodefesa é para Todos", desc: "Flávio Almeida" },
+                  { img: "9 – A Rosa e o Cravo – Solange Cristina Leandrin Betiate.png", title: "A Rosa e o Cravo", desc: "Solange Cristina Leandrin Betiate" },
+                  { img: "10 – Crianças do Amanhã – Carlos Bueno.png", title: "Crianças do Amanhã", desc: "Carlos Bueno" }
+                ].map((author, index) => (
+                  <div key={index} className="w-64 sm:w-72 bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative group-hover/card flex-shrink-0">
+                    <div className="aspect-[3/4] relative flex items-center justify-center bg-slate-900">
+                      <img 
+                        src={`/assets/${author.img}`} 
+                        alt={author.title}
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                      />
+                      {/* Gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+                      
+                      {/* Text info */}
+                      <div className="absolute bottom-5 left-5 right-5 pointer-events-none">
+                         <p className="text-[10px] text-amber-500 font-bold tracking-widest uppercase mb-1">{author.desc}</p>
+                         <p className="text-white font-bold leading-tight mb-2 text-sm sm:text-base uppercase">{author.title}</p>
+                         <div className="flex gap-1">
+                           {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
+                         </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
             ))}
           </div>
