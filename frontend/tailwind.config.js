@@ -10,11 +10,16 @@ export default {
                 shine: {
                     '0%': { left: '-100%' },
                     '100%': { left: '100%' }
+                },
+                scroll: {
+                    '0%': { transform: 'translateX(0)' },
+                    '100%': { transform: 'translateX(-50%)' }
                 }
             },
             animation: {
                 shine: 'shine 1.5s infinite',
                 'spin-slow': 'spin 3s linear infinite',
+                'scroll-slow': 'scroll 40s linear infinite',
             },
             colors: {
                 'deep-charcoal': '#0A0A0A',
