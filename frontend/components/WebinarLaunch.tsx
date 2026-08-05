@@ -3,6 +3,15 @@ import { Calendar, Clock, BookOpen, AlertTriangle, CheckCircle, Video, Lock, Che
 
 export const WebinarLaunch: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [showSticky, setShowSticky] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowSticky(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Scarcity scroll effect
   useEffect(() => {
