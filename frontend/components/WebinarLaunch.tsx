@@ -45,13 +45,13 @@ export const WebinarLaunch: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0a0a0a] z-0"></div>
         
         {/* Right Author Image (Absolute positioned for professional blend) */}
-        <div className="absolute bottom-0 right-0 w-full md:w-[55%] lg:w-[50%] h-full z-0 hidden md:flex justify-end items-end overflow-hidden pointer-events-none">
+        <div className="absolute bottom-0 right-0 w-full md:w-[75%] lg:w-[70%] h-full z-0 hidden md:flex justify-end items-end overflow-hidden pointer-events-none">
            {/* Subtle glow behind the author */}
            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-amber-500/10 blur-[120px] rounded-full"></div>
            <img 
               src="/assets/Leonildo%20Bevilaqua%20Oficial.png" 
               alt="Leonildo Bevilaqua" 
-              className="object-contain object-bottom h-[95%] lg:h-[110%] w-auto mr-[-5%] lg:mr-0 drop-shadow-[0_0_40px_rgba(0,0,0,0.5)] z-10"
+              className="object-contain object-bottom h-[125%] lg:h-[165%] w-auto mr-[10%] lg:mr-[25%] drop-shadow-[0_0_40px_rgba(0,0,0,0.5)] z-10"
            />
            {/* Fade at the bottom to blend seamlessly */}
            <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent z-20"></div>
@@ -304,10 +304,10 @@ export const WebinarLaunch: React.FC = () => {
                       <img 
                         src={`/assets/${author.img}`} 
                         alt={author.title}
-                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                        className="w-full h-full object-contain transition-transform duration-700 hover:scale-105"
                       />
                       {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent pointer-events-none"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none"></div>
                       
                       {/* Text info */}
                       <div className="absolute bottom-5 left-5 right-5 pointer-events-none">
