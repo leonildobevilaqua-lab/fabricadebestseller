@@ -49,14 +49,14 @@ export const WebinarLaunch: React.FC = () => {
            {/* Subtle glow behind the author */}
            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-amber-500/10 blur-[120px] rounded-full"></div>
            <img 
-              src="/assets/landing/f7acb9e3-2a41-4762-9ea4-679816fcb72a.jpeg" 
+              src="/assets/Leonildo%20Bevilaqua%20Oficial.png" 
               alt="Leonildo Bevilaqua" 
-              className="object-cover object-center w-full h-full z-10"
+              className="object-contain object-bottom h-[95%] lg:h-[110%] w-auto mr-[-5%] lg:mr-0 drop-shadow-[0_0_40px_rgba(0,0,0,0.5)] z-10"
            />
            {/* Fade at the bottom to blend seamlessly */}
            <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent z-20"></div>
            {/* Fade on the left to blend with text */}
-           <div className="absolute top-0 left-0 w-1/3 h-full bg-gradient-to-r from-[#0a0a0a] to-transparent z-20"></div>
+           <div className="absolute top-0 left-0 w-1/4 h-full bg-gradient-to-r from-[#0a0a0a] to-transparent z-20"></div>
         </div>
         
         <div className="relative max-w-6xl mx-auto flex w-full z-10 py-20 lg:py-28">
@@ -299,8 +299,8 @@ export const WebinarLaunch: React.FC = () => {
                   { img: "9 – A Rosa e o Cravo – Solange Cristina Leandrin Betiate.png", title: "A Rosa e o Cravo", desc: "Solange Cristina Leandrin Betiate" },
                   { img: "10 – Crianças do Amanhã – Carlos Bueno.png", title: "Crianças do Amanhã", desc: "Carlos Bueno" }
                 ].map((author, index) => (
-                  <div key={index} className="w-64 sm:w-72 bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative group-hover/card flex-shrink-0">
-                    <div className="aspect-[3/4] relative flex items-center justify-center bg-slate-900">
+                  <div key={index} className="w-80 sm:w-96 md:w-[480px] bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative group-hover/card flex-shrink-0">
+                    <div className="aspect-[2/1] relative flex items-center justify-center bg-slate-900">
                       <img 
                         src={`/assets/${author.img}`} 
                         alt={author.title}
