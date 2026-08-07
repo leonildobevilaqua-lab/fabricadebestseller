@@ -276,7 +276,7 @@ export const UserAuthController = {
 
             // Filter projects for the logged-in user
             const userProjects = enrichedProjects.filter((p: any) => {
-                return p.customerEmail === strUser;
+                return p.customerEmail === strUser || isMaster || isAdmin;
             });
 
             const usageCount = userProjects.length;

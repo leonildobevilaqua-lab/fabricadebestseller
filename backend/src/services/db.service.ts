@@ -147,9 +147,10 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                                 try { val = JSON.parse(val); } catch(e){}
                             }
                             
+                            val = val || item.metadata;
+                            
                             // If it's an object, we can spread and add id, key, updated_at
                             if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
-                                val = val || (item.metadata || {});
                                 const parsed = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
                                 localDB[item.key] = parsed;
                                 return parsed;
