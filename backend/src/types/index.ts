@@ -26,6 +26,8 @@ export interface BookMetadata {
     isFiction?: boolean;
     genre?: string;
     characters?: { name: string; info: string }[];
+    email?: string;
+    customerEmail?: string;
     lastWorkerPulse?: string;
     currentWorkerId?: string;
 }

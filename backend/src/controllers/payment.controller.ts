@@ -460,13 +460,13 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 
                     // Collect all items (main product + order bumps / commissions)
                     const kiwifyItems: any[] = [];
-                    if (kiwifyData.Product) kiwifyItems.push(kiwifyData.Product);
-                    if (kiwifyData.product) kiwifyItems.push(kiwifyData.product);
-                    if (Array.isArray(kiwifyData.order_bumps)) kiwifyItems.push(...kiwifyData.order_bumps);
-                    if (Array.isArray(kiwifyData.Order_Bumps)) kiwifyItems.push(...kiwifyData.Order_Bumps);
-                    if (Array.isArray(kiwifyData.bumps)) kiwifyItems.push(...kiwifyData.bumps);
+                    if (kiwifyDataRaw.Product) kiwifyItems.push(kiwifyDataRaw.Product);
+                    if (kiwifyDataRaw.product) kiwifyItems.push(kiwifyDataRaw.product);
+                    if (Array.isArray(kiwifyDataRaw.order_bumps)) kiwifyItems.push(...kiwifyDataRaw.order_bumps);
+                    if (Array.isArray(kiwifyDataRaw.Order_Bumps)) kiwifyItems.push(...kiwifyDataRaw.Order_Bumps);
+                    if (Array.isArray(kiwifyDataRaw.bumps)) kiwifyItems.push(...kiwifyDataRaw.bumps);
                     if (Array.isArray(payload.order_bumps)) kiwifyItems.push(...payload.order_bumps);
-                    if (Array.isArray(kiwifyData.Commissions)) kiwifyItems.push(...kiwifyData.Commissions);
+                    if (Array.isArray(kiwifyDataRaw.Commissions)) kiwifyItems.push(...kiwifyDataRaw.Commissions);
 
                     if (kiwifyItems.length === 0) {
                         kiwifyItems.push({ product_name: productName });
