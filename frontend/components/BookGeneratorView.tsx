@@ -216,7 +216,7 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                                         </div>
     
                                         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto justify-start lg:justify-end shrink-0">
-                                        <span className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase())) 
+                                        <span className={`px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-colors ${(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD'].includes((order.status || '').toUpperCase())) 
                                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                             ((order.status || '').toUpperCase() === 'IN_PROGRESS' || (order.status || '').toUpperCase() === 'WRITING_CHAPTERS' || (order.status || '').toUpperCase() === 'GENERATING_STRUCTURE') 
                                             ? 'bg-blue-50 text-blue-700 border-blue-200 animate-pulse' :
@@ -224,13 +224,13 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                                             ? 'bg-red-50 text-red-700 border-red-200' :
                                             'bg-amber-50 text-amber-700 border-amber-200'
                                             }`}>
-                                            {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase())) ? (t as any).dashboard.statusGenerated :
+                                            {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD'].includes((order.status || '').toUpperCase())) ? (t as any).dashboard.statusGenerated :
                                                 ((order.status || '').toUpperCase() === 'IN_PROGRESS' || (order.status || '').toUpperCase() === 'WRITING_CHAPTERS' || (order.status || '').toUpperCase() === 'GENERATING_STRUCTURE') ? (t as any).dashboard.statusProcessing :
                                                     ((order.status || '').toUpperCase() === 'FAILED') ? (lang === 'en' ? 'FAILED (CLICK TO RESUME)' : 'FALHOU (CLIQUE PARA RETOMAR)') :
                                                     (t as any).dashboard.statusWaiting}
                                         </span>
 
-                                        {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase())) && (
+                                        {(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD'].includes((order.status || '').toUpperCase())) && (
                                             <a
                                                 href={order.downloadUrl?.startsWith('http') ? order.downloadUrl : `${getApiBase()}${order.downloadUrl || `/api/projects/${order.id}/download-zip`}`}
                                                 target="_blank"
@@ -242,7 +242,7 @@ export const BookGeneratorView: React.FC<BookGeneratorViewProps> = ({
                                             </a>
                                         )}
 
-                                        {(!(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED'].includes((order.status || '').toUpperCase()))) && (
+                                        {(!(['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD'].includes((order.status || '').toUpperCase()))) && (
                                             <button
                                                 onClick={async () => {
                                                     const msg = lang === 'en' 

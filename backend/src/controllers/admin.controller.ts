@@ -557,8 +557,17 @@ export const getProjectHistory = async (req: Request, res: Response) => {
 
                 if (!customerPhone || customerPhone === "") customerPhone = "-";
 
-                let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download`;
+                let downloadLink = metadata.downloadUrl || metadata.kitUrl || metadata.docLink || `/api/projects/${projectId}/download-zip`;
                 const safeTitle = (bookTitle.length > 150) ? bookTitle.substring(0, 150) + "..." : bookTitle;
+
+                const currentStatus = (metadata.status || p.status || "").toUpperCase();
+                const isCompleted = ['COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS', 'READY_TO_DOWNLOAD', 'DONE', 'FINISHED', 'APPROVED'].includes(currentStatus) ||
+                    (p.structure && Array.isArray(p.structure) && p.structure.length > 0) ||
+                    (metadata.structure && Array.isArray(metadata.structure) && metadata.structure.length > 0) ||
+                    (p.progress >= 100 || metadata.progress >= 100) ||
+                    (p.currentStep === 'DONE' || metadata.currentStep === 'DONE' || p.currentStep === 'DETAILS' || metadata.currentStep === 'DETAILS');
+
+                const finalStatus = isCompleted ? 'COMPLETED' : (currentStatus || 'IN_PROGRESS');
 
                 return {
                     id: projectId,
@@ -568,7 +577,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
                     customerName: customerName,
                     customerEmail: customerEmail,
                     customerPhone: customerPhone,
-                    status: (metadata.status || p.status || "READY").toUpperCase(),
+                    status: finalStatus,
                     projectId: projectId,
                     downloadUrl: downloadLink,
                     credits: credits,
@@ -942,8 +951,34 @@ export const forceFinalizeProject = async (req: Request, res: Response) => {
         const { id } = req.params;
         if (!id) return res.status(400).json({ error: "ID required" });
 
-        const project = await getVal(`/projects/${id}`, { forceSync: true });
-        if (!project) return res.status(404).json({ error: "Project not found" });
+        let project = await getVal(`/projects/${id}`, { forceSync: true });
+        if (!project) {
+            const leads = await getVal('/leads', { forceSync: true }) || [];
+            const leadsArr = Array.isArray(leads) ? leads : Object.values(leads);
+            const lead = leadsArr.find((l: any) => l.id === id || l.projectId === id);
+
+            if (lead) {
+                console.log(`[Admin] Converting Lead ${id} into full Project for force-finalization...`);
+                project = {
+                    id: id,
+                    metadata: {
+                        id: id,
+                        authorName: lead.name || lead.authorName || "Autor",
+                        topic: lead.topic || lead.bookTitle || "Livro",
+                        bookTitle: lead.bookTitle || lead.topic || "Livro Gerado",
+                        subTitle: lead.subTitle || "",
+                        contact: { name: lead.name || "Cliente", email: lead.email || "", phone: lead.phone || "" },
+                        language: 'pt',
+                        status: 'IN_PROGRESS',
+                        progress: 50
+                    },
+                    createdAt: lead.created_at || lead.date || new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+            } else {
+                return res.status(404).json({ error: "Projeto ou Solicitação não encontrada" });
+            }
+        }
 
         console.log(`[Admin] Smart-Force Finalizing Project: ${id}`);
 

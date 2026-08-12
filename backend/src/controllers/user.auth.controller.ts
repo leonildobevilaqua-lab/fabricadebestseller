@@ -311,17 +311,27 @@ export const UserAuthController = {
                 const bookTitle = metadata.bookTitle || p.bookTitle || metadata.title || p.title || metadata.topic || p.topic || 'Livro Gerado';
                 const safeTitle = (bookTitle.length > 150) ? bookTitle.substring(0, 150) + "..." : bookTitle;
 
+                const currentStatus = (metadata.status || p.status || '').toUpperCase();
+                const isCompleted = ['COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS', 'READY_TO_DOWNLOAD', 'DONE', 'FINISHED', 'APPROVED'].includes(currentStatus) ||
+                    (p.structure && Array.isArray(p.structure) && p.structure.length > 0) ||
+                    (metadata.structure && Array.isArray(metadata.structure) && metadata.structure.length > 0) ||
+                    (p.progress >= 100 || metadata.progress >= 100) ||
+                    (p.currentStep === 'DONE' || metadata.currentStep === 'DONE' || p.currentStep === 'DETAILS' || metadata.currentStep === 'DETAILS');
+
+                const finalStatus = isCompleted ? 'COMPLETED' : (currentStatus || 'PROCESSING');
+                const projId = p.id || metadata.id || p.projectId;
+
                 return {
-                    id: p.id || metadata.id || p.projectId,
-                    projectId: p.id || metadata.id || p.projectId,
+                    id: projId,
+                    projectId: projId,
                     title: safeTitle,
                     authorName: metadata.authorName || p.authorName || p.customerName || 'Autor',
                     customerName: p.customerName || 'Cliente',
                     customerEmail: p.customerEmail,
                     customerPhone: p.customerPhone,
                     date: p.createdAt || metadata.createdAt || p.date || p.updated_at || new Date(),
-                    status: (metadata.status || p.status || 'PROCESSING').toUpperCase(),
-                    downloadUrl: metadata.kitUrl || metadata.kitLink || metadata.downloadUrl || p.kitUrl || p.downloadUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${p.id || metadata.id || p.projectId}/download`
+                    status: finalStatus,
+                    downloadUrl: metadata.kitUrl || metadata.kitLink || metadata.downloadUrl || p.kitUrl || p.downloadUrl || metadata.docLink || metadata.finalDocxUrl || `/api/projects/${projId}/download-zip`
                 };
             }).sort((a: any, b: any) => {
                 const dateA = new Date(a.date || 0).getTime();
