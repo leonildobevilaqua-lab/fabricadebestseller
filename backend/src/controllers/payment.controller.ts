@@ -458,44 +458,95 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     redeemedIds.push(txId);
                     await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
 
-                    // Detect Product Type
-                    const pNameUpper = productName.toUpperCase();
-                    const isCIP = pNameUpper.includes('FICHA') || pNameUpper.includes('CATALOGRÁFICA') || pNameUpper.includes('CATALOGRAFICA');
-                    const isBarcode = pNameUpper.includes('BARRAS');
-                    const isQR = pNameUpper.includes('QR CODE');
-                    const isCover = pNameUpper.includes('CAPA PROFISSIONAL') || pNameUpper.includes('CAPA_PROFISSIONAL') || pNameUpper.includes('CAPAS PROFISSIONAIS');
+                    // Collect all items (main product + order bumps / commissions)
+                    const kiwifyItems: any[] = [];
+                    if (kiwifyData.Product) kiwifyItems.push(kiwifyData.Product);
+                    if (kiwifyData.product) kiwifyItems.push(kiwifyData.product);
+                    if (Array.isArray(kiwifyData.order_bumps)) kiwifyItems.push(...kiwifyData.order_bumps);
+                    if (Array.isArray(kiwifyData.Order_Bumps)) kiwifyItems.push(...kiwifyData.Order_Bumps);
+                    if (Array.isArray(kiwifyData.bumps)) kiwifyItems.push(...kiwifyData.bumps);
+                    if (Array.isArray(payload.order_bumps)) kiwifyItems.push(...payload.order_bumps);
+                    if (Array.isArray(kiwifyData.Commissions)) kiwifyItems.push(...kiwifyData.Commissions);
 
-                    if (isCIP) {
-                        const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
-                        const newCipCredits = currentCipCredits + 1;
-                        await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
-                        await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
-                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newCipCredits} CIP credits.`);
-                    } else if (isBarcode) {
-                        const currentBarcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
-                        const newBarcodeCredits = currentBarcodeCredits + 1;
-                        await setVal(`/barcodeCredits/${safeEmail}`, newBarcodeCredits);
-                        await setVal(`/users/${safeEmail}/barcodeCredits`, newBarcodeCredits);
-                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newBarcodeCredits} Barcode credits.`);
-                    } else if (isQR) {
-                        const currentQrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
-                        const newQrCredits = currentQrCredits + 1;
-                        await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
-                        await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
-                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newQrCredits} QR credits.`);
-                    } else if (isCover) {
-                        const currentCoverCredits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
-                        const newCoverCredits = currentCoverCredits + 1;
-                        await setVal(`/coverCredits/${safeEmail}`, newCoverCredits);
-                        await setVal(`/users/${safeEmail}/coverCredits`, newCoverCredits);
-                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newCoverCredits} Cover credits.`);
-                    } else {
-                        // DEFAULT: BOOK CREDIT
+                    if (kiwifyItems.length === 0) {
+                        kiwifyItems.push({ product_name: productName });
+                    }
+
+                    let kBookCreditsToAdd = 0;
+                    let kCipCreditsToAdd = 0;
+                    let kBarcodeCreditsToAdd = 0;
+                    let kQrCreditsToAdd = 0;
+                    let kCoverCreditsToAdd = 0;
+
+                    for (const kItem of kiwifyItems) {
+                        const kPName = ((kItem.product_name || kItem.name || kItem.product_title || productName) + "")
+                            .toUpperCase()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "");
+
+                        if (kPName.includes('REGISTRO COMPLETO') || kPName.includes('PRC')) {
+                            kCipCreditsToAdd += 1;
+                            kBarcodeCreditsToAdd += 1;
+                            kQrCreditsToAdd += 1;
+                        } else if (kPName.includes('CAPA PROFISSIONAL') || kPName.includes('CAPA_PROFISSIONAL') || kPName.includes('CAPAS PROFISSIONAIS')) {
+                            kCoverCreditsToAdd += 1;
+                        } else if (kPName.includes('FICHA') || kPName.includes('CATALOGRAFICA')) {
+                            kCipCreditsToAdd += 1;
+                        } else if (kPName.includes('BARRAS') || kPName.includes('BARCODE') || kPName.includes('CODIGO DE BARRAS')) {
+                            kBarcodeCreditsToAdd += 1;
+                        } else if (kPName.includes('QR CODE') || kPName.includes('QRCODE') || kPName.includes('QR')) {
+                            kQrCreditsToAdd += 1;
+                        } else if (kPName.includes('12 LIVROS') || kPName.includes('12 CREDITO') || kPName.includes('12 CRÉDITO') || kPName.includes('12CR')) {
+                            kBookCreditsToAdd += 12;
+                        } else if (kPName.includes('9 LIVROS') || kPName.includes('9 CREDITO') || kPName.includes('9 CRÉDITO') || kPName.includes('9CR')) {
+                            kBookCreditsToAdd += 9;
+                        } else if (kPName.includes('6 LIVROS') || kPName.includes('6 CREDITO') || kPName.includes('6 CRÉDITO') || kPName.includes('6CR')) {
+                            kBookCreditsToAdd += 6;
+                        } else if (kPName.includes('3 LIVROS') || kPName.includes('3 CREDITO') || kPName.includes('3 CRÉDITO') || kPName.includes('3CR')) {
+                            kBookCreditsToAdd += 3;
+                        } else {
+                            kBookCreditsToAdd += 1;
+                        }
+                    }
+
+                    if (kBookCreditsToAdd > 0) {
                         const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-                        const newCredits = currentCredits + 1;
+                        const newCredits = currentCredits + kBookCreditsToAdd;
                         await setVal(`/credits/${safeEmail}`, newCredits);
                         await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
-                        console.log(`[WEBHOOK] SUCCESS: ${email} now has ${newCredits} book credits.`);
+                        console.log(`[KIWIFY WEBHOOK] SUCCESS: ${email} now has ${newCredits} book credits (added +${kBookCreditsToAdd}).`);
+                    }
+
+                    if (kCipCreditsToAdd > 0) {
+                        const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+                        const newCipCredits = currentCipCredits + kCipCreditsToAdd;
+                        await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
+                        await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
+                        console.log(`[KIWIFY WEBHOOK] SUCCESS: ${email} now has ${newCipCredits} CIP credits (added +${kCipCreditsToAdd}).`);
+                    }
+
+                    if (kBarcodeCreditsToAdd > 0) {
+                        const currentBarcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+                        const newBarcodeCredits = currentBarcodeCredits + kBarcodeCreditsToAdd;
+                        await setVal(`/barcodeCredits/${safeEmail}`, newBarcodeCredits);
+                        await setVal(`/users/${safeEmail}/barcodeCredits`, newBarcodeCredits);
+                        console.log(`[KIWIFY WEBHOOK] SUCCESS: ${email} now has ${newBarcodeCredits} Barcode credits (added +${kBarcodeCreditsToAdd}).`);
+                    }
+
+                    if (kQrCreditsToAdd > 0) {
+                        const currentQrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+                        const newQrCredits = currentQrCredits + kQrCreditsToAdd;
+                        await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
+                        await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
+                        console.log(`[KIWIFY WEBHOOK] SUCCESS: ${email} now has ${newQrCredits} QR credits (added +${kQrCreditsToAdd}).`);
+                    }
+
+                    if (kCoverCreditsToAdd > 0) {
+                        const currentCoverCredits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
+                        const newCoverCredits = currentCoverCredits + kCoverCreditsToAdd;
+                        await setVal(`/coverCredits/${safeEmail}`, newCoverCredits);
+                        await setVal(`/users/${safeEmail}/coverCredits`, newCoverCredits);
+                        console.log(`[KIWIFY WEBHOOK] SUCCESS: ${email} now has ${newCoverCredits} Cover credits (added +${kCoverCreditsToAdd}).`);
                     }
 
                     // Save last payment date
@@ -1384,12 +1435,32 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 redeemedIds.push(txId);
                 await setVal(`/users/${safeEmail}/redeemed_payments`, redeemedIds);
 
-                // Detect Product Type (BOOK, CIP, BARCODE, QR, COMPLETE_PACKAGE)
-                const pNameUpper = productName.toUpperCase();
-                
-                // Collect all possible identifiers for the product/checkout
+                // Collect all items (main item + order bumps array)
+                const itemsToProcess: any[] = [];
+                if (payload.item) itemsToProcess.push(payload.item);
+                if (Array.isArray(payload.bumps)) itemsToProcess.push(...payload.bumps);
+                if (Array.isArray(payload.data?.bumps)) itemsToProcess.push(...payload.data.bumps);
+                if (itemsToProcess.length === 0) {
+                    itemsToProcess.push({
+                        product_id: payload.product_id || payload.product?.id || payload.data?.product_id || payload.data?.product?.id,
+                        product_name: productName,
+                        offer_code: payload.checkout_code || payload.offer_code || payload.offer?.code
+                    });
+                }
+
+                // Collect all possible identifiers for the product/checkout across all items
                 const identifiers = new Set<string>();
-                if (payload.item?.product_id) identifiers.add(String(payload.item.product_id).trim());
+                for (const itemObj of itemsToProcess) {
+                    if (!itemObj) continue;
+                    if (itemObj.product_id) identifiers.add(String(itemObj.product_id).trim());
+                    if (itemObj.product?.id) identifiers.add(String(itemObj.product.id).trim());
+                    if (itemObj.offer_id) identifiers.add(String(itemObj.offer_id).trim());
+                    if (itemObj.offer_code) identifiers.add(String(itemObj.offer_code).trim());
+                    if (itemObj.checkout_code) identifiers.add(String(itemObj.checkout_code).trim());
+                    if (itemObj.checkout_id) identifiers.add(String(itemObj.checkout_id).trim());
+                    if (itemObj.checkout_hash) identifiers.add(String(itemObj.checkout_hash).trim());
+                }
+
                 if (tx.product?.id) identifiers.add(String(tx.product.id).trim());
                 if (payload.product_id) identifiers.add(String(payload.product_id).trim());
                 if (payload.product?.id) identifiers.add(String(payload.product.id).trim());
@@ -1398,25 +1469,18 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 if (payload.checkout_hash) identifiers.add(String(payload.checkout_hash).trim());
                 if (tx.checkout_id) identifiers.add(String(tx.checkout_id).trim());
                 if (tx.checkout_hash) identifiers.add(String(tx.checkout_hash).trim());
-                if (payload.item?.checkout_id) identifiers.add(String(payload.item.checkout_id).trim());
-                
-                // Add checkout_code and other potential fields from Ticto webhook structure
                 if (payload.checkout_code) identifiers.add(String(payload.checkout_code).trim());
                 if (payload.order?.checkout_code) identifiers.add(String(payload.order.checkout_code).trim());
                 if (tx.checkout_code) identifiers.add(String(tx.checkout_code).trim());
-                if (payload.item?.checkout_code) identifiers.add(String(payload.item.checkout_code).trim());
-                if (payload.item?.checkout_hash) identifiers.add(String(payload.item.checkout_hash).trim());
                 if (payload.data?.checkout_code) identifiers.add(String(payload.data.checkout_code).trim());
                 if (payload.data?.checkout_hash) identifiers.add(String(payload.data.checkout_hash).trim());
                 if (payload.order?.checkout_hash) identifiers.add(String(payload.order.checkout_hash).trim());
-
-                // Nested payload.data fallbacks for safety
                 if (payload.data?.product?.id) identifiers.add(String(payload.data.product.id).trim());
                 if (payload.data?.product_id) identifiers.add(String(payload.data.product_id).trim());
                 if (payload.data?.order?.checkout_id) identifiers.add(String(payload.data.order.checkout_id).trim());
                 if (payload.data?.order?.checkout_code) identifiers.add(String(payload.data.order.checkout_code).trim());
 
-                // Parse checkout URL if present (extremely robust fallback)
+                // Parse checkout URL if present
                 const checkUrl = payload.checkout_url || payload.order?.checkout_url || tx.checkout_url || payload.item?.checkout_url || '';
                 if (checkUrl) {
                     const match = checkUrl.match(/checkout\.ticto\.app\/([A-Za-z0-9]+)/);
@@ -1433,7 +1497,6 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     if (alreadyUsed) {
                         console.log(`[TICTO WEBHOOK] BLOCKED: ${email} tried to reuse promo O6F5202E7/111296.`);
                         await setVal(`/users/${safeEmail}/promo_blocked`, true);
-                        // We do NOT increment credits here
                         if (!res.headersSent) {
                             return res.status(200).json({ received: true, processed: true, warning: "promo_already_used" });
                         }
@@ -1449,86 +1512,110 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 let qrCreditsToAdd = 0;
                 let coverCreditsToAdd = 0;
 
-                const matchesIdentifier = (idsOrHashes: string[]) => {
-                    return idsOrHashes.some(id => identifiers.has(id));
-                };
+                // Process EACH item / order bump in the order
+                for (const itemObj of itemsToProcess) {
+                    const itemIds = new Set<string>();
+                    if (itemObj.product_id) itemIds.add(String(itemObj.product_id).trim());
+                    if (itemObj.product?.id) itemIds.add(String(itemObj.product.id).trim());
+                    if (itemObj.offer_id) itemIds.add(String(itemObj.offer_id).trim());
+                    if (itemObj.offer_code) itemIds.add(String(itemObj.offer_code).trim());
+                    if (itemObj.checkout_code) itemIds.add(String(itemObj.checkout_code).trim());
+                    if (itemObj.checkout_id) itemIds.add(String(itemObj.checkout_id).trim());
+                    if (itemObj.checkout_hash) itemIds.add(String(itemObj.checkout_hash).trim());
 
-                // ID 111296 / O6F5202E7 (Oferta Especial 1ª Compra - 1 Livro)
-                if (matchesIdentifier(['111296', 'O6F5202E7'])) {
-                    bookCreditsToAdd += 1;
-                }
-                // ID Capa Profissional - OE1970B27 (R$ 87,00 por geração)
-                if (matchesIdentifier(['OE1970B27'])) {
-                    coverCreditsToAdd += 1;
-                }
-                // ID 111114 / OAE19BCE4 (PRC - Pacote de Registro Completo - 1 de cada)
-                if (matchesIdentifier(['111114', 'OAE19BCE4'])) {
-                    cipCreditsToAdd += 1;
-                    barcodeCreditsToAdd += 1;
-                    qrCreditsToAdd += 1;
-                }
-                // ID 111112 / O8B28DD61 (Gerador Automático de QR Codes - 1 QR)
-                if (matchesIdentifier(['111112', 'O8B28DD61'])) {
-                    qrCreditsToAdd += 1;
-                }
-                // ID 110881 / O9012A440 ou O77037442 (Crédito para Código de Barras - 1 Barcode)
-                if (matchesIdentifier(['110881', 'O9012A440', 'O77037442'])) {
-                    barcodeCreditsToAdd += 1;
-                }
-                // ID 110774 / O89DB6739 (Crédito para Ficha Catalográfica - 1 Ficha)
-                if (matchesIdentifier(['110774', 'O89DB6739'])) {
-                    cipCreditsToAdd += 1;
-                }
-                // ID 110633 / O1234F079 (Pacote 12 Livros)
-                if (matchesIdentifier(['110633', 'O1234F079'])) {
-                    bookCreditsToAdd += 12;
-                }
-                // ID 110631 / OFD92B07B (Pacote 9 Livros)
-                if (matchesIdentifier(['110631', 'OFD92B07B'])) {
-                    bookCreditsToAdd += 9;
-                }
-                // ID 110634 / O276DFB4A (Pacote 6 Livros)
-                if (matchesIdentifier(['110634', 'O276DFB4A'])) {
-                    bookCreditsToAdd += 6;
-                }
-                // ID 110628 / OFEE31960 (Pacote 3 Livros)
-                if (matchesIdentifier(['110628', 'OFEE31960'])) {
-                    bookCreditsToAdd += 3;
-                }
-                // ID 108488 / O6CE296D4 (Gerador de Livros Profissionais - 1 Livro)
-                if (matchesIdentifier(['108488', 'O6CE296D4'])) {
-                    bookCreditsToAdd += 1;
-                }
+                    const itemMatches = (idsOrHashes: string[]) => idsOrHashes.some(id => itemIds.has(id));
 
-                // Fallbacks using text matches on product name (only if no explicit ID matched)
-                if (bookCreditsToAdd === 0 && cipCreditsToAdd === 0 && barcodeCreditsToAdd === 0 && qrCreditsToAdd === 0 && coverCreditsToAdd === 0) {
-                    const normalizedPName = pNameUpper
-                        .normalize("NFD")
-                        .replace(/[\u0300-\u036f]/g, ""); // Strip accents/diacritics
+                    let matched = false;
 
-                    if (normalizedPName.includes('REGISTRO COMPLETO') || normalizedPName.includes('PRC')) {
-                        cipCreditsToAdd += 1;
-                        barcodeCreditsToAdd += 1;
-                        qrCreditsToAdd += 1;
-                    } else if (normalizedPName.includes('CAPA PROFISSIONAL') || normalizedPName.includes('CAPA_PROFISSIONAL') || normalizedPName.includes('CAPAS PROFISSIONAIS')) {
+                    // ID 111296 / O6F5202E7 (Oferta Especial 1ª Compra - 1 Livro)
+                    if (itemMatches(['111296', 'O6F5202E7'])) {
+                        bookCreditsToAdd += 1;
+                        matched = true;
+                    }
+                    // ID Capa Profissional - OE1970B27
+                    if (itemMatches(['OE1970B27'])) {
                         coverCreditsToAdd += 1;
-                    } else if (normalizedPName.includes('FICHA') || normalizedPName.includes('CATALOGRAFICA')) {
+                        matched = true;
+                    }
+                    // ID 111114 / OAE19BCE4 (PRC - Pacote de Registro Completo - 1 de cada)
+                    if (itemMatches(['111114', 'OAE19BCE4'])) {
                         cipCreditsToAdd += 1;
-                    } else if (normalizedPName.includes('BARRAS') || normalizedPName.includes('BARCODE') || normalizedPName.includes('CODIGO DE BARRAS')) {
                         barcodeCreditsToAdd += 1;
-                    } else if (normalizedPName.includes('QR CODE') || normalizedPName.includes('QRCODE') || normalizedPName.includes('QR')) {
                         qrCreditsToAdd += 1;
-                    } else if (normalizedPName.includes('12 LIVROS') || normalizedPName.includes('12 CREDITO') || normalizedPName.includes('12 CRÉDITO') || normalizedPName.includes('12CR')) {
+                        matched = true;
+                    }
+                    // ID 111112 / O8B28DD61 (Gerador Automático de QR Codes - 1 QR)
+                    if (itemMatches(['111112', 'O8B28DD61'])) {
+                        qrCreditsToAdd += 1;
+                        matched = true;
+                    }
+                    // ID 110881 / O9012A440 ou O77037442 (Crédito para Código de Barras - 1 Barcode)
+                    if (itemMatches(['110881', 'O9012A440', 'O77037442'])) {
+                        barcodeCreditsToAdd += 1;
+                        matched = true;
+                    }
+                    // ID 110774 / O89DB6739 (Crédito para Ficha Catalográfica - 1 Ficha)
+                    if (itemMatches(['110774', 'O89DB6739'])) {
+                        cipCreditsToAdd += 1;
+                        matched = true;
+                    }
+                    // ID 110633 / O1234F079 (Pacote 12 Livros)
+                    if (itemMatches(['110633', 'O1234F079'])) {
                         bookCreditsToAdd += 12;
-                    } else if (normalizedPName.includes('9 LIVROS') || normalizedPName.includes('9 CREDITO') || normalizedPName.includes('9 CRÉDITO') || normalizedPName.includes('9CR')) {
+                        matched = true;
+                    }
+                    // ID 110631 / OFD92B07B (Pacote 9 Livros)
+                    if (itemMatches(['110631', 'OFD92B07B'])) {
                         bookCreditsToAdd += 9;
-                    } else if (normalizedPName.includes('6 LIVROS') || normalizedPName.includes('6 CREDITO') || normalizedPName.includes('6 CRÉDITO') || normalizedPName.includes('6CR')) {
+                        matched = true;
+                    }
+                    // ID 110634 / O276DFB4A (Pacote 6 Livros)
+                    if (itemMatches(['110634', 'O276DFB4A'])) {
                         bookCreditsToAdd += 6;
-                    } else if (normalizedPName.includes('3 LIVROS') || normalizedPName.includes('3 CREDITO') || normalizedPName.includes('3 CRÉDITO') || normalizedPName.includes('3CR')) {
-                        bookCreditsToAdd = 3;
-                    } else {
-                        // Standard fallback: 1 book credit
-                        bookCreditsToAdd = 1;
+                        matched = true;
+                    }
+                    // ID 110628 / OFEE31960 (Pacote 3 Livros)
+                    if (itemMatches(['110628', 'OFEE31960'])) {
+                        bookCreditsToAdd += 3;
+                        matched = true;
+                    }
+                    // ID 108488 / O6CE296D4 (Gerador de Livros Profissionais - 1 Livro)
+                    if (itemMatches(['108488', 'O6CE296D4'])) {
+                        bookCreditsToAdd += 1;
+                        matched = true;
+                    }
+
+                    // Fallback using text matches on product/offer name for unmatched item
+                    if (!matched) {
+                        const itemPName = ((itemObj.product_name || itemObj.offer_name || itemObj.name || productName) + "")
+                            .toUpperCase()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "");
+
+                        if (itemPName.includes('REGISTRO COMPLETO') || itemPName.includes('PRC')) {
+                            cipCreditsToAdd += 1;
+                            barcodeCreditsToAdd += 1;
+                            qrCreditsToAdd += 1;
+                        } else if (itemPName.includes('CAPA PROFISSIONAL') || itemPName.includes('CAPA_PROFISSIONAL') || itemPName.includes('CAPAS PROFISSIONAIS')) {
+                            coverCreditsToAdd += 1;
+                        } else if (itemPName.includes('FICHA') || itemPName.includes('CATALOGRAFICA')) {
+                            cipCreditsToAdd += 1;
+                        } else if (itemPName.includes('BARRAS') || itemPName.includes('BARCODE') || itemPName.includes('CODIGO DE BARRAS')) {
+                            barcodeCreditsToAdd += 1;
+                        } else if (itemPName.includes('QR CODE') || itemPName.includes('QRCODE') || itemPName.includes('QR')) {
+                            qrCreditsToAdd += 1;
+                        } else if (itemPName.includes('12 LIVROS') || itemPName.includes('12 CREDITO') || itemPName.includes('12 CRÉDITO') || itemPName.includes('12CR')) {
+                            bookCreditsToAdd += 12;
+                        } else if (itemPName.includes('9 LIVROS') || itemPName.includes('9 CREDITO') || itemPName.includes('9 CRÉDITO') || itemPName.includes('9CR')) {
+                            bookCreditsToAdd += 9;
+                        } else if (itemPName.includes('6 LIVROS') || itemPName.includes('6 CREDITO') || itemPName.includes('6 CRÉDITO') || itemPName.includes('6CR')) {
+                            bookCreditsToAdd += 6;
+                        } else if (itemPName.includes('3 LIVROS') || itemPName.includes('3 CREDITO') || itemPName.includes('3 CRÉDITO') || itemPName.includes('3CR')) {
+                            bookCreditsToAdd += 3;
+                        } else {
+                            // Default fallback: 1 book credit
+                            bookCreditsToAdd += 1;
+                        }
                     }
                 }
 
