@@ -71,7 +71,10 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                 if (k && k.startsWith(`${normalized}/`)) {
                     try {
                         const val = typeof v === 'string' ? JSON.parse(v) : v;
-                        if (val) results.push(val);
+                        if (val && typeof val === 'object') {
+                            if (!val.metadata) val.metadata = val;
+                            results.push(val);
+                        }
                     } catch (e) {}
                 }
             }
@@ -124,41 +127,94 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                 console.error("[DB] Appwrite Fetch Error:", e);
             }
         } else {
-            // SUPABASE LOGIC (Original)
+            // SUPABASE LOGIC (Robust Collection & Sub-key Fetch)
             try {
                 if (isCollectionRoot) {
-                    let selectFields = options.fields || 'key, value, updated_at';
-                    if (!options.fields) {
-                        if (normalized === '/projects') selectFields = 'key, updated_at, metadata:value->metadata';
-                        else if (normalized === '/leads') selectFields = 'key, updated_at, value';
+                    const collectionItems: any[] = [];
+                    const seenIds = new Set<string>();
+
+                    // A. Check root key (e.g. key = "/leads" or key = "/orders")
+                    try {
+                        const { data: rootRow } = await supabase.from('kv_store').select('key, value, updated_at').eq('key', normalized).maybeSingle();
+                        if (rootRow && rootRow.value) {
+                            let rootVal = rootRow.value;
+                            if (typeof rootVal === 'string' && (rootVal.startsWith('{') || rootVal.startsWith('['))) {
+                                try { rootVal = JSON.parse(rootVal); } catch (e) {}
+                            }
+                            const rawArr = Array.isArray(rootVal) ? rootVal : (typeof rootVal === 'object' ? Object.values(rootVal) : []);
+                            for (const item of rawArr) {
+                                if (item && typeof item === 'object') {
+                                    const id = item.id || item.key || JSON.stringify(item).slice(0, 30);
+                                    if (!seenIds.has(id)) {
+                                        seenIds.add(id);
+                                        collectionItems.push(item);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.error("[DB] Root collection row fetch error:", e);
                     }
 
-                    const { data: rawItems, error } = await supabase
+                    // B. Check sub-keys (e.g. key >= "/projects/" && key < "/projects0")
+                    let selectFields = options.fields || 'key, value, updated_at';
+                    if (!options.fields && normalized === '/projects') {
+                        // Light select for projects to prevent query timeout while keeping metadata intact
+                        selectFields = 'key, updated_at, value->metadata, value->id, value->createdAt, value->customerEmail';
+                    }
+
+                    const { data: rawItemsData, error } = await supabase
                         .from('kv_store')
                         .select(selectFields)
                         .gte('key', `${normalized}/`)
                         .lt('key', `${normalized}0`)
                         .limit(2000);
-                        
-                    if (!error && rawItems && rawItems.length > 0) {
-                        remoteData = rawItems.map((item: any) => {
+
+                    const rawItems: any[] = (rawItemsData as any[]) || [];
+
+                    if (!error && rawItems.length > 0) {
+                        for (const item of rawItems) {
                             let val = item.value;
+                            let metadata = item.metadata || (val && val.metadata);
+
                             if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
-                                try { val = JSON.parse(val); } catch(e){}
+                                try { val = JSON.parse(val); } catch (e) {}
                             }
-                            
-                            val = val || item.metadata;
-                            
-                            // If it's an object, we can spread and add id, key, updated_at
-                            if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
-                                const parsed = { ...val, id: val.id || item.key.split('/').pop(), key: item.key, updated_at: item.updated_at };
+                            if (typeof metadata === 'string' && (metadata.startsWith('{') || metadata.startsWith('['))) {
+                                try { metadata = JSON.parse(metadata); } catch (e) {}
+                            }
+
+                            if (!metadata && val && typeof val === 'object') {
+                                metadata = val.metadata || val;
+                            }
+
+                            if (val !== null && val !== undefined) {
+                                const projId = item.id || (val && val.id) || (metadata && metadata.id) || item.key.split('/').pop();
+                                const metadataObj = metadata || (val && val.metadata) || (typeof val === 'object' ? val : {});
+                                const parsed = {
+                                    ...(typeof val === 'object' && val !== null ? val : {}),
+                                    ...(typeof metadataObj === 'object' && metadataObj !== null ? metadataObj : {}),
+                                    id: projId,
+                                    key: item.key,
+                                    updated_at: item.updated_at || (val && val.updatedAt),
+                                    metadata: metadataObj
+                                };
+
                                 localDB[item.key] = parsed;
-                                return parsed;
-                            } else {
-                                // For primitives (numbers, booleans, strings) or arrays, just store as is
-                                localDB[item.key] = val;
-                                return val;
+
+                                if (!seenIds.has(projId)) {
+                                    seenIds.add(projId);
+                                    collectionItems.push(parsed);
+                                }
                             }
+                        }
+                    }
+
+                    if (collectionItems.length > 0) {
+                        remoteData = collectionItems.sort((a: any, b: any) => {
+                            const da = new Date(a?.updated_at || a?.updatedAt || a?.date || a?.createdAt || 0).getTime();
+                            const db = new Date(b?.updated_at || b?.updatedAt || b?.date || b?.createdAt || 0).getTime();
+                            return db - da;
                         });
                         remoteSuccess = true;
                     }

@@ -104,21 +104,29 @@ export const getProjectByEmail = async (email: string): Promise<BookProject | nu
         // Filter by Email
         // Note: Project metadata might use 'contact.email' or just rely on authorName locally?
         // Check `createProject` usage -> metadata includes contact
-        const userProjects = projectsList.filter(p =>
-            p.metadata?.contact?.email?.toLowerCase().trim() === email.toLowerCase().trim()
-        );
+        const userProjects = projectsList.filter(p => {
+            if (!p) return false;
+            const projMetadata = p.metadata || (p as any);
+            const projEmail = (projMetadata.contact?.email || (p as any).contact?.email || (p as any).customerEmail || (p as any).userEmail || (p as any).email || '').toLowerCase().trim();
+            return projEmail === email.toLowerCase().trim();
+        });
 
         if (userProjects.length === 0) return null;
 
         // Sort by Created At Descending
-        userProjects.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        userProjects.sort((a: any, b: any) => {
+            const da = new Date(a.createdAt || a.created_at || a.updatedAt || a.updated_at || 0).getTime();
+            const db = new Date(b.createdAt || b.created_at || b.updatedAt || b.updated_at || 0).getTime();
+            return db - da;
+        });
 
         // Prioritize UNFINISHED projects for resuming
-        const activeProject = userProjects.find(p =>
-            p.metadata.status !== 'COMPLETED' &&
-            p.metadata.status !== 'LIVRO ENTREGUE' &&
-            p.metadata.status !== 'FAILED'
-        );
+        const activeProject = userProjects.find((p: any) => {
+            const status = p.metadata?.status || p.status;
+            return status !== 'COMPLETED' &&
+                status !== 'LIVRO ENTREGUE' &&
+                status !== 'FAILED';
+        });
 
         const selected = activeProject || userProjects[0];
 
