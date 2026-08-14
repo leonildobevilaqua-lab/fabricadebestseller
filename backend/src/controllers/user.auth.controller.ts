@@ -274,9 +274,9 @@ export const UserAuthController = {
                 };
             });
 
-            // Filter projects for the logged-in user
+            // Filter projects strictly for the logged-in user (VIP Member Area)
             const userProjects = enrichedProjects.filter((p: any) => {
-                return p.customerEmail === strUser || isMaster || isAdmin;
+                return p.customerEmail === strUser;
             });
 
             const usageCount = userProjects.length;
