@@ -203,7 +203,14 @@ export const UserAuthController = {
             leadsArray.forEach((l: any) => {
                 const hasProjectData = l.bookTitle || l.topic || l.projectId;
                 const isBookLead = (l.type === 'BOOK' && hasProjectData) || hasProjectData;
-                const alreadyInProjects = combinedProjects.some((p: any) => (p.id || p.projectId) === (l.id || l.projectId));
+                
+                const alreadyInProjects = combinedProjects.some((p: any) => {
+                    const pId = String(p.id || p.projectId || '');
+                    const lId = String(l.id || '');
+                    const lProjId = String(l.projectId || '');
+                    return (pId && (pId === lId || pId === lProjId)) || (lId && pId === lId);
+                });
+
                 if (isBookLead && !alreadyInProjects) {
                     combinedProjects.push(l);
                 }
