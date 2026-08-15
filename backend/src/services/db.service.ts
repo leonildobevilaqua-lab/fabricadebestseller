@@ -163,19 +163,32 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         selectFields = 'key, updated_at, value->metadata, value->id, value->createdAt, value->customerEmail';
                     }
 
-                    const { data: rawItemsData, error } = await supabase
-                        .from('kv_store')
-                        .select(selectFields)
-                        .gte('key', `${normalized}/`)
-                        .lt('key', `${normalized}0`)
-                        .limit(2000);
+                    let rawItems: any[] = [];
+                    let from = 0;
+                    let limit = 1000;
+                    while (true) {
+                        const { data: rawItemsData, error } = await supabase
+                            .from('kv_store')
+                            .select(selectFields)
+                            .gte('key', `${normalized}/`)
+                            .lt('key', `${normalized}0`)
+                            .order('key', { ascending: true })
+                            .range(from, from + limit - 1);
+                            
+                        if (error) {
+                            console.error("[DB] Supabase Fetch Error (Pagination):", error);
+                            break;
+                        }
+                        if (!rawItemsData || rawItemsData.length === 0) break;
+                        rawItems = rawItems.concat(rawItemsData);
+                        if (rawItemsData.length < limit) break;
+                        from += limit;
+                    }
 
-                    const rawItems: any[] = (rawItemsData as any[]) || [];
-
-                    if (!error && rawItems.length > 0) {
+                    if (rawItems.length > 0) {
                         for (const item of rawItems) {
-                            let val = item.value;
-                            let metadata = item.metadata || (val && val.metadata);
+                            let val = item.value || {};
+                            let metadata = item.metadata || (val && val.metadata) || {};
 
                             if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
                                 try { val = JSON.parse(val); } catch (e) {}
