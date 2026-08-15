@@ -276,7 +276,31 @@ export const UserAuthController = {
 
             // Filter projects strictly for the logged-in user (VIP Member Area)
             const userProjects = enrichedProjects.filter((p: any) => {
-                return p.customerEmail === strUser;
+                if (p.customerEmail === strUser) return true;
+                
+                const uPhone = String(user.phone || user.profile?.phone || '').replace(/\D/g, '');
+                const pPhone = String(p.customerPhone || '').replace(/\D/g, '');
+                if (uPhone.length >= 10 && pPhone.length >= 10 && uPhone === pPhone) return true;
+
+                const uName = String(user.name || user.profile?.name || '').toLowerCase().trim();
+                const pName = String(p.customerName || p.authorName || '').toLowerCase().trim();
+                
+                if (uName.length > 5 && pName.length > 5 && uName !== 'cliente' && uName !== 'autor' && pName !== 'cliente' && pName !== 'autor') {
+                    if (uName === pName) return true;
+                    
+                    const uParts = uName.split(' ').filter((n: string) => n.length > 2);
+                    const pParts = pName.split(' ').filter((n: string) => n.length > 2);
+                    
+                    if (uParts.length >= 2 && pParts.length >= 2) {
+                        let matches = 0;
+                        for (const up of uParts) {
+                            if (pParts.includes(up)) matches++;
+                        }
+                        if (matches >= 2) return true;
+                    }
+                }
+                
+                return false;
             });
 
             const usageCount = userProjects.length;
