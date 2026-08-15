@@ -1900,8 +1900,9 @@ export const downloadProjectBook = async (req: Request, res: Response) => {
             console.log(`[DOWNLOAD] Arquivo não encontrado para o projeto ${id}. Tentando regeneração automática...`);
             const project = await QueueService.getProject(id);
             
+            const allowedStatuses = ['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD', 'WAITING_DETAILS'];
             // Gerar se o projeto estiver em um estado "finalizado"
-            if (project && (project.metadata.status === 'COMPLETED' || project.metadata.status === 'LIVRO ENTREGUE' || project.metadata.status === 'WAITING_DETAILS')) {
+            if (project && allowedStatuses.includes((project.metadata.status || '').toUpperCase())) {
                 try {
                     await DocService.generateBookDocx(project);
                     // Re-lê o diretório após a geração
@@ -1947,7 +1948,8 @@ export const downloadProjectZip = async (req: Request, res: Response) => {
         if (!zipFile) {
             console.log(`[ZIP-DOWNLOAD] ZIP não encontrado para o projeto ${id}. Tentando regeneração automática...`);
             const project = await QueueService.getProject(id);
-            if (project && (project.metadata.status === 'COMPLETED' || project.metadata.status === 'LIVRO ENTREGUE' || project.metadata.status === 'WAITING_DETAILS')) {
+            const allowedStatuses = ['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD', 'WAITING_DETAILS'];
+            if (project && allowedStatuses.includes((project.metadata.status || '').toUpperCase())) {
                 try {
                     await DocService.generateBookDocx(project);
                     files = fs.readdirSync(outputDir);
