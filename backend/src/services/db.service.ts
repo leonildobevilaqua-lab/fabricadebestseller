@@ -164,25 +164,45 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                     }
 
                     let rawItems: any[] = [];
+                    // First, fetch only the keys to avoid timeouts on large JSON extraction
+                    let allKeys: string[] = [];
                     let from = 0;
                     let limit = 1000;
                     while (true) {
-                        const { data: rawItemsData, error } = await supabase
+                        const { data: keysData, error } = await supabase
                             .from('kv_store')
-                            .select(selectFields)
+                            .select('key')
                             .gte('key', `${normalized}/`)
                             .lt('key', `${normalized}0`)
                             .order('key', { ascending: true })
                             .range(from, from + limit - 1);
                             
                         if (error) {
-                            console.error("[DB] Supabase Fetch Error (Pagination):", error);
+                            console.error("[DB] Supabase Fetch Error (Pagination Keys):", error);
                             break;
                         }
-                        if (!rawItemsData || rawItemsData.length === 0) break;
-                        rawItems = rawItems.concat(rawItemsData);
-                        if (rawItemsData.length < limit) break;
+                        if (!keysData || keysData.length === 0) break;
+                        allKeys = allKeys.concat(keysData.map(d => d.key));
+                        if (keysData.length < limit) break;
                         from += limit;
+                    }
+
+                    // Then, fetch the full data in small chunks to prevent statement timeouts
+                    const chunkSize = 50;
+                    for (let i = 0; i < allKeys.length; i += chunkSize) {
+                        const chunk = allKeys.slice(i, i + chunkSize);
+                        const { data: chunkData, error } = await supabase
+                            .from('kv_store')
+                            .select(selectFields)
+                            .in('key', chunk);
+                            
+                        if (error) {
+                            console.error("[DB] Supabase Fetch Error (Chunk):", error);
+                            continue;
+                        }
+                        if (chunkData) {
+                            rawItems = rawItems.concat(chunkData);
+                        }
                     }
 
                     if (rawItems.length > 0) {
