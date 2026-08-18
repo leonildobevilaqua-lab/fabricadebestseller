@@ -353,6 +353,7 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
+    const [quickImpersonateEmail, setQuickImpersonateEmail] = useState('');
 
     // Auth Mode State
     const [authMode, setAuthMode] = useState<'login' | 'forgot' | 'reset'>('login');
@@ -1071,10 +1072,14 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         const q = appliedSearchQuery.toLowerCase().trim();
         if (q) {
             // Se houver busca, traz todos os livros (ignora filtro de período)
-            pList = projects.map(p => ({ ...p, isProject: true })).filter(p => 
-                (p.customerName && p.customerName.toLowerCase().includes(q)) ||
-                (p.customerEmail && p.customerEmail.toLowerCase().includes(q))
-            );
+            pList = projects.map(p => ({ ...p, isProject: true })).filter(p => {
+                const searchQ = q;
+                const matchCustomerName = p.customerName && p.customerName.toLowerCase().includes(searchQ);
+                const matchCustomerEmail = p.customerEmail && p.customerEmail.toLowerCase().includes(searchQ);
+                const matchContactName = p.contact?.name && p.contact.name.toLowerCase().includes(searchQ);
+                const matchContactEmail = p.contact?.email && p.contact.email.toLowerCase().includes(searchQ);
+                return matchCustomerName || matchCustomerEmail || matchContactName || matchContactEmail;
+            });
         } else {
             // Se não houver busca, aplica o filtro de período selecionado
             pList = getFilteredProjects().map(p => ({ ...p, isProject: true }));
@@ -1463,6 +1468,44 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                                         className="px-4 py-2 rounded-lg text-sm font-bold shadow-sm bg-red-600 text-white hover:bg-red-700 flex items-center gap-2 transition"
                                     >
                                         <span>⚠️</span> Apagar Tudo
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mt-8 p-6 mb-8 flex flex-col md:flex-row items-center gap-4 justify-between">
+                                <div>
+                                    <h3 className="font-black text-lg text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                                        <User className="text-indigo-500" size={20} />
+                                        Acesso VIP Rápido
+                                    </h3>
+                                    <p className="text-sm text-slate-500 mt-1">
+                                        Acesse o painel do cliente diretamente pelo e-mail, sem precisar buscar na lista.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 w-full md:w-auto">
+                                    <input
+                                        type="email"
+                                        placeholder="E-mail do cliente..."
+                                        value={quickImpersonateEmail}
+                                        onChange={e => setQuickImpersonateEmail(e.target.value)}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter' && quickImpersonateEmail.trim()) {
+                                                handleImpersonate(quickImpersonateEmail.trim(), 'Acesso VIP');
+                                            }
+                                        }}
+                                        className="p-2 border border-slate-300 rounded-md text-slate-700 font-medium bg-white w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                                    />
+                                    <button
+                                        onClick={() => {
+                                            if (quickImpersonateEmail.trim()) {
+                                                handleImpersonate(quickImpersonateEmail.trim(), 'Acesso VIP');
+                                            } else {
+                                                alert("Por favor, digite um e-mail válido.");
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-bold shadow-sm transition-all whitespace-nowrap"
+                                    >
+                                        Entrar na Área VIP
                                     </button>
                                 </div>
                             </div>
