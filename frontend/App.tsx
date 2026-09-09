@@ -31,6 +31,7 @@ const CipGenerator = lazy(() => import('./components/CipGenerator'));
 const Obrigado = lazy(() => import('./components/Obrigado').then(m => ({ default: m.Obrigado })));
 const PacoteRegistro = lazy(() => import('./components/PacoteRegistro').then(m => ({ default: m.PacoteRegistro })));
 const WebinarLaunch = lazy(() => import('./components/WebinarLaunch').then(m => ({ default: m.WebinarLaunch })));
+const WebinarLaunchV2 = lazy(() => import('./components/WebinarLaunchV2').then(m => ({ default: m.WebinarLaunchV2 })));
 
 // Inline component — carrega /diagramacao.html via iframe (mesmo padrão do SalesLandingV7)
 const DiagramacaoLanding: React.FC = () => (
@@ -252,6 +253,13 @@ const App: React.FC = () => {
       return (
         <ErrorBoundary>
           <WebinarLaunch />
+        </ErrorBoundary>
+      );
+    }
+    if (path === '/lancamento_2' || path === '/lancamento-2') {
+      return (
+        <ErrorBoundary>
+          <WebinarLaunchV2 />
         </ErrorBoundary>
       );
     }
