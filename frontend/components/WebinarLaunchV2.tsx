@@ -256,15 +256,6 @@ export const WebinarLaunchV2: React.FC = () => {
                 </div>
               </li>
               <li className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                  <CheckCircle className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-white">Checklist Publicação Amazon</h3>
-                  <p className="text-slate-400 text-sm mt-1">O passo a passo exato de cada etapa técnica para subir e aprovar seu livro no KDP sem erros.</p>
-                </div>
-              </li>
-              <li className="flex gap-4">
                 <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center border border-pink-500/20">
                   <BookOpen className="w-5 h-5 text-pink-400" />
                 </div>
@@ -318,10 +309,6 @@ export const WebinarLaunchV2: React.FC = () => {
                   <span className="text-slate-500 line-through whitespace-nowrap">R$ 79,90</span>
                 </div>
                 <div className="flex justify-between items-center text-xs sm:text-sm">
-                  <span className="text-slate-400 truncate pr-2">Checklist Amazon</span>
-                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 29,90</span>
-                </div>
-                <div className="flex justify-between items-center text-xs sm:text-sm">
                   <span className="text-slate-400 truncate pr-2">Livro Digital</span>
                   <span className="text-slate-500 line-through whitespace-nowrap">R$ 49,90</span>
                 </div>
@@ -339,12 +326,12 @@ export const WebinarLaunchV2: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center font-medium pt-1">
                   <span className="text-slate-300 text-xs sm:text-sm">Valor Total de Tudo:</span>
-                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 914,30</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 884,40</span>
                 </div>
               </div>
               
               <div className="text-center space-y-1">
-                <p className="text-slate-400 text-sm line-through">De: R$ 914,30</p>
+                <p className="text-slate-400 text-sm line-through">De: R$ 884,40</p>
                 <div className="flex items-end justify-center gap-2">
                   <span className="text-xl font-medium text-slate-300">Por apenas:</span>
                   <span className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500">R$ 29,90</span>
