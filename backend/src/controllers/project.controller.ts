@@ -4,7 +4,7 @@ import * as AIService from '../services/ai.service';
 import * as DocService from '../services/doc.service';
 import { TitleOption, BookProject } from '../types';
 import { sendEmail } from '../services/email.service';
-import { pushVal, getVal, setVal, reloadDB } from '../services/db.service';
+import { pushVal, getVal, getValLocal, setVal, reloadDB } from '../services/db.service';
 import * as StorageService from '../services/storage.service';
 import path from 'path';
 import mammoth from 'mammoth';
@@ -52,7 +52,7 @@ export const create = async (req: Request, res: Response) => {
         // if (isLocal) console.log(`[PROJECT] DEV MODE DETECTED: Bypassing Credit Check for ${authorName}`);
 
         if (!isResuming && safeEmail && !isLocal) {
-            let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            let credits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
 
             // --- KIWIFY/ASAAS FAST-TRACK SYNC ---
             // If credits <= 0, try one last time to sync from raw orders/payments before denying
@@ -69,7 +69,7 @@ export const create = async (req: Request, res: Response) => {
                         (o.paymentInfo?.payerEmail?.toLowerCase().trim() === userEmail || o.email?.toLowerCase().trim() === userEmail)
                     );
 
-                    const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                    const redeemedIds = getValLocal(`/users/${safeEmail}/redeemed_payments`) || [];
 
                     for (const order of confirmedOrders) {
                         const txId = order.paymentInfo?.transactionId || order.id || order.order_id;
@@ -94,7 +94,7 @@ export const create = async (req: Request, res: Response) => {
             if (credits <= 0) {
                 console.log(`[PROJECT] Denied creation for ${contact.email}: No credits. Creating PENDING lead.`);
 
-                const actualUserPlan = await getVal(`/users/${safeEmail}/plan`);
+                const actualUserPlan = getValLocal(`/users/${safeEmail}/plan`);
                 const resolvedPlan = actualUserPlan || contact.plan || null;
 
                 // CREATE PENDING LEAD FOR ADMIN VISIBILITY
@@ -138,7 +138,7 @@ export const create = async (req: Request, res: Response) => {
             await setVal(`/credits/${safeEmail}`, newTotal);
             
             // Mirror to user profile for dashboard visibility
-            const userProfile = await getVal(`/users/${safeEmail}`);
+            const userProfile = getValLocal(`/users/${safeEmail}`);
             if (userProfile) {
                 userProfile.bookCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, userProfile);
@@ -173,7 +173,7 @@ export const create = async (req: Request, res: Response) => {
 
                 // --- REAL-TIME ADMIN SYNC ---
                 const safeEmail = contact.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-                const userInDb = await getVal(`/users/${safeEmail}`);
+                const userInDb = getValLocal(`/users/${safeEmail}`);
                 const currentPlan = userInDb?.plan || contact.plan || null;
 
                 if (leadIndex !== -1) {
@@ -218,7 +218,7 @@ export const create = async (req: Request, res: Response) => {
         // [ORDER RECONCILIATION - LINK PROJECT TO ORDER]
         if (!isResuming && safeEmail) {
             try {
-                const userOrders: any[] = await getVal(`/users/${safeEmail}/orders`) || [];
+                const userOrders: any[] = getValLocal(`/users/${safeEmail}/orders`) || [];
                 // Find oldest AVAILABLE credit
                 // We look for 'CREDIT_AVAILABLE' which was created by Payment Controller
                 let orderIndex = userOrders.findIndex((o: any) => o.status === 'CREDIT_AVAILABLE');
@@ -364,11 +364,11 @@ export const startResearch = async (req: Request, res: Response) => {
         if (!hasAccess) {
             // 1. Check Unified Ledger Credits (Source of Truth)
             const safeEmail = (userEmail as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-            let ledgerCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            let ledgerCredits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
 
             // Fallback to user object if root path is empty (Legacy support)
             if (!ledgerCredits) {
-                const userObj = await getVal(`/users/${safeEmail}`);
+                const userObj = getValLocal(`/users/${safeEmail}`);
                 if (userObj?.bookCredits) ledgerCredits = Number(userObj.bookCredits);
             }
 
@@ -464,7 +464,7 @@ export const startResearch = async (req: Request, res: Response) => {
                 );
 
                 const safeEmail = userEmailLower.replace(/[^a-zA-Z0-9]/g, '_');
-                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                const redeemedIds = getValLocal(`/users/${safeEmail}/redeemed_payments`) || [];
 
                 for (const order of confirmedOrders) {
                     const txId = order.paymentInfo?.transactionId || order.id || order.order_id;
@@ -727,7 +727,7 @@ export const selectTitle = async (req: Request, res: Response) => {
             }
 
             // Sync with /users/:email/orders if applicable
-            const orders = (await getVal(`/users/${safeEmail}/orders`)) || [];
+            const orders = (getValLocal(`/users/${safeEmail}/orders`)) || [];
             if (Array.isArray(orders)) {
                 const orderIndex = orders.findIndex(o => o.projectId === id);
                 if (orderIndex !== -1) {
@@ -1846,7 +1846,7 @@ export const remove = async (req: Request, res: Response) => {
             for (const user of users as any[]) {
                 if (user.email) {
                     const safeEmail = user.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-                    const userOrders = await getVal(`/users/${safeEmail}/orders`) || [];
+                    const userOrders = getValLocal(`/users/${safeEmail}/orders`) || [];
                     if (Array.isArray(userOrders)) {
                         const originalLen = userOrders.length;
                         const filtered = userOrders.filter(o => o.projectId !== id && o.id !== id);
@@ -2044,7 +2044,7 @@ export const consumeCoverCredit = async (req: Request, res: Response) => {
         const ledgerKey = `/credits/${safeEmail}`;
         const userKey = `/users/${safeEmail}`;
 
-        const { getVal, setVal } = require('../services/firebase.service');
+        const { getVal, getValLocal, setVal } = require('../services/firebase.service');
         const ledgerCredits = await getVal(ledgerKey);
         const userObj = await getVal(userKey);
         

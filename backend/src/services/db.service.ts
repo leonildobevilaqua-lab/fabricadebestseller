@@ -48,6 +48,20 @@ const getLocalDB = () => {
     return cachedLocalDB;
 };
 
+export const getValLocal = (pathStr: string): any => {
+    try {
+        if (!pathStr) return null;
+        const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
+        const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
+        const localDB = getLocalDB();
+        const val = localDB[normalized];
+        if (val === undefined) return null;
+        return typeof val === 'string' ? JSON.parse(val) : val;
+    } catch (e) {
+        return null;
+    }
+};
+
 export const getVal = async (pathStr: string, options: { fields?: string, forceSync?: boolean } = {}): Promise<any> => {
     try {
         if (!pathStr) return null;

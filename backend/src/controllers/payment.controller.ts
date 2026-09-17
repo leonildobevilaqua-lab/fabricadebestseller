@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { setVal, getVal, pushVal, reloadDB } from '../services/db.service';
+import { setVal, getVal, getValLocal, pushVal, reloadDB } from '../services/db.service';
 import { getProjectByEmail } from '../services/queue.service';
 import multer from 'multer';
 import { AsaasProvider } from '../services/asaas.provider';
@@ -48,7 +48,7 @@ export const createLead = async (req: Request, res: Response) => {
         let resolvedPlan = plan ? { ...plan, status: 'PENDING' } : undefined;
 
         if (safeEmail && !resolvedPlan) {
-            const userPlan = await getVal(`/users/${safeEmail}/plan`);
+            const userPlan = getValLocal(`/users/${safeEmail}/plan`);
             if (userPlan && userPlan.status === 'ACTIVE') {
                 resolvedPlan = userPlan; // Inherit plan so admin sees correct price
             }
@@ -90,12 +90,12 @@ export const getLeads = async (req: Request, res: Response) => {
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
             if (!lead.email) return { ...lead, credits: 0, cipCredits: 0, qrCredits: 0 };
             const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-            const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-            const cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
-            const qrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+            const credits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
+            const cipCredits = Number((getValLocal(`/cipCredits/${safeEmail}`)) || 0);
+            const qrCredits = Number((getValLocal(`/qrCredits/${safeEmail}`)) || 0);
 
             // Fix Plan display out-of-sync for books
-            const userPlan = await getVal(`/users/${safeEmail}/plan`);
+            const userPlan = getValLocal(`/users/${safeEmail}/plan`);
             let updatedLead = { ...lead, credits, cipCredits, qrCredits };
 
             // If the lead was a generic Book request without plan context, but the user HAS an active plan, apply it so the UI shows the correct Plan and Discounted Price.
@@ -194,7 +194,7 @@ export const approveLead = async (req: Request, res: Response) => {
         if (approvalType === 'CREDIT') {
             // Admin is manually allowing a generation (Book Paid)
             // Add 1 Credit
-            const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            const currentCredits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
             await setVal(`/credits/${safeEmail}`, currentCredits + 1);
 
             // Mark Lead as APPROVED (meaning they have access/credit) if not already
@@ -234,7 +234,7 @@ export const approveLead = async (req: Request, res: Response) => {
                 // If it's a non-plan lead being approved without CREDIT type, assume standard approval (Legacy)
                 // This might be "Liberar Geração" for old leads.
                 // We will grant 1 credit here to be safe for legacy flows.
-                const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                const currentCredits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
                 if (currentCredits === 0) {
                     await setVal(`/credits/${safeEmail}`, 1);
                 }
@@ -450,7 +450,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 console.log(`[WEBHOOK] ACTION: GRANT CREDIT for ${email} (Product: ${productName}, Val: ${amount})`);
 
                 const txId = paymentInfo.transactionId;
-                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                const redeemedIds = getValLocal(`/users/${safeEmail}/redeemed_payments`) || [];
                 
                 if (redeemedIds.includes(txId)) {
                     console.log(`[WEBHOOK] DUPLICATE TRANSACTION ${txId} for ${email}, ignoring credit addition.`);
@@ -510,7 +510,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     }
 
                     if (kBookCreditsToAdd > 0) {
-                        const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                        const currentCredits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
                         const newCredits = currentCredits + kBookCreditsToAdd;
                         await setVal(`/credits/${safeEmail}`, newCredits);
                         await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
@@ -518,7 +518,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     }
 
                     if (kCipCreditsToAdd > 0) {
-                        const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+                        const currentCipCredits = Number((getValLocal(`/cipCredits/${safeEmail}`)) || 0);
                         const newCipCredits = currentCipCredits + kCipCreditsToAdd;
                         await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
                         await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
@@ -526,7 +526,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     }
 
                     if (kBarcodeCreditsToAdd > 0) {
-                        const currentBarcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+                        const currentBarcodeCredits = Number((getValLocal(`/barcodeCredits/${safeEmail}`)) || 0);
                         const newBarcodeCredits = currentBarcodeCredits + kBarcodeCreditsToAdd;
                         await setVal(`/barcodeCredits/${safeEmail}`, newBarcodeCredits);
                         await setVal(`/users/${safeEmail}/barcodeCredits`, newBarcodeCredits);
@@ -534,7 +534,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     }
 
                     if (kQrCreditsToAdd > 0) {
-                        const currentQrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+                        const currentQrCredits = Number((getValLocal(`/qrCredits/${safeEmail}`)) || 0);
                         const newQrCredits = currentQrCredits + kQrCreditsToAdd;
                         await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
                         await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
@@ -542,7 +542,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                     }
 
                     if (kCoverCreditsToAdd > 0) {
-                        const currentCoverCredits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
+                        const currentCoverCredits = Number((getValLocal(`/coverCredits/${safeEmail}`)) || 0);
                         const newCoverCredits = currentCoverCredits + kCoverCreditsToAdd;
                         await setVal(`/coverCredits/${safeEmail}`, newCoverCredits);
                         await setVal(`/users/${safeEmail}/coverCredits`, newCoverCredits);
@@ -629,7 +629,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                 } else {
                     console.warn(`[WEBHOOK] UNHANDLED PAYMENT: ${productName} - ${amount}. Assuming Credit Grant fallback.`);
                     // Fallback to credit grant if we can't identify simple plan
-                    const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                    const currentCredits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
                     await setVal(`/credits/${safeEmail}`, currentCredits + 1);
                 }
             }
@@ -651,12 +651,12 @@ export const checkAccess = async (req: Request, res: Response) => {
         const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
         
         // --- FORCE SYNC: Ensure we get fresh data from Remote DB (Supabase/Appwrite) ---
-        let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
-        let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
+        let credits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
+        let userPlan: any = getValLocal(`/users/${safeEmail}/plan`);
         
         // Resilience: Check alternative path (bookCredits inside user object) if /credits is 0
         if (credits <= 0) {
-            const userObj = await getVal(`/users/${safeEmail}`);
+            const userObj = getValLocal(`/users/${safeEmail}`);
             if (userObj && userObj.bookCredits) {
                 credits = Number(userObj.bookCredits);
             }
@@ -699,7 +699,7 @@ export const checkAccess = async (req: Request, res: Response) => {
                 o.paymentInfo?.payerEmail?.toLowerCase().trim() === (email as string).toLowerCase().trim()
             );
 
-            const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+            const redeemedIds = getValLocal(`/users/${safeEmail}/redeemed_payments`) || [];
 
             for (const order of confirmedKiwifyOrders) {
                 const txId = order.paymentInfo?.transactionId || order.id || order.order_id;
@@ -764,7 +764,7 @@ export const checkAccess = async (req: Request, res: Response) => {
             }
 
             if (isPlan && (!userPlan || userPlan.status !== 'ACTIVE')) {
-                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                const redeemedIds = getValLocal(`/users/${safeEmail}/redeemed_payments`) || [];
                 if (!redeemedIds.includes(recentConfirmedPayment.id)) {
                     console.log(`[CHECK_ACCESS] Fast-track Activating plan locally for ${email}`);
                     const upDesc = (recentConfirmedPayment.description || '').toUpperCase();
@@ -791,7 +791,7 @@ export const checkAccess = async (req: Request, res: Response) => {
 
             if ((isGen || isGenPrice) && !isPlan) {
                 // Determine if this exact generation payment isn't redeemed yet
-                const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+                const redeemedIds = getValLocal(`/users/${safeEmail}/redeemed_payments`) || [];
                 if (!redeemedIds.includes(recentConfirmedPayment.id)) {
                     redeemedIds.push(recentConfirmedPayment.id);
                     credits += 1;
@@ -918,7 +918,7 @@ export const useCredit = async (req: Request, res: Response) => {
     if (!email) return res.status(400).json({ error: "Email required" });
 
     const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-    const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+    const credits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
 
     if (credits > 0) {
         await setVal(`/credits/${safeEmail}`, credits - 1);
@@ -934,7 +934,7 @@ export const useCoverCredit = async (req: Request, res: Response) => {
     if (!email) return res.status(400).json({ error: "Email required" });
 
     const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-    const credits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
+    const credits = Number((getValLocal(`/coverCredits/${safeEmail}`)) || 0);
 
     if (credits > 0) {
         await setVal(`/coverCredits/${safeEmail}`, credits - 1);
@@ -953,7 +953,7 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         await reloadDB();
 
         // 1. Identificar Plano e Ciclo
-        let plan = await getVal(`/users/${safeEmail}/plan`);
+        let plan = getValLocal(`/users/${safeEmail}/plan`);
 
         // Fallback search via leads (only if plan is truly ACTIVE)
         if (!plan || plan.status !== 'ACTIVE') {
@@ -998,7 +998,7 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         console.log(`[CHARGE] Email: ${email} | planKey: ${planKey} | price: R$ ${price}`);
 
         // 3. Criar Cobrança no Asaas
-        const userProfile = await getVal(`/users/${safeEmail}/profile`) || {};
+        const userProfile = getValLocal(`/users/${safeEmail}/profile`) || {};
         const customerId = await AsaasProvider.createCustomer({
             name: userProfile.name || email.split('@')[0],
             email: email,
@@ -1175,7 +1175,7 @@ export const createCharge = async (req: Request, res: Response) => {
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         // -- Determina o plano ativo (mesma lógica de createBookGenerationCharge) --
-        let plan = await getVal(`/users/${safeEmail}/plan`);
+        let plan = getValLocal(`/users/${safeEmail}/plan`);
 
         if (!plan || plan.status !== 'ACTIVE') {
             const rawLeadsCheck = await getVal('/leads') || [];
@@ -1427,7 +1427,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
             console.log(`[TICTO WEBHOOK] LIBERATING CREDITS for ${email}`);
 
             const txId = paymentInfo.transactionId;
-            const redeemedIds = await getVal(`/users/${safeEmail}/redeemed_payments`) || [];
+            const redeemedIds = getValLocal(`/users/${safeEmail}/redeemed_payments`) || [];
             
             if (redeemedIds.includes(txId)) {
                 console.log(`[TICTO WEBHOOK] DUPLICATE TRANSACTION ${txId} for ${email}, ignoring credit addition.`);
@@ -1493,7 +1493,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 
                 // --- SPECIAL PROMO RESTRICTION (R$ 9,99 / R$ 5,99) ---
                 if (identifiers.has('O01C5F91D') || identifiers.has('O6F5202E7') || identifiers.has('111296')) {
-                    const alreadyUsed = await getVal(`/users/${safeEmail}/promo_599_used`) === true;
+                    const alreadyUsed = getValLocal(`/users/${safeEmail}/promo_599_used`) === true;
                     if (alreadyUsed) {
                         console.log(`[TICTO WEBHOOK] BLOCKED: ${email} tried to reuse promo O6F5202E7/111296.`);
                         await setVal(`/users/${safeEmail}/promo_blocked`, true);
@@ -1621,7 +1621,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
 
                 // Apply credits to database
                 if (bookCreditsToAdd > 0) {
-                    const currentCredits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+                    const currentCredits = Number((getValLocal(`/credits/${safeEmail}`)) || 0);
                     const newCredits = currentCredits + bookCreditsToAdd;
                     await setVal(`/credits/${safeEmail}`, newCredits);
                     await setVal(`/users/${safeEmail}/bookCredits`, newCredits);
@@ -1630,7 +1630,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 }
 
                 if (cipCreditsToAdd > 0) {
-                    const currentCipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+                    const currentCipCredits = Number((getValLocal(`/cipCredits/${safeEmail}`)) || 0);
                     const newCipCredits = currentCipCredits + cipCreditsToAdd;
                     await setVal(`/cipCredits/${safeEmail}`, newCipCredits);
                     await setVal(`/users/${safeEmail}/cipCredits`, newCipCredits);
@@ -1638,7 +1638,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 }
 
                 if (barcodeCreditsToAdd > 0) {
-                    const currentBarcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
+                    const currentBarcodeCredits = Number((getValLocal(`/barcodeCredits/${safeEmail}`)) || 0);
                     const newBarcodeCredits = currentBarcodeCredits + barcodeCreditsToAdd;
                     await setVal(`/barcodeCredits/${safeEmail}`, newBarcodeCredits);
                     await setVal(`/users/${safeEmail}/barcodeCredits`, newBarcodeCredits);
@@ -1646,7 +1646,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 }
 
                 if (qrCreditsToAdd > 0) {
-                    const currentQrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
+                    const currentQrCredits = Number((getValLocal(`/qrCredits/${safeEmail}`)) || 0);
                     const newQrCredits = currentQrCredits + qrCreditsToAdd;
                     await setVal(`/qrCredits/${safeEmail}`, newQrCredits);
                     await setVal(`/users/${safeEmail}/qrCredits`, newQrCredits);
@@ -1654,7 +1654,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 }
 
                 if (coverCreditsToAdd > 0) {
-                    const currentCoverCredits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
+                    const currentCoverCredits = Number((getValLocal(`/coverCredits/${safeEmail}`)) || 0);
                     const newCoverCredits = currentCoverCredits + coverCreditsToAdd;
                     await setVal(`/coverCredits/${safeEmail}`, newCoverCredits);
                     await setVal(`/users/${safeEmail}/coverCredits`, newCoverCredits);
