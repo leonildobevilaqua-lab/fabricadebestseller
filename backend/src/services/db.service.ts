@@ -263,15 +263,29 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                             const db = new Date(b?.updated_at || b?.updatedAt || b?.date || b?.createdAt || 0).getTime();
                             return db - da;
                         });
+                        
+                        try {
+                            fs.writeFileSync(DB_PATH, JSON.stringify(localDB));
+                            console.log(`[DB] Saved localDB to disk after remote fetch of ${normalized}`);
+                        } catch (e) {
+                            console.error("[DB] Error saving to disk:", e);
+                        }
                         remoteSuccess = true;
                     }
                 } else {
                     const { data, error } = await supabase.from('kv_store').select('value').eq('key', normalized).maybeSingle();
-                    if (!error && data) {
-                        let parsed = data.value;
-                        if (typeof parsed === 'string' && (parsed.startsWith('{') || parsed.startsWith('['))) parsed = JSON.parse(parsed);
-                        localDB[normalized] = parsed;
-                        remoteData = parsed;
+                    if (error) console.error(`[DB] Supabase Fetch Error (${normalized}):`, error.message);
+                    if (data && data.value) {
+                        let val = data.value;
+                        if (typeof val === 'string') {
+                            try { val = JSON.parse(val); } catch(e) {}
+                        }
+                        remoteData = val;
+                        localDB[normalized] = remoteData;
+                        
+                        try {
+                            fs.writeFileSync(DB_PATH, JSON.stringify(localDB));
+                        } catch (e) {}
                         remoteSuccess = true;
                     }
                 }

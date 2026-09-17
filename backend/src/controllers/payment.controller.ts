@@ -39,7 +39,7 @@ const SUBSCRIPTION_PRICES: any = {
 // Store a lead when user fills the form
 export const createLead = async (req: Request, res: Response) => {
     try {
-        await reloadDB();
+
         const { name, email, phone, countryCode, type, topic, authorName, tag, plan, discount, language } = req.body;
         // Create a unique ID or use email
         const id = new Date().getTime().toString();
@@ -82,9 +82,13 @@ export const createLead = async (req: Request, res: Response) => {
 // Get all leads for admin
 export const getLeads = async (req: Request, res: Response) => {
     try {
-        await reloadDB();
+
         const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+
+        // Fetch projects ONCE to avoid concurrent DB fetch floods
+        const allProjectsData = await getVal('/projects') || [];
+        const projectsList: any[] = Array.isArray(allProjectsData) ? allProjectsData : Object.values(allProjectsData);
 
         // Enhance leads with credit status and latest plan
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
@@ -105,10 +109,31 @@ export const getLeads = async (req: Request, res: Response) => {
 
             // ATTACH PROJECT DATA IF MISSING
             if (!updatedLead.projectId && !updatedLead.details?.projectId) {
-                const project = await getProjectByEmail(lead.email);
-                if (project) {
-                    updatedLead.projectId = project.id;
-                    if (!updatedLead.bookTitle) updatedLead.bookTitle = project.metadata.bookTitle;
+                // Manual local search instead of calling getProjectByEmail which triggers remote fetch loops
+                const userProjects = projectsList.filter((p: any) => {
+                    if (!p) return false;
+                    const projMetadata = p.metadata || p;
+                    const projEmail = (projMetadata.contact?.email || p.contact?.email || p.customerEmail || p.userEmail || p.email || '').toLowerCase().trim();
+                    return projEmail === lead.email.toLowerCase().trim();
+                });
+
+                if (userProjects.length > 0) {
+                    userProjects.sort((a: any, b: any) => {
+                        const da = new Date(a.createdAt || a.created_at || a.updatedAt || 0).getTime();
+                        const db = new Date(b.createdAt || b.created_at || b.updatedAt || 0).getTime();
+                        return db - da;
+                    });
+                    
+                    const activeProject = userProjects.find((p: any) => {
+                        const status = p.metadata?.status || p.status;
+                        return status !== 'COMPLETED' && status !== 'LIVRO ENTREGUE' && status !== 'FAILED';
+                    });
+
+                    const project = activeProject || userProjects[0];
+                    updatedLead.projectId = project.id || project.key?.split('/').pop();
+                    if (!updatedLead.bookTitle) {
+                        updatedLead.bookTitle = project.metadata?.bookTitle || project.bookTitle;
+                    }
                 }
             }
 
@@ -162,7 +187,7 @@ const updateLeadStatus = async (email: string, newStatus: string) => {
 // Approve a lead (Grant free access OR Activate Plan)
 export const approveLead = async (req: Request, res: Response) => {
     try {
-        await reloadDB();
+
         const { email } = req.body;
         const approvalType = req.body.type; // 'CREDIT' or undefined (Subscription)
 
@@ -255,7 +280,7 @@ export const approveLead = async (req: Request, res: Response) => {
 
 export const handleKiwifyWebhook = async (req: Request, res: Response) => {
     try {
-        await reloadDB();
+
         const payload = req.body;
         console.log("Webhook Received:", JSON.stringify(payload));
 
@@ -644,7 +669,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
 
 export const checkAccess = async (req: Request, res: Response) => {
     try {
-        await reloadDB();
+
         const { email } = req.query;
         if (!email) return res.status(400).json({ error: "Email required" });
 
@@ -950,7 +975,7 @@ export const createBookGenerationCharge = async (req: Request, res: Response) =>
         const { email } = req.body;
         if (!email) return res.status(400).json({ error: "Email required" });
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        await reloadDB();
+
 
         // 1. Identificar Plano e Ciclo
         let plan = getValLocal(`/users/${safeEmail}/plan`);
@@ -1171,7 +1196,7 @@ export const createCharge = async (req: Request, res: Response) => {
     try {
         const { email, type, payer } = req.body;
 
-        await reloadDB();
+
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         // -- Determina o plano ativo (mesma lógica de createBookGenerationCharge) --
@@ -1349,7 +1374,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
         // But for Ticto, a quick 200 is good. We'll use a flag.
         let responseSent = false;
 
-        await reloadDB();
+
 
         const tx = payload.transaction || payload.data?.transaction || {};
         const email = (

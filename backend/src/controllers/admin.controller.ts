@@ -434,7 +434,7 @@ export const restoreBackup = async (req: Request, res: Response) => {
         }
 
         // 3. Reload in-memory state
-        await reloadDB();
+
 
         res.json({ success: true });
     } catch (e: any) {
@@ -694,7 +694,7 @@ export const wipeAllHistory = async (req: Request, res: Response) => {
         await deleteVal('/users');
         await deleteVal('/credits');
 
-        await reloadDB();
+
         res.json({ success: true, message: "Todos os registros (Leads, Pedidos, Usuários e Projetos) foram apagados completamente." });
     } catch (e: any) {
         console.error("Wipe All Error:", e);
@@ -732,7 +732,7 @@ export const manageCredits = async (req: Request, res: Response) => {
 
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
         
-        await reloadDB();
+
 
         if (type === 'cip') {
             const currentCredits = Number(getValLocal(`/cipCredits/${safeEmail}`) || 0);
@@ -826,7 +826,7 @@ export const adminUpdateUserPassword = async (req: Request, res: Response) => {
         if (!email || !newPassword) return res.status(400).json({ error: "Email e nova senha são obrigatórios." });
 
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        await reloadDB();
+
         const user = getValLocal(`/users/${safeEmail}`);
 
         if (!user) {
@@ -859,7 +859,7 @@ export const impersonateUser = async (req: Request, res: Response) => {
     try {
    const safeEmail = cleanEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
-        await reloadDB();
+
         let user = getValLocal(`/users/${safeEmail}`);
 
         let userName = "Cliente";
