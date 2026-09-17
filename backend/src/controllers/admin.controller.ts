@@ -586,7 +586,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
             });
 
         const sorted = projectHistory.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        res.json(sorted);
+        res.json(sorted.slice(0, 20));
     } catch (e: any) {
         console.error("🔥 CRITICAL ADMIN PROJECTS ERROR:", e);
         res.status(500).json({ error: "Erro ao carregar histórico: " + e.message });
