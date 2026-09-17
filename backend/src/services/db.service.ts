@@ -462,7 +462,7 @@ const syncCollectionInBackground = async (normalized: string) => {
             }
 
             if (chunkData) {
-                for (const item of chunkData) {
+                for (const item of chunkData as any[]) {
                     let val = item.value || {};
                     let metadata = item.metadata || val.metadata || {};
                     if (typeof val === 'string' && val.startsWith('{')) try { val = JSON.parse(val); } catch (e) {}
