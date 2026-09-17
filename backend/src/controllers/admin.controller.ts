@@ -447,8 +447,8 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 export const getOrders = async (req: Request, res: Response) => {
     try {
-        // 1. Get real financial orders for the Dashboard (Force Sync for Admin)
-        const ordersArray = await getVal('/orders', { forceSync: true }) || [];
+        // 1. Get real financial orders for the Dashboard (Cache is maintained by webhooks)
+        const ordersArray = await getVal('/orders') || [];
         const orders = Array.isArray(ordersArray) ? ordersArray : Object.values(ordersArray);
 
         // 2. Sort - Newer first
@@ -469,8 +469,8 @@ export const getProjectHistory = async (req: Request, res: Response) => {
     try {
         // 1. Get projects & Leads (Hybrid version)
         const [allProjects, allLeadsData] = await Promise.all([
-            getVal('/projects', { forceSync: true }) || [],
-            getVal('/leads', { forceSync: true }) || []
+            getVal('/projects') || [],
+            getVal('/leads') || []
         ]);
         
         const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
@@ -488,8 +488,8 @@ export const getProjectHistory = async (req: Request, res: Response) => {
         });
 
         // 2. Enhance projects with latest credits
-        const allCredits = await getVal('/credits', { forceSync: true }) || {};
-        const allOrders = await getVal('/orders', { forceSync: true }) || [];
+        const allCredits = await getVal('/credits') || {};
+        const allOrders = await getVal('/orders') || [];
         const orders = Array.isArray(allOrders) ? allOrders : Object.values(allOrders);
         const leads = leadsArray; 
         
