@@ -201,15 +201,21 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         from += limit;
                     }
 
-                    // Then, fetch the full data in small chunks to prevent statement timeouts
-                    const chunkSize = 50;
+                    // Then, fetch the full data in parallel chunks to prevent statement timeouts and significantly speed up cold boots
+                    const chunkSize = 500;
+                    const fetchPromises = [];
                     for (let i = 0; i < allKeys.length; i += chunkSize) {
                         const chunk = allKeys.slice(i, i + chunkSize);
-                        const { data: chunkData, error } = await supabase
-                            .from('kv_store')
-                            .select(selectFields)
-                            .in('key', chunk);
-                            
+                        fetchPromises.push(
+                            supabase
+                                .from('kv_store')
+                                .select(selectFields)
+                                .in('key', chunk)
+                        );
+                    }
+
+                    const chunkResults = await Promise.all(fetchPromises);
+                    for (const { data: chunkData, error } of chunkResults) {
                         if (error) {
                             console.error("[DB] Supabase Fetch Error (Chunk):", error);
                             continue;

@@ -90,6 +90,14 @@ export const getLeads = async (req: Request, res: Response) => {
         const allProjectsData = await getVal('/projects') || [];
         const projectsList: any[] = Array.isArray(allProjectsData) ? allProjectsData : Object.values(allProjectsData);
 
+        // Pre-fetch related data into local memory cache to prevent getValLocal from failing on cold boots
+        await Promise.all([
+            getVal('/credits'),
+            getVal('/cipCredits'),
+            getVal('/qrCredits'),
+            getVal('/users')
+        ]);
+
         // Enhance leads with credit status and latest plan
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
             if (!lead.email) return { ...lead, credits: 0, cipCredits: 0, qrCredits: 0 };
