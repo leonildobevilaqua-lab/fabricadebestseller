@@ -86,7 +86,7 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                     try {
                         const val = typeof v === 'string' ? JSON.parse(v) : v;
                         if (val && typeof val === 'object') {
-                            if (!val.metadata) val.metadata = val;
+                            if (!val.metadata) val.metadata = { ...val };
                             results.push(val);
                         }
                     } catch (e) {}
