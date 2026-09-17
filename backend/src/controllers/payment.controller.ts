@@ -48,7 +48,7 @@ export const createLead = async (req: Request, res: Response) => {
         let resolvedPlan = plan ? { ...plan, status: 'PENDING' } : undefined;
 
         if (safeEmail && !resolvedPlan) {
-            const userPlan = await getVal(`/users/${safeEmail}/plan`, { forceSync: true });
+            const userPlan = await getVal(`/users/${safeEmail}/plan`);
             if (userPlan && userPlan.status === 'ACTIVE') {
                 resolvedPlan = userPlan; // Inherit plan so admin sees correct price
             }
@@ -83,19 +83,19 @@ export const createLead = async (req: Request, res: Response) => {
 export const getLeads = async (req: Request, res: Response) => {
     try {
         await reloadDB();
-        const rawLeads = await getVal('/leads', { forceSync: true }) || [];
+        const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
         // Enhance leads with credit status and latest plan
         const leadsWithCredits = await Promise.all(leads.map(async (lead: any) => {
             if (!lead.email) return { ...lead, credits: 0, cipCredits: 0, qrCredits: 0 };
             const safeEmail = lead.email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-            const credits = Number((await getVal(`/credits/${safeEmail}`, { forceSync: true })) || 0);
-            const cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`, { forceSync: true })) || 0);
-            const qrCredits = Number((await getVal(`/qrCredits/${safeEmail}`, { forceSync: true })) || 0);
+            const credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+            const cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
+            const qrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
 
             // Fix Plan display out-of-sync for books
-            const userPlan = await getVal(`/users/${safeEmail}/plan`, { forceSync: true });
+            const userPlan = await getVal(`/users/${safeEmail}/plan`);
             let updatedLead = { ...lead, credits, cipCredits, qrCredits };
 
             // If the lead was a generic Book request without plan context, but the user HAS an active plan, apply it so the UI shows the correct Plan and Discounted Price.
@@ -651,12 +651,12 @@ export const checkAccess = async (req: Request, res: Response) => {
         const safeEmail = (email as string).toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
         
         // --- FORCE SYNC: Ensure we get fresh data from Remote DB (Supabase/Appwrite) ---
-        let credits = Number((await getVal(`/credits/${safeEmail}`, { forceSync: true })) || 0);
-        let userPlan: any = await getVal(`/users/${safeEmail}/plan`, { forceSync: true });
+        let credits = Number((await getVal(`/credits/${safeEmail}`)) || 0);
+        let userPlan: any = await getVal(`/users/${safeEmail}/plan`);
         
         // Resilience: Check alternative path (bookCredits inside user object) if /credits is 0
         if (credits <= 0) {
-            const userObj = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            const userObj = await getVal(`/users/${safeEmail}`);
             if (userObj && userObj.bookCredits) {
                 credits = Number(userObj.bookCredits);
             }
@@ -666,9 +666,9 @@ export const checkAccess = async (req: Request, res: Response) => {
         let latestInvoiceNumber: any = null;
         let asaasPayments: any[] = [];
 
-        const rawOrders = await getVal('/orders', { forceSync: true }) || [];
+        const rawOrders = await getVal('/orders') || [];
         const orders = Array.isArray(rawOrders) ? rawOrders : Object.values(rawOrders);
-        const rawLeads = await getVal('/leads', { forceSync: true }) || [];
+        const rawLeads = await getVal('/leads') || [];
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 
         // Fetch truth from Asaas

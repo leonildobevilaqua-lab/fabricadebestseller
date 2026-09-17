@@ -17,7 +17,7 @@ export const UserAuthController = {
 
         try {
             await reloadDB();
-            let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            let user = await getVal(`/users/${safeEmail}`);
             let isAuthenticated = false;
 
             // --- MASTER LOGIN (INQUEBRÁVEL) ---
@@ -101,7 +101,7 @@ export const UserAuthController = {
 
         try {
             await reloadDB();
-            let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            let user = await getVal(`/users/${safeEmail}`);
 
             // 1. Optimized profile sync (Avoid full leads scan)
             if (!user || !user.profile || !user.plan) {
@@ -353,23 +353,23 @@ export const UserAuthController = {
             });
 
             // --- 4. CREDITS ---
-            let credits = await getVal(`/credits/${safeEmail}`, { forceSync: true }) || 0;
+            let credits = await getVal(`/credits/${safeEmail}`) || 0;
             
             // Check alternative path (bookCredits inside user object)
             if (!credits && user.bookCredits) {
                 credits = user.bookCredits;
             }
 
-            let cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`, { forceSync: true })) || 0);
+            let cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`)) || 0);
             if (!cipCredits && user.cipCredits) cipCredits = user.cipCredits;
 
-            let barcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true })) || 0);
+            let barcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`)) || 0);
             if (!barcodeCredits && user.barcodeCredits) barcodeCredits = user.barcodeCredits;
 
-            let qrCredits = Number((await getVal(`/qrCredits/${safeEmail}`, { forceSync: true })) || 0);
+            let qrCredits = Number((await getVal(`/qrCredits/${safeEmail}`)) || 0);
             if (!qrCredits && user.qrCredits) qrCredits = user.qrCredits;
 
-            let coverCredits = Number((await getVal(`/coverCredits/${safeEmail}`, { forceSync: true })) || 0);
+            let coverCredits = Number((await getVal(`/coverCredits/${safeEmail}`)) || 0);
             if (!coverCredits && user.coverCredits) coverCredits = user.coverCredits;
 
             // --- 5. MASTER RESTORATION (REMOVED PER USER REQUEST TO TEST CREDITS) ---
@@ -412,7 +412,7 @@ export const UserAuthController = {
 
         try {
             const passwordHash = await bcrypt.hash(password, 10);
-            const existingUser = await getVal(`/users/${safeEmail}`, { forceSync: true }) || {};
+            const existingUser = await getVal(`/users/${safeEmail}`) || {};
 
             const newUser = {
                 ...existingUser,
