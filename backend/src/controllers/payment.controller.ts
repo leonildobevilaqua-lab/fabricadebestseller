@@ -84,10 +84,13 @@ export const getLeads = async (req: Request, res: Response) => {
     try {
 
         const rawLeads = await getVal('/leads') || [];
+        console.log("rawLeads count:", Array.isArray(rawLeads) ? rawLeads.length : Object.keys(rawLeads).length);
         const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
+        console.log("leads count:", leads.length);
 
         // Fetch projects ONCE to avoid concurrent DB fetch floods
         const allProjectsData = await getVal('/projects') || [];
+        console.log("allProjectsData count:", Array.isArray(allProjectsData) ? allProjectsData.length : Object.keys(allProjectsData).length);
         const projectsList: any[] = Array.isArray(allProjectsData) ? allProjectsData : Object.values(allProjectsData);
 
         // Pre-fetch related data into local memory cache to prevent getValLocal from failing on cold boots

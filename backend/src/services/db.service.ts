@@ -191,8 +191,7 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         const { data: keysData, error } = await supabase
                             .from('kv_store')
                             .select('key')
-                            .gte('key', `${normalized}/`)
-                            .lt('key', `${normalized}0`)
+                            .like('key', `${normalized}/%`)
                             .order('key', { ascending: true })
                             .range(from, from + limit - 1);
                             
@@ -421,8 +420,7 @@ const syncCollectionInBackground = async (normalized: string) => {
             const { data: keysData, error } = await supabase
                 .from('kv_store')
                 .select('key, updated_at')
-                .gte('key', `${normalized}/`)
-                .lt('key', `${normalized}0`)
+                .like('key', `${normalized}/%`)
                 .order('key', { ascending: true })
                 .range(from, from + limit - 1);
                 
