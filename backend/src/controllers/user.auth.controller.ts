@@ -285,8 +285,13 @@ export const UserAuthController = {
             });
 
             // Filter projects strictly for the logged-in user (VIP Member Area)
+            const safeCleanUser = cleanUser.replace(/[@.]/g, '_');
             const userProjects = enrichedProjects.filter((p: any) => {
-                if (p.customerEmail === strUser) return true;
+                const safeCustomer = (p.customerEmail || "").replace(/[@.]/g, '_');
+                const safeEmail = (p.email || "").replace(/[@.]/g, '_');
+                const safeContact = (p.contact && p.contact.email) ? p.contact.email.toLowerCase().replace(/[@.]/g, '_') : "";
+                
+                if (safeCustomer === safeCleanUser || safeEmail === safeCleanUser || safeContact === safeCleanUser) return true;
                 
                 const uPhone = String(user.phone || user.profile?.phone || '').replace(/\D/g, '');
                 const pPhone = String(p.customerPhone || '').replace(/\D/g, '');

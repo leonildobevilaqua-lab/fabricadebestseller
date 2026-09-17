@@ -483,11 +483,11 @@ export const getProjectHistory = async (req: Request, res: Response) => {
         leadsArray.forEach((l: any) => {
             const hasProjectData = l.bookTitle || l.topic || l.projectId;
             const isBookLead = (l.type === 'BOOK' && hasProjectData) || hasProjectData;
+            const lId = String(l.id || '');
+            const lProjId = String(l.projectId || '');
             const alreadyIn = combined.some((p: any) => {
                 const pId = String(p.id || p.projectId || '');
-                const lId = String(l.id || '');
-                const lProjId = String(l.projectId || '');
-                return pId && (pId === lId || pId === lProjId);
+                return (pId && (pId === lId || pId === lProjId)) || (lId && pId === lId);
             });
             if (isBookLead && !alreadyIn) {
                 combined.push(l);
