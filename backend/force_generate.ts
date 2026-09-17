@@ -1,11 +1,10 @@
-
 import * as QueueService from './src/services/queue.service';
 import * as DocService from './src/services/doc.service';
 import { supabase } from './src/services/supabase';
 
 async function forceGenerate() {
-    // 1. Specific Project ID identifying "Crianças e Adolescentes Sem Limites"
-    const targetId = '72886aec-2792-439e-8b6b-efc31d573361';
+    // 1. Specific Project ID
+    const targetId = '5e4e737c-d85c-40ce-98de-552ba495f74f';
 
     console.log(`Force generating DOCX for Project ID: ${targetId}`);
 
