@@ -473,15 +473,22 @@ export const getProjectHistory = async (req: Request, res: Response) => {
             getVal('/leads') || []
         ]);
         
-        const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
+        const projectsArray = (Array.isArray(allProjects) ? allProjects : Object.values(allProjects)).map((p: any) => {
+            if (!p.id && !p.projectId && p.key) p.id = p.key.split('/').pop();
+            return p;
+        });
         const leadsArray = Array.isArray(allLeadsData) ? allLeadsData : Object.values(allLeadsData);
 
-        // Merge everything that looks like a book/project
         const combined = [...projectsArray];
         leadsArray.forEach((l: any) => {
             const hasProjectData = l.bookTitle || l.topic || l.projectId;
             const isBookLead = (l.type === 'BOOK' && hasProjectData) || hasProjectData;
-            const alreadyIn = combined.some((p: any) => (p.id || p.projectId) === (l.id || l.projectId));
+            const alreadyIn = combined.some((p: any) => {
+                const pId = String(p.id || p.projectId || '');
+                const lId = String(l.id || '');
+                const lProjId = String(l.projectId || '');
+                return pId && (pId === lId || pId === lProjId);
+            });
             if (isBookLead && !alreadyIn) {
                 combined.push(l);
             }

@@ -192,7 +192,10 @@ export const UserAuthController = {
                 getVal('/orders') || []
             ]);
             
-            const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
+            const projectsArray = (Array.isArray(allProjects) ? allProjects : Object.values(allProjects)).map((p: any) => {
+                if (!p.id && !p.projectId && p.key) p.id = p.key.split('/').pop();
+                return p;
+            });
             const leadsArray = Array.isArray(allLeads) ? allLeads : Object.values(allLeads);
             const ordersArray = Array.isArray(allOrders) ? allOrders : Object.values(allOrders);
 
