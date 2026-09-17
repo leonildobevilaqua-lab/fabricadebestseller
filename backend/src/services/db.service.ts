@@ -35,6 +35,15 @@ const getLocalDB = () => {
     if (cachedLocalDB) return cachedLocalDB;
     try {
         if (fs.existsSync(DB_PATH)) {
+            // ONE-TIME FIX: Wipe the corrupted persistent volume cache
+            if (!fs.existsSync(DB_PATH + '.wiped_v6')) {
+                console.log("[DB] Wiping local cache one-time to clear ghosts...");
+                fs.unlinkSync(DB_PATH);
+                fs.writeFileSync(DB_PATH + '.wiped_v6', 'true');
+                cachedLocalDB = {};
+                return cachedLocalDB;
+            }
+
             const stats = fs.statSync(DB_PATH);
             const content = fs.readFileSync(DB_PATH, 'utf-8');
             cachedLocalDB = JSON.parse(content);
@@ -438,6 +447,7 @@ const syncCollectionInBackground = async (normalized: string) => {
             const local = localDB[k.key];
             if (!local) return true;
             if (typeof local !== 'object') return true; // Force refetch corrupted strings
+            if (!local.updated_at) return true; // If local object lacks updated_at, we must fetch
             if (k.updated_at && local.updated_at) {
                 return new Date(k.updated_at).getTime() > new Date(local.updated_at).getTime();
             }
