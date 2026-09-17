@@ -93,6 +93,11 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                 }
             }
             if (results.length > 0) {
+                // Background Sync: Fetch missing/updated keys from Supabase without blocking the current fast request
+                setTimeout(() => {
+                    syncCollectionInBackground(normalized).catch(e => console.error(`[DB] Background sync failed for ${normalized}:`, e));
+                }, 100);
+
                 return results.sort((a: any, b: any) => {
                     const da = new Date(a?.updated_at || a?.date || a?.createdAt || 0).getTime();
                     const db = new Date(b?.updated_at || b?.date || b?.createdAt || 0).getTime();
@@ -201,21 +206,15 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         from += limit;
                     }
 
-                    // Then, fetch the full data in parallel chunks to prevent statement timeouts and significantly speed up cold boots
-                    const chunkSize = 500;
-                    const fetchPromises = [];
+                    // Then, fetch the full data in SMALL sequential chunks to prevent OOM/timeouts on cold boots
+                    const chunkSize = 100;
                     for (let i = 0; i < allKeys.length; i += chunkSize) {
                         const chunk = allKeys.slice(i, i + chunkSize);
-                        fetchPromises.push(
-                            supabase
-                                .from('kv_store')
-                                .select(selectFields)
-                                .in('key', chunk)
-                        );
-                    }
-
-                    const chunkResults = await Promise.all(fetchPromises);
-                    for (const { data: chunkData, error } of chunkResults) {
+                        const { data: chunkData, error } = await supabase
+                            .from('kv_store')
+                            .select('key, value, updated_at')
+                            .in('key', chunk);
+                            
                         if (error) {
                             console.error("[DB] Supabase Fetch Error (Chunk):", error);
                             continue;
@@ -407,6 +406,90 @@ export const setVal = async (pathStr: string, value: any) => {
 
     } catch (e) {
         console.error("setVal error:", e);
+    }
+};
+
+// --- BACKGROUND SYNC IMPLEMENTATION ---
+const syncCollectionInBackground = async (normalized: string) => {
+    try {
+        const localDB = getLocalDB();
+        
+        let allKeys: any[] = [];
+        let from = 0;
+        let limit = 1000;
+        while (true) {
+            const { data: keysData, error } = await supabase
+                .from('kv_store')
+                .select('key, updated_at')
+                .gte('key', `${normalized}/`)
+                .lt('key', `${normalized}0`)
+                .order('key', { ascending: true })
+                .range(from, from + limit - 1);
+                
+            if (error) {
+                console.error("[DB] Sync keys error:", error);
+                break;
+            }
+            if (!keysData || keysData.length === 0) break;
+            allKeys = allKeys.concat(keysData);
+            if (keysData.length < limit) break;
+            from += limit;
+        }
+
+        const keysToFetch = allKeys.filter(k => {
+            const local = localDB[k.key];
+            if (!local) return true;
+            if (k.updated_at && local.updated_at) {
+                return new Date(k.updated_at).getTime() > new Date(local.updated_at).getTime();
+            }
+            return false;
+        }).map(k => k.key);
+
+        if (keysToFetch.length === 0) return;
+        
+        console.log(`[DB] Background sync found ${keysToFetch.length} new/updated keys for ${normalized}.`);
+
+        const chunkSize = 100;
+        let changed = false;
+        for (let i = 0; i < keysToFetch.length; i += chunkSize) {
+            const chunk = keysToFetch.slice(i, i + chunkSize);
+            const { data: chunkData, error } = await supabase
+                .from('kv_store')
+                .select('key, value, updated_at')
+                .in('key', chunk);
+
+            if (error) {
+                console.error("[DB] Sync chunk error:", error);
+                continue;
+            }
+
+            if (chunkData) {
+                for (const item of chunkData) {
+                    let val = item.value || {};
+                    let metadata = item.metadata || val.metadata || {};
+                    if (typeof val === 'string' && val.startsWith('{')) try { val = JSON.parse(val); } catch (e) {}
+                    if (typeof metadata === 'string' && metadata.startsWith('{')) try { metadata = JSON.parse(metadata); } catch (e) {}
+                    
+                    const parsed = {
+                        ...val,
+                        ...metadata,
+                        id: item.id || val.id || metadata.id || item.key.split('/').pop(),
+                        key: item.key,
+                        updated_at: item.updated_at
+                    };
+                    localDB[item.key] = parsed;
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed) {
+            cachedLocalDB = localDB;
+            fs.writeFileSync(DB_PATH, JSON.stringify(localDB));
+            console.log(`[DB] Background sync completed and saved for ${normalized}.`);
+        }
+    } catch (e) {
+        console.error(`[DB] Background sync fatal error for ${normalized}:`, e);
     }
 };
 
