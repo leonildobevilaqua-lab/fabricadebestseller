@@ -437,6 +437,7 @@ const syncCollectionInBackground = async (normalized: string) => {
         const keysToFetch = allKeys.filter(k => {
             const local = localDB[k.key];
             if (!local) return true;
+            if (typeof local !== 'object') return true; // Force refetch corrupted strings
             if (k.updated_at && local.updated_at) {
                 return new Date(k.updated_at).getTime() > new Date(local.updated_at).getTime();
             }
