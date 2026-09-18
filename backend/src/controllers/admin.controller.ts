@@ -742,7 +742,8 @@ export const manageCredits = async (req: Request, res: Response) => {
 
 
         if (type === 'cip') {
-            const currentCredits = Number(getValLocal(`/cipCredits/${safeEmail}`) || 0);
+            let currentCredits = Number(getValLocal(`/cipCredits/${safeEmail}`));
+            if (isNaN(currentCredits)) currentCredits = 0;
             const newTotal = Math.max(0, currentCredits + Number(amount));
             await setVal(`/cipCredits/${safeEmail}`, newTotal);
 
@@ -756,7 +757,8 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         if (type === 'barcode') {
-            const currentCredits = Number(getValLocal(`/barcodeCredits/${safeEmail}`) || 0);
+            let currentCredits = Number(getValLocal(`/barcodeCredits/${safeEmail}`));
+            if (isNaN(currentCredits)) currentCredits = 0;
             const base = Math.max(0, currentCredits);
             const newTotal = Math.max(0, base + Number(amount));
             await setVal(`/barcodeCredits/${safeEmail}`, newTotal);
@@ -772,7 +774,8 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         if (type === 'qr') {
-            const currentCredits = Number(getValLocal(`/qrCredits/${safeEmail}`) || 0);
+            let currentCredits = Number(getValLocal(`/qrCredits/${safeEmail}`));
+            if (isNaN(currentCredits)) currentCredits = 0;
             const base = Math.max(0, currentCredits);
             const newTotal = Math.max(0, base + Number(amount));
             await setVal(`/qrCredits/${safeEmail}`, newTotal);
@@ -788,7 +791,8 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         if (type === 'cover') {
-            const currentCredits = Number(getValLocal(`/coverCredits/${safeEmail}`) || 0);
+            let currentCredits = Number(getValLocal(`/coverCredits/${safeEmail}`));
+            if (isNaN(currentCredits)) currentCredits = 0;
             const base = Math.max(0, currentCredits);
             const newTotal = Math.max(0, base + Number(amount));
             await setVal(`/coverCredits/${safeEmail}`, newTotal);
@@ -804,7 +808,8 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         // 1. Update /credits/ (Primary Source of truth for Generator)
-        const currentCredits = Number(getValLocal(`/credits/${safeEmail}`) || 0);
+        let currentCredits = Number(getValLocal(`/credits/${safeEmail}`));
+        if (isNaN(currentCredits)) currentCredits = 0;
         const newTotal = Math.max(0, currentCredits + Number(amount));
 
         await setVal(`/credits/${safeEmail}`, newTotal);

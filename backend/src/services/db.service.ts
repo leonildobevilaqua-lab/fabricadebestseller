@@ -241,8 +241,8 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
 
                     if (rawItems.length > 0) {
                         for (const item of rawItems) {
-                            let val = item.value || {};
-                            let metadata = item.metadata || (val && val.metadata) || {};
+                            let val = item.value !== undefined ? item.value : {};
+                            let metadata = item.metadata !== undefined ? item.metadata : (val && typeof val === 'object' ? val.metadata : {});
 
                             if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
                                 try { val = JSON.parse(val); } catch (e) {}
@@ -260,7 +260,7 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                                 const metadataObj = metadata || (val && val.metadata) || (typeof val === 'object' ? val : {});
                                 
                                 let parsed: any;
-                                if (typeof val !== 'object') {
+                                if (val === null || typeof val !== 'object') {
                                     parsed = val;
                                 } else {
                                     parsed = {
