@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { getVal, getValLocal, setVal, reloadDB } from '../services/db.service';
 import { supabase } from '../services/supabase';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const SECRET = process.env.JWT_SECRET || "USER_SECRET_KEY_123";
