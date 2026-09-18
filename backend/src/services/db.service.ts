@@ -209,7 +209,14 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                             break;
                         }
                         if (!keysData || keysData.length === 0) break;
-                        allKeys = allKeys.concat(keysData.map(d => d.key));
+                        
+                        // Filter out sub-keys (e.g. /projects/123/metadata) to only return direct children
+                        const directChildren = keysData
+                            .map(d => d.key)
+                            .filter(k => k.indexOf('/', normalized.length + 1) === -1);
+                            
+                        allKeys = allKeys.concat(directChildren);
+                        
                         if (keysData.length < limit) break;
                         from += limit;
                     }

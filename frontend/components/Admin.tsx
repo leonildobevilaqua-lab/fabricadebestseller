@@ -393,12 +393,12 @@ export const Admin: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             });
             const data = await res.json();
             if (res.ok) {
-                setFoundCredits(data.credits);
-                setFoundCipCredits(data.cipCredits);
-                setFoundBarcodeCredits(data.barcodeCredits);
-                setFoundQrCredits(data.qrCredits);
-                setFoundCoverCredits(data.coverCredits);
-                if (data.credits === 0 && data.cipCredits === 0 && data.barcodeCredits === 0 && data.qrCredits === 0 && data.coverCredits === 0 && !creditsMsg) setCreditsMsg('ℹ️ Usuário encontrado, mas sem créditos no momento.');
+                setFoundCredits(data.credits ?? 0);
+                setFoundCipCredits(data.cipCredits ?? 0);
+                setFoundBarcodeCredits(data.barcodeCredits ?? 0);
+                setFoundQrCredits(data.qrCredits ?? 0);
+                setFoundCoverCredits(data.coverCredits ?? 0);
+                if ((data.credits ?? 0) === 0 && (data.cipCredits ?? 0) === 0 && (data.barcodeCredits ?? 0) === 0 && (data.qrCredits ?? 0) === 0 && (data.coverCredits ?? 0) === 0 && !creditsMsg) setCreditsMsg('ℹ️ Usuário encontrado, mas sem créditos no momento.');
             } else {
                 setCreditsMsg(`❌ ${data.error || 'Usuário não encontrado ou erro na busca.'}`);
                 setFoundCredits(null);
