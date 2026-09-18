@@ -262,9 +262,13 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
 
                                 localDB[item.key] = parsed;
 
-                                if (!seenIds.has(projId)) {
-                                    seenIds.add(projId);
-                                    collectionItems.push(parsed);
+                                const parts = item.key.split('/');
+                                const normalizedParts = normalized.split('/');
+                                if (parts.length === normalizedParts.length + 1) {
+                                    if (!seenIds.has(projId)) {
+                                        seenIds.add(projId);
+                                        collectionItems.push(parsed);
+                                    }
                                 }
                             }
                         }
@@ -317,10 +321,14 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
             const results: any[] = [];
             for (const [k, v] of Object.entries(localDB)) {
                 if (k && k.startsWith(`${normalized}/`)) {
-                    try {
-                        const val = typeof v === 'string' ? JSON.parse(v) : v;
-                        if (val) results.push(val);
-                    } catch (e) {}
+                    const parts = k.split('/');
+                    const normalizedParts = normalized.split('/');
+                    if (parts.length === normalizedParts.length + 1) {
+                        try {
+                            const val = typeof v === 'string' ? JSON.parse(v) : v;
+                            if (val) results.push(val);
+                        } catch (e) {}
+                    }
                 }
             }
             return results.sort((a: any, b: any) => {
