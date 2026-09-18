@@ -4,7 +4,7 @@ import * as ConfigService from '../services/config.service';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { sendEmail } from '../services/email.service';
 import { getVal, getValLocal, setVal, reloadDB, deleteVal, getDatabasePath } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';

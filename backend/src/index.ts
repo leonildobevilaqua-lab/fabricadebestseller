@@ -3,7 +3,7 @@ dotenv.config();
 // Trigger watch reload to load new API keys from .env
 import app from './app';
 import fs from 'fs';       // Adicionado para salvar o arquivo
-import bcrypt from 'bcrypt'; // Adicionado para criptografar a senha
+import bcrypt from 'bcryptjs'; // Adicionado para criptografar a senha
 import path from 'path';     // Adicionado para achar a pasta certa
 
 // OVERRIDE: Garantir que o ambiente de produção seja mantido a menos que explicitamente sandbox
