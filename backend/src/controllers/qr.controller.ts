@@ -17,7 +17,7 @@ export const QrController = {
       const safeEmail = String(email).trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
 
       // Check QR Credits
-      await reloadDB();
+      // reloadDB removido para performance
       const userObj = await getVal(`/users/${safeEmail}`);
       let qrCredits = Number(await getVal(`/qrCredits/${safeEmail}`) || 0);
 

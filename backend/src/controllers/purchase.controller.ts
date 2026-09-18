@@ -22,7 +22,7 @@ export const createBookCharge = async (req: Request, res: Response) => {
         if (!email) return res.status(400).json({ error: "Email required" });
 
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        await reloadDB();
+        // reloadDB removido para performance
 
         // 1. Determine User Plan
         let plan = await getVal(`/users/${safeEmail}/plan`);

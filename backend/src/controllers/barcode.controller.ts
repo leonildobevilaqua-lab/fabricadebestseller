@@ -17,7 +17,7 @@ export const BarcodeController = {
       const safeEmail = String(email).trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
 
       // Check Barcode Credits - UNIFIED SOURCE OF TRUTH (Matches Admin & Dashboard)
-      await reloadDB();
+      // reloadDB removido para performance
       const userObj = await getVal(`/users/${safeEmail}`);
       let barcodeCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`) || 0);
 

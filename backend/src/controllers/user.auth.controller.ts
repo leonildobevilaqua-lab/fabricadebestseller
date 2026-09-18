@@ -16,8 +16,10 @@ export const UserAuthController = {
         const safeEmail = cleanUser.replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
             let user = getValLocal(`/users/${safeEmail}`);
+            if (!user) {
+                user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            }
             let isAuthenticated = false;
 
             // --- MASTER LOGIN (INQUEBRÁVEL) ---
@@ -100,8 +102,10 @@ export const UserAuthController = {
         const safeEmail = cleanUser.replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
             let user = getValLocal(`/users/${safeEmail}`);
+            if (!user) {
+                user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            }
 
             // 1. Optimized profile sync (Avoid full leads scan)
             if (!user || !user.profile || !user.plan) {
@@ -458,8 +462,10 @@ export const UserAuthController = {
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
-            const user = getValLocal(`/users/${safeEmail}`);
+            let user = getValLocal(`/users/${safeEmail}`);
+            if (!user) {
+                user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            }
 
             if (!user) {
                 return res.status(404).json({ error: "Usuário não encontrado." });
@@ -504,7 +510,6 @@ export const UserAuthController = {
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
             const stored = await getVal(`/resets_user/${safeEmail}`);
 
             if (!stored || stored.token !== token || Date.now() > stored.expires) {
@@ -542,8 +547,10 @@ export const UserAuthController = {
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
-            const user = getValLocal(`/users/${safeEmail}`);
+            let user = getValLocal(`/users/${safeEmail}`);
+            if (!user) {
+                user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            }
             if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
             // Verify current

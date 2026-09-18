@@ -336,7 +336,7 @@ export const startResearch = async (req: Request, res: Response) => {
     let currentStatus = 'UNKNOWN';
 
     if (userEmail) {
-        await reloadDB(); // Force sync to see Admin Approval
+        // reloadDB removido para performance // Force sync to see Admin Approval
 
         // VIP BYPASS (Hotfix)
         if (userEmail.toLowerCase().includes('subevilaqua')) {

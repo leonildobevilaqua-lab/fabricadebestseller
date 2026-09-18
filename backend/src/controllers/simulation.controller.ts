@@ -4,7 +4,7 @@ import { setVal, getVal, pushVal, reloadDB } from '../services/db.service';
 
 export const simulateWebhook = async (req: Request, res: Response) => {
     try {
-        await reloadDB(); // Force sync with disk to ensure we have latest data
+        // reloadDB removido para performance // Force sync with disk to ensure we have latest data
         const { plan, billing, user } = req.body;
 
         if (!user || !user.email) {
