@@ -1901,10 +1901,18 @@ export const downloadProjectBook = async (req: Request, res: Response) => {
             const project = await QueueService.getProject(id);
             
             const allowedStatuses = ['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD', 'WAITING_DETAILS'];
+            const p = project as any;
+            const currentStatus = (p?.metadata?.status || p?.status || '').toUpperCase();
+            const isCompleted = allowedStatuses.includes(currentStatus) ||
+                (p?.structure && Array.isArray(p.structure) && p.structure.length > 0) ||
+                (p?.metadata?.structure && Array.isArray(p.metadata.structure) && p.metadata.structure.length > 0) ||
+                ((p?.progress || 0) >= 100 || (p?.metadata && p.metadata.progress >= 100)) ||
+                (p?.currentStep === 'DONE' || p?.metadata?.currentStep === 'DONE' || p?.currentStep === 'DETAILS' || p?.metadata?.currentStep === 'DETAILS');
+
             // Gerar se o projeto estiver em um estado "finalizado"
-            if (project && allowedStatuses.includes((project.metadata.status || '').toUpperCase())) {
+            if (p && isCompleted) {
                 try {
-                    await DocService.generateBookDocx(project);
+                    await DocService.generateBookDocx(project!);
                     // Re-lê o diretório após a geração
                     files = fs.readdirSync(outputDir);
                     zipFile = files.find((f: string) => f.includes(id) && f.endsWith('.zip'));

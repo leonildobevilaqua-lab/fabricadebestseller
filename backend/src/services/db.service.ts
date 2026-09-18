@@ -222,7 +222,7 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                     }
 
                     // Then, fetch the full data in SMALL sequential chunks to prevent OOM/timeouts on cold boots
-                    const chunkSize = 100;
+                    const chunkSize = normalized === '/projects' ? 10 : 100;
                     for (let i = 0; i < allKeys.length; i += chunkSize) {
                         const chunk = allKeys.slice(i, i + chunkSize);
                         const { data: chunkData, error } = await supabase
@@ -258,14 +258,20 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                             if (val !== null && val !== undefined) {
                                 const projId = item.id || (val && val.id) || (metadata && metadata.id) || item.key.split('/').pop();
                                 const metadataObj = metadata || (val && val.metadata) || (typeof val === 'object' ? val : {});
-                                const parsed = {
-                                    ...(typeof val === 'object' && val !== null ? val : {}),
-                                    ...(typeof metadataObj === 'object' && metadataObj !== null ? metadataObj : {}),
-                                    id: projId,
-                                    key: item.key,
-                                    updated_at: item.updated_at || (val && val.updatedAt),
-                                    metadata: metadataObj
-                                };
+                                
+                                let parsed: any;
+                                if (typeof val !== 'object') {
+                                    parsed = val;
+                                } else {
+                                    parsed = {
+                                        ...val,
+                                        ...(typeof metadataObj === 'object' && metadataObj !== null ? metadataObj : {}),
+                                        id: projId,
+                                        key: item.key,
+                                        updated_at: item.updated_at || val.updatedAt,
+                                        metadata: metadataObj
+                                    };
+                                }
 
                                 localDB[item.key] = parsed;
 
