@@ -1269,7 +1269,7 @@ export const sendBookEmail = async (req: Request, res: Response) => {
         // Save file locally logic preserved
         const fs = require('fs');
         const path = require('path');
-        const savePath = path.join(__dirname, '../../generated_books');
+        const savePath = path.join(require('os').tmpdir(), 'bestseller_books');
         if (!fs.existsSync(savePath)) fs.mkdirSync(savePath, { recursive: true });
 
         const safeEmail = email.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -1882,7 +1882,7 @@ export const downloadProjectBook = async (req: Request, res: Response) => {
     const { id } = req.params;
     const fs = require('fs');
     const path = require('path');
-    const outputDir = path.join(__dirname, '../../generated_books');
+    const outputDir = path.join(require('os').tmpdir(), 'bestseller_books');
 
     try {
         if (!fs.existsSync(outputDir)) {
@@ -1935,7 +1935,7 @@ export const downloadProjectZip = async (req: Request, res: Response) => {
     const { id } = req.params;
     const fs = require('fs');
     const path = require('path');
-    const outputDir = path.join(__dirname, '../../generated_books');
+    const outputDir = path.join(require('os').tmpdir(), 'bestseller_books');
 
     try {
         if (!fs.existsSync(outputDir)) {
