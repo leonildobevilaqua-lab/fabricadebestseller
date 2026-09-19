@@ -36,8 +36,23 @@ export const queueDiskBackup = () => {
             const db = cachedLocalDB || {};
             const cleanDb: Record<string, any> = {};
             for (const [k, v] of Object.entries(db)) {
-                if (k.endsWith('/translations') || k.endsWith('/full_chapters')) continue;
-                cleanDb[k] = v;
+                if (!k || k.endsWith('/translations') || k.endsWith('/full_chapters')) continue;
+
+                // If it's a project entry, strip heavy chapter text & research dump from disk dump to keep file < 3MB
+                if (k.startsWith('/projects/') && typeof v === 'object' && v !== null) {
+                    const { researchContext, ...restProject } = v as any;
+                    let cleanStructure = restProject.structure;
+                    if (Array.isArray(cleanStructure)) {
+                        cleanStructure = cleanStructure.map((ch: any) => {
+                            if (!ch || typeof ch !== 'object') return ch;
+                            const { content, sections, ...restChapter } = ch;
+                            return restChapter;
+                        });
+                    }
+                    cleanDb[k] = { ...restProject, structure: cleanStructure };
+                } else {
+                    cleanDb[k] = v;
+                }
             }
             const content = JSON.stringify(cleanDb);
             await fs.promises.writeFile(DB_PATH, content, 'utf-8');
@@ -47,7 +62,7 @@ export const queueDiskBackup = () => {
             isSavingDisk = false;
             if (needsDiskSave) queueDiskBackup();
         }
-    }, 1500);
+    }, 2000);
 };
 
 const getLocalDB = () => {
@@ -55,22 +70,21 @@ const getLocalDB = () => {
     try {
         if (fs.existsSync(DB_PATH)) {
             const stats = fs.statSync(DB_PATH);
-            // SAFETY: Auto-reset cache if file grows over 5MB to prevent thread lock
-            if (stats.size > 5 * 1024 * 1024) {
-                console.warn(`[DB] Local DB file size (${Math.round(stats.size / 1024)}KB) exceeds 5MB limit. Resetting file...`);
+            // SAFETY: If disk cache file exceeds 10MB, log warning and unlink file without resetting in-memory cachedLocalDB if populated
+            if (stats.size > 10 * 1024 * 1024) {
+                console.warn(`[DB] Local DB disk file size (${Math.round(stats.size / 1024)}KB) exceeds 10MB limit. Cleaning disk file...`);
                 try { fs.unlinkSync(DB_PATH); } catch (e) {}
-                cachedLocalDB = {};
+            } else {
+                const content = fs.readFileSync(DB_PATH, 'utf-8');
+                cachedLocalDB = JSON.parse(content);
+                console.log(`[DB] Local DB loaded into memory: ${Math.round(stats.size / 1024)}KB`);
                 return cachedLocalDB;
             }
-            const content = fs.readFileSync(DB_PATH, 'utf-8');
-            cachedLocalDB = JSON.parse(content);
-            console.log(`[DB] Local DB loaded into memory: ${Math.round(stats.size / 1024)}KB`);
-            return cachedLocalDB;
         }
     } catch (e) { 
         console.error("[DB] getLocalDB error:", e);
     }
-    cachedLocalDB = {};
+    cachedLocalDB = cachedLocalDB || {};
     return cachedLocalDB;
 };
 
