@@ -520,7 +520,8 @@ export const startResearch = async (req: Request, res: Response) => {
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
             for (let i = leads.length - 1; i >= 0; i--) {
                 if ((leads[i] as any).email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
-                    await setVal(`/leads[${i}]/status`, 'IN_PROGRESS');
+                    leads[i].status = 'IN_PROGRESS';
+                    await setVal('/leads', leads);
                     console.log(`Updated Lead status to IN_PROGRESS for ${userEmail}`);
                     break;
                 }

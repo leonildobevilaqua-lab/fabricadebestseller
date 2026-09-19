@@ -30,16 +30,45 @@ export const getDatabasePath = (): string => {
 const DB_PATH = getDatabasePath();
 
 let cachedLocalDB: any = null;
+let saveTimeout: NodeJS.Timeout | null = null;
+let isSavingDisk = false;
+let needsDiskSave = false;
+
+export const queueDiskBackup = () => {
+    needsDiskSave = true;
+    if (saveTimeout) return;
+    saveTimeout = setTimeout(async () => {
+        saveTimeout = null;
+        if (isSavingDisk || !needsDiskSave) return;
+        isSavingDisk = true;
+        needsDiskSave = false;
+        try {
+            const db = cachedLocalDB || {};
+            const cleanDb: Record<string, any> = {};
+            for (const [k, v] of Object.entries(db)) {
+                if (k.endsWith('/translations') || k.endsWith('/full_chapters')) continue;
+                cleanDb[k] = v;
+            }
+            const content = JSON.stringify(cleanDb);
+            await fs.promises.writeFile(DB_PATH, content, 'utf-8');
+        } catch (err) {
+            console.error("[DB] Disk Backup Error:", err);
+        } finally {
+            isSavingDisk = false;
+            if (needsDiskSave) queueDiskBackup();
+        }
+    }, 1500);
+};
 
 const getLocalDB = () => {
     if (cachedLocalDB) return cachedLocalDB;
     try {
         if (fs.existsSync(DB_PATH)) {
             // ONE-TIME FIX: Wipe the corrupted persistent volume cache
-            if (!fs.existsSync(DB_PATH + '.wiped_v6')) {
-                console.log("[DB] Wiping local cache one-time to clear ghosts...");
-                fs.unlinkSync(DB_PATH);
-                fs.writeFileSync(DB_PATH + '.wiped_v6', 'true');
+            if (!fs.existsSync(DB_PATH + '.wiped_v7')) {
+                console.log("[DB] Wiping local cache one-time to clear ghosts and huge bloated files...");
+                try { fs.unlinkSync(DB_PATH); } catch (e) {}
+                fs.writeFileSync(DB_PATH + '.wiped_v7', 'true');
                 cachedLocalDB = {};
                 return cachedLocalDB;
             }
@@ -294,12 +323,8 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                             return db - da;
                         });
                         
-                        try {
-                            fs.writeFileSync(DB_PATH, JSON.stringify(localDB));
-                            console.log(`[DB] Saved localDB to disk after remote fetch of ${normalized}`);
-                        } catch (e) {
-                            console.error("[DB] Error saving to disk:", e);
-                        }
+                        queueDiskBackup();
+                        console.log(`[DB] Saved localDB to disk after remote fetch of ${normalized}`);
                         remoteSuccess = true;
                     }
                 } else {
@@ -313,9 +338,7 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         remoteData = val;
                         localDB[normalized] = remoteData;
                         
-                        try {
-                            fs.writeFileSync(DB_PATH, JSON.stringify(localDB));
-                        } catch (e) {}
+                        queueDiskBackup();
                         remoteSuccess = true;
                     }
                 }
@@ -426,12 +449,8 @@ export const setVal = async (pathStr: string, value: any) => {
             }
         }
 
-        // 3. DISK BACKUP (Synchronous to ensure integrity during rapid updates)
-        try {
-            fs.writeFileSync(DB_PATH, JSON.stringify(db));
-        } catch (err) {
-            console.error("[DB] Disk Backup Error:", err);
-        }
+        // 3. DISK BACKUP (Non-blocking debounced async)
+        queueDiskBackup();
 
     } catch (e) {
         console.error("setVal error:", e);
@@ -515,7 +534,7 @@ const syncCollectionInBackground = async (normalized: string) => {
 
         if (changed) {
             cachedLocalDB = localDB;
-            fs.writeFileSync(DB_PATH, JSON.stringify(localDB));
+            queueDiskBackup();
             console.log(`[DB] Background sync completed and saved for ${normalized}.`);
         }
     } catch (e) {
