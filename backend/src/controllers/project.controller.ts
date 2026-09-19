@@ -23,16 +23,14 @@ export const create = async (req: Request, res: Response) => {
         // RESUME LOGIC: Check if user already has an active project, UNLESS forcing new
         if (contact && contact.email && !req.body.forceNew) {
             const existing = await QueueService.getProjectByEmail(contact.email);
-            // If exists and is NOT Failed/Completed, return it?
-            if (existing && existing.metadata.status !== 'COMPLETED' && existing.metadata.status !== 'FAILED') {
+            const finishedStatuses = ['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'WAITING_DETAILS', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD', 'FAILED'];
+            // If exists and is NOT in a finished status, resume it
+            if (existing && !finishedStatuses.includes(existing.metadata.status as any)) {
                 // BUG FIX: Ignore 'Diagramming' projects (Livro Pré-Escrito) if user is trying to create a new book (Generator)
-                // Unless the new topic allows it (which it shouldn't if it's manual input)
                 if (existing.metadata.topic === 'Livro Pré-Escrito' && topic !== 'Livro Pré-Escrito') {
                     console.log("Ignoring existing Diagramming project for new Book creation flow.");
-                    // Do NOT return. Let it create a new one.
                 } else {
-                    console.log(`Resuming existing project ${existing.id} for ${contact.email}`);
-                    // If IDLE, update metadata with new inputs?
+                    console.log(`Resuming existing active project ${existing.id} for ${contact.email}`);
                     if (existing.metadata.status === 'IDLE') {
                         await QueueService.updateMetadata(existing.id, { authorName, topic, language, contentStyle, writingTone, bookTitle, subTitle });
                         existing.metadata.authorName = authorName;

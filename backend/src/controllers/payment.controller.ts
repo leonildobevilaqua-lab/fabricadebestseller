@@ -915,7 +915,7 @@ export const checkAccess = async (req: Request, res: Response) => {
         try {
             const project = await getProjectByEmail((email as string).toLowerCase().trim());
             // If project exists and is NOT in a finished state, consider it active
-            const finishedStatuses = ['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY'];
+            const finishedStatuses = ['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'WAITING_DETAILS', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD'];
             if (project && !finishedStatuses.includes(project.metadata.status as any)) {
                 // BUG FIX: Consider IDLE, WAITING_TITLE, and FAILED as active projects so they can be resumed without duplicate charges
                 hasActiveProject = true;

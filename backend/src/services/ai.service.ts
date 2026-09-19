@@ -805,8 +805,13 @@ export const writeChapter = async (
     }
   }
 
-  // Ensure we don't go overboard if AI hallucinates 10 topics (4 subtopics fits the 170-200 pages goal better)
-  subtopics = Array.isArray(subtopics) ? subtopics.slice(0, 4) : ["Fundamentos", "Histórico e Evolução", "Ferramentas e Técnicas", "Estudos de Caso"];
+  // Ensure we ALWAYS have at least 4 subtopics per chapter to hit the 170-210 pages goal
+  const defaultSubtopics = ["Fundamentos e Conceitos-Chave", "Aprofundamento Prático e Estratégias", "Estudos de Caso e Aplicações Reais", "Ferramentas e Métricas de Sucesso"];
+  if (!Array.isArray(subtopics)) subtopics = [];
+  while (subtopics.length < 4) {
+    subtopics.push(defaultSubtopics[subtopics.length] || `Aprofundamento Prático Parte ${subtopics.length + 1}`);
+  }
+  subtopics = subtopics.slice(0, 4);
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -917,7 +922,7 @@ export const writeChapter = async (
                  - Varie o vocabulário e a cadência para que o texto pareça uma continuação fluida e natural, sem redundâncias.
                  - Use tom conversacional e prático.
                  ${metadata.isFiction ? '- Use prosa imersiva, foco em diálogos e ação.' : ''}
-                 - TAMANHO: Escreva rigorosamente entre 450 e 500 palavras por seção. Detalhe profundamente os conceitos com exemplos ricos.
+                 - TAMANHO MÍNIMO OBRIGATÓRIO: Escreva rigorosamente entre 500 e 550 palavras por seção. Detalhe profundamente os conceitos com exemplos práticos, estudos de caso e análises estratégicas.
                  
                  ${previousChaptersContext}
                  
