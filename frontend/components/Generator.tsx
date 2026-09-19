@@ -1440,8 +1440,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               </button>
             ) : (
               <RotatingMessage messages={(() => {
+                const pNum = Number(progress || 0) || 0;
                 if (metadata.isFiction) return (t as any).rotatingMessagesFiction || t.rotatingMessages;
-                if (progress < 40) return [
+                if (pNum < 40) return [
                   "Pesquisando os vídeos mais visualizados sobre o assunto...",
                   "Verificando os comentários nos vídeos sobre o tema...",
                   "Mapeando as dores, dúvidas e sugestões da audiência...",
@@ -1449,7 +1450,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                   "Identificando gatilhos mentais mais utilizados...",
                   "Cruzando dados de concorrentes best-sellers..."
                 ];
-                if (progress < 90) return [
+                if (pNum < 90) return [
                   "Selecionando as principais informações coletadas na pesquisa profissional...",
                   "Organizando os assuntos de acordo com os capítulos...",
                   "Fazendo a estruturação adequada do pensamento lógico do livro...",
