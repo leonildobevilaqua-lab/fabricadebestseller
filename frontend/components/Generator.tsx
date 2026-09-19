@@ -141,9 +141,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           const p = await API.getProject(access.activeProjectId);
           if (p) {
             setProject(p);
-            // If it's IDLE or low-progress RESEARCHING, kickstart research worker
-            const pProgress = Number(p.metadata.progress || 0);
-            if (p.metadata.status === 'IDLE' || (p.metadata.status === 'RESEARCHING' && pProgress < 10)) {
+            // If it's IDLE, kickstart research worker
+            if (p.metadata.status === 'IDLE') {
               console.log("Kickstarting research worker on mount...");
               try {
                 await API.startResearch(p.id, language, userContact?.email);
@@ -642,7 +641,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     if (!projectId || !project || error) return;
     const { status } = project.metadata;
     const now = Date.now();
-    const isStuck = (now - lastProgressTime > 15000); // 15 seconds without progress or pulse update
+    const isStuck = (now - lastProgressTime > 180000); // 3 minutes (180s) without progress or pulse update
     
     if (isStuck && (status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' || status === 'GENERATING_MARKETING')) {
        console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Retrying...`);

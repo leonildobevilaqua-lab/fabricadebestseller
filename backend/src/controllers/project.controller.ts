@@ -494,10 +494,10 @@ export const startResearch = async (req: Request, res: Response) => {
     // 1. LOCK CHECK
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'RESEARCHING' && (now - lastPulse < 15000); // 15s grace
+    const isActuallyRunning = project.metadata.status === 'RESEARCHING' && (now - lastPulse < 180000); // 3 min grace (180s)
 
     if (isActuallyRunning) {
-        console.log(`[startResearch] Research already active for ${id}. Skipping.`);
+        console.log(`[startResearch] Research already active for ${id} (last pulse ${now - lastPulse}ms ago). Skipping new worker.`);
         return res.json({ success: true, message: "Research already in progress", status: 'ACTIVE' });
     }
 
@@ -770,7 +770,7 @@ export const generateBookContent = async (req: Request, res: Response) => {
     // 1. LOCK CHECK: Prevent multiple workers from processing the same project
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 15000); // 15s grace
+    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 180000); // 3 min grace (180s)
 
     if (isActuallyRunning) {
         console.log(`[PROJECT] Generation already active for ${id} (Pulse: ${now - lastPulse}ms ago). Skipping new worker.`);
