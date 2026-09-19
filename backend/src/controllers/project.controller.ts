@@ -324,11 +324,11 @@ export const startResearch = async (req: Request, res: Response) => {
         return res.status(404).json({ error: "Not found" });
     }
 
-    // IDEMPOTENCY: If project is already running, don't restart or block.
+    // IDEMPOTENCY: If project is already completed, skip.
     const pStatus = project.metadata.status as string;
-    if (['RESEARCHING', 'WRITING_CHAPTERS', 'COMPLETED', 'LIVRO ENTREGUE'].includes(pStatus)) {
-        console.log(`[startResearch] Project ${id} already active (${pStatus}). Skipping init.`);
-        return res.json({ success: true, message: "Already active" });
+    if (['COMPLETED', 'LIVRO ENTREGUE'].includes(pStatus)) {
+        console.log(`[startResearch] Project ${id} already completed (${pStatus}). Skipping init.`);
+        return res.json({ success: true, message: "Already completed" });
     }
 
     const userEmail = project.metadata.contact?.email || bodyEmail;
@@ -495,7 +495,7 @@ export const startResearch = async (req: Request, res: Response) => {
     // 1. LOCK CHECK
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'RESEARCHING' && (now - lastPulse < 600000); // 10 min grace
+    const isActuallyRunning = project.metadata.status === 'RESEARCHING' && (now - lastPulse < 15000); // 15s grace
 
     if (isActuallyRunning) {
         console.log(`[startResearch] Research already active for ${id}. Skipping.`);
@@ -519,10 +519,10 @@ export const startResearch = async (req: Request, res: Response) => {
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
             for (let i = leads.length - 1; i >= 0; i--) {
-                if ((leads[i] as any).email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
-                    leads[i].status = 'IN_PROGRESS';
-                    await setVal('/leads', leads);
-                    console.log(`Updated Lead status to IN_PROGRESS for ${userEmail}`);
+                const l = leads[i] as any;
+                if (l && l.email?.toLowerCase().trim() === userEmail.toLowerCase().trim()) {
+                    await setVal(`/leads/${l.id}`, { ...l, status: 'IN_PROGRESS' });
+                    console.log(`Updated Lead ${l.id} status to IN_PROGRESS for ${userEmail}`);
                     break;
                 }
             }
@@ -771,7 +771,7 @@ export const generateBookContent = async (req: Request, res: Response) => {
     // 1. LOCK CHECK: Prevent multiple workers from processing the same project
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 180000); // 3 min grace (180s) - Reduced from 10m for better responsiveness
+    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 15000); // 15s grace
 
     if (isActuallyRunning) {
         console.log(`[PROJECT] Generation already active for ${id} (Pulse: ${now - lastPulse}ms ago). Skipping new worker.`);
@@ -788,155 +788,157 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
     res.json({ message: "Content generation started", workerId });
 
-    try {
-        // We reload the project inside the loop to get the most fresh state
-        let chapters = [...project.structure];
-        const total = chapters.length;
+    (async () => {
+        try {
+            // We reload the project inside the loop to get the most fresh state
+            let chapters = [...project.structure];
+            const total = chapters.length;
 
-        for (let i = 0; i < total; i++) {
-            // RELOAD: Ensure we have the latest structure (maybe updated by a previous worker before crash)
-            const freshProject = await QueueService.getProject(id);
-            if (!freshProject) break;
-            
-            // CHECK LOCK: If someone else took over, we stop
-            if (freshProject.metadata.currentWorkerId !== workerId) {
-                console.log(`[PROJECT] Worker ${workerId} preempted by ${freshProject.metadata.currentWorkerId}. Stopping.`);
-                return;
-            }
+            for (let i = 0; i < total; i++) {
+                // RELOAD: Ensure we have the latest structure (maybe updated by a previous worker before crash)
+                const freshProject = await QueueService.getProject(id);
+                if (!freshProject) break;
+                
+                // CHECK LOCK: If someone else took over, we stop
+                if (freshProject.metadata.currentWorkerId !== workerId) {
+                    console.log(`[PROJECT] Worker ${workerId} preempted by ${freshProject.metadata.currentWorkerId}. Stopping.`);
+                    return;
+                }
 
-            chapters = freshProject.structure;
-            const chapter = chapters[i];
+                chapters = freshProject.structure;
+                const chapter = chapters[i];
 
-            // RESUME LOGIC: Skip if already generated
-            if (chapter.isGenerated && chapter.content && chapter.content.length >= 50) {
-                console.log(`[PROJECT] Skipping Chapter ${chapter.id} (Already exists and long enough)`);
-                continue;
-            }
+                // RESUME LOGIC: Skip if already generated
+                if (chapter.isGenerated && chapter.content && chapter.content.length >= 50) {
+                    console.log(`[PROJECT] Skipping Chapter ${chapter.id} (Already exists and long enough)`);
+                    continue;
+                }
 
-            // Update Pulse & Progress
-            const progressValue = total > 0 ? 41 + Math.floor(((i) / total) * 40) : 41;
-            await QueueService.updateMetadata(id, {
-                statusMessage: `Escrevendo Capítulo ${chapter.id}: ${chapter.title}...`,
-                progress: progressValue, // 41% to 81%
-                lastWorkerPulse: new Date().toISOString()
-            });
+                // Update Pulse & Progress
+                const progressValue = total > 0 ? 41 + Math.floor(((i) / total) * 40) : 41;
+                await QueueService.updateMetadata(id, {
+                    statusMessage: `Escrevendo Capítulo ${chapter.id}: ${chapter.title}...`,
+                    progress: progressValue, // 41% to 81%
+                    lastWorkerPulse: new Date().toISOString()
+                });
 
-            // RETRY STRATEGY (3 Attempts)
-            let success = false;
-            let attempts = 0;
-            while (!success && attempts < 3) {
-                try {
-                    attempts++;
-                    const meta = { ...freshProject.metadata, language: targetLang };
-                    const content = await AIService.writeChapter(meta, chapter, chapters, freshProject.researchContext, async () => {
-                        // Pulse Callback: Update server activity after each section
-                        await QueueService.updateMetadata(id, { lastWorkerPulse: new Date().toISOString() });
-                    });
-                    
-                    // RELOAD AGAIN before saving to be super safe
-                    const latest = await QueueService.getProject(id);
-                    if (latest && latest.metadata.currentWorkerId === workerId) {
-                        latest.structure[i].content = content;
-                        latest.structure[i].isGenerated = true;
-                        await QueueService.updateProject(id, { 
-                            structure: latest.structure,
-                            metadata: { ...latest.metadata, lastWorkerPulse: new Date().toISOString() }
+                // RETRY STRATEGY (3 Attempts)
+                let success = false;
+                let attempts = 0;
+                while (!success && attempts < 3) {
+                    try {
+                        attempts++;
+                        const meta = { ...freshProject.metadata, language: targetLang };
+                        const content = await AIService.writeChapter(meta, chapter, chapters, freshProject.researchContext, async () => {
+                            // Pulse Callback: Update server activity after each section
+                            await QueueService.updateMetadata(id, { lastWorkerPulse: new Date().toISOString() });
                         });
-                    }
-                    success = true;
-                } catch (e: any) {
-                    console.error(`Error writing chapter ${chapter.id} (Attempt ${attempts}/3):`, e);
-                    if (attempts >= 3) {
-                        console.error(`[PROJECT] Chapter ${chapter.id} PERSISTENT FAILURE after 3 attempts. Stopping generation.`);
-                        throw new Error(`Falha persistente no Capítulo ${chapter.id}: ${e.message}`);
-                    } else {
-                        // Exponential backoff
-                        const delay = attempts * 3000;
-                        await new Promise(r => setTimeout(r, delay));
+                        
+                        // RELOAD AGAIN before saving to be super safe
+                        const latest = await QueueService.getProject(id);
+                        if (latest && latest.metadata.currentWorkerId === workerId) {
+                            latest.structure[i].content = content;
+                            latest.structure[i].isGenerated = true;
+                            await QueueService.updateProject(id, { 
+                                structure: latest.structure,
+                                metadata: { ...latest.metadata, lastWorkerPulse: new Date().toISOString() }
+                            });
+                        }
+                        success = true;
+                    } catch (e: any) {
+                        console.error(`Error writing chapter ${chapter.id} (Attempt ${attempts}/3):`, e);
+                        if (attempts >= 3) {
+                            console.error(`[PROJECT] Chapter ${chapter.id} PERSISTENT FAILURE after 3 attempts. Stopping generation.`);
+                            throw new Error(`Falha persistente no Capítulo ${chapter.id}: ${e.message}`);
+                        } else {
+                            // Exponential backoff
+                            const delay = attempts * 3000;
+                            await new Promise(r => setTimeout(r, delay));
+                        }
                     }
                 }
             }
-        }
 
-        // 2. Write Introduction (after chapters to be coherent)
-        // RELOAD: Crucial to get the generated chapters before adding intro
-        const finalProject = await QueueService.getProject(id);
-        if (!finalProject) throw new Error("Project lost during generation");
+            // 2. Write Introduction (after chapters to be coherent)
+            // RELOAD: Crucial to get the generated chapters before adding intro
+            const finalProject = await QueueService.getProject(id);
+            if (!finalProject) throw new Error("Project lost during generation");
 
-        // Check if Intro exists (Chapter 0)
-        let hasIntro = false;
-        if (finalProject.structure && finalProject.structure.length > 0) {
-            if (finalProject.structure[0].id === 0 && finalProject.structure[0].isGenerated) {
-                hasIntro = true;
+            // Check if Intro exists (Chapter 0)
+            let hasIntro = false;
+            if (finalProject.structure && finalProject.structure.length > 0) {
+                if (finalProject.structure[0].id === 0 && finalProject.structure[0].isGenerated) {
+                    hasIntro = true;
+                }
             }
-        }
 
-        if (!hasIntro) {
-            await QueueService.updateMetadata(id, {
-                status: 'WRITING_CHAPTERS',
-                progress: 85,
-                statusMessage: "Escrevendo a Introdução de alto impacto..."
-            });
+            if (!hasIntro) {
+                await QueueService.updateMetadata(id, {
+                    status: 'WRITING_CHAPTERS',
+                    progress: 85,
+                    statusMessage: "Escrevendo a Introdução de alto impacto..."
+                });
 
-            let introContent = "";
+                let introContent = "";
+                try {
+                    introContent = await AIService.writeIntroduction(finalProject.metadata, finalProject.structure, finalProject.researchContext, targetLang);
+                } catch (e) {
+                    console.error("Introduction Generation Failed:", e);
+                    introContent = "A Introdução não pôde ser gerada automaticamente devido a uma instabilidade na IA. Por favor, escreva uma introdução manualmente.";
+                }
+
+                const introChapter: any = { id: 0, title: "Introdução", content: introContent, isGenerated: true };
+
+                if (!finalProject.structure) finalProject.structure = [];
+
+                if (finalProject.structure.length > 0 && finalProject.structure[0].id !== 0) {
+                    finalProject.structure.unshift(introChapter);
+                } else {
+                    finalProject.structure[0] = introChapter;
+                }
+                await QueueService.updateProject(id, { structure: finalProject.structure });
+            }
+
+            // Use finalProject metadata for auto-generate check
+            const finalMeta = finalProject.metadata;
+
+            // --- PAUSE POINT: Final Touches (Wait for User) ---
+            // If not auto-generate, we stop here to let the user review and add toppings (Dedication, etc.)
+            if (!finalMeta.autoGenerate) {
+                console.log(`[PROJECT] Pausing for Final Touches (WAITING_DETAILS) for project ${id}`);
+                await QueueService.updateMetadata(id, {
+                    status: 'WAITING_DETAILS',
+                    progress: 86,
+                    statusMessage: "🔨 Esboço pronto! Agora dê os toques finais de autoria para concluirmos..."
+                });
+                return; // DONE for now.
+            }
+
+            // --- AUTO-GEN FLOW (Background/Admin) ---
+            // If auto-generate is TRUE, we generate extras automatically and proceed
+            console.log("[PROJECT] Auto-generating Extras and proceeding...");
             try {
-                introContent = await AIService.writeIntroduction(finalProject.metadata, finalProject.structure, finalProject.researchContext, targetLang);
+                const extras = await AIService.generateExtras(finalMeta, "", "", "", targetLang);
+                await QueueService.updateMetadata(id, {
+                    dedication: extras.dedication,
+                    acknowledgments: extras.acknowledgments,
+                    aboutAuthor: extras.aboutAuthor
+                });
             } catch (e) {
-                console.error("Introduction Generation Failed:", e);
-                introContent = "A Introdução não pôde ser gerada automaticamente devido a uma instabilidade na IA. Por favor, escreva uma introdução manualmente.";
+                console.warn("Auto-extras failed, using placeholders", e);
             }
 
-            const introChapter: any = { id: 0, title: "Introdução", content: introContent, isGenerated: true };
+            // Proceed to final steps
+            await finalizeProjectLogic(id, targetLang);
 
-            if (!finalProject.structure) finalProject.structure = [];
-
-            if (finalProject.structure.length > 0 && finalProject.structure[0].id !== 0) {
-                finalProject.structure.unshift(introChapter);
-            } else {
-                finalProject.structure[0] = introChapter;
-            }
-            await QueueService.updateProject(id, { structure: finalProject.structure });
-        }
-
-        // Use finalProject metadata for auto-generate check
-        const finalMeta = finalProject.metadata;
-
-        // --- PAUSE POINT: Final Touches (Wait for User) ---
-        // If not auto-generate, we stop here to let the user review and add toppings (Dedication, etc.)
-        if (!finalMeta.autoGenerate) {
-            console.log(`[PROJECT] Pausing for Final Touches (WAITING_DETAILS) for project ${id}`);
-            await QueueService.updateMetadata(id, {
-                status: 'WAITING_DETAILS',
-                progress: 86,
-                statusMessage: "🔨 Esboço pronto! Agora dê os toques finais de autoria para concluirmos..."
+        } catch (error: any) {
+            console.error(`[GENERATION_CRITICAL_ERROR] Project ${id}:`, error);
+            await QueueService.updateMetadata(id, { 
+                status: 'FAILED', 
+                statusMessage: `⚠️ Erro na geração: ${error.message || "Falha técnica na IA"}. Tente retomar clicando em GERAR LIVRO.` 
             });
-            return; // DONE for now.
         }
-
-        // --- AUTO-GEN FLOW (Background/Admin) ---
-        // If auto-generate is TRUE, we generate extras automatically and proceed
-        console.log("[PROJECT] Auto-generating Extras and proceeding...");
-        try {
-            const extras = await AIService.generateExtras(finalMeta, "", "", "", targetLang);
-            await QueueService.updateMetadata(id, {
-                dedication: extras.dedication,
-                acknowledgments: extras.acknowledgments,
-                aboutAuthor: extras.aboutAuthor
-            });
-        } catch (e) {
-            console.warn("Auto-extras failed, using placeholders", e);
-        }
-
-        // Proceed to final steps
-        await finalizeProjectLogic(id, targetLang);
-
-    } catch (error: any) {
-        console.error(`[GENERATION_CRITICAL_ERROR] Project ${id}:`, error);
-        await QueueService.updateMetadata(id, { 
-            status: 'FAILED', 
-            statusMessage: `⚠️ Erro na geração: ${error.message || "Falha técnica na IA"}. Tente retomar clicando em GERAR LIVRO.` 
-        });
-    }
+    })();
 };
 
 export const resumeGeneration = async (req: Request, res: Response) => {

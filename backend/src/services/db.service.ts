@@ -70,16 +70,19 @@ const getLocalDB = () => {
     try {
         if (fs.existsSync(DB_PATH)) {
             const stats = fs.statSync(DB_PATH);
-            // SAFETY: If disk cache file exceeds 10MB, log warning and unlink file without resetting in-memory cachedLocalDB if populated
-            if (stats.size > 10 * 1024 * 1024) {
-                console.warn(`[DB] Local DB disk file size (${Math.round(stats.size / 1024)}KB) exceeds 10MB limit. Cleaning disk file...`);
-                try { fs.unlinkSync(DB_PATH); } catch (e) {}
-            } else {
-                const content = fs.readFileSync(DB_PATH, 'utf-8');
+            const content = fs.readFileSync(DB_PATH, 'utf-8');
+            try {
                 cachedLocalDB = JSON.parse(content);
                 console.log(`[DB] Local DB loaded into memory: ${Math.round(stats.size / 1024)}KB`);
-                return cachedLocalDB;
+            } catch (jsonErr) {
+                console.error("[DB] Failed to parse local DB file:", jsonErr);
+                cachedLocalDB = {};
             }
+            if (stats.size > 10 * 1024 * 1024) {
+                console.warn(`[DB] Local DB disk file size (${Math.round(stats.size / 1024)}KB) exceeds 10MB limit. Queueing sanitized disk backup...`);
+                queueDiskBackup();
+            }
+            return cachedLocalDB;
         }
     } catch (e) { 
         console.error("[DB] getLocalDB error:", e);
