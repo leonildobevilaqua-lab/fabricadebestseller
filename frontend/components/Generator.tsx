@@ -135,17 +135,19 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
         const access = await res.json();
 
-        if (access.activeProjectId) {
+        const hasTopicToCreate = metadata.topic && metadata.topic.trim().length > 0;
+
+        if (access.activeProjectId && !hasTopicToCreate) {
           setProjectId(access.activeProjectId);
           // Get the project data immediately
           const p = await API.getProject(access.activeProjectId);
           if (p) {
             setProject(p);
-            // If it's IDLE, kickstart research worker
-            if (p.metadata.status === 'IDLE') {
-              console.log("Kickstarting research worker on mount...");
+            // If it's IDLE or RESEARCHING with low progress (<= 5%), kickstart research worker with force=true
+            if (p.metadata.status === 'IDLE' || (p.metadata.status === 'RESEARCHING' && (!p.metadata.progress || p.metadata.progress <= 5))) {
+              console.log("Kickstarting research worker on mount with force=true...");
               try {
-                await API.startResearch(p.id, language, userContact?.email);
+                await API.startResearch(p.id, language, userContact?.email, undefined, true);
               } catch (startErr) {
                 console.error("Failed to kickstart research:", startErr);
               }
@@ -153,8 +155,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           }
           setIsLoadingAccess(false);
           setIsManufacturing(false); // Skip animation
-        } else if (access.hasAccess && access.credits > 0) {
-          // Authorized but no active project: Start Animation for new book
+        } else if (access.hasAccess || (access.credits && access.credits > 0) || hasTopicToCreate) {
+          // Authorized or creating new book: Start Animation for new book
           setIsManufacturing(true);
           setIsLoadingAccess(false);
         } else {

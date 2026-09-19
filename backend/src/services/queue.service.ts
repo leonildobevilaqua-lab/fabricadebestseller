@@ -42,11 +42,29 @@ export const getProject = async (id: string): Promise<BookProject | null> => {
         const data = await getVal(`/projects/${id}`);
         if (!data) return null;
 
-        // Ensure Dates are Date objects (JSON stores as strings)
+        const metadata: BookMetadata = {
+            id: data.id || id,
+            authorName: data.metadata?.authorName || data.authorName || '',
+            topic: data.metadata?.topic || data.topic || '',
+            status: data.metadata?.status || data.status || 'IDLE',
+            progress: data.metadata?.progress ?? data.progress ?? 0,
+            currentStep: data.metadata?.currentStep || data.currentStep || 'START',
+            statusMessage: data.metadata?.statusMessage || data.statusMessage || '',
+            bookTitle: data.metadata?.bookTitle || data.bookTitle || data.title || '',
+            subTitle: data.metadata?.subTitle || data.subTitle || '',
+            language: data.metadata?.language || data.language || 'pt',
+            isFiction: data.metadata?.isFiction ?? data.isFiction ?? false,
+            genre: data.metadata?.genre || data.genre || data.contentStyle || '',
+            lastWorkerPulse: data.metadata?.lastWorkerPulse || data.lastWorkerPulse || data.updatedAt || '',
+            currentWorkerId: data.metadata?.currentWorkerId || data.currentWorkerId || '',
+            ...data.metadata
+        };
+
         return {
             ...data,
-            createdAt: new Date(data.createdAt),
-            updatedAt: new Date(data.updatedAt)
+            metadata,
+            createdAt: new Date(data.createdAt || data.created_at || Date.now()),
+            updatedAt: new Date(data.updatedAt || data.updated_at || Date.now())
         };
     } catch (error) {
         console.error("DB Get Error:", error);
@@ -63,8 +81,6 @@ export const updateProject = async (id: string, updates: Partial<BookProject>) =
             ...current,
             ...updates,
             updatedAt: new Date(),
-            // Merger deep objects if necessary, but Partial<BookProject> usually replaces top-level keys
-            // metadata is handled separately usually, but if passed here, we merge it
             metadata: updates.metadata ? { ...current.metadata, ...updates.metadata } : current.metadata
         };
 
@@ -101,9 +117,6 @@ export const getProjectByEmail = async (email: string): Promise<BookProject | nu
 
         const projectsList = Object.values(allProjects) as BookProject[];
 
-        // Filter by Email
-        // Note: Project metadata might use 'contact.email' or just rely on authorName locally?
-        // Check `createProject` usage -> metadata includes contact
         const userProjects = projectsList.filter(p => {
             if (!p) return false;
             const projMetadata = p.metadata || (p as any);
@@ -113,29 +126,22 @@ export const getProjectByEmail = async (email: string): Promise<BookProject | nu
 
         if (userProjects.length === 0) return null;
 
-        // Sort by Created At Descending
         userProjects.sort((a: any, b: any) => {
             const da = new Date(a.createdAt || a.created_at || a.updatedAt || a.updated_at || 0).getTime();
             const db = new Date(b.createdAt || b.created_at || b.updatedAt || b.updated_at || 0).getTime();
             return db - da;
         });
 
-        // Prioritize UNFINISHED projects for resuming
+        const finishedStatuses = ['COMPLETED', 'LIVRO ENTREGUE', 'SUCCESS', 'READY', 'WAITING_DETAILS', 'DONE', 'FINISHED', 'APPROVED', 'READY_TO_DOWNLOAD', 'FAILED'];
+
         const activeProject = userProjects.find((p: any) => {
             const status = p.metadata?.status || p.status;
-            return status !== 'COMPLETED' &&
-                status !== 'LIVRO ENTREGUE' &&
-                status !== 'FAILED';
+            return !finishedStatuses.includes(status as any);
         });
 
         const selected = activeProject || userProjects[0];
-
-        // Format dates
-        return {
-            ...selected,
-            createdAt: new Date(selected.createdAt),
-            updatedAt: new Date(selected.updatedAt)
-        };
+        const projId = selected.id || (selected as any).key?.split('/').pop();
+        return getProject(projId);
 
     } catch (error) {
         console.error("DB GetByEmail Error", error);
