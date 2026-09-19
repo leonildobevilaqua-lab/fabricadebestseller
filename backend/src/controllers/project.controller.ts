@@ -828,7 +828,8 @@ export const generateBookContent = async (req: Request, res: Response) => {
                     try {
                         attempts++;
                         const meta = { ...freshProject.metadata, language: targetLang };
-                        const content = await AIService.writeChapter(meta, chapter, chapters, freshProject.researchContext, async () => {
+                        const rContext = freshProject.researchContext || (freshProject.metadata as any)?.researchContext || "";
+                        const content = await AIService.writeChapter(meta, chapter, chapters, rContext, async () => {
                             // Pulse Callback: Update server activity after each section
                             await QueueService.updateMetadata(id, { lastWorkerPulse: new Date().toISOString() });
                         });
@@ -880,7 +881,8 @@ export const generateBookContent = async (req: Request, res: Response) => {
 
                 let introContent = "";
                 try {
-                    introContent = await AIService.writeIntroduction(finalProject.metadata, finalProject.structure, finalProject.researchContext, targetLang);
+                    const finalRContext = finalProject.researchContext || (finalProject.metadata as any)?.researchContext || "";
+                    introContent = await AIService.writeIntroduction(finalProject.metadata, finalProject.structure, finalRContext, targetLang);
                 } catch (e) {
                     console.error("Introduction Generation Failed:", e);
                     introContent = "A Introdução não pôde ser gerada automaticamente devido a uma instabilidade na IA. Por favor, escreva uma introdução manualmente.";

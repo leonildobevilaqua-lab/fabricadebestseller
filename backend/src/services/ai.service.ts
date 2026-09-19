@@ -150,7 +150,7 @@ export const researchGoogle = async (topic: string, priorContext: string, lang: 
   const prompt = `
       ${SYSTEM_INSTRUCTION}
       
-      PREVIOUS CONTEXT: ${priorContext.substring(0, 5000)}...
+      PREVIOUS CONTEXT: ${(priorContext || "").substring(0, 5000)}...
       
       DATA FROM GOOGLE SEARCH:
       ${contextData}
@@ -204,7 +204,7 @@ export const analyzeCompetitors = async (topic: string, priorContext: string, la
   const prompt = `
       ${SYSTEM_INSTRUCTION}
       
-      PREVIOUS CONTEXT: ${priorContext.substring(0, 5000)}...
+      PREVIOUS CONTEXT: ${(priorContext || "").substring(0, 5000)}...
       
       AMAZON MARKET DATA (REAL BEST-SELLERS):
       ${contextData}
@@ -229,7 +229,7 @@ export const analyzeCompetitors = async (topic: string, priorContext: string, la
 };
 
 export const generateTitleOptions = async (topic: string, researchContext: string = "", lang: string = 'pt', titleInstruction?: string, isFiction: boolean = false): Promise<TitleOption[]> => {
-  console.log(`[IA] Iniciando geração de títulos para: ${topic.substring(0, 50)}...`);
+  console.log(`[IA] Iniciando geração de títulos para: ${(topic || "").substring(0, 50)}...`);
   const llm = await getLLMProvider();
   const langName = getLangName(lang);
 
@@ -264,13 +264,13 @@ FOCO EM FICÇÃO (PADRÃO BEST-SELLER):
 FOCO EM NÃO FICÇÃO (PADRÃO BEST-SELLER):
 - Foco em AUTORIDADE e TRANSFORMAÇÃO.
 - Títulos de impacto compostos por múltiplas palavras (Ex: "Mentalidade Inabalável", "O Foco Essencialista", "O Poder da Presença").
-- Subtítulos que entregam a solução sem parecer um curso de internet.
+- Subtítulos que entregam a solution sem parecer um curso de internet.
 `}
 
 ${titleInstruction ? `\nINSTRUÇÕES ADICIONAIS DO CLIENTE (PRIORIDADE MÁXIMA PARA MOLDAR A IDEIA):\n"${titleInstruction}"\n` : ''}
 
 CONTEXTO DE PESQUISA (Use para entender o que o público deste nicho REALMENTE consome):
-${researchContext.substring(0, 5000)}
+${(researchContext || "").substring(0, 5000)}
 
 RETORNE APENAS JSON LIMPO NA ESTRUTURA EXATA DE UM ARRAY COM EXATAMENTE 9 OPÇÕES:
 [
@@ -286,7 +286,7 @@ NÃO GERE MARKDOWN FORA DO JSON. GERE EXATAMENTE 9 OPÇÕES (todos com títulos 
   try {
     // INCREASED CONTEXT: Using the high TPM (1,000K) of the user's paid Gemini Tier
     // This allows for MUCH deeper analysis and better titles.
-    const raw = await llm.generateJSON<any[]>(`${SYSTEM_PROMPT}\n\nCONTEXTO DE PESQUISA COMPLETO:\n${researchContext.substring(0, 30000)}\n\nINPUT DO USUÁRIO: ${userPrompt}`);
+    const raw = await llm.generateJSON<any[]>(`${SYSTEM_PROMPT}\n\nCONTEXTO DE PESQUISA COMPLETO:\n${(researchContext || "").substring(0, 30000)}\n\nINPUT DO USUÁRIO: ${userPrompt}`);
 
     if (!Array.isArray(raw)) {
       console.warn("[IA] Response is not an array, attempting to wrap it.");
@@ -705,12 +705,13 @@ const getHumanizationInstructions = (lang: string, style: string = 'Profissional
 export const writeIntroduction = async (
   metadata: BookMetadata,
   structure: Chapter[],
-  researchContext: string,
+  researchContext: string = "",
   lang: string = 'pt'
 ): Promise<string> => {
   const llm = await getLLMProvider();
   const langName = getLangName(lang);
-  const structureList = structure.map(c => `- ${c.title}`).join('\n');
+  const safeResearchContext = researchContext || "";
+  const structureList = (structure || []).map(c => `- ${c.title}`).join('\n');
   const style = metadata.contentStyle || 'Profissional / Técnico';
   const tone = metadata.writingTone || 'Autoridade e Confiança';
 
@@ -720,7 +721,7 @@ export const writeIntroduction = async (
     chaptersSnippets += "\n=== RESUMO DO INÍCIO DE CADA CAPÍTULO DO LIVRO (Use para garantir coerência e citar ideias) ===\n";
     structure.forEach(c => {
       if (c.id !== 0 && c.content && c.content.length > 100) {
-        const snippet = c.content.substring(0, 500).trim();
+        const snippet = (c.content || "").substring(0, 500).trim();
         chaptersSnippets += `Capítulo ${c.id} ("${c.title}"):\n"${snippet}..."\n\n`;
       }
     });
@@ -730,10 +731,10 @@ export const writeIntroduction = async (
   const prompt = `
       ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
       
-      Author: ${metadata.authorName}
-      Book: ${metadata.bookTitle}
-      Subtitle: ${metadata.subTitle}
-      ${metadata.isFiction ? `GENRE: ${metadata.genre}\nCHARACTERS: ${JSON.stringify(metadata.characters)}` : ''}
+      Author: ${metadata.authorName || ""}
+      Book: ${metadata.bookTitle || ""}
+      Subtitle: ${metadata.subTitle || ""}
+      ${metadata.isFiction ? `GENRE: ${metadata.genre || ""}\nCHARACTERS: ${JSON.stringify(metadata.characters || [])}` : ''}
       
       Structure:
       ${structureList}
@@ -741,7 +742,7 @@ export const writeIntroduction = async (
       ${chaptersSnippets}
       
       Research Context:
-      ${researchContext}
+      ${safeResearchContext}
       
       TASK: Write the INTRODUCTION ${metadata.isFiction ? '(or PROLOGUE)' : ''} for this book.
       Objective: Hook the reader IMMEDIATELY. Start with a controversial statement, a personal story, or a surprising fact.
@@ -767,12 +768,13 @@ export const writeChapter = async (
   metadata: BookMetadata,
   chapter: Chapter,
   structure: Chapter[],
-  researchContext: string,
+  researchContext: string = "",
   onPulse?: () => Promise<void>
 ): Promise<string> => {
   const llm = await getLLMProvider();
   const lang = metadata.language || 'pt';
   const langName = getLangName(lang);
+  const safeResearchContext = researchContext || "";
 
   // 1. Check if subSections are already defined on the chapter structure, otherwise generate dynamically
   let subtopics: string[] = [];
@@ -781,10 +783,10 @@ export const writeChapter = async (
   } else {
     const outlinePrompt = `
       ${SYSTEM_INSTRUCTION}
-      Context: ${researchContext.substring(0, 5000)}...
-      Book: ${metadata.bookTitle}
-      Chapter: ${chapter.title}
-      Chapter Objective: ${chapter.intro}
+      Context: ${safeResearchContext.substring(0, 5000)}...
+      Book: ${metadata.bookTitle || ""}
+      Chapter: ${chapter.title || ""}
+      Chapter Objective: ${chapter.intro || ""}
 
       TASK: Create a detailed outline for this chapter with exactly 4 distinct sub-sections.
       Each sub-section must cover a specific aspect of the chapter's topic in EXTREME depth.
@@ -804,7 +806,7 @@ export const writeChapter = async (
   }
 
   // Ensure we don't go overboard if AI hallucinates 10 topics (4 subtopics fits the 170-200 pages goal better)
-  subtopics = subtopics.slice(0, 4);
+  subtopics = Array.isArray(subtopics) ? subtopics.slice(0, 4) : ["Fundamentos", "Histórico e Evolução", "Ferramentas e Técnicas", "Estudos de Caso"];
 
   // 2. Iterative Generation
   let fullChapterContent = "";
@@ -813,15 +815,15 @@ export const writeChapter = async (
   const tone = metadata.writingTone || 'Natural';
 
   // 2.1 Calculate Accumulated Context and Prohibited Terms from Previous Chapters
-  const currentChapterIndex = structure.findIndex(c => c.id === chapter.id);
+  const currentChapterIndex = structure ? structure.findIndex(c => c.id === chapter.id) : -1;
   let previousChaptersContext = "";
   if (currentChapterIndex > 0) {
     previousChaptersContext += "\n=== CONTEXTO DE CAPÍTULOS ANTERIORES E JÁ ESCRITOS ===\n";
     for (let j = 0; j < currentChapterIndex; j++) {
       const prevCh = structure[j];
-      if (prevCh.content && prevCh.content.length > 100) {
-        const snippet = prevCh.content.substring(0, 600).trim();
-        previousChaptersContext += `Capítulo ${prevCh.id}: "${prevCh.title}"\nInício do Capítulo:\n"${snippet}..."\n\n`;
+      if (prevCh && prevCh.content && prevCh.content.length > 100) {
+        const snippet = (prevCh.content || "").substring(0, 600).trim();
+        previousChaptersContext += `Capítulo ${prevCh.id}: "${prevCh.title || ""}"\nInício do Capítulo:\n"${snippet}..."\n\n`;
       }
     }
     previousChaptersContext += "=====================================================\n";
@@ -830,13 +832,13 @@ export const writeChapter = async (
   let prohibitedWordsList: string[] = [];
   if (currentChapterIndex > 0) {
     const prevCh = structure[currentChapterIndex - 1];
-    if (prevCh.content) {
+    if (prevCh && prevCh.content) {
       prohibitedWordsList = [...prohibitedWordsList, ...extractKeyTerms(prevCh.content, 40)];
     }
   }
   if (currentChapterIndex > 1) {
     const prevPrevCh = structure[currentChapterIndex - 2];
-    if (prevPrevCh.content) {
+    if (prevPrevCh && prevPrevCh.content) {
       prohibitedWordsList = [...prohibitedWordsList, ...extractKeyTerms(prevPrevCh.content, 20)];
     }
   }
@@ -858,11 +860,11 @@ export const writeChapter = async (
             ${getHumanizationInstructions(lang, style, tone)}
             
             CONTEXTO DE PESQUISA (Use isso como base, não invente):
-            ${researchContext.substring(0, 3000)}
+            ${safeResearchContext.substring(0, 3000)}
             
-            Context: ${researchContext}
-            Chapter: ${chapter.title}
-            Objective: ${chapter.intro}
+            Context: ${safeResearchContext}
+            Chapter: ${chapter.title || ""}
+            Objective: ${chapter.intro || ""}
             
             TASK: Write the INTRODUCTION for this chapter (approx 250 words).
             Hook the reader, explain what will be covered, and set the stage.
@@ -888,18 +890,18 @@ export const writeChapter = async (
       while (!subSuccess && subAttempts < 3) {
         try {
           subAttempts++;
-          console.log(`[IA] Writing subtopic "${subtopic}" (Attempt ${subAttempts}/3) for chapter: ${chapter.title}`);
+          console.log(`[IA] Writing subtopic "${subtopic}" (Attempt ${subAttempts}/3) for chapter: ${chapter.title || ""}`);
           
           const sectionPrompt = `
                  ${getHumanizationInstructions(lang, style, tone, metadata.isFiction)}
                  
-                 ${metadata.isFiction ? `GENRE: ${metadata.genre}\nCHARACTERS: ${JSON.stringify(metadata.characters)}` : `
+                 ${metadata.isFiction ? `GENRE: ${metadata.genre || ""}\nCHARACTERS: ${JSON.stringify(metadata.characters || [])}` : `
                  CONTEXTO DE PESQUISA (Use isso como base, não invente):
-                 ${researchContext.substring(0, 5000)}
+                 ${safeResearchContext.substring(0, 5000)}
                  `}
                  
-                 Book: ${metadata.bookTitle}
-                 Chapter: ${chapter.title}
+                 Book: ${metadata.bookTitle || ""}
+                 Chapter: ${chapter.title || ""}
                  
                  Current Section: "${subtopic}"
                  
@@ -955,7 +957,7 @@ export const writeChapter = async (
         conclAttempts++;
         const conclusionPrompt = `
             ${getHumanizationInstructions(lang, style, tone)}
-            Chapter: ${chapter.title}
+            Chapter: ${chapter.title || ""}
             
             TASK: Write a powerful CONCLUSION for this chapter (approx 150 words).
             Summarize key points and transition to the next idea.
@@ -978,11 +980,11 @@ export const writeChapter = async (
         ${getHumanizationInstructions(lang, style, tone)}
         
         CONTEXTO DE PESQUISA (Use isso como base, não invente):
-        ${researchContext.substring(0, 5000)}
+        ${safeResearchContext.substring(0, 5000)}
         
-        Author: ${metadata.authorName}
-        Book: ${metadata.bookTitle}
-        CURRENT CHAPTER: ${chapter.id}. ${chapter.title}
+        Author: ${metadata.authorName || ""}
+        Book: ${metadata.bookTitle || ""}
+        CURRENT CHAPTER: ${chapter.id}. ${chapter.title || ""}
         
         TAREFA: Escreva o Capítulo Completo.
         REGRAS:

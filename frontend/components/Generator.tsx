@@ -828,7 +828,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           {project.titleOptions && project.titleOptions.length > 0 ? (
             project.titleOptions.map((opt, idx) => (
               <button
-                key={`title-opt-v5-stable-${idx}-${opt.title.substring(0,10)}`}
+                key={`title-opt-v5-stable-${idx}-${(opt.title || '').substring(0,10)}`}
                 onClick={() => handleTitleSelect(opt)}
                 className={`text-left p-4 md:p-5 rounded-2xl border transition-all bg-white group relative overflow-hidden ${opt.isTopChoice ? 'border-[#0ea5e9] shadow-xl ring-2 ring-[#e0f2fe]' : 'border-gray-100 hover:border-[#0ea5e9] hover:shadow-lg'}`}
               >
