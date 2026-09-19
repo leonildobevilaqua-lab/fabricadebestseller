@@ -353,11 +353,10 @@ export const startResearch = async (req: Request, res: Response) => {
         }
 
         if (!hasAccess) {
-            // [FIX] PROJECT-BASED ACCESS: If the project exists and is in IDLE state, 
-            // the user ALREADY spent their credit to create it. We must let it start.
-            if (project.metadata.status === 'IDLE' || project.metadata.status === 'WAITING_TITLE') {
+            // [FIX] PROJECT-BASED ACCESS: If the project exists in DB, credit was ALREADY spent at creation.
+            if (project && project.id) {
                 hasAccess = true;
-                console.log(`[startResearch] Access Granted: Project ${id} is in ${project.metadata.status} state (Credit already spent).`);
+                console.log(`[startResearch] Access Granted: Project ${id} exists in database (Status: ${project.metadata.status}).`);
             }
         }
 
