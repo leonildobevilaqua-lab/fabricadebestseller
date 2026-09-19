@@ -490,9 +490,10 @@ export const startResearch = async (req: Request, res: Response) => {
         const workerId = uuidv4();
 
     // 1. LOCK CHECK
+    const force = req.body?.force === true;
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'RESEARCHING' && (now - lastPulse < 180000); // 3 min grace (180s)
+    const isActuallyRunning = !force && project.metadata.status === 'RESEARCHING' && (now - lastPulse < 25000); // 25s grace
 
     if (isActuallyRunning) {
         console.log(`[startResearch] Research already active for ${id} (last pulse ${now - lastPulse}ms ago). Skipping new worker.`);
@@ -533,6 +534,17 @@ export const startResearch = async (req: Request, res: Response) => {
 
     // Background Process
     (async () => {
+        const pulseInterval = setInterval(async () => {
+            try {
+                const latest = await QueueService.getProject(id);
+                if (latest && latest.metadata.currentWorkerId === workerId && latest.metadata.status === 'RESEARCHING') {
+                    await QueueService.updateMetadata(id, { lastWorkerPulse: new Date().toISOString() });
+                } else {
+                    clearInterval(pulseInterval);
+                }
+            } catch (_) {}
+        }, 5000);
+
         try {
             const targetLang = language || project.metadata.language || 'pt';
             
@@ -682,6 +694,8 @@ export const startResearch = async (req: Request, res: Response) => {
                 status: 'FAILED',
                 statusMessage: `⚠️ Falha na produção: ${error.message?.substring(0, 100)}... Redigitalizando...`
             });
+        } finally {
+            clearInterval(pulseInterval);
         }
     })();
 };
@@ -766,9 +780,10 @@ export const generateBookContent = async (req: Request, res: Response) => {
     const targetLang = language || project.metadata.language || 'pt';
 
     // 1. LOCK CHECK: Prevent multiple workers from processing the same project
+    const force = req.body?.force === true;
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 180000); // 3 min grace (180s)
+    const isActuallyRunning = !force && project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 25000); // 25s grace
 
     if (isActuallyRunning) {
         console.log(`[PROJECT] Generation already active for ${id} (Pulse: ${now - lastPulse}ms ago). Skipping new worker.`);
@@ -786,6 +801,17 @@ export const generateBookContent = async (req: Request, res: Response) => {
     res.json({ message: "Content generation started", workerId });
 
     (async () => {
+        const pulseInterval = setInterval(async () => {
+            try {
+                const latest = await QueueService.getProject(id);
+                if (latest && latest.metadata.currentWorkerId === workerId && latest.metadata.status === 'WRITING_CHAPTERS') {
+                    await QueueService.updateMetadata(id, { lastWorkerPulse: new Date().toISOString() });
+                } else {
+                    clearInterval(pulseInterval);
+                }
+            } catch (_) {}
+        }, 5000);
+
         try {
             // We reload the project inside the loop to get the most fresh state
             let chapters = [...project.structure];
@@ -936,6 +962,8 @@ export const generateBookContent = async (req: Request, res: Response) => {
                 status: 'FAILED', 
                 statusMessage: `⚠️ Erro na geração: ${error.message || "Falha técnica na IA"}. Tente retomar clicando em GERAR LIVRO.` 
             });
+        } finally {
+            clearInterval(pulseInterval);
         }
     })();
 };

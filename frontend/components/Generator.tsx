@@ -465,9 +465,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
       // Since `API.createProject` succeeded, payment is already verified and the credit was consumed.
       // We can immediately start the research process.
-      if (p.metadata.status === 'IDLE') {
+      if (p.metadata.status === 'IDLE' || (p.metadata.status === 'RESEARCHING' && (!p.metadata.progress || p.metadata.progress <= 5))) {
         try {
-          await API.startResearch(p.id, bookLanguage || language, userContact?.email);
+          await API.startResearch(p.id, bookLanguage || language, userContact?.email, undefined, true);
         } catch (startErr) {
           console.error("Failed to start research automatically:", startErr);
         }
@@ -560,13 +560,13 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     setRetryCount(prev => prev + 1);
     try {
       if (progress < 30) {
-        await API.startResearch(projectId, bookLanguage || language);
+        await API.startResearch(projectId, bookLanguage || language, userContact?.email, undefined, true);
         setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa automaticamente...' } });
       } else if (progress >= 30 && progress < 41) {
-        await API.generateBookContent(projectId, bookLanguage || language);
+        await API.generateBookContent(projectId, bookLanguage || language, userContact?.email, true);
         setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Iniciando escrita...' } });
       } else {
-        await API.generateBookContent(projectId, bookLanguage || language);
+        await API.generateBookContent(projectId, bookLanguage || language, userContact?.email, true);
         setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita automaticamente...' } });
       }
     } catch (e) {
@@ -636,12 +636,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     return () => clearInterval(interval);
   }, [projectId, lastProgress]);
 
-  // AUTO-RESUME EFFECT: If stuck for > 60s in an active state, kick it!
+  // AUTO-RESUME EFFECT: If stuck for > 25s in an active state, kick it!
   useEffect(() => {
     if (!projectId || !project || error) return;
     const { status } = project.metadata;
     const now = Date.now();
-    const isStuck = (now - lastProgressTime > 180000); // 3 minutes (180s) without progress or pulse update
+    const isStuck = (now - lastProgressTime > 25000); // 25 seconds (was 180s) without progress or pulse update
     
     if (isStuck && (status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' || status === 'GENERATING_MARKETING')) {
        console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Retrying...`);

@@ -16,11 +16,17 @@ export const getApiBase = () => {
     return window.location.origin;
 };
 
-let BASE_URL = getApiBase();
-if (BASE_URL.endsWith('/')) BASE_URL = BASE_URL.slice(0, -1);
+export const getApiUrl = () => {
+    let base = getApiBase();
+    if (base.endsWith('/')) base = base.slice(0, -1);
+    return `${base}/api/projects`;
+};
 
-const API_URL = `${BASE_URL}/api/projects`;
-const PAYMENT_URL = `${BASE_URL}/api/payment`;
+export const getPaymentUrl = () => {
+    let base = getApiBase();
+    if (base.endsWith('/')) base = base.slice(0, -1);
+    return `${base}/api/payment`;
+};
 
 export const createProject = async (
     authorName: string, 
@@ -38,7 +44,7 @@ export const createProject = async (
         characters?: { name: string, info: string }[]
     }
 ): Promise<BookProject> => {
-    const res = await fetch(API_URL, {
+    const res = await fetch(getApiUrl(), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ authorName, topic, language, contact, forceNew, ...extra })
@@ -47,15 +53,15 @@ export const createProject = async (
 };
 
 export const getProject = async (id: string): Promise<BookProject> => {
-    const res = await fetch(`${API_URL}/${id}`);
+    const res = await fetch(`${getApiUrl()}/${id}`);
     return res.json();
 };
 
-export const startResearch = async (id: string, language?: string, email?: string, titleInstruction?: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/${id}/research`, {
+export const startResearch = async (id: string, language?: string, email?: string, titleInstruction?: string, force?: boolean): Promise<void> => {
+    const res = await fetch(`${getApiUrl()}/${id}/research`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, email, titleInstruction })
+        body: JSON.stringify({ language, email, titleInstruction, force })
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -65,18 +71,18 @@ export const startResearch = async (id: string, language?: string, email?: strin
 };
 
 export const selectTitle = async (id: string, title: string, subtitle: string): Promise<void> => {
-    await fetch(`${API_URL}/${id}/select-title`, {
+    await fetch(`${getApiUrl()}/${id}/select-title`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, subtitle })
     });
 };
 
-export const generateBookContent = async (id: string, language?: string, email?: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/${id}/generate`, {
+export const generateBookContent = async (id: string, language?: string, email?: string, force?: boolean): Promise<void> => {
+    const res = await fetch(`${getApiUrl()}/${id}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, email })
+        body: JSON.stringify({ language, email, force })
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -86,7 +92,7 @@ export const generateBookContent = async (id: string, language?: string, email?:
 };
 
 export const updateProject = async (id: string, data: any): Promise<void> => {
-    await fetch(`${API_URL}/${id}`, {
+    await fetch(`${getApiUrl()}/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -95,7 +101,7 @@ export const updateProject = async (id: string, data: any): Promise<void> => {
 
 export const useCredit = async (email: string): Promise<boolean> => {
     try {
-        const res = await fetch(`${PAYMENT_URL}/use`, {
+        const res = await fetch(`${getPaymentUrl()}/use`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email })
@@ -109,7 +115,7 @@ export const useCredit = async (email: string): Promise<boolean> => {
 };
 
 export const createLead = async (data: any): Promise<any> => {
-    const res = await fetch(`${PAYMENT_URL}/leads`, {
+    const res = await fetch(`${getPaymentUrl()}/leads`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -127,7 +133,7 @@ export const registerPromoLead = async (name: string, email: string, phone: stri
 };
 
 export const finalizeProject = async (id: string, data: any): Promise<void> => {
-    const res = await fetch(`${API_URL}/${id}/finalize`, {
+    const res = await fetch(`${getApiUrl()}/${id}/finalize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
