@@ -14,17 +14,7 @@ import path from 'path';
 const DB_PROVIDER = process.env.DB_PROVIDER || 'supabase';
 
 export const getDatabasePath = (): string => {
-    let currentDir = __dirname;
-    while (currentDir) {
-        const potentialDb = path.join(currentDir, 'database.json');
-        if (fs.existsSync(potentialDb) && fs.statSync(potentialDb).size > 10000) {
-            return potentialDb;
-        }
-        const parent = path.dirname(currentDir);
-        if (parent === currentDir) break;
-        currentDir = parent;
-    }
-    return path.resolve(process.cwd(), 'database.json');
+    return process.env.DB_PATH || path.resolve(process.cwd(), 'database.json');
 };
 
 const DB_PATH = getDatabasePath();
@@ -64,16 +54,14 @@ const getLocalDB = () => {
     if (cachedLocalDB) return cachedLocalDB;
     try {
         if (fs.existsSync(DB_PATH)) {
-            // ONE-TIME FIX: Wipe the corrupted persistent volume cache
-            if (!fs.existsSync(DB_PATH + '.wiped_v7')) {
-                console.log("[DB] Wiping local cache one-time to clear ghosts and huge bloated files...");
+            const stats = fs.statSync(DB_PATH);
+            // SAFETY: Auto-reset cache if file grows over 5MB to prevent thread lock
+            if (stats.size > 5 * 1024 * 1024) {
+                console.warn(`[DB] Local DB file size (${Math.round(stats.size / 1024)}KB) exceeds 5MB limit. Resetting file...`);
                 try { fs.unlinkSync(DB_PATH); } catch (e) {}
-                fs.writeFileSync(DB_PATH + '.wiped_v7', 'true');
                 cachedLocalDB = {};
                 return cachedLocalDB;
             }
-
-            const stats = fs.statSync(DB_PATH);
             const content = fs.readFileSync(DB_PATH, 'utf-8');
             cachedLocalDB = JSON.parse(content);
             console.log(`[DB] Local DB loaded into memory: ${Math.round(stats.size / 1024)}KB`);

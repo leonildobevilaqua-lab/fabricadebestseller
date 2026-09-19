@@ -542,10 +542,11 @@ export const startResearch = async (req: Request, res: Response) => {
             // Check preemption helper
             const checkPreemption = async () => {
                 const latest = await QueueService.getProject(id);
-                if (!latest || latest.metadata.currentWorkerId !== workerId) {
+                if (latest && latest.metadata.currentWorkerId && latest.metadata.currentWorkerId !== workerId) {
+                    console.warn(`[startResearch] Worker ${workerId} preempted by ${latest.metadata.currentWorkerId}`);
                     throw new Error("PREEMPTED");
                 }
-                return latest;
+                return latest || currentProject;
             };
 
             const topic = project.metadata.topic;
