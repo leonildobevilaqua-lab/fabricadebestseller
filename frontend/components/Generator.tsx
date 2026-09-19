@@ -1446,7 +1446,8 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               </button>
             ) : (
               <RotatingMessage messages={(() => {
-                const pNum = Number(progress || 0) || 0;
+                const rawP = project?.metadata?.progress;
+                const pNum = typeof rawP === 'number' ? rawP : (parseInt(String(rawP || 0), 10) || 0);
                 if (metadata.isFiction) return (t as any).rotatingMessagesFiction || t.rotatingMessages;
                 if (pNum < 40) return [
                   "Pesquisando os vídeos mais visualizados sobre o assunto...",

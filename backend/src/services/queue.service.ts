@@ -39,7 +39,7 @@ export const createProject = async (metadata: Partial<BookMetadata>): Promise<Bo
 
 export const getProject = async (id: string): Promise<BookProject | null> => {
     try {
-        const data = await getVal(`/projects/${id}`, { forceSync: true });
+        const data = await getVal(`/projects/${id}`);
         if (!data) return null;
 
         // Ensure Dates are Date objects (JSON stores as strings)
