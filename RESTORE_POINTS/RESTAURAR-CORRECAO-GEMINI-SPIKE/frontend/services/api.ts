@@ -1,0 +1,151 @@
+import { BookMetadata, TitleOption, BookProject, Chapter } from '../types';
+
+// Robust URL Resolution Strategy
+export const getApiBase = () => {
+    const env = (import.meta as any).env.VITE_API_URL;
+    if (env) return env;
+    const custom = localStorage.getItem('admin_api_url');
+    if (custom) return custom.trim();
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:3005';
+    
+    // Explicit production override if needed
+    if (host.includes('fabricadebestseller.com.br')) return 'https://api.fabricadebestseller.com.br';
+    
+    // Default to same origin (proxy mode)
+    return window.location.origin;
+};
+
+export const getApiUrl = () => {
+    let base = getApiBase();
+    if (base.endsWith('/')) base = base.slice(0, -1);
+    return `${base}/api/projects`;
+};
+
+export const getPaymentUrl = () => {
+    let base = getApiBase();
+    if (base.endsWith('/')) base = base.slice(0, -1);
+    return `${base}/api/payment`;
+};
+
+export const createProject = async (
+    authorName: string, 
+    topic: string, 
+    language?: string, 
+    contact?: any, 
+    forceNew?: boolean, 
+    extra?: { 
+        contentStyle?: string, 
+        writingTone?: string, 
+        bookTitle?: string, 
+        subTitle?: string,
+        isFiction?: boolean,
+        genre?: string,
+        characters?: { name: string, info: string }[]
+    }
+): Promise<BookProject> => {
+    const res = await fetch(getApiUrl(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authorName, topic, language, contact, forceNew, ...extra })
+    });
+    return res.json();
+};
+
+export const getProject = async (id: string): Promise<BookProject> => {
+    const res = await fetch(`${getApiUrl()}/${id}`);
+    return res.json();
+};
+
+export const startResearch = async (id: string, language?: string, email?: string, titleInstruction?: string, force?: boolean): Promise<void> => {
+    const res = await fetch(`${getApiUrl()}/${id}/research`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language, email, titleInstruction, force })
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.code ? JSON.stringify({ code: err.code, message: err.error }) : (err.error || res.statusText);
+        throw new Error(msg);
+    }
+};
+
+export const selectTitle = async (id: string, title: string, subtitle: string): Promise<void> => {
+    await fetch(`${getApiUrl()}/${id}/select-title`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, subtitle })
+    });
+};
+
+export const generateBookContent = async (id: string, language?: string, email?: string, force?: boolean): Promise<void> => {
+    const res = await fetch(`${getApiUrl()}/${id}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language, email, force })
+    });
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err.code ? JSON.stringify({ code: err.code, message: err.error }) : (err.error || res.statusText);
+        throw new Error(msg);
+    }
+};
+
+export const updateProject = async (id: string, data: any): Promise<void> => {
+    await fetch(`${getApiUrl()}/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+};
+
+export const useCredit = async (email: string): Promise<boolean> => {
+    try {
+        const res = await fetch(`${getPaymentUrl()}/use`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        return data.success;
+    } catch (e) {
+        console.error("Failed to use credit", e);
+        return false;
+    }
+};
+
+export const createLead = async (data: any): Promise<any> => {
+    const res = await fetch(`${getPaymentUrl()}/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    return res.json();
+};
+
+export const registerPromoLead = async (name: string, email: string, phone: string): Promise<any> => {
+    const res = await fetch(`${getApiBase()}/api/user/leads`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, phone, source: 'promocao_599' })
+    });
+    return res.json();
+};
+
+export const finalizeProject = async (id: string, data: any): Promise<void> => {
+    const res = await fetch(`${getApiUrl()}/${id}/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+        let errMsg = "Erro ao finalizar livro.";
+        try {
+            const errData = await res.json();
+            errMsg = errData.details || errData.error || errMsg;
+        } catch (e) {
+            // keep default message
+        }
+        throw new Error(errMsg);
+    }
+};

@@ -52,9 +52,8 @@ export class GeminiProvider implements LLMProvider {
             } catch (error: any) {
                 console.error(`[GEMINI] Model ${modelName} CRITICAL FAILURE:`, error.message);
                 lastError = error;
-                const isRateLimit = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED') || error?.message?.includes('Quota exceeded');
-                const delayMs = isRateLimit ? 5000 : 1000;
-                await new Promise(resolve => setTimeout(resolve, delayMs));
+                // Wait 1s before next model to avoid hitting rate limits too fast
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
         throw lastError;
@@ -107,9 +106,7 @@ export class GeminiProvider implements LLMProvider {
             } catch (error: any) {
                 console.warn(`[GEMINI] Model ${modelName} JSON failed:`, error.message);
                 lastError = error;
-                const isRateLimit = error?.status === 429 || error?.message?.includes('429') || error?.message?.includes('RESOURCE_EXHAUSTED') || error?.message?.includes('Quota exceeded');
-                const delayMs = isRateLimit ? 5000 : 1000;
-                await new Promise(resolve => setTimeout(resolve, delayMs));
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
         throw lastError;

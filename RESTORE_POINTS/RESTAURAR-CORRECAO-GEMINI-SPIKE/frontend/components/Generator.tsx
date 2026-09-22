@@ -557,22 +557,22 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   const [retryCount, setRetryCount] = useState(0);
 
-  const handleRetry = async (forceParam: boolean = false) => {
+  const handleRetry = async () => {
     if (!projectId || !project) return;
     setRetryCount(prev => prev + 1);
     try {
       if (progress < 30) {
-        await API.startResearch(projectId, bookLanguage || language, userContact?.email, undefined, forceParam);
-        setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa...' } });
+        await API.startResearch(projectId, bookLanguage || language, userContact?.email, undefined, true);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa automaticamente...' } });
       } else if (progress >= 30 && progress < 41) {
-        await API.generateBookContent(projectId, bookLanguage || language, userContact?.email, forceParam);
+        await API.generateBookContent(projectId, bookLanguage || language, userContact?.email, true);
         setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Iniciando escrita...' } });
       } else {
-        await API.generateBookContent(projectId, bookLanguage || language, userContact?.email, forceParam);
-        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita...' } });
+        await API.generateBookContent(projectId, bookLanguage || language, userContact?.email, true);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita automaticamente...' } });
       }
     } catch (e) {
-      console.error("Retry execution failed", e);
+      console.error("Auto-retry failed", e);
     }
   };
 
@@ -638,17 +638,17 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     return () => clearInterval(interval);
   }, [projectId, lastProgress]);
 
-  // AUTO-RESUME EFFECT: If stuck for > 180s (3 min) in an active state without pulse updates, safely attempt resume
+  // AUTO-RESUME EFFECT: If stuck for > 25s in an active state, kick it!
   useEffect(() => {
     if (!projectId || !project || error) return;
     const { status } = project.metadata;
     const now = Date.now();
-    const isStuck = (now - lastProgressTime > 180000); // 180 seconds (3 minutes) without progress or pulse update
+    const isStuck = (now - lastProgressTime > 25000); // 25 seconds (was 180s) without progress or pulse update
     
     if (isStuck && (status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' || status === 'GENERATING_MARKETING')) {
-       console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Attempting non-forcing resume...`);
+       console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Retrying...`);
        setLastProgressTime(now); // Reset timer to avoid spamming
-       handleRetry(false); // Pass force=false for auto-resume to avoid spawning duplicate workers
+       handleRetry();
     }
   }, [projectId, project, lastProgress, lastProgressTime, error]);
 
