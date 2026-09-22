@@ -135,21 +135,28 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
         if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
         const access = await res.json();
 
-        if (access.activeProjectId) {
+        const hasTopicToCreate = metadata.topic && metadata.topic.trim().length > 0;
+
+        if (access.activeProjectId && !hasTopicToCreate) {
           setProjectId(access.activeProjectId);
           // Get the project data immediately
           const p = await API.getProject(access.activeProjectId);
           if (p) {
             setProject(p);
-            // If it's IDLE, it means it was waiting for payment and now it has it
-            if (p.metadata.status === 'IDLE') {
-              await API.startResearch(p.id, language, userContact?.email);
+            // If it's IDLE or RESEARCHING with low progress (<= 5%), kickstart research worker with force=true
+            if (p.metadata.status === 'IDLE' || (p.metadata.status === 'RESEARCHING' && (!p.metadata.progress || p.metadata.progress <= 5))) {
+              console.log("Kickstarting research worker on mount with force=true...");
+              try {
+                await API.startResearch(p.id, language, userContact?.email, undefined, true);
+              } catch (startErr) {
+                console.error("Failed to kickstart research:", startErr);
+              }
             }
           }
           setIsLoadingAccess(false);
           setIsManufacturing(false); // Skip animation
-        } else if (access.hasAccess && access.credits > 0) {
-          // Authorized but no active project: Start Animation for new book
+        } else if (access.hasAccess || (access.credits && access.credits > 0) || hasTopicToCreate) {
+          // Authorized or creating new book: Start Animation for new book
           setIsManufacturing(true);
           setIsLoadingAccess(false);
         } else {
@@ -460,9 +467,9 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
       // Since `API.createProject` succeeded, payment is already verified and the credit was consumed.
       // We can immediately start the research process.
-      if (p.metadata.status === 'IDLE') {
+      if (p.metadata.status === 'IDLE' || (p.metadata.status === 'RESEARCHING' && (!p.metadata.progress || p.metadata.progress <= 5))) {
         try {
-          await API.startResearch(p.id, bookLanguage || language, userContact?.email);
+          await API.startResearch(p.id, bookLanguage || language, userContact?.email, undefined, true);
         } catch (startErr) {
           console.error("Failed to start research automatically:", startErr);
         }
@@ -550,22 +557,22 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
 
   const [retryCount, setRetryCount] = useState(0);
 
-  const handleRetry = async () => {
+  const handleRetry = async (forceParam: boolean = false) => {
     if (!projectId || !project) return;
     setRetryCount(prev => prev + 1);
     try {
       if (progress < 30) {
-        await API.startResearch(projectId, bookLanguage || language);
-        setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa automaticamente...' } });
+        await API.startResearch(projectId, bookLanguage || language, userContact?.email, undefined, forceParam);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'RESEARCHING', statusMessage: 'Reiniciando pesquisa...' } });
       } else if (progress >= 30 && progress < 41) {
-        await API.generateBookContent(projectId, bookLanguage || language);
+        await API.generateBookContent(projectId, bookLanguage || language, userContact?.email, forceParam);
         setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Iniciando escrita...' } });
       } else {
-        await API.generateBookContent(projectId, bookLanguage || language);
-        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita automaticamente...' } });
+        await API.generateBookContent(projectId, bookLanguage || language, userContact?.email, forceParam);
+        setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', statusMessage: 'Retomando a escrita...' } });
       }
     } catch (e) {
-      console.error("Auto-retry failed", e);
+      console.error("Retry execution failed", e);
     }
   };
 
@@ -631,17 +638,17 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     return () => clearInterval(interval);
   }, [projectId, lastProgress]);
 
-  // AUTO-RESUME EFFECT: If stuck for > 60s in an active state, kick it!
+  // AUTO-RESUME EFFECT: If stuck for > 180s (3 min) in an active state without pulse updates, safely attempt resume
   useEffect(() => {
     if (!projectId || !project || error) return;
     const { status } = project.metadata;
     const now = Date.now();
-    const isStuck = (now - lastProgressTime > 240000); // 4 minutes (240s) without progress or pulse update
+    const isStuck = (now - lastProgressTime > 180000); // 180 seconds (3 minutes) without progress or pulse update
     
     if (isStuck && (status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' || status === 'GENERATING_MARKETING')) {
-       console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Retrying...`);
+       console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Attempting non-forcing resume...`);
        setLastProgressTime(now); // Reset timer to avoid spamming
-       handleRetry();
+       handleRetry(false); // Pass force=false for auto-resume to avoid spawning duplicate workers
     }
   }, [projectId, project, lastProgress, lastProgressTime, error]);
 
@@ -823,7 +830,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
           {project.titleOptions && project.titleOptions.length > 0 ? (
             project.titleOptions.map((opt, idx) => (
               <button
-                key={`title-opt-v5-stable-${idx}-${opt.title.substring(0,10)}`}
+                key={`title-opt-v5-stable-${idx}-${(opt.title || '').substring(0,10)}`}
                 onClick={() => handleTitleSelect(opt)}
                 className={`text-left p-4 md:p-5 rounded-2xl border transition-all bg-white group relative overflow-hidden ${opt.isTopChoice ? 'border-[#0ea5e9] shadow-xl ring-2 ring-[#e0f2fe]' : 'border-gray-100 hover:border-[#0ea5e9] hover:shadow-lg'}`}
               >
@@ -1440,8 +1447,10 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
               </button>
             ) : (
               <RotatingMessage messages={(() => {
+                const rawP = project?.metadata?.progress;
+                const pNum = typeof rawP === 'number' ? rawP : (parseInt(String(rawP || 0), 10) || 0);
                 if (metadata.isFiction) return (t as any).rotatingMessagesFiction || t.rotatingMessages;
-                if (progress < 40) return [
+                if (pNum < 40) return [
                   "Pesquisando os vídeos mais visualizados sobre o assunto...",
                   "Verificando os comentários nos vídeos sobre o tema...",
                   "Mapeando as dores, dúvidas e sugestões da audiência...",
@@ -1449,7 +1458,7 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
                   "Identificando gatilhos mentais mais utilizados...",
                   "Cruzando dados de concorrentes best-sellers..."
                 ];
-                if (progress < 90) return [
+                if (pNum < 90) return [
                   "Selecionando as principais informações coletadas na pesquisa profissional...",
                   "Organizando os assuntos de acordo com os capítulos...",
                   "Fazendo a estruturação adequada do pensamento lógico do livro...",

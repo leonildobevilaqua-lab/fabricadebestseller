@@ -38,31 +38,37 @@ export const WebinarLaunch: React.FC = () => {
       </div>
 
       {/* 2. HERO SECTION */}
-      <header className="relative overflow-hidden px-4 sm:px-6 lg:px-8 min-h-[85vh] flex items-center">
-        {/* Background image & gradient overlays */}
-        <div className="absolute inset-0 bg-[url('https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/c9d8ecf8-037b-4369-9da5-f65483c55b2f/id-preview-466dbbd5--e4d091a5-d542-4a0e-874e-c767d3340964.lovable.app-1772137611340.png')] bg-cover bg-center opacity-10"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent z-0"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0a0a0a] z-0"></div>
+      <header className="relative overflow-hidden px-4 sm:px-6 lg:px-8 min-h-[90vh] flex items-center pt-24 md:pt-0">
         
-        {/* Right Author Image (Absolute positioned for professional blend) */}
-        <div className="absolute bottom-0 right-0 w-full md:w-[75%] lg:w-[70%] h-full z-0 hidden md:flex justify-end items-end overflow-hidden pointer-events-none">
-           {/* Subtle glow behind the author */}
-           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[80%] bg-amber-500/10 blur-[120px] rounded-full"></div>
-           <img 
-              src="/assets/Leonildo%20Bevilaqua%20Oficial.png" 
-              alt="Leonildo Bevilaqua" 
-              className="object-contain object-bottom h-[125%] lg:h-[165%] w-auto mr-[10%] lg:mr-[25%] drop-shadow-[0_0_40px_rgba(0,0,0,0.5)] z-10"
-           />
-           {/* Fade at the bottom to blend seamlessly */}
-           <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/80 to-transparent z-20"></div>
-           {/* Fade on the left to blend with text */}
-           <div className="absolute top-0 left-0 w-1/4 h-full bg-gradient-to-r from-[#0a0a0a] to-transparent z-20"></div>
+        {/* Cinematic Main Background (Podcast Image) */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="/assets/Leonildo%20Bevilaqua%20-%20Oficial%20Landing%20page.png" 
+            alt="Leonildo Bevilaqua" 
+            className="w-full h-full object-cover object-[70%_center] md:object-right opacity-30 md:opacity-90"
+          />
         </div>
+
+        {/* Gradient overlays to blend the image into the dark theme and highlight text */}
+        {/* Left gradient for text readability (Netflix style) */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent w-full md:w-[75%] z-0"></div>
         
-        <div className="relative max-w-6xl mx-auto flex w-full z-10 py-20 lg:py-28">
+        {/* Mobile-only dark overlay to guarantee text contrast */}
+        <div className="absolute inset-0 bg-black/60 md:hidden z-0"></div>
+        
+        {/* Bottom gradient for smooth transition to the next section */}
+        <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent z-0"></div>
+        
+        {/* Top gradient for header breathing room */}
+        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#0a0a0a] via-black/50 to-transparent z-0"></div>
+
+        {/* Subtle amber glow behind the text to make it pop */}
+        <div className="absolute top-1/2 left-[10%] -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 blur-[150px] rounded-full hidden md:block z-0"></div>
+
+        <div className="relative max-w-6xl mx-auto flex w-full z-20 py-10 lg:py-28">
           {/* Left Column - Text & CTA */}
-          <div className="w-full md:w-[65%] lg:w-[60%] space-y-8 text-center md:text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium text-sm mb-4">
+          <div className="w-full md:w-[65%] lg:w-[60%] space-y-8 text-center md:text-left z-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium text-sm mb-4 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
               <Video className="w-4 h-4" />
               <span>Apresentação Completa e Exclusiva</span>
             </div>
@@ -74,13 +80,13 @@ export const WebinarLaunch: React.FC = () => {
               </span>
             </h1>
             
-            <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto md:mx-0 leading-relaxed">
+            <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto md:mx-0 leading-relaxed drop-shadow-md">
               Participe de um encontro intenso onde revelarei os bastidores da <strong>Fábrica de Best Seller</strong>. O passo a passo para transformar sua ideia em um livro desejado, lucrativo e de altíssima qualidade.
             </p>
 
             {/* DATE & TIME BADGE */}
             <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 pt-6">
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-4 rounded-xl backdrop-blur-sm">
+              <div className="flex items-center gap-3 bg-black/40 md:bg-white/5 border border-white/10 px-6 py-4 rounded-xl backdrop-blur-sm">
                 <Calendar className="w-6 h-6 text-amber-500" />
                 <div className="text-left">
                   <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Quando</p>
@@ -88,7 +94,7 @@ export const WebinarLaunch: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-6 py-4 rounded-xl backdrop-blur-sm">
+              <div className="flex items-center gap-3 bg-black/40 md:bg-white/5 border border-white/10 px-6 py-4 rounded-xl backdrop-blur-sm">
                 <Clock className="w-6 h-6 text-amber-500" />
                 <div className="text-left">
                   <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Horário</p>
@@ -98,9 +104,13 @@ export const WebinarLaunch: React.FC = () => {
             </div>
             
             <div className="pt-8">
-              <a href="#inscricao" className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold text-lg py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02]">
+              <button 
+                type="button"
+                onClick={() => window.open('https://payment.ticto.app/OF211B00F', '_blank', 'noopener,noreferrer')}
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold text-lg py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02]"
+              >
                 GARANTIR MINHA VAGA | LOTE ESPECIAL <ChevronRight className="w-5 h-5" />
-              </a>
+              </button>
               <p className="text-xs text-slate-500 mt-3 text-center md:text-left pl-2">97% dos ingressos do lote especial vendidos.</p>
             </div>
           </div>
@@ -212,54 +222,129 @@ export const WebinarLaunch: React.FC = () => {
               <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight">Não é sobre o preço.<br />É sobre dar vida ao seu livro.</h2>
             </div>
             
-            <ul className="space-y-6">
+            <ul className="space-y-4">
               <li className="flex gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                  <Video className="w-6 h-6 text-emerald-400" />
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                  <Video className="w-5 h-5 text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-white">Acesso à Apresentação</h3>
-                  <p className="text-slate-400 mt-1">Acesso completo ao conteúdo onde eu detalho todo o processo de criação de um Livro Profissional, passo a passo.</p>
+                  <h3 className="text-lg font-semibold text-white">Masterclass Método (PBE)</h3>
+                  <p className="text-slate-400 text-sm mt-1">Treinamento completo revelando os bastidores para criar, formatar e lançar sua obra com velocidade e padrão profissional.</p>
                 </div>
               </li>
-              
-              <li className="flex gap-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-amber-500 text-black text-[10px] font-bold px-2 py-1 uppercase rounded-bl-lg">Bônus Especial</div>
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                  <BookOpen className="w-6 h-6 text-amber-400" />
+              <li className="flex gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                  <BookOpen className="w-5 h-5 text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-amber-400">1 Crédito na Fábrica</h3>
-                  <p className="text-slate-300 mt-1">Ao garantir seu ingresso, você ganha 1 crédito para gerar um livro completo utilizando a inteligência artificial da Fábrica de Best Seller.</p>
+                  <h3 className="text-lg font-semibold text-amber-400">1 Crédito Completo na FBS</h3>
+                  <p className="text-slate-400 text-sm mt-1">Acesso direto à ferramenta de IA para estruturar e gerar seu livro completo do sumário à conclusão.</p>
+                </div>
+              </li>
+              <li className="flex gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                  <Star className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Matriz de Mineração de Temas</h3>
+                  <p className="text-slate-400 text-sm mt-1">Framework de mercado para encontrar assuntos lucrativos e títulos que atraem cliques imediatos.</p>
+                </div>
+              </li>
+              <li className="flex gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-pink-500/10 flex items-center justify-center border border-pink-500/20">
+                  <BookOpen className="w-5 h-5 text-pink-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">O Campo Magnético das Vendas</h3>
+                  <p className="text-slate-400 text-sm mt-1">Livro digital com guia estratégico para transformar leitores casuais em clientes fiéis.</p>
+                </div>
+              </li>
+              <li className="flex gap-4">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
+                  <Star className="w-5 h-5 text-cyan-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">Modelo de Página de Registro</h3>
+                  <p className="text-slate-400 text-sm mt-1">Template 100% editável para você divulgar e capturar interessados no seu livro antes do lançamento.</p>
+                </div>
+              </li>
+              <li className="flex gap-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 relative overflow-hidden mt-4">
+                <div className="absolute top-0 right-0 bg-amber-500 text-black text-[10px] font-bold px-2 py-1 uppercase rounded-bl-lg">Liberados ao vivo</div>
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                  <Star className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-amber-400">2 Bônus Surpresas Especiais</h3>
+                  <p className="text-slate-300 text-sm mt-1">
+                    Ativos de altíssimo valor (R$ 546,90) revelados unicamente para os participantes presentes ao encerramento da masterclass.
+                  </p>
                 </div>
               </li>
             </ul>
           </div>
 
-          {/* Checkout Card */}
+          {/* Checkout Card with Price Anchoring */}
           <div className="bg-gradient-to-b from-slate-900 to-black border border-white/10 rounded-3xl p-8 relative shadow-2xl shadow-amber-900/10">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-black font-bold uppercase tracking-widest text-xs px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
               Oferta Limitada
             </div>
             
-            <div className="text-center space-y-6 pt-4">
-              <div>
-                <p className="text-slate-400 text-sm line-through">De: R$ 97,00</p>
-                <div className="flex items-end justify-center gap-2 mt-2">
-                  <span className="text-xl font-medium text-slate-300">Por apenas:</span>
-                  <span className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500">R$ 29,90</span>
+            <div className="space-y-6 pt-2">
+              <div className="bg-black/50 p-4 sm:p-5 rounded-xl border border-white/5 space-y-2">
+                <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <span className="text-slate-400 truncate pr-2">Masterclass Método (PBE)</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 147,90</span>
                 </div>
-                <p className="text-amber-500/80 text-sm font-medium mt-2">1º Lote. O preço subirá para R$ 49,90 em breve.</p>
+                <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <span className="text-slate-400 truncate pr-2">1 Crédito FBS</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 39,90</span>
+                </div>
+                <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <span className="text-slate-400 truncate pr-2">Matriz de Mineração</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 79,90</span>
+                </div>
+                <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <span className="text-slate-400 truncate pr-2">Livro Digital</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 49,90</span>
+                </div>
+                <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <span className="text-slate-400 truncate pr-2">Modelo de Página</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 19,90</span>
+                </div>
+                <div className="flex justify-between items-center text-xs sm:text-sm">
+                  <span className="text-amber-500/80 truncate pr-2">Bônus Surpresa 1</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 49,90</span>
+                </div>
+                <div className="flex justify-between items-center text-xs sm:text-sm border-b border-white/5 pb-2">
+                  <span className="text-amber-500 font-bold truncate pr-2">Bônus ESPECIAL 2</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 497,00</span>
+                </div>
+                <div className="flex justify-between items-center font-medium pt-1">
+                  <span className="text-slate-300 text-xs sm:text-sm">Valor Total de Tudo:</span>
+                  <span className="text-slate-500 line-through whitespace-nowrap">R$ 884,40</span>
+                </div>
+              </div>
+              
+              <div className="text-center space-y-1">
+                <p className="text-slate-400 text-sm line-through">De: R$ 884,40</p>
+                <div className="flex items-end justify-center gap-2">
+                  <span className="text-xl font-medium text-slate-300">Por apenas:</span>
+                  <span className="text-4xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500">R$ 29,90</span>
+                </div>
+                <p className="text-amber-500/80 text-xs sm:text-sm font-medium pt-2">
+                  (Ou em até 5x de R$ 6,62 — mais de 96% de economia)
+                </p>
               </div>
 
-              <a 
-                href="#"
+              <button 
+                type="button"
+                onClick={() => window.open('https://payment.ticto.app/OF211B00F', '_blank', 'noopener,noreferrer')}
                 className="w-full block bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold text-lg py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 <div className="flex items-center justify-center gap-2">
                   Garantir Minha Vaga Agora <ChevronRight className="w-5 h-5" />
                 </div>
-              </a>
+              </button>
 
               <div className="flex items-center justify-center gap-4 text-xs font-medium text-slate-400">
                 <div className="flex items-center gap-1"><Lock className="w-3 h-3 text-emerald-500" /> Pagamento Seguro</div>
@@ -427,9 +512,13 @@ export const WebinarLaunch: React.FC = () => {
           </div>
 
           <div className="text-center pt-8">
-            <a href="#inscricao" className="inline-block bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 px-8 rounded-xl transition-colors">
+            <button 
+              type="button"
+              onClick={() => window.open('https://payment.ticto.app/OF211B00F', '_blank', 'noopener,noreferrer')}
+              className="inline-block bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 px-8 rounded-xl transition-colors"
+            >
               Quero Garantir Minha Vaga
-            </a>
+            </button>
           </div>
         </div>
       </section>

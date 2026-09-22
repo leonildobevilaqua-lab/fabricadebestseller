@@ -25,7 +25,7 @@ export const ResearchService = {
         const isEnglish = lang === 'en';
         console.log(`[RESEARCH] Google Search (${lang}, market: ${isEnglish ? 'US' : 'BR'}): "${query}"`);
         try {
-            const timeout = 60000; // 1 minute
+            const timeout = 2000; // 2 seconds
             const searchPromise = search({
                 query: query,
                 // For English: target US region results (Google.com, United States)
@@ -63,7 +63,7 @@ export const ResearchService = {
             // For English: add "english" to ensure US-market content
             const searchQuery = isEnglish ? `${query} english` : query;
             // youtube-search-api does not support regionCode in the same way, but we adjust the query
-            const timeout = 60000; // 1 minute
+            const timeout = 2000; // 2 seconds
             const searchPromise = YouTubeSearch.GetListByKeyword(searchQuery, false, 10);
             const data = await Promise.race([
                 searchPromise,
@@ -101,7 +101,7 @@ export const ResearchService = {
         console.log(`[RESEARCH] Amazon Search via Google (lang=${lang}, domain=${domain}): "${query}"`);
 
         try {
-            const timeout = 60000; // 1 minute
+            const timeout = 2000; // 2 seconds
             const searchPromise = search({
                 query: query,
                 // For English: use US geolocation to get Amazon.com results

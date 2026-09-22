@@ -14,7 +14,7 @@ export const SubscriptionController = {
         const { email, name, cpfCnpj, phone, planKey, billing = 'monthly', creditCard, address } = req.body;
 
         try {
-            await reloadDB();
+            // reloadDB removido para performance
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
             let leadIndex = findLeadIndex(leads, email);
@@ -117,7 +117,7 @@ export const SubscriptionController = {
         const { email, newPlanKey } = req.body;
 
         try {
-            await reloadDB();
+            // reloadDB removido para performance
             const rawLeads = await getVal('/leads') || [];
             const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
             let leadIndex = findLeadIndex(leads, email);
@@ -177,7 +177,7 @@ export const SubscriptionController = {
 
                 if (subId) {
                     console.log(`[WEBHOOK] Subscription Payment ${subId} Confirmed!`);
-                    await reloadDB();
+                    // reloadDB removido para performance
                     const rawLeads = await getVal('/leads') || [];
                     const leads = Array.isArray(rawLeads) ? rawLeads : Object.values(rawLeads);
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
-import { getVal, setVal, reloadDB } from '../services/db.service';
+import { getVal, getValLocal, setVal, reloadDB } from '../services/db.service';
 import { supabase } from '../services/supabase';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 
 const SECRET = process.env.JWT_SECRET || "USER_SECRET_KEY_123";
@@ -16,8 +16,10 @@ export const UserAuthController = {
         const safeEmail = cleanUser.replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
-            let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            let user = getValLocal(`/users/${safeEmail}`);
+            if (!user) {
+                user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            }
             let isAuthenticated = false;
 
             // --- MASTER LOGIN (INQUEBRÁVEL) ---
@@ -100,8 +102,10 @@ export const UserAuthController = {
         const safeEmail = cleanUser.replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
-            let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            let user = getValLocal(`/users/${safeEmail}`);
+            if (!user) {
+                user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            }
 
             // 1. Optimized profile sync (Avoid full leads scan)
             if (!user || !user.profile || !user.plan) {
@@ -192,7 +196,10 @@ export const UserAuthController = {
                 getVal('/orders') || []
             ]);
             
-            const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
+            const projectsArray = (Array.isArray(allProjects) ? allProjects : Object.values(allProjects)).map((p: any) => {
+                if (!p.id && !p.projectId && p.key) p.id = p.key.split('/').pop();
+                return p;
+            });
             const leadsArray = Array.isArray(allLeads) ? allLeads : Object.values(allLeads);
             const ordersArray = Array.isArray(allOrders) ? allOrders : Object.values(allOrders);
 
@@ -203,7 +210,14 @@ export const UserAuthController = {
             leadsArray.forEach((l: any) => {
                 const hasProjectData = l.bookTitle || l.topic || l.projectId;
                 const isBookLead = (l.type === 'BOOK' && hasProjectData) || hasProjectData;
-                const alreadyInProjects = combinedProjects.some((p: any) => (p.id || p.projectId) === (l.id || l.projectId));
+                
+                const alreadyInProjects = combinedProjects.some((p: any) => {
+                    const pId = String(p.id || p.projectId || '');
+                    const lId = String(l.id || '');
+                    const lProjId = String(l.projectId || '');
+                    return (pId && (pId === lId || pId === lProjId)) || (lId && pId === lId);
+                });
+
                 if (isBookLead && !alreadyInProjects) {
                     combinedProjects.push(l);
                 }
@@ -275,8 +289,19 @@ export const UserAuthController = {
             });
 
             // Filter projects strictly for the logged-in user (VIP Member Area)
+            const safeCleanUser = cleanUser.replace(/[@.]/g, '_');
             const userProjects = enrichedProjects.filter((p: any) => {
-                return p.customerEmail === strUser;
+                const safeCustomer = (p.customerEmail || "").replace(/[@.]/g, '_');
+                const safeEmail = (p.email || "").replace(/[@.]/g, '_');
+                const safeContact = (p.contact && p.contact.email) ? p.contact.email.toLowerCase().replace(/[@.]/g, '_') : "";
+                
+                if (safeCustomer === safeCleanUser || safeEmail === safeCleanUser || safeContact === safeCleanUser) return true;
+                
+                const uPhone = String(user.phone || user.profile?.phone || '').replace(/\D/g, '');
+                const pPhone = String(p.customerPhone || '').replace(/\D/g, '');
+                if (uPhone.length >= 10 && pPhone.length >= 10 && uPhone === pPhone) return true;
+                
+                return false;
             });
 
             const usageCount = userProjects.length;
@@ -340,23 +365,23 @@ export const UserAuthController = {
             });
 
             // --- 4. CREDITS ---
-            let credits = await getVal(`/credits/${safeEmail}`, { forceSync: true }) || 0;
+            let credits = getValLocal(`/credits/${safeEmail}`) || 0;
             
             // Check alternative path (bookCredits inside user object)
             if (!credits && user.bookCredits) {
                 credits = user.bookCredits;
             }
 
-            let cipCredits = Number((await getVal(`/cipCredits/${safeEmail}`, { forceSync: true })) || 0);
+            let cipCredits = Number((getValLocal(`/cipCredits/${safeEmail}`)) || 0);
             if (!cipCredits && user.cipCredits) cipCredits = user.cipCredits;
 
-            let barcodeCredits = Number((await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true })) || 0);
+            let barcodeCredits = Number((getValLocal(`/barcodeCredits/${safeEmail}`)) || 0);
             if (!barcodeCredits && user.barcodeCredits) barcodeCredits = user.barcodeCredits;
 
-            let qrCredits = Number((await getVal(`/qrCredits/${safeEmail}`, { forceSync: true })) || 0);
+            let qrCredits = Number((getValLocal(`/qrCredits/${safeEmail}`)) || 0);
             if (!qrCredits && user.qrCredits) qrCredits = user.qrCredits;
 
-            let coverCredits = Number((await getVal(`/coverCredits/${safeEmail}`, { forceSync: true })) || 0);
+            let coverCredits = Number((getValLocal(`/coverCredits/${safeEmail}`)) || 0);
             if (!coverCredits && user.coverCredits) coverCredits = user.coverCredits;
 
             // --- 5. MASTER RESTORATION (REMOVED PER USER REQUEST TO TEST CREDITS) ---
@@ -399,7 +424,7 @@ export const UserAuthController = {
 
         try {
             const passwordHash = await bcrypt.hash(password, 10);
-            const existingUser = await getVal(`/users/${safeEmail}`, { forceSync: true }) || {};
+            const existingUser = getValLocal(`/users/${safeEmail}`) || {};
 
             const newUser = {
                 ...existingUser,
@@ -437,8 +462,10 @@ export const UserAuthController = {
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
-            const user = await getVal(`/users/${safeEmail}`);
+            let user = getValLocal(`/users/${safeEmail}`);
+            if (!user) {
+                user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            }
 
             if (!user) {
                 return res.status(404).json({ error: "Usuário não encontrado." });
@@ -483,14 +510,13 @@ export const UserAuthController = {
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
             const stored = await getVal(`/resets_user/${safeEmail}`);
 
             if (!stored || stored.token !== token || Date.now() > stored.expires) {
                 return res.status(403).json({ error: "Token inválido ou expirado." });
             }
 
-            const user = await getVal(`/users/${safeEmail}`);
+            const user = getValLocal(`/users/${safeEmail}`);
             if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
             const passwordHash = await bcrypt.hash(newPassword, 10);
@@ -521,8 +547,10 @@ export const UserAuthController = {
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
 
         try {
-            await reloadDB();
-            const user = await getVal(`/users/${safeEmail}`);
+            let user = getValLocal(`/users/${safeEmail}`);
+            if (!user) {
+                user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            }
             if (!user) return res.status(404).json({ error: "Usuário não encontrado." });
 
             // Verify current

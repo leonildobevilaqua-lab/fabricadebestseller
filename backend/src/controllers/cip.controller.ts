@@ -40,7 +40,7 @@ export const CipController = {
       const safeEmail = String(email).trim().toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
 
       // Check CIP Credits - UNIFIED SOURCE OF TRUTH (Matches Admin & Dashboard)
-      await reloadDB();
+      // reloadDB removido para performance
       const userObj = await getVal(`/users/${safeEmail}`);
       let cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`) || 0);
       

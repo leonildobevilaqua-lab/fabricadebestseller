@@ -4,9 +4,9 @@ import * as ConfigService from '../services/config.service';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { sendEmail } from '../services/email.service';
-import { getVal, setVal, reloadDB, deleteVal, getDatabasePath } from '../services/db.service';
+import { getVal, getValLocal, setVal, reloadDB, deleteVal, getDatabasePath } from '../services/db.service';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '../services/supabase';
 import * as DocService from '../services/doc.service';
@@ -384,7 +384,7 @@ export const listBackups = async (req: Request, res: Response) => {
         const supabaseFiles = (data || []).map((row: any) => ({ name: `${row.key}.json`, time: new Date(row.updated_at).getTime() }));
 
         // 2. Check Local DB
-        const { getVal, getLocalDB } = require('../services/db.service');
+        const { getVal, getValLocal, getLocalDB } = require('../services/db.service');
         const localDB = getLocalDB();
         const localFiles: any[] = [];
         for (const [k, v] of Object.entries(localDB)) {
@@ -434,7 +434,7 @@ export const restoreBackup = async (req: Request, res: Response) => {
         }
 
         // 3. Reload in-memory state
-        await reloadDB();
+
 
         res.json({ success: true });
     } catch (e: any) {
@@ -447,8 +447,8 @@ export const restoreBackup = async (req: Request, res: Response) => {
 
 export const getOrders = async (req: Request, res: Response) => {
     try {
-        // 1. Get real financial orders for the Dashboard (Force Sync for Admin)
-        const ordersArray = await getVal('/orders', { forceSync: true }) || [];
+        // 1. Get real financial orders for the Dashboard (Cache is maintained by webhooks)
+        const ordersArray = await getVal('/orders') || [];
         const orders = Array.isArray(ordersArray) ? ordersArray : Object.values(ordersArray);
 
         // 2. Sort - Newer first
@@ -469,27 +469,34 @@ export const getProjectHistory = async (req: Request, res: Response) => {
     try {
         // 1. Get projects & Leads (Hybrid version)
         const [allProjects, allLeadsData] = await Promise.all([
-            getVal('/projects', { forceSync: true }) || [],
-            getVal('/leads', { forceSync: true }) || []
+            getVal('/projects') || [],
+            getVal('/leads') || []
         ]);
         
-        const projectsArray = Array.isArray(allProjects) ? allProjects : Object.values(allProjects);
+        const projectsArray = (Array.isArray(allProjects) ? allProjects : Object.values(allProjects)).map((p: any) => {
+            if (!p.id && !p.projectId && p.key) p.id = p.key.split('/').pop();
+            return p;
+        });
         const leadsArray = Array.isArray(allLeadsData) ? allLeadsData : Object.values(allLeadsData);
 
-        // Merge everything that looks like a book/project
         const combined = [...projectsArray];
         leadsArray.forEach((l: any) => {
             const hasProjectData = l.bookTitle || l.topic || l.projectId;
             const isBookLead = (l.type === 'BOOK' && hasProjectData) || hasProjectData;
-            const alreadyIn = combined.some((p: any) => (p.id || p.projectId) === (l.id || l.projectId));
+            const lId = String(l.id || '');
+            const lProjId = String(l.projectId || '');
+            const alreadyIn = combined.some((p: any) => {
+                const pId = String(p.id || p.projectId || '');
+                return (pId && (pId === lId || pId === lProjId)) || (lId && pId === lId);
+            });
             if (isBookLead && !alreadyIn) {
                 combined.push(l);
             }
         });
 
         // 2. Enhance projects with latest credits
-        const allCredits = await getVal('/credits', { forceSync: true }) || {};
-        const allOrders = await getVal('/orders', { forceSync: true }) || [];
+        const allCredits = await getVal('/credits') || {};
+        const allOrders = await getVal('/orders') || [];
         const orders = Array.isArray(allOrders) ? allOrders : Object.values(allOrders);
         const leads = leadsArray; 
         
@@ -586,7 +593,7 @@ export const getProjectHistory = async (req: Request, res: Response) => {
             });
 
         const sorted = projectHistory.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        res.json(sorted);
+        res.json(sorted.slice(0, 20));
     } catch (e: any) {
         console.error("🔥 CRITICAL ADMIN PROJECTS ERROR:", e);
         res.status(500).json({ error: "Erro ao carregar histórico: " + e.message });
@@ -694,7 +701,7 @@ export const wipeAllHistory = async (req: Request, res: Response) => {
         await deleteVal('/users');
         await deleteVal('/credits');
 
-        await reloadDB();
+
         res.json({ success: true, message: "Todos os registros (Leads, Pedidos, Usuários e Projetos) foram apagados completamente." });
     } catch (e: any) {
         console.error("Wipe All Error:", e);
@@ -710,11 +717,11 @@ export const getCredits = async (req: Request, res: Response) => {
         const { email } = req.params;
         if (!email) return res.status(400).json({ error: "Email requerido" });
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        const credits = Number(await getVal(`/credits/${safeEmail}`, { forceSync: true }) || 0);
-        const cipCredits = Number(await getVal(`/cipCredits/${safeEmail}`, { forceSync: true }) || 0);
-        const barcodeCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true }) || 0);
-        const qrCredits = Number(await getVal(`/qrCredits/${safeEmail}`, { forceSync: true }) || 0);
-        const coverCredits = Number(await getVal(`/coverCredits/${safeEmail}`, { forceSync: true }) || 0);
+        const credits = Number(getValLocal(`/credits/${safeEmail}`) || 0);
+        const cipCredits = Number(getValLocal(`/cipCredits/${safeEmail}`) || 0);
+        const barcodeCredits = Number(getValLocal(`/barcodeCredits/${safeEmail}`) || 0);
+        const qrCredits = Number(getValLocal(`/qrCredits/${safeEmail}`) || 0);
+        const coverCredits = Number(getValLocal(`/coverCredits/${safeEmail}`) || 0);
         res.json({ email, credits, cipCredits, barcodeCredits, qrCredits, coverCredits });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
@@ -732,14 +739,15 @@ export const manageCredits = async (req: Request, res: Response) => {
 
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
         
-        await reloadDB();
+
 
         if (type === 'cip') {
-            const currentCredits = Number(await getVal(`/cipCredits/${safeEmail}`, { forceSync: true }) || 0);
+            let currentCredits = Number(getValLocal(`/cipCredits/${safeEmail}`));
+            if (isNaN(currentCredits)) currentCredits = 0;
             const newTotal = Math.max(0, currentCredits + Number(amount));
             await setVal(`/cipCredits/${safeEmail}`, newTotal);
 
-            const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            const user = getValLocal(`/users/${safeEmail}`);
             if (user) {
                 user.cipCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, user);
@@ -749,12 +757,13 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         if (type === 'barcode') {
-            const currentCredits = Number(await getVal(`/barcodeCredits/${safeEmail}`, { forceSync: true }) || 0);
+            let currentCredits = Number(getValLocal(`/barcodeCredits/${safeEmail}`));
+            if (isNaN(currentCredits)) currentCredits = 0;
             const base = Math.max(0, currentCredits);
             const newTotal = Math.max(0, base + Number(amount));
             await setVal(`/barcodeCredits/${safeEmail}`, newTotal);
 
-            const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            const user = getValLocal(`/users/${safeEmail}`);
             if (user) {
                 user.barcodeCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, user);
@@ -765,12 +774,13 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         if (type === 'qr') {
-            const currentCredits = Number(await getVal(`/qrCredits/${safeEmail}`, { forceSync: true }) || 0);
+            let currentCredits = Number(getValLocal(`/qrCredits/${safeEmail}`));
+            if (isNaN(currentCredits)) currentCredits = 0;
             const base = Math.max(0, currentCredits);
             const newTotal = Math.max(0, base + Number(amount));
             await setVal(`/qrCredits/${safeEmail}`, newTotal);
 
-            const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            const user = getValLocal(`/users/${safeEmail}`);
             if (user) {
                 user.qrCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, user);
@@ -781,12 +791,13 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         if (type === 'cover') {
-            const currentCredits = Number(await getVal(`/coverCredits/${safeEmail}`, { forceSync: true }) || 0);
+            let currentCredits = Number(getValLocal(`/coverCredits/${safeEmail}`));
+            if (isNaN(currentCredits)) currentCredits = 0;
             const base = Math.max(0, currentCredits);
             const newTotal = Math.max(0, base + Number(amount));
             await setVal(`/coverCredits/${safeEmail}`, newTotal);
 
-            const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+            const user = getValLocal(`/users/${safeEmail}`);
             if (user) {
                 user.coverCredits = newTotal;
                 await setVal(`/users/${safeEmail}`, user);
@@ -797,13 +808,14 @@ export const manageCredits = async (req: Request, res: Response) => {
         }
 
         // 1. Update /credits/ (Primary Source of truth for Generator)
-        const currentCredits = Number(await getVal(`/credits/${safeEmail}`, { forceSync: true }) || 0);
+        let currentCredits = Number(getValLocal(`/credits/${safeEmail}`));
+        if (isNaN(currentCredits)) currentCredits = 0;
         const newTotal = Math.max(0, currentCredits + Number(amount));
 
         await setVal(`/credits/${safeEmail}`, newTotal);
 
         // 2. Mirror to /users/ (For User Profile/Dashboard visibility)
-        const user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+        const user = getValLocal(`/users/${safeEmail}`);
         if (user) {
             user.bookCredits = newTotal;
             await setVal(`/users/${safeEmail}`, user);
@@ -826,8 +838,8 @@ export const adminUpdateUserPassword = async (req: Request, res: Response) => {
         if (!email || !newPassword) return res.status(400).json({ error: "Email e nova senha são obrigatórios." });
 
         const safeEmail = email.toLowerCase().trim().replace(/[^a-zA-Z0-9]/g, '_');
-        await reloadDB();
-        const user = await getVal(`/users/${safeEmail}`);
+
+        const user = getValLocal(`/users/${safeEmail}`);
 
         if (!user) {
             return res.status(404).json({ error: "Usuário não encontrado na base /users." });
@@ -859,8 +871,8 @@ export const impersonateUser = async (req: Request, res: Response) => {
     try {
    const safeEmail = cleanEmail.replace(/[^a-zA-Z0-9]/g, '_');
 
-        await reloadDB();
-        let user = await getVal(`/users/${safeEmail}`, { forceSync: true });
+
+        let user = getValLocal(`/users/${safeEmail}`);
 
         let userName = "Cliente";
         let userPlan = "FREE";
@@ -951,9 +963,9 @@ export const forceFinalizeProject = async (req: Request, res: Response) => {
         const { id } = req.params;
         if (!id) return res.status(400).json({ error: "ID required" });
 
-        let project = await getVal(`/projects/${id}`, { forceSync: true });
+        let project = await getVal(`/projects/${id}`);
         if (!project) {
-            const leads = await getVal('/leads', { forceSync: true }) || [];
+            const leads = await getVal('/leads') || [];
             const leadsArr = Array.isArray(leads) ? leads : Object.values(leads);
             const lead = leadsArr.find((l: any) => l.id === id || l.projectId === id);
 

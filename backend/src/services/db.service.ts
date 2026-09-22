@@ -14,22 +14,56 @@ import path from 'path';
 const DB_PROVIDER = process.env.DB_PROVIDER || 'supabase';
 
 export const getDatabasePath = (): string => {
-    let currentDir = __dirname;
-    while (currentDir) {
-        const potentialDb = path.join(currentDir, 'database.json');
-        if (fs.existsSync(potentialDb) && fs.statSync(potentialDb).size > 10000) {
-            return potentialDb;
-        }
-        const parent = path.dirname(currentDir);
-        if (parent === currentDir) break;
-        currentDir = parent;
-    }
-    return path.resolve(process.cwd(), 'database.json');
+    return process.env.DB_PATH || path.resolve(process.cwd(), 'database.json');
 };
 
 const DB_PATH = getDatabasePath();
 
 let cachedLocalDB: any = null;
+let saveTimeout: NodeJS.Timeout | null = null;
+let isSavingDisk = false;
+let needsDiskSave = false;
+
+export const queueDiskBackup = () => {
+    needsDiskSave = true;
+    if (saveTimeout) return;
+    saveTimeout = setTimeout(async () => {
+        saveTimeout = null;
+        if (isSavingDisk || !needsDiskSave) return;
+        isSavingDisk = true;
+        needsDiskSave = false;
+        try {
+            const db = cachedLocalDB || {};
+            const cleanDb: Record<string, any> = {};
+            for (const [k, v] of Object.entries(db)) {
+                if (!k || k.endsWith('/translations') || k.endsWith('/full_chapters')) continue;
+
+                // If it's a project entry, strip heavy chapter text & research dump from disk dump to keep file < 3MB
+                if (k.startsWith('/projects/') && typeof v === 'object' && v !== null) {
+                    const { researchContext, ...restProject } = v as any;
+                    let cleanStructure = restProject.structure;
+                    if (Array.isArray(cleanStructure)) {
+                        cleanStructure = cleanStructure.map((ch: any) => {
+                            if (!ch || typeof ch !== 'object') return ch;
+                            const { content, sections, ...restChapter } = ch;
+                            return restChapter;
+                        });
+                    }
+                    cleanDb[k] = { ...restProject, structure: cleanStructure };
+                } else {
+                    cleanDb[k] = v;
+                }
+            }
+            const content = JSON.stringify(cleanDb);
+            await fs.promises.writeFile(DB_PATH, content, 'utf-8');
+        } catch (err) {
+            console.error("[DB] Disk Backup Error:", err);
+        } finally {
+            isSavingDisk = false;
+            if (needsDiskSave) queueDiskBackup();
+        }
+    }, 2000);
+};
 
 const getLocalDB = () => {
     if (cachedLocalDB) return cachedLocalDB;
@@ -37,15 +71,38 @@ const getLocalDB = () => {
         if (fs.existsSync(DB_PATH)) {
             const stats = fs.statSync(DB_PATH);
             const content = fs.readFileSync(DB_PATH, 'utf-8');
-            cachedLocalDB = JSON.parse(content);
-            console.log(`[DB] Local DB loaded into memory: ${Math.round(stats.size / 1024)}KB`);
+            try {
+                cachedLocalDB = JSON.parse(content);
+                console.log(`[DB] Local DB loaded into memory: ${Math.round(stats.size / 1024)}KB`);
+            } catch (jsonErr) {
+                console.error("[DB] Failed to parse local DB file:", jsonErr);
+                cachedLocalDB = {};
+            }
+            if (stats.size > 10 * 1024 * 1024) {
+                console.warn(`[DB] Local DB disk file size (${Math.round(stats.size / 1024)}KB) exceeds 10MB limit. Queueing sanitized disk backup...`);
+                queueDiskBackup();
+            }
             return cachedLocalDB;
         }
     } catch (e) { 
         console.error("[DB] getLocalDB error:", e);
     }
-    cachedLocalDB = {};
+    cachedLocalDB = cachedLocalDB || {};
     return cachedLocalDB;
+};
+
+export const getValLocal = (pathStr: string): any => {
+    try {
+        if (!pathStr) return null;
+        const cleanPath = pathStr.startsWith('/') ? pathStr : '/' + pathStr;
+        const normalized = (cleanPath.endsWith('/') && cleanPath.length > 1) ? cleanPath.slice(0, -1) : cleanPath;
+        const localDB = getLocalDB();
+        const val = localDB[normalized];
+        if (val === undefined) return null;
+        return typeof val === 'string' ? JSON.parse(val) : val;
+    } catch (e) {
+        return null;
+    }
 };
 
 export const getVal = async (pathStr: string, options: { fields?: string, forceSync?: boolean } = {}): Promise<any> => {
@@ -72,13 +129,18 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                     try {
                         const val = typeof v === 'string' ? JSON.parse(v) : v;
                         if (val && typeof val === 'object') {
-                            if (!val.metadata) val.metadata = val;
+                            if (!val.metadata) val.metadata = { ...val };
                             results.push(val);
                         }
                     } catch (e) {}
                 }
             }
             if (results.length > 0) {
+                // Background Sync: Fetch missing/updated keys from Supabase without blocking the current fast request
+                setTimeout(() => {
+                    syncCollectionInBackground(normalized).catch(e => console.error(`[DB] Background sync failed for ${normalized}:`, e));
+                }, 100);
+
                 return results.sort((a: any, b: any) => {
                     const da = new Date(a?.updated_at || a?.date || a?.createdAt || 0).getTime();
                     const db = new Date(b?.updated_at || b?.date || b?.createdAt || 0).getTime();
@@ -163,19 +225,58 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                         selectFields = 'key, updated_at, value->metadata, value->id, value->createdAt, value->customerEmail';
                     }
 
-                    const { data: rawItemsData, error } = await supabase
-                        .from('kv_store')
-                        .select(selectFields)
-                        .gte('key', `${normalized}/`)
-                        .lt('key', `${normalized}0`)
-                        .limit(2000);
+                    let rawItems: any[] = [];
+                    // First, fetch only the keys to avoid timeouts on large JSON extraction
+                    let allKeys: string[] = [];
+                    let from = 0;
+                    let limit = 1000;
+                    while (true) {
+                        const { data: keysData, error } = await supabase
+                            .from('kv_store')
+                            .select('key')
+                            .like('key', `${normalized}/%`)
+                            .order('key', { ascending: true })
+                            .range(from, from + limit - 1);
+                            
+                        if (error) {
+                            console.error("[DB] Supabase Fetch Error (Pagination Keys):", error);
+                            break;
+                        }
+                        if (!keysData || keysData.length === 0) break;
+                        
+                        // Filter out sub-keys (e.g. /projects/123/metadata) to only return direct children
+                        const directChildren = keysData
+                            .map(d => d.key)
+                            .filter(k => k.indexOf('/', normalized.length + 1) === -1);
+                            
+                        allKeys = allKeys.concat(directChildren);
+                        
+                        if (keysData.length < limit) break;
+                        from += limit;
+                    }
 
-                    const rawItems: any[] = (rawItemsData as any[]) || [];
+                    // Then, fetch the full data in SMALL sequential chunks to prevent OOM/timeouts on cold boots
+                    const chunkSize = normalized === '/projects' ? 10 : 100;
+                    for (let i = 0; i < allKeys.length; i += chunkSize) {
+                        const chunk = allKeys.slice(i, i + chunkSize);
+                        const { data: chunkData, error } = await supabase
+                            .from('kv_store')
+                            .select('key, value, updated_at')
+                            .in('key', chunk);
+                            
+                        if (error) {
+                            console.error("[DB] Supabase Fetch Error (Chunk):", error);
+                            continue;
+                        }
+                        if (chunkData) {
+                            rawItems = rawItems.concat(chunkData);
+                        }
+                    }
 
-                    if (!error && rawItems.length > 0) {
+                    if (rawItems.length > 0) {
                         for (const item of rawItems) {
-                            let val = item.value;
-                            let metadata = item.metadata || (val && val.metadata);
+                            let val = item.value !== undefined ? item.value : {};
+                            let metadata = item.metadata !== undefined ? item.metadata : (val && typeof val === 'object' ? val.metadata : {});
 
                             if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
                                 try { val = JSON.parse(val); } catch (e) {}
@@ -191,20 +292,30 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                             if (val !== null && val !== undefined) {
                                 const projId = item.id || (val && val.id) || (metadata && metadata.id) || item.key.split('/').pop();
                                 const metadataObj = metadata || (val && val.metadata) || (typeof val === 'object' ? val : {});
-                                const parsed = {
-                                    ...(typeof val === 'object' && val !== null ? val : {}),
-                                    ...(typeof metadataObj === 'object' && metadataObj !== null ? metadataObj : {}),
-                                    id: projId,
-                                    key: item.key,
-                                    updated_at: item.updated_at || (val && val.updatedAt),
-                                    metadata: metadataObj
-                                };
+                                
+                                let parsed: any;
+                                if (val === null || typeof val !== 'object') {
+                                    parsed = val;
+                                } else {
+                                    parsed = {
+                                        ...val,
+                                        ...(typeof metadataObj === 'object' && metadataObj !== null ? metadataObj : {}),
+                                        id: projId,
+                                        key: item.key,
+                                        updated_at: item.updated_at || val.updatedAt,
+                                        metadata: metadataObj
+                                    };
+                                }
 
                                 localDB[item.key] = parsed;
 
-                                if (!seenIds.has(projId)) {
-                                    seenIds.add(projId);
-                                    collectionItems.push(parsed);
+                                const parts = item.key.split('/');
+                                const normalizedParts = normalized.split('/');
+                                if (parts.length === normalizedParts.length + 1) {
+                                    if (!seenIds.has(projId)) {
+                                        seenIds.add(projId);
+                                        collectionItems.push(parsed);
+                                    }
                                 }
                             }
                         }
@@ -216,15 +327,23 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
                             const db = new Date(b?.updated_at || b?.updatedAt || b?.date || b?.createdAt || 0).getTime();
                             return db - da;
                         });
+                        
+                        queueDiskBackup();
+                        console.log(`[DB] Saved localDB to disk after remote fetch of ${normalized}`);
                         remoteSuccess = true;
                     }
                 } else {
                     const { data, error } = await supabase.from('kv_store').select('value').eq('key', normalized).maybeSingle();
-                    if (!error && data) {
-                        let parsed = data.value;
-                        if (typeof parsed === 'string' && (parsed.startsWith('{') || parsed.startsWith('['))) parsed = JSON.parse(parsed);
-                        localDB[normalized] = parsed;
-                        remoteData = parsed;
+                    if (error) console.error(`[DB] Supabase Fetch Error (${normalized}):`, error.message);
+                    if (data && data.value) {
+                        let val = data.value;
+                        if (typeof val === 'string') {
+                            try { val = JSON.parse(val); } catch(e) {}
+                        }
+                        remoteData = val;
+                        localDB[normalized] = remoteData;
+                        
+                        queueDiskBackup();
                         remoteSuccess = true;
                     }
                 }
@@ -243,10 +362,14 @@ export const getVal = async (pathStr: string, options: { fields?: string, forceS
             const results: any[] = [];
             for (const [k, v] of Object.entries(localDB)) {
                 if (k && k.startsWith(`${normalized}/`)) {
-                    try {
-                        const val = typeof v === 'string' ? JSON.parse(v) : v;
-                        if (val) results.push(val);
-                    } catch (e) {}
+                    const parts = k.split('/');
+                    const normalizedParts = normalized.split('/');
+                    if (parts.length === normalizedParts.length + 1) {
+                        try {
+                            const val = typeof v === 'string' ? JSON.parse(v) : v;
+                            if (val) results.push(val);
+                        } catch (e) {}
+                    }
                 }
             }
             return results.sort((a: any, b: any) => {
@@ -331,15 +454,96 @@ export const setVal = async (pathStr: string, value: any) => {
             }
         }
 
-        // 3. DISK BACKUP (Synchronous to ensure integrity during rapid updates)
-        try {
-            fs.writeFileSync(DB_PATH, JSON.stringify(db));
-        } catch (err) {
-            console.error("[DB] Disk Backup Error:", err);
-        }
+        // 3. DISK BACKUP (Non-blocking debounced async)
+        queueDiskBackup();
 
     } catch (e) {
         console.error("setVal error:", e);
+    }
+};
+
+// --- BACKGROUND SYNC IMPLEMENTATION ---
+const syncCollectionInBackground = async (normalized: string) => {
+    try {
+        const localDB = getLocalDB();
+        
+        let allKeys: any[] = [];
+        let from = 0;
+        let limit = 1000;
+        while (true) {
+            const { data: keysData, error } = await supabase
+                .from('kv_store')
+                .select('key, updated_at')
+                .like('key', `${normalized}/%`)
+                .order('key', { ascending: true })
+                .range(from, from + limit - 1);
+                
+            if (error) {
+                console.error("[DB] Sync keys error:", error);
+                break;
+            }
+            if (!keysData || keysData.length === 0) break;
+            allKeys = allKeys.concat(keysData);
+            if (keysData.length < limit) break;
+            from += limit;
+        }
+
+        const keysToFetch = allKeys.filter(k => {
+            const local = localDB[k.key];
+            if (!local) return true;
+            if (typeof local !== 'object') return true; // Force refetch corrupted strings
+            if (!local.updated_at) return true; // If local object lacks updated_at, we must fetch
+            if (k.updated_at && local.updated_at) {
+                return new Date(k.updated_at).getTime() > new Date(local.updated_at).getTime();
+            }
+            return false;
+        }).map(k => k.key);
+
+        if (keysToFetch.length === 0) return;
+        
+        console.log(`[DB] Background sync found ${keysToFetch.length} new/updated keys for ${normalized}.`);
+
+        const chunkSize = 100;
+        let changed = false;
+        for (let i = 0; i < keysToFetch.length; i += chunkSize) {
+            const chunk = keysToFetch.slice(i, i + chunkSize);
+            const { data: chunkData, error } = await supabase
+                .from('kv_store')
+                .select('key, value, updated_at')
+                .in('key', chunk);
+
+            if (error) {
+                console.error("[DB] Sync chunk error:", error);
+                continue;
+            }
+
+            if (chunkData) {
+                for (const item of chunkData as any[]) {
+                    let val = item.value || {};
+                    let metadata = item.metadata || val.metadata || {};
+                    if (typeof val === 'string' && val.startsWith('{')) try { val = JSON.parse(val); } catch (e) {}
+                    if (typeof metadata === 'string' && metadata.startsWith('{')) try { metadata = JSON.parse(metadata); } catch (e) {}
+                    
+                    const parsed = {
+                        ...val,
+                        ...metadata,
+                        id: item.id || val.id || metadata.id || item.key.split('/').pop(),
+                        key: item.key,
+                        updated_at: item.updated_at
+                    };
+                    localDB[item.key] = parsed;
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed) {
+            cachedLocalDB = localDB;
+            queueDiskBackup();
+            console.log(`[DB] Background sync completed and saved for ${normalized}.`);
+        }
+    } catch (e) {
+        console.error(`[DB] Background sync fatal error for ${normalized}:`, e);
     }
 };
 

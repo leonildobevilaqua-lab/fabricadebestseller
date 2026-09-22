@@ -148,7 +148,7 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
     // Ensure directory exists
     const fs = require('fs');
     const path = require('path');
-    const outputDir = path.join(__dirname, '../../generated_books');
+    const outputDir = path.join(require('os').tmpdir(), 'bestseller_books');
     if (!fs.existsSync(outputDir)) {
         try { fs.mkdirSync(outputDir, { recursive: true }); } catch (err) { }
     }
@@ -180,8 +180,10 @@ export const generateBookDocx = async (project: BookProject): Promise<string> =>
             archive.pipe(output);
 
             // Add Book
-            archive.append(buffer, { name: project.metadata.bookTitle ? `${project.metadata.bookTitle}.docx` : `${tr.bookFile}.docx` });
-
+            const safeTitle = project.metadata.bookTitle 
+                ? project.metadata.bookTitle.replace(/[/\\?%*:|"<>]/g, '-').substring(0, 100).trim()
+                : tr.bookFile;
+            archive.append(buffer, { name: `${safeTitle}.docx` });
             // Helper to add docx string
             const addDoc = async (name: string, title: string, content: string) => {
                 const b = await createSimpleDocx(title, content);

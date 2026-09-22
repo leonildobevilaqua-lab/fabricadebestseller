@@ -3,13 +3,14 @@ import React, { useEffect, useState } from 'react';
 import { 
     BookOpen, FileText, ClipboardList, Barcode, Palette, 
     Smartphone, Cloud, Upload, Zap, Settings, LogOut,
-    Menu, X, ChevronRight, User, Package
+    Menu, X, ChevronRight, User, Package, ShoppingBag
 } from 'lucide-react';
 import { getApiBase } from '../services/api';
 import { useLanguage } from '../i18n/context';
 import { SidebarItem } from './SidebarItem';
 import { BookGeneratorView } from './BookGeneratorView';
 import { PlaceholderView, ExternalProductView } from './DashboardViews';
+import ProductCatalogView from './ProductCatalogView';
 import CipGenerator from './CipGenerator';
 import BarcodeGenerator from './BarcodeGenerator';
 import QrCodeGenerator from './QrCodeGenerator';
@@ -27,7 +28,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         if (window.location.pathname === '/capas-profissionais' || window.location.pathname === '/capa-profissional') {
             return 'capas-profissionais';
         }
-        return 'livro';
+        return 'vitrine';
     });
     const [sidebarOpen, setSidebarOpen] = useState(false);
     
@@ -130,19 +131,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
         } catch (e) { setPassMsg({ type: 'error', text: "Erro de conexão." }); } finally { setPassLoading(false); }
     };
 
-    const menuItems = [
+    interface MenuItem {
+        id: string;
+        label: string;
+        icon: any;
+        price?: string;
+        isPreparation?: boolean;
+        badgeText?: string;
+        externalLink?: string;
+    }
+
+    const menuItems: MenuItem[] = [
+        { id: 'vitrine', label: 'Vitrine de Produtos & Serviços', icon: ShoppingBag, badgeText: 'Vitrine 🔥' },
         { id: 'livro', label: 'Gerador de Livros', icon: BookOpen, price: 'R$ 39,90' },
         { id: 'capas-profissionais', label: 'Capa Profissional (IA)', icon: Palette, isPreparation: true },
         { id: 'cbl-tutorial', label: 'Registro CBL (Tutorial)', icon: FileText, price: 'R$ 19,90' },
         { id: 'ficha-catalografica', label: 'Ficha Catalográfica', icon: ClipboardList, price: 'R$ 27,90' },
         { id: 'barras', label: 'Código de Barras', icon: Barcode, price: 'R$ 19,90' },
         { id: 'qr-code', label: 'Gerador QR Code', icon: Smartphone, price: 'R$ 7,00' },
-        { id: 'pacote-completo', label: 'Pacote (Ficha Catalog. + Cód. Barras + QR Code)', icon: Package, price: 'R$ 49,90' },
-        { id: 'diagramacao-formatacao-360', label: 'Diagramação e Formatação 360 Express', icon: FileText, price: 'R$ 97,00', externalLink: 'https://checkout.ticto.app/O2674C7CD', badgeText: 'Novo' },
-        { id: 'capa-fisica', label: 'Capa Livro Físico', icon: Palette, price: 'R$ 149,90' },
-        { id: 'amazon', label: '"DESAFIO P72H" PUBLICAÇÃO NA AMAZON', icon: Cloud, price: 'R$ 97,90', externalLink: 'https://checkout.ticto.app/O32C21B1D' },
-        { id: 'uiclap', label: 'Publicação UICLAP', icon: Upload, price: 'R$ 97,90', externalLink: 'https://checkout.ticto.app/OED0004AF' },
-        { id: 'ticto', label: 'Publicação TICTO', icon: Zap, isPreparation: true },
+        { id: 'pacote-completo', label: 'PACOTE DE REGISTRO', icon: Package, price: 'R$ 49,90' },
+        { id: 'diagramacao-formatacao-360', label: 'Diagramação 360 Express', icon: FileText, price: 'R$ 97,00' },
+        { id: 'capa-fisica', label: 'Capa Profissional (Físico/Ebook)', icon: Palette, price: 'R$ 149,90' },
+        { id: 'amazon', label: '"Desafio P72H" Publicação Amazon', icon: Cloud, price: 'R$ 97,90' },
+        { id: 'uiclap', label: 'Autopublicação Express UICLAP', icon: Upload, price: 'R$ 97,90' },
+        { id: 'ticto', label: 'Publicação Profissional TICTO', icon: Zap, isPreparation: true },
     ];
 
     const renderSection = () => {
@@ -162,31 +174,44 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
                         getApiBase={getApiBase}
                     />
                 );
+            case 'vitrine':
+                return (
+                    <ProductCatalogView 
+                        onSelectTab={(tabId) => setActiveTab(tabId)} 
+                        stats={stats}
+                        hasCredits={hasCredits}
+                        onNewBook={onNewBook}
+                        handleBuyCredit={handleBuyCredit}
+                        handleDeleteProject={handleDeleteProject}
+                        getApiBase={getApiBase}
+                        userEmail={user.email}
+                    />
+                );
             case 'cbl-tutorial':
                 return (
                     <ExternalProductView 
                         title="Tutorial Registro Oficial CBL"
-                        desc="Aprenda o passo a passo para registrar seu livro na Câmara Brasileira do Livro e garantir seus direitos autorais."
+                        desc="Aprenda o passo a passo para registrar seu livro na Câmara Brasileira do Livro e garantir seus direitos autorais com segurança."
                         videoId="NeM3tTW7MgU"
                         checkoutUrl="https://checkout.ticto.app/O77037442"
+                        originalPrice="R$ 97,90"
                         price="R$ 19,90"
                     />
                 );
             case 'ficha-catalografica':
                 return (
                     <div className="bg-white rounded-3xl p-4 md:p-8 border border-slate-200 shadow-xl overflow-hidden min-h-[70vh]">
-                         {/* Wrap CipGenerator and override internal pricing logic if needed via props or CSS */}
                          <CipGenerator />
                     </div>
                 );
             case 'capa-fisica':
                 return (
                     <ExternalProductView 
-                        title="Criação de Capa Profissional (Físico)"
-                        desc="Tenha uma capa de alta conversão para o seu livro impresso. Design premium que vende à primeira vista."
+                        title="Criação de Capa Profissional (Físico / Ebook)"
+                        desc="Tenha uma capa de alta conversão para o seu livro impresso e digital. Design premium criado sob medida por especialistas."
                         videoId="K7AAxtH69WM"
                         checkoutUrl="https://checkout.ticto.app/O6FA2355C"
-                        originalPrice="R$ 297,90"
+                        originalPrice="R$ 497,00"
                         price="R$ 149,90"
                     />
                 );
@@ -233,19 +258,55 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onNewBook, onLogout 
             case 'pacote-completo':
                 return (
                     <ExternalProductView 
-                        title="Pacote (Ficha Catalog. + Cód. Barras + QR Code)"
-                        desc="Economize com o combo essencial para seu livro: Ficha Catalográfica (CIP) + Código de Barras + QR Code Personalizado. Tudo o que você precisa para profissionalizar sua obra em um só lugar."
+                        title="PACOTE DE REGISTRO (Ficha Catalográfica + Código de Barras + QR Code)"
+                        desc="Economize com o combo completo essencial para o seu livro: Ficha Catalográfica (CIP) + Código de Barras EAN + QR Code Dinâmico Personalizado."
                         checkoutUrl="https://checkout.ticto.app/OAE19BCE4"
                         videoId="NeM3tTW7MgU"
+                        originalPrice="R$ 167,60"
                         price="R$ 49,90"
-                        originalPrice="R$ 54,80"
                     />
                 );
-            case 'diagramacao-formatacao-360': return <PlaceholderView title="Diagramação e Formatação 360 Express" />;
+            case 'diagramacao-formatacao-360':
+                return (
+                    <ExternalProductView 
+                        title="Diagramação e Formatação 360 Express"
+                        desc="Transforme seu texto bruto em um livro com layout, tipografia e espaçamentos profissionais prontos para impressão ou publicação digital."
+                        videoId="NeM3tTW7MgU"
+                        checkoutUrl="https://checkout.ticto.app/O2674C7CD"
+                        originalPrice="R$ 247,00"
+                        price="R$ 97,00"
+                    />
+                );
             case 'capa-ebook': return <PlaceholderView title="Capa Profissional (Ebook)" />;
-            case 'amazon': return <PlaceholderView title='"DESAFIO P72H" PUBLICAÇÃO NA AMAZON' />;
-            case 'uiclap': return <PlaceholderView title="Publicação na UICLAP" />;
-            case 'ticto': return <PlaceholderView title="Publicação na TICTO" />;
+            case 'amazon':
+                return (
+                    <ExternalProductView 
+                        title='"Desafio P72H" Publicação Amazon'
+                        desc="Publicação guiada passo a passo na Amazon KDP em 72 horas para alcançar milhares de leitores na maior plataforma de e-books do mundo."
+                        videoId="NeM3tTW7MgU"
+                        checkoutUrl="https://checkout.ticto.app/O32C21B1D"
+                        originalPrice="R$ 199,90"
+                        price="R$ 97,90"
+                    />
+                );
+            case 'uiclap':
+                return (
+                    <ExternalProductView 
+                        title="Autopublicação Express UICLAP"
+                        desc="Coloque seu livro físico à venda na maior plataforma de autopublicação da América Latina sem pagar por tiragem mínima."
+                        videoId="NeM3tTW7MgU"
+                        checkoutUrl="https://checkout.ticto.app/OED0004AF"
+                        originalPrice="R$ 199,90"
+                        price="R$ 97,90"
+                    />
+                );
+            case 'ticto': 
+                return (
+                    <PlaceholderView 
+                        title="Publicação Profissional TICTO" 
+                        description="Lançamento em breve! Ecossistema integrado de vendas e distribuição de infoprodutos e obras impressas via Ticto."
+                    />
+                );
             default: return <PlaceholderView title="Seção em Desenvolvimento" />;
         }
     };
