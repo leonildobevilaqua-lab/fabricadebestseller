@@ -538,9 +538,7 @@ export const handleKiwifyWebhook = async (req: Request, res: Response) => {
                             kBookCreditsToAdd += 9;
                         } else if (kPName.includes('6 LIVROS') || kPName.includes('6 CREDITO') || kPName.includes('6 CRÉDITO') || kPName.includes('6CR')) {
                             kBookCreditsToAdd += 6;
-                        } else if (kPName.includes('3 LIVROS') || kPName.includes('3 CREDITO') || kPName.includes('3 CRÉDITO') || kPName.includes('3CR')) {
-                            kBookCreditsToAdd += 3;
-                        } else {
+                        } else if (kPName.includes('LIVRO') || kPName.includes('GERACAO') || kPName.includes('GERAÇÃO') || kPName.includes('GERADOR') || kPName.includes('BESTSELLER') || kPName.includes('BEST SELLER') || kPName.includes('FABRICA')) {
                             kBookCreditsToAdd += 1;
                         }
                     }
@@ -758,7 +756,7 @@ export const checkAccess = async (req: Request, res: Response) => {
                     };
                     await setVal(`/users/${safeEmail}/plan`, userPlan);
                     console.log(`[CHECK_ACCESS] Activated Kiwify plan via fast-track.`);
-                } else if (isGen || (!isPlan && order.paymentInfo?.amount >= 10)) {
+                } else if (isGen) {
                     credits += 1;
                     await setVal(`/credits/${safeEmail}`, credits);
                     console.log(`[CHECK_ACCESS] Granted Kiwify credit via fast-track.`);
@@ -825,7 +823,7 @@ export const checkAccess = async (req: Request, res: Response) => {
                 }
             }
 
-            if ((isGen || isGenPrice) && !isPlan) {
+            if (isGen && !isPlan) {
                 // Determine if this exact generation payment isn't redeemed yet
                 const redeemedIds = getValLocal(`/users/${safeEmail}/redeemed_payments`) || [];
                 if (!redeemedIds.includes(recentConfirmedPayment.id)) {

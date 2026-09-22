@@ -312,14 +312,16 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
     // Helper to get credits count for internal tools
     const getProductCreditCount = (product: ProductItem): number => {
         if (product.id === 'livro') {
-            if (hasCredits) return 1;
-            return stats?.credits || stats?.bookCredits || 0;
+            const count = Number(stats?.credits ?? stats?.bookCredits ?? 0);
+            return count > 0 ? count : 0;
         }
         if (product.creditKey && stats) {
-            return stats[product.creditKey] || 0;
+            return Number(stats[product.creditKey] || 0);
         }
         return 0;
     };
+
+    const bookCreditsCount = Number(stats?.credits ?? stats?.bookCredits ?? 0);
 
     return (
         <div className="space-y-8 animate-fade-in pb-12 font-sans">
@@ -347,12 +349,12 @@ export const ProductCatalogView: React.FC<ProductCatalogViewProps> = ({
                             <span>Status da Conta</span>
                         </div>
 
-                        {hasCredits || (stats?.credits || 0) > 0 ? (
+                        {bookCreditsCount > 0 ? (
                             <div className="space-y-2 w-full">
                                 <div className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full text-xs font-black uppercase tracking-widest text-center">
-                                    {(stats?.credits || 1) === 1 
+                                    {bookCreditsCount === 1 
                                         ? "Você possui 1 crédito ativo" 
-                                        : `Você possui ${stats?.credits || 1} créditos ativos`
+                                        : `Você possui ${bookCreditsCount} créditos ativos`
                                     }
                                 </div>
                                 <button
