@@ -241,9 +241,14 @@ export const SocialProofSection: React.FC<SocialProofSectionProps> = ({ onSelect
 
         {/* 3. WHATSAPP PRINTS GRID */}
         <div className="space-y-6 pt-4">
-          <div className="flex items-center gap-2 border-b border-white/10 pb-4">
-            <MessageSquare className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-xl sm:text-2xl font-bold text-white">Conversas & Depoimentos no WhatsApp</h3>
+          <div className="border-b border-white/10 pb-4 space-y-1">
+            <div className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 text-emerald-400" />
+              <h3 className="text-xl sm:text-2xl font-bold text-white">Conversas & Depoimentos no WhatsApp</h3>
+            </div>
+            <p className="text-sm text-slate-300 italic font-medium pl-7">
+              Resultados reais de alunos do Método PBE que publicaram seus livros e ativaram as oportunidades do nosso ecossistema de negócios:
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

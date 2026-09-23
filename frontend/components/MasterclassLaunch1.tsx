@@ -78,27 +78,27 @@ export const MasterclassLaunch1: React.FC = () => {
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#0a0a0a] via-black/50 to-transparent z-0"></div>
         <div className="absolute top-1/2 left-[10%] -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 blur-[150px] rounded-full hidden md:block z-0"></div>
 
-        <div className="relative max-w-6xl mx-auto flex w-full z-20 py-10 lg:py-28">
+        <div className="relative max-w-6xl mx-auto flex w-full z-20 py-10 lg:py-24">
           {/* Left Column - Text & CTA */}
-          <div className="w-full md:w-[68%] lg:w-[65%] space-y-8 text-center md:text-left z-20">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium text-sm mb-4 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-              <Video className="w-4 h-4" />
-              <span>Apresentação Completa e Exclusiva</span>
+          <div className="w-full md:w-[72%] lg:w-[68%] space-y-8 text-center md:text-left z-20">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium text-xs sm:text-sm mb-2 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+              <Video className="w-4 h-4 text-amber-400" />
+              <span className="font-bold tracking-wide">[ MASTERCLASS PRÁTICA + 1 CRÉDITO COMPLETO DA IA INCLUSO ]</span>
             </div>
             
-            <h1 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-br from-white via-slate-200 to-slate-400 leading-tight">
-              Descubra o Método Exato para <br className="hidden sm:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-600">
-                Criar e Lançar seu Livro
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-extrabold tracking-tight text-white leading-tight">
+              Descubra o Método Exato para Criar, Lançar seu Livro e <br className="hidden sm:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500">
+                Ativar Novas Fontes de Renda em Tempo Recorde
               </span>
             </h1>
             
-            <p className="text-lg sm:text-xl text-slate-300 max-w-2xl mx-auto md:mx-0 leading-relaxed drop-shadow-md">
-              Participe de um encontro intenso onde revelarei os bastidores da <strong>Fábrica de Best Seller</strong>. O passo a passo para transformar sua ideia em um livro desejado, lucrativo e de altíssima qualidade.
+            <p className="text-base sm:text-lg text-slate-300 max-w-2xl mx-auto md:mx-0 leading-relaxed drop-shadow-md">
+              Participe da Masterclass do Método Publicação Business Express (PBE) e veja como usar IA para publicar sua obra na Amazon e UICLAP — e conheça os bastidores do ecossistema onde nossos alunos chegam a gerar comissões de até 60% (cerca de R$ 275 por venda).
             </p>
 
             {/* DYNAMIC DATE & 3-TIME-SLOT SELECTOR */}
-            <div className="space-y-4 pt-4 text-left bg-black/40 md:bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-md max-w-xl">
+            <div className="space-y-4 pt-2 text-left bg-black/50 md:bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-md max-w-xl">
               <div className="flex items-center gap-3">
                 <Calendar className="w-6 h-6 text-amber-500 flex-shrink-0" />
                 <div>
@@ -134,122 +134,130 @@ export const MasterclassLaunch1: React.FC = () => {
               </div>
             </div>
             
-            <div className="pt-6">
+            <div className="pt-4 space-y-2">
               <button 
                 type="button"
                 onClick={handleCheckout}
-                className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold text-lg py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02]"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-black text-base sm:text-lg py-4 px-8 rounded-xl shadow-[0_0_25px_rgba(34,197,94,0.4)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
               >
-                GARANTIR MINHA VAGA | LOTE ESPECIAL <ChevronRight className="w-5 h-5" />
+                GARANTIR MINHA VAGA + 1 LIVRO NA FBS POR R$ 29,90 <ChevronRight className="w-5 h-5" />
               </button>
-              <p className="text-xs text-slate-500 mt-3 text-center md:text-left pl-2">97% dos ingressos do lote especial vendidos.</p>
+              <p className="text-xs text-slate-400 pt-1 text-center md:text-left flex items-center justify-center md:justify-start gap-2">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <span>Pagamento 100% Seguro • Acesso Imediato • Garantia de 7 dias</span>
+              </p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* 3. SUB-HERO (PROBLEM AGITATION) */}
+      {/* 3. SEÇÃO DE CONEXÃO: "O Livro te dá Autoridade. O Método PBE te dá Escala." */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/10 bg-black">
-        <div className="max-w-3xl mx-auto text-center space-y-8">
-          <h2 className="text-3xl md:text-5xl font-bold leading-tight">
-            Seu livro pode ter um conteúdo incrível.<br />
-            <span className="text-amber-500">Mas se ele ficar na gaveta, ele não existe.</span>
-          </h2>
-          
-          <p className="text-xl text-slate-400">
-            Muitos autores passam meses, ou até anos, tentando escrever. Quando terminam, descobrem que as editoras fecham as portas e o público os ignora.
-          </p>
-          <div className="bg-white/5 border border-amber-500/20 p-6 rounded-2xl max-w-2xl mx-auto">
-            <p className="text-amber-400 font-medium text-lg">
-              Se você não tem um plano estruturado para lançar, publicar de forma independente e usar a tecnologia a seu favor, o problema não é o seu livro. É a sua estratégia.
+        <div className="max-w-5xl mx-auto space-y-12">
+          <div className="text-center space-y-4 max-w-3xl mx-auto">
+            <h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest">O Modelo dos Autores de Sucesso</h3>
+            <h2 className="text-3xl md:text-5xl font-bold leading-tight">
+              O Livro te dá Autoridade.<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-500">O Método PBE te dá Escala.</span>
+            </h2>
+            <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
+              Descubra os dois pilares fundamentais para transformar seu conhecimento em uma obra física publicada e em um ecossistema altamente lucrativo:
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. PARA QUEM É (QUALIFICATION) */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a]">
-        <div className="max-w-4xl mx-auto space-y-12">
-          <div className="text-center space-y-4">
-            <h3 className="text-amber-500 text-sm font-bold uppercase tracking-widest">Antes de continuar...</h3>
-            <h2 className="text-3xl md:text-4xl font-bold">Isso é para você?</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex gap-4 items-start p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/30 transition-colors">
-              <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
-              <p className="text-slate-300">Tem uma ideia na cabeça, mas trava na hora de organizar e escrever o conteúdo.</p>
-            </div>
-            <div className="flex gap-4 items-start p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/30 transition-colors">
-              <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
-              <p className="text-slate-300">Quer publicar um livro com padrão profissional de grandes editoras, sem gastar milhares de reais.</p>
-            </div>
-            <div className="flex gap-4 items-start p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/30 transition-colors">
-              <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
-              <p className="text-slate-300">Já publicou antes, mas o livro está "escondido" na Amazon e não gera vendas consistentes.</p>
-            </div>
-            <div className="flex gap-4 items-start p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/30 transition-colors">
-              <CheckCircle className="w-6 h-6 text-green-500 flex-shrink-0" />
-              <p className="text-slate-300">Quer descobrir como a Inteligência Artificial pode multiplicar a sua velocidade de criação.</p>
-            </div>
-          </div>
-          
-          <div className="text-center pt-4">
-            <p className="text-xl text-amber-500 font-semibold">Se você se viu aqui, você precisa dessa apresentação.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. CONTEÚDO (WHAT THEY WILL LEARN) */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/10 bg-black">
-        <div className="max-w-4xl mx-auto space-y-12">
-          <div className="text-center space-y-4">
-            <h3 className="text-amber-500 text-sm font-bold uppercase tracking-widest">Conteúdo do Encontro</h3>
-            <h2 className="text-3xl md:text-4xl font-bold">Você sairá com um plano prático para:</h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="flex gap-4">
-              <div className="text-amber-500 font-black text-2xl opacity-50 mt-1">01</div>
-              <div>
-                <h4 className="text-xl font-bold text-white mb-2">Estruturar a Oferta do Livro</h4>
-                <p className="text-slate-400">Como encontrar um ângulo único que faça os leitores desejarem seu livro antes mesmo de lerem a primeira página.</p>
+            <div className="bg-gradient-to-b from-slate-900 to-black p-8 rounded-3xl border border-amber-500/30 relative shadow-2xl flex flex-col justify-between space-y-6 group hover:border-amber-500/60 transition-all">
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xl">
+                  01
+                </div>
+                <h3 className="text-2xl font-extrabold text-white group-hover:text-amber-400 transition-colors">
+                  Pilar 1 — Publicação Express (Amazon & UICLAP)
+                </h3>
+                <p className="text-slate-300 text-base leading-relaxed">
+                  Como sair do zero, estruturar capítulos com a IA da Fábrica de Best Seller e ter o livro à venda impresso sob demanda e em ebook com padrão de grandes editoras.
+                </p>
+              </div>
+              <div className="pt-4 border-t border-white/10 flex items-center gap-2 text-xs text-amber-400 font-semibold">
+                <CheckCircle className="w-4 h-4 text-emerald-400" />
+                <span>Sem necessidade de estoque ou impressão antecipada</span>
               </div>
             </div>
-            <div className="flex gap-4">
-              <div className="text-amber-500 font-black text-2xl opacity-50 mt-1">02</div>
-              <div>
-                <h4 className="text-xl font-bold text-white mb-2">Domínio da Fábrica de Best Seller</h4>
-                <p className="text-slate-400">Veremos na prática como a IA constrói, estrutura e lapida cada capítulo para que o livro tenha a sua voz.</p>
+
+            <div className="bg-gradient-to-b from-slate-900 to-black p-8 rounded-3xl border border-emerald-500/30 relative shadow-2xl flex flex-col justify-between space-y-6 group hover:border-emerald-500/60 transition-all">
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xl">
+                  02
+                </div>
+                <h3 className="text-2xl font-extrabold text-white group-hover:text-emerald-400 transition-colors">
+                  Pilar 2 — O Modelo de Negócios dos Autores
+                </h3>
+                <p className="text-slate-300 text-base leading-relaxed">
+                  Como os alunos do método têm a oportunidade exclusiva de se tornar Representantes Afiliados Autorizados (RAA), monetizando a própria autoridade com comissões de até 60% (cerca de R$ 275 por venda aprovada).
+                </p>
               </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="text-amber-500 font-black text-2xl opacity-50 mt-1">03</div>
-              <div>
-                <h4 className="text-xl font-bold text-white mb-2">Design e Diagramação Express</h4>
-                <p className="text-slate-400">Os segredos para ter capas que convertem e interiores perfeitamente diagramados, igual aos de livraria.</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="text-amber-500 font-black text-2xl opacity-50 mt-1">04</div>
-              <div>
-                <h4 className="text-xl font-bold text-white mb-2">Posicionamento Independente</h4>
-                <p className="text-slate-400">O que fazer depois do livro pronto para ele realmente vender de forma independente na Amazon e fora dela.</p>
+              <div className="pt-4 border-t border-white/10 flex items-center gap-2 text-xs text-emerald-400 font-semibold">
+                <CheckCircle className="w-4 h-4 text-emerald-400" />
+                <span>Monetização ativa com comissões diretas de R$ 275/venda</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 6. OFFER & PRICING SECTION (Checkout) */}
-      <section id="inscricao" className="py-20 px-4 sm:px-6 lg:px-8 relative bg-[#0a0a0a]">
+      {/* 4. SEÇÃO DOS 4 MÓDULOS DA MASTERCLASS */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/10 bg-[#0a0a0a]">
+        <div className="max-w-4xl mx-auto space-y-12">
+          <div className="text-center space-y-4">
+            <h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest">Cronograma do Treinamento</h3>
+            <h2 className="text-3xl md:text-4xl font-extrabold">Os 4 Módulos Práticos da Masterclass:</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="flex gap-5 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/40 transition-all">
+              <div className="text-amber-400 font-black text-3xl opacity-80 mt-1 flex-shrink-0">01</div>
+              <div>
+                <h4 className="text-xl font-bold text-white mb-2">Estruturação e Oferta do Livro</h4>
+                <p className="text-slate-300 text-sm leading-relaxed">Mineração de temas lucrativos e roteiro completo do sumário à conclusão do livro.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-5 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/40 transition-all">
+              <div className="text-amber-400 font-black text-3xl opacity-80 mt-1 flex-shrink-0">02</div>
+              <div>
+                <h4 className="text-xl font-bold text-white mb-2">Domínio da Fábrica de Best Seller</h4>
+                <p className="text-slate-300 text-sm leading-relaxed">Como utilizar seu crédito incluso na ferramenta de IA para redigir e lapidar com sua voz autoral.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-5 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-amber-500/40 transition-all">
+              <div className="text-amber-400 font-black text-3xl opacity-80 mt-1 flex-shrink-0">03</div>
+              <div>
+                <h4 className="text-xl font-bold text-white mb-2">Design, Diagramação e Publicação</h4>
+                <p className="text-slate-300 text-sm leading-relaxed">Capas profissionais, diagramação interna e publicação express na Amazon e UICLAP.</p>
+              </div>
+            </div>
+
+            <div className="flex gap-5 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-emerald-500/40 transition-all">
+              <div className="text-emerald-400 font-black text-3xl opacity-80 mt-1 flex-shrink-0">04</div>
+              <div>
+                <h4 className="text-xl font-bold text-white mb-2">O Ecossistema de Lucro do Autor</h4>
+                <p className="text-slate-300 text-sm leading-relaxed">Como funciona o programa fechado de Representantes Afiliados Autorizados (RAA) para alunos e o passo a passo para gerar caixa imediato.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. OFFER & PRICING SECTION (Checkout) */}
+      <section id="inscricao" className="py-20 px-4 sm:px-6 lg:px-8 relative bg-[#0a0a0a] border-t border-white/10">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500 via-transparent to-transparent"></div>
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
           
           <div className="space-y-8">
             <div>
-              <h3 className="text-amber-500 text-sm font-bold uppercase tracking-widest mb-2">Acesso Exclusivo</h3>
-              <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight">Não é sobre o preço.<br />É sobre dar vida ao seu livro.</h2>
+              <h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-2">Acesso Exclusivo</h3>
+              <h2 className="text-3xl md:text-4xl font-bold text-white leading-tight">Tudo o que você vai receber<br />ao garantir sua vaga hoje:</h2>
             </div>
             
             <ul className="space-y-4">
@@ -285,8 +293,8 @@ export const MasterclassLaunch1: React.FC = () => {
                   <BookOpen className="w-5 h-5 text-pink-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">O Campo Magnético das Vendas</h3>
-                  <p className="text-slate-400 text-sm mt-1">Livro digital com guia estratégico para transformar leitores casuais em clientes fiéis.</p>
+                  <h3 className="text-lg font-semibold text-white">Livro Digital: O Campo Magnético das Vendas</h3>
+                  <p className="text-slate-400 text-sm mt-1">Guia estratégico para transformar leitores casuais em clientes fiéis do seu negócio.</p>
                 </div>
               </li>
               <li className="flex gap-4">
@@ -368,7 +376,7 @@ export const MasterclassLaunch1: React.FC = () => {
               <button 
                 type="button"
                 onClick={handleCheckout}
-                className="w-full block bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold text-lg py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                className="w-full block bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-extrabold text-lg py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 <div className="flex items-center justify-center gap-2">
                   Garantir Minha Vaga Agora <ChevronRight className="w-5 h-5" />
@@ -385,10 +393,10 @@ export const MasterclassLaunch1: React.FC = () => {
         </div>
       </section>
 
-      {/* 7. CASOS DE SUCESSO (SOCIAL PROOF) */}
+      {/* 6. CASOS DE SUCESSO (SOCIAL PROOF) */}
       <SocialProofSection onSelectImage={setSelectedImage} />
 
-      {/* 8. AUTHORITY SECTION */}
+      {/* 7. AUTHORITY SECTION */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a] border-t border-white/5 relative overflow-hidden">
         <div className="max-w-5xl mx-auto relative z-10 flex flex-col md:flex-row items-center gap-12">
           
@@ -406,36 +414,46 @@ export const MasterclassLaunch1: React.FC = () => {
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
               <div className="absolute bottom-6 left-6 right-6">
                 <p className="font-bold text-2xl text-white">Leonildo Bevilaqua</p>
-                <p className="text-amber-500 text-sm font-bold mt-1">Especialista & Fundador</p>
+                <p className="text-amber-500 text-xs font-bold mt-1">Fundador FBS & Criador Método PBE</p>
               </div>
             </div>
           </div>
 
           <div className="w-full md:w-2/3 space-y-6">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">Quem vai apresentar?</h2>
-            <p className="text-lg text-slate-300 leading-relaxed">
-              Minha missão é democratizar a criação de livros de alta qualidade. Desenvolvi o ecossistema <strong>FBS - Fábrica de Best Seller</strong>, a ferramenta de inteligência artificial para que autores comuns pudessem alcançar o padrão das grandes editoras.
-            </p>
-            <p className="text-lg text-slate-300 leading-relaxed">
-              Nesta apresentação, vou abrir a "caixa preta" do processo. Vou mostrar a você não apenas como escrever usando IA, mas como pensar de forma estratégica para que o seu livro não seja apenas mais um na estante, e sim um material lido, desejado e lembrado.
-            </p>
+            <div>
+              <h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest mb-1">Quem vai apresentar?</h3>
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-white">Leonildo Bevilaqua</h2>
+              <p className="text-amber-400 font-semibold text-sm mt-1">Fundador da Fábrica de Best Seller & Criador do Método Publicação Business Express (PBE)</p>
+            </div>
+
+            <div className="space-y-4 text-slate-300 text-base leading-relaxed">
+              <p>
+                "Minha missão é simples: acabar com o mito de que publicar um livro profissional exige meses de bloqueio criativo ou milhares de reais na mão de editoras tradicionais."
+              </p>
+              <p>
+                "Desenvolvi o ecossistema da Fábrica de Best Seller para unir tecnologia de ponta, inteligência artificial e estratégias reais de mercado. O resultado? Autores comuns publicando com o mesmo padrão das maiores livrarias do país — com registro, diagramação impecável e distribuição express."
+              </p>
+              <p>
+                "Nesta Masterclass, vou abrir a 'caixa preta' de todo o nosso processo. Você verá exatamente como utilizar a nossa IA para estruturar sua obra e como pensar como um autor-empresário: usando seu livro não apenas como um cartão de visitas de luxo, mas como a porta de entrada para um ecossistema altamente lucrativo."
+              </p>
+            </div>
             
-            <div className="pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
-               <div className="flex items-center gap-3 text-slate-300">
-                 <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                 <span>Especialista em Publicação</span>
+            <div className="pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+               <div className="flex items-start gap-3 text-slate-300">
+                 <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                 <span><strong>Tecnologia Proprietária:</strong> Criador da plataforma FBS, utilizada por centenas de autores para estruturar e publicar livros.</span>
                </div>
-               <div className="flex items-center gap-3 text-slate-300">
-                 <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                 <span>Criador da FBS (Fábrica de Best Seller)</span>
+               <div className="flex items-start gap-3 text-slate-300">
+                 <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                 <span><strong>Visão 360° de Mercado:</strong> Especialista em estratégias de publicação independente na Amazon e UICLAP.</span>
                </div>
-               <div className="flex items-center gap-3 text-slate-300">
-                 <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                 <span>Foco em Resultado e Alta Qualidade</span>
+               <div className="flex items-start gap-3 text-slate-300">
+                 <CheckCircle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                 <span><strong>Foco em Lucro Real:</strong> Mentor do ecossistema PBE, integrando autoridade de publicação com modelos escaláveis de negócios.</span>
                </div>
-               <div className="flex items-center gap-3 text-slate-300">
-                 <Users className="w-5 h-5 text-amber-500 flex-shrink-0" />
-                 <span>Centenas de autores impactados</span>
+               <div className="flex items-start gap-3 text-slate-300">
+                 <Users className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                 <span><strong>Centenas de Obras no Mercado:</strong> Dezenas de nichos validados, de especialistas a autores independentes.</span>
                </div>
             </div>
           </div>
@@ -443,44 +461,72 @@ export const MasterclassLaunch1: React.FC = () => {
         </div>
       </section>
 
-      {/* 9. GUARANTEE SECTION */}
+      {/* 8. GUARANTEE SECTION */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/10 bg-black text-center">
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto border border-green-500/20">
              <ShieldCheck className="w-10 h-10 text-green-500" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold">Garantia incondicional<br />de 7 dias</h2>
-          <p className="text-lg text-slate-400">
-            Se você sentir que o conteúdo da apresentação não é para você ou que a ferramenta da Fábrica não vai ajudar no seu projeto, basta enviar um único email. Devolvemos 100% do seu investimento, sem perguntas e sem burocracia. O risco é todo meu.
+          <h2 className="text-3xl md:text-4xl font-bold">Garantia Incondicional<br />de 7 Dias</h2>
+          <p className="text-lg text-slate-400 leading-relaxed">
+            Se você assistir à Masterclass, testar a ferramenta e sentir que o método não atende às suas expectativas, basta enviar um único e-mail para nossa equipe. Devolvemos 100% do seu valor pago (R$ 29,90), na hora e sem questionamentos. O risco é todo meu.
           </p>
         </div>
       </section>
 
-      {/* 10. FAQ SECTION */}
+      {/* 9. FAQ SECTION */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-white/10 bg-[#0a0a0a]">
-        <div className="max-w-3xl mx-auto space-y-12">
+        <div className="max-w-4xl mx-auto space-y-12">
           <div className="text-center space-y-4">
-            <h3 className="text-amber-500 text-sm font-bold uppercase tracking-widest">FAQ</h3>
-            <h2 className="text-3xl md:text-4xl font-bold">Alguma dúvida?</h2>
+            <h3 className="text-amber-500 text-xs font-bold uppercase tracking-widest">FAQ</h3>
+            <h2 className="text-3xl md:text-4xl font-extrabold">Alguma dúvida?</h2>
           </div>
           
           <div className="space-y-4">
             {[
-              { q: "A apresentação será ao vivo?", a: "Sim! Teremos um momento exclusivo de interação para você extrair o máximo de conhecimento." },
-              { q: "Vai ficar gravado?", a: "Sim, os alunos inscritos receberão acesso à gravação para revisar o plano estratégico quando quiserem." },
-              { q: "Nunca escrevi um livro antes. Isso é para mim?", a: "Totalmente. Vamos mostrar como a Inteligência Artificial pode destravar suas ideias e te ajudar a estruturar um livro do zero absoluto." },
-              { q: "Como vou acessar a Fábrica de Best Seller?", a: "O seu crédito bônus será ativado na plataforma assim que sua compra for confirmada, permitindo que você inicie o projeto do seu livro." }
+              {
+                q: "A apresentação será ao vivo?",
+                a: "O acesso é imediato. Para que você não precise esperar dias por uma data na agenda, disponibilizamos a gravação oficial e completa da Masterclass diretamente na sua área de membros. Assim que a inscrição for aprovada, você pode começar a assistir imediatamente no seu próprio ritmo."
+              },
+              {
+                q: "Vou ter acesso à gravação para rever depois?",
+                a: "Sim, com certeza. O treinamento fica 100% disponível para você assistir quando, onde e quantas vezes quiser. Você poderá pausar, aplicar o passo a passo na prática e rever cada estratégia de estruturação e publicação sempre que precisar."
+              },
+              {
+                q: "Nunca escrevi um livro antes e não me considero escritor. Isso é para mim?",
+                a: "Com certeza. O Método PBE foi desenhado exatamente para quem não tem tempo a perder ou trava diante de uma folha em branco. Você não precisa de dons literários: nossa tecnologia de Inteligência Artificial orienta toda a estrutura da obra, organizando seu conhecimento e ideias do sumário à conclusão com padrão profissional de grandes editoras."
+              },
+              {
+                q: "Como recebo o meu crédito e o acesso à Fábrica de Best Seller?",
+                a: "A liberação é automática. Assim que a sua inscrição de R$ 29,90 for confirmada, você receberá por e-mail os dados de login da área de membros e as instruções para ativar o seu 1 Crédito Completo na FBS. Com ele em mãos, você já poderá dar os primeiros passos e estruturar seu livro dentro da ferramenta."
+              },
+              {
+                q: "Como funciona a publicação na Amazon e na UICLAP? Preciso pagar impressão antecipada?",
+                a: "Não, você não precisa investir em estoque. Na Masterclass, ensinamos o modelo de impressão sob demanda: seu livro é cadastrado para venda digital (eBook) e versão física impressa. Quando um leitor compra, a plataforma imprime e entrega diretamente para ele, e você recebe seus royalties limpos, sem risco financeiro com caixas de livros paradas em casa."
+              },
+              {
+                q: "O que é o programa de Representante Afiliado Autorizado (RAA) citado no ecossistema?",
+                a: "É a nossa via de monetização rápida para autores do Método PBE. Dentro do treinamento, revelaremos como nossos alunos qualificados podem se credenciar para indicar o ecossistema e a ferramenta para outros profissionais, conquistando comissões de até 60% (cerca de R$ 275 por venda). Você verá todos os critérios e o funcionamento detalhado durante a apresentação."
+              },
+              {
+                q: "O que acontece se eu assistir e achar que não é para mim?",
+                a: "O seu risco é absolutamente zero. Você tem uma Garantia Incondicional de 7 dias. Se você assistir à Masterclass, testar a ferramenta e sentir que o método não atende às suas expectativas, basta enviar um único e-mail para nossa equipe. Devolvemos 100% do seu valor pago (R$ 29,90), na hora e sem questionamentos."
+              },
+              {
+                q: "Quais são as formas de pagamento disponíveis?",
+                a: "Você pode garantir sua vaga e o seu crédito por apenas R$ 29,90 à vista via PIX (com liberação imediata) ou em até 5x de R$ 6,62 no cartão de crédito."
+              }
             ].map((faq, index) => (
               <div key={index} className="border border-white/10 rounded-xl bg-white/5 overflow-hidden">
                 <button 
-                  className="w-full px-6 py-4 flex items-center justify-between font-semibold text-left hover:bg-white/5 transition-colors"
+                  className="w-full px-6 py-5 flex items-center justify-between font-bold text-left text-white hover:bg-white/5 transition-colors"
                   onClick={() => toggleFaq(index)}
                 >
-                  <span>{faq.q}</span>
-                  <ChevronDown className={`w-5 h-5 text-amber-500 transition-transform ${openFaq === index ? 'rotate-180' : ''}`} />
+                  <span className="pr-4">{faq.q}</span>
+                  <ChevronDown className={`w-5 h-5 text-amber-500 flex-shrink-0 transition-transform ${openFaq === index ? 'rotate-180' : ''}`} />
                 </button>
                 {openFaq === index && (
-                  <div className="px-6 py-4 border-t border-white/10 text-slate-400 bg-black/20">
+                  <div className="px-6 py-5 border-t border-white/10 text-slate-300 text-sm sm:text-base leading-relaxed bg-black/40">
                     {faq.a}
                   </div>
                 )}
@@ -492,9 +538,9 @@ export const MasterclassLaunch1: React.FC = () => {
             <button 
               type="button"
               onClick={handleCheckout}
-              className="inline-block bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 px-8 rounded-xl transition-colors"
+              className="inline-block bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-extrabold py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02]"
             >
-              Quero Garantir Minha Vaga
+              GARANTIR MINHA VAGA + 1 LIVRO NA FBS POR R$ 29,90
             </button>
           </div>
         </div>
