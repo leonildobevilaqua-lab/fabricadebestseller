@@ -59,7 +59,7 @@ export const SocialProofSection: React.FC<SocialProofSectionProps> = ({ onSelect
       id: 'solange',
       audioElementId: 'audio_solange',
       audioSrc: '/assets/depoimento_dra_solange.mp3',
-      coverImg: '/assets/9 – A Rosa e o Cravo – Solange Cristina Leandrin Betiate.png',
+      coverImg: '/assets/9 – A Rosa e o Cravo – Solange Cristina Leandrin Betiate.webp',
       bookTitle: 'A Rosa e o Cravo',
       authorName: 'Dra. Solange',
       subtitle: 'Autora & Cliente Satisfeita',
@@ -69,7 +69,7 @@ export const SocialProofSection: React.FC<SocialProofSectionProps> = ({ onSelect
       id: 'flavio',
       audioElementId: 'audio_flavio',
       audioSrc: '/assets/depoimento_flavio.mp3',
-      coverImg: '/assets/8 – Autodefesa é para Todos – Flávio Almeida.png',
+      coverImg: '/assets/8 – Autodefesa é para Todos – Flávio Almeida.webp',
       bookTitle: 'Autodefesa é para Todos',
       authorName: 'Flávio - Mestre em Krav Maga',
       subtitle: 'Autor & Cliente Satisfeito',
@@ -78,25 +78,25 @@ export const SocialProofSection: React.FC<SocialProofSectionProps> = ({ onSelect
   ];
 
   const whatsappProofs = [
-    { id: 1, src: '/assets/clientes%20satisfeitos%20-%201.jpeg', alt: 'Depoimento WhatsApp de cliente satisfeito 1' },
-    { id: 2, src: '/assets/clientes%20satisfeitos%20-%202.jpeg', alt: 'Depoimento WhatsApp de cliente satisfeito 2' },
-    { id: 3, src: '/assets/clientes%20satisfeitos%20-%203.jpeg', alt: 'Depoimento WhatsApp de cliente satisfeito 3' },
-    { id: 4, src: '/assets/clientes%20satisfeitos%20-%204.jpeg', alt: 'Depoimento WhatsApp de cliente satisfeito 4' },
-    { id: 5, src: '/assets/clientes%20satisfeitos%20-%205.jpeg', alt: 'Depoimento WhatsApp de cliente satisfeito 5' },
-    { id: 6, src: '/assets/clientes%20satisfeitos%20-%206.jpeg', alt: 'Depoimento WhatsApp de cliente satisfeito 6' },
+    { id: 1, src: '/assets/clientes%20satisfeitos%20-%201.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 1' },
+    { id: 2, src: '/assets/clientes%20satisfeitos%20-%202.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 2' },
+    { id: 3, src: '/assets/clientes%20satisfeitos%20-%203.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 3' },
+    { id: 4, src: '/assets/clientes%20satisfeitos%20-%204.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 4' },
+    { id: 5, src: '/assets/clientes%20satisfeitos%20-%205.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 5' },
+    { id: 6, src: '/assets/clientes%20satisfeitos%20-%206.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 6' },
   ];
 
   const bookCovers = [
-    { img: "1 - A Chama Inextinguível - Ap. Custodio Ignacio.png", title: "A Chama Inextinguível", desc: "Ap. Custodio Ignacio" },
-    { img: "2 – O Campo Magnético das Vendas - Leonildo Bevilaqua.png", title: "O Campo Magnético das Vendas", desc: "Leonildo Bevilaqua" },
-    { img: "3 – A Ilusão da Cor - Edinaldo Pereira da Silva.png", title: "A Ilusão da Cor", desc: "Edinaldo Pereira da Silva" },
-    { img: "4 - A Nova Educação - Moisés Allaion Ferreira.png", title: "A Nova Educação", desc: "Moisés Allaion Ferreira" },
-    { img: "5 – O Mapa Secreto da Puberdade – Tânia Garcia.jpg", title: "O Mapa Secreto da Puberdade", desc: "Tânia Garcia" },
-    { img: "6 – Memorize de Forma Inteligente, Não Árdua! – Prof. Carlos André.png", title: "Memorize de Forma Inteligente, Não Árdua!", desc: "Prof. Carlos André" },
-    { img: "7 – 3 Minutos de Silêncio – Aline Tanaka.png", title: "3 Minutos de Silêncio", desc: "Aline Tanaka" },
-    { img: "8 – Autodefesa é para Todos – Flávio Almeida.png", title: "Autodefesa é para Todos", desc: "Flávio Almeida" },
-    { img: "9 – A Rosa e o Cravo – Solange Cristina Leandrin Betiate.png", title: "A Rosa e o Cravo", desc: "Solange Cristina Leandrin Betiate" },
-    { img: "10 – Crianças do Amanhã – Carlos Bueno.png", title: "Crianças do Amanhã", desc: "Carlos Bueno" }
+    { img: "1 - A Chama Inextinguível - Ap. Custodio Ignacio.webp", title: "A Chama Inextinguível", desc: "Ap. Custodio Ignacio" },
+    { img: "2 – O Campo Magnético das Vendas - Leonildo Bevilaqua.webp", title: "O Campo Magnético das Vendas", desc: "Leonildo Bevilaqua" },
+    { img: "3 – A Ilusão da Cor - Edinaldo Pereira da Silva.webp", title: "A Ilusão da Cor", desc: "Edinaldo Pereira da Silva" },
+    { img: "4 - A Nova Educação - Moisés Allaion Ferreira.webp", title: "A Nova Educação", desc: "Moisés Allaion Ferreira" },
+    { img: "5 – O Mapa Secreto da Puberdade – Tânia Garcia.webp", title: "O Mapa Secreto da Puberdade", desc: "Tânia Garcia" },
+    { img: "6 – Memorize de Forma Inteligente, Não Árdua! – Prof. Carlos André.webp", title: "Memorize de Forma Inteligente, Não Árdua!", desc: "Prof. Carlos André" },
+    { img: "7 – 3 Minutos de Silêncio – Aline Tanaka.webp", title: "3 Minutos de Silêncio", desc: "Aline Tanaka" },
+    { img: "8 – Autodefesa é para Todos – Flávio Almeida.webp", title: "Autodefesa é para Todos", desc: "Flávio Almeida" },
+    { img: "9 – A Rosa e o Cravo – Solange Cristina Leandrin Betiate.webp", title: "A Rosa e o Cravo", desc: "Solange Cristina Leandrin Betiate" },
+    { img: "10 – Crianças do Amanhã – Carlos Bueno.webp", title: "Crianças do Amanhã", desc: "Carlos Bueno" }
   ];
 
   return (
@@ -179,6 +179,10 @@ export const SocialProofSection: React.FC<SocialProofSectionProps> = ({ onSelect
                     <img 
                       src={spotlight.coverImg} 
                       alt={spotlight.bookTitle}
+                      width={360}
+                      height={480}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-auto max-h-[500px] object-contain rounded-lg drop-shadow-[0_25px_35px_rgba(0,0,0,0.95)] transform transition-transform duration-500 group-hover:scale-[1.03]"
                     />
                   </div>
@@ -201,6 +205,7 @@ export const SocialProofSection: React.FC<SocialProofSectionProps> = ({ onSelect
                       <div className="flex items-center gap-4">
                         <button
                           type="button"
+                          aria-label={isPlaying ? `Pausar depoimento em áudio de ${spotlight.authorName}` : `Ouvir depoimento em áudio de ${spotlight.authorName}`}
                           onClick={() => toggleAudio(spotlight.id, spotlight.audioElementId)}
                           className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 transform active:scale-95 shadow-lg flex-shrink-0 ${
                             isPlaying 

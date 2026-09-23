@@ -45,8 +45,12 @@ export const WebinarLaunch: React.FC = () => {
         {/* Cinematic Main Background (Podcast Image) */}
         <div className="absolute inset-0 z-0">
           <img 
-            src="/assets/Leonildo%20Bevilaqua%20-%20Oficial%20Landing%20page.png" 
-            alt="Leonildo Bevilaqua" 
+            src="/assets/Leonildo%20Bevilaqua%20-%20Oficial%20Landing%20page.webp" 
+            alt="Leonildo Bevilaqua - Fábrica de Best Seller" 
+            fetchPriority="high"
+            decoding="async"
+            width={1200}
+            height={675}
             className="w-full h-full object-cover object-[70%_center] md:object-right opacity-30 md:opacity-90"
           />
         </div>
