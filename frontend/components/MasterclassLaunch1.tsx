@@ -1,11 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { Calendar, Clock, BookOpen, AlertTriangle, CheckCircle, Video, Lock, ChevronRight, ChevronDown, Check, ShieldCheck, Star, Users, X } from 'lucide-react';
+import { getDynamicWebinarSlots, WebinarSlotsInfo } from '../utils/timeUtils';
 import { SocialProofSection } from './SocialProofSection';
 
-export const WebinarLaunch: React.FC = () => {
+export const MasterclassLaunch1: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [showSticky, setShowSticky] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // Dynamic Webinar Slots (+20m, +1h20m, +2h20m)
+  const [slotsInfo, setSlotsInfo] = useState<WebinarSlotsInfo | null>(null);
+  const [selectedSlotIndex, setSelectedSlotIndex] = useState<number>(0);
+
+  useEffect(() => {
+    const info = getDynamicWebinarSlots();
+    setSlotsInfo(info);
+  }, []);
+
+  const handleCheckout = () => {
+    const currentSlot = slotsInfo ? slotsInfo.slots[selectedSlotIndex] : '21:30';
+    const day = slotsInfo ? slotsInfo.dayOfWeek : 'Hoje';
+    const checkoutUrl = `https://payment.ticto.app/OF211B00F?sck=${encodeURIComponent(`horario_${currentSlot.replace(':', '_')}`)}&custom=${encodeURIComponent(`${day}_${currentSlot}`)}`;
+    window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,7 +32,6 @@ export const WebinarLaunch: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Scarcity scroll effect
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -52,24 +68,15 @@ export const WebinarLaunch: React.FC = () => {
         </div>
 
         {/* Gradient overlays to blend the image into the dark theme and highlight text */}
-        {/* Left gradient for text readability (Netflix style) */}
         <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent w-full md:w-[75%] z-0"></div>
-        
-        {/* Mobile-only dark overlay to guarantee text contrast */}
         <div className="absolute inset-0 bg-black/60 md:hidden z-0"></div>
-        
-        {/* Bottom gradient for smooth transition to the next section */}
         <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/60 to-transparent z-0"></div>
-        
-        {/* Top gradient for header breathing room */}
         <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#0a0a0a] via-black/50 to-transparent z-0"></div>
-
-        {/* Subtle amber glow behind the text to make it pop */}
         <div className="absolute top-1/2 left-[10%] -translate-y-1/2 w-[600px] h-[600px] bg-amber-500/5 blur-[150px] rounded-full hidden md:block z-0"></div>
 
         <div className="relative max-w-6xl mx-auto flex w-full z-20 py-10 lg:py-28">
           {/* Left Column - Text & CTA */}
-          <div className="w-full md:w-[65%] lg:w-[60%] space-y-8 text-center md:text-left z-20">
+          <div className="w-full md:w-[68%] lg:w-[65%] space-y-8 text-center md:text-left z-20">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 font-medium text-sm mb-4 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
               <Video className="w-4 h-4" />
               <span>Apresentação Completa e Exclusiva</span>
@@ -86,29 +93,47 @@ export const WebinarLaunch: React.FC = () => {
               Participe de um encontro intenso onde revelarei os bastidores da <strong>Fábrica de Best Seller</strong>. O passo a passo para transformar sua ideia em um livro desejado, lucrativo e de altíssima qualidade.
             </p>
 
-            {/* DATE & TIME BADGE */}
-            <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-4 pt-6">
-              <div className="flex items-center gap-3 bg-black/40 md:bg-white/5 border border-white/10 px-6 py-4 rounded-xl backdrop-blur-sm">
-                <Calendar className="w-6 h-6 text-amber-500" />
-                <div className="text-left">
+            {/* DYNAMIC DATE & 3-TIME-SLOT SELECTOR */}
+            <div className="space-y-4 pt-4 text-left bg-black/40 md:bg-white/5 border border-white/10 p-5 rounded-2xl backdrop-blur-md max-w-xl">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-6 h-6 text-amber-500 flex-shrink-0" />
+                <div>
                   <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Quando</p>
-                  <p className="text-lg font-bold text-white">Quinta-feira</p>
+                  <p className="text-lg font-bold text-white">{slotsInfo ? slotsInfo.dayOfWeek : 'Hoje'}</p>
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3 bg-black/40 md:bg-white/5 border border-white/10 px-6 py-4 rounded-xl backdrop-blur-sm">
-                <Clock className="w-6 h-6 text-amber-500" />
-                <div className="text-left">
-                  <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Horário</p>
-                  <p className="text-lg font-bold text-white">Às 19:30 (Brasília)</p>
+
+              <div>
+                <p className="text-xs text-amber-400 font-semibold uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-amber-500" /> Escolha o melhor horário para assistir hoje:
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  {slotsInfo?.fullFormatted.map((item, idx) => {
+                    const isSelected = selectedSlotIndex === idx;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setSelectedSlotIndex(idx)}
+                        className={`flex items-center justify-between px-3.5 py-3 rounded-xl border text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+                          isSelected
+                            ? 'bg-gradient-to-r from-amber-500/25 to-yellow-500/15 border-amber-500 text-amber-300 shadow-[0_0_15px_rgba(245,158,11,0.25)] ring-1 ring-amber-500'
+                            : 'bg-white/5 border-white/10 text-slate-300 hover:border-amber-500/40 hover:bg-white/10'
+                        }`}
+                      >
+                        <span>{item.label}</span>
+                        {isSelected && <Check className="w-4 h-4 text-amber-400 flex-shrink-0 ml-1" />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
             
-            <div className="pt-8">
+            <div className="pt-6">
               <button 
                 type="button"
-                onClick={() => window.open('https://payment.ticto.app/OF211B00F', '_blank', 'noopener,noreferrer')}
+                onClick={handleCheckout}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold text-lg py-4 px-10 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02]"
               >
                 GARANTIR MINHA VAGA | LOTE ESPECIAL <ChevronRight className="w-5 h-5" />
@@ -217,7 +242,6 @@ export const WebinarLaunch: React.FC = () => {
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-amber-500 via-transparent to-transparent"></div>
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center relative z-10">
           
-          {/* O que você vai levar */}
           <div className="space-y-8">
             <div>
               <h3 className="text-amber-500 text-sm font-bold uppercase tracking-widest mb-2">Acesso Exclusivo</h3>
@@ -285,7 +309,6 @@ export const WebinarLaunch: React.FC = () => {
             </ul>
           </div>
 
-          {/* Checkout Card with Price Anchoring */}
           <div className="bg-gradient-to-b from-slate-900 to-black border border-white/10 rounded-3xl p-8 relative shadow-2xl shadow-amber-900/10">
             <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-amber-500 text-black font-bold uppercase tracking-widest text-xs px-4 py-1 rounded-full shadow-lg whitespace-nowrap">
               Oferta Limitada
@@ -340,7 +363,7 @@ export const WebinarLaunch: React.FC = () => {
 
               <button 
                 type="button"
-                onClick={() => window.open('https://payment.ticto.app/OF211B00F', '_blank', 'noopener,noreferrer')}
+                onClick={handleCheckout}
                 className="w-full block bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white font-bold text-lg py-4 px-8 rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 <div className="flex items-center justify-center gap-2">
@@ -464,7 +487,7 @@ export const WebinarLaunch: React.FC = () => {
           <div className="text-center pt-8">
             <button 
               type="button"
-              onClick={() => window.open('https://payment.ticto.app/OF211B00F', '_blank', 'noopener,noreferrer')}
+              onClick={handleCheckout}
               className="inline-block bg-amber-500 hover:bg-amber-400 text-black font-bold py-4 px-8 rounded-xl transition-colors"
             >
               Quero Garantir Minha Vaga
@@ -517,4 +540,3 @@ export const WebinarLaunch: React.FC = () => {
     </div>
   );
 };
-

@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Clock, BookOpen, AlertTriangle, CheckCircle, Video, Lock, ChevronRight, ChevronDown, Check, ShieldCheck, Star, Users } from 'lucide-react';
+import { Calendar, Clock, BookOpen, AlertTriangle, CheckCircle, Video, Lock, ChevronRight, ChevronDown, Check, ShieldCheck, Star, Users, X } from 'lucide-react';
+import { SocialProofSection } from './SocialProofSection';
 
 export const WebinarLaunchV2: React.FC = () => {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [showSticky, setShowSticky] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -362,59 +364,7 @@ export const WebinarLaunchV2: React.FC = () => {
       </section>
 
       {/* 7. CASOS DE SUCESSO (SOCIAL PROOF) */}
-      <section className="py-20 border-t border-white/10 bg-black overflow-hidden">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12 mb-12">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl md:text-4xl font-bold">Autores comuns.<br /><span className="text-amber-500">Resultados fora do comum.</span></h2>
-            <p className="text-slate-400 max-w-2xl mx-auto">O que eles têm em comum não é apenas talento, mas acesso à ferramenta e estratégia certas.</p>
-          </div>
-        </div>
-          
-        <div className="relative w-full flex overflow-hidden group">
-          <div className="absolute left-0 top-0 bottom-0 w-16 md:w-40 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
-          <div className="absolute right-0 top-0 bottom-0 w-16 md:w-40 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
-          
-          <div className="flex animate-scroll-slow items-center w-max flex-nowrap">
-            {[1, 2].map((loop) => (
-              <div key={`loop-${loop}`} className="flex items-center gap-6 px-3 flex-shrink-0 min-w-max">
-                {[
-                  { img: "1 – A Chama Inextinguível - Ap. Custodio Ignacio.jpg", title: "A Chama Inextinguível", desc: "Ap. Custodio Ignacio" },
-                  { img: "2 – O Campo Magnético das Vendas - Leonildo Bevilaqua.png", title: "O Campo Magnético das Vendas", desc: "Leonildo Bevilaqua" },
-                  { img: "3 – A Ilusão da Cor - Edinaldo Pereira da Silva.png", title: "A Ilusão da Cor", desc: "Edinaldo Pereira da Silva" },
-                  { img: "4 – A Nova Educação – Moisés Allaion Ferreira.jpg", title: "A Nova Educação", desc: "Moisés Allaion Ferreira" },
-                  { img: "5 – O Mapa Secreto da Puberdade – Tânia Garcia.jpg", title: "O Mapa Secreto da Puberdade", desc: "Tânia Garcia" },
-                  { img: "6 – Memorize de Forma Inteligente, Não Árdua! – Prof. Carlos André.png", title: "Memorize de Forma Inteligente, Não Árdua!", desc: "Prof. Carlos André" },
-                  { img: "7 – 3 Minutos de Silêncio – Aline Tanaka.png", title: "3 Minutos de Silêncio", desc: "Aline Tanaka" },
-                  { img: "8 – Autodefesa é para Todos – Flávio Almeida.png", title: "Autodefesa é para Todos", desc: "Flávio Almeida" },
-                  { img: "9 – A Rosa e o Cravo – Solange Cristina Leandrin Betiate.png", title: "A Rosa e o Cravo", desc: "Solange Cristina Leandrin Betiate" },
-                  { img: "10 – Crianças do Amanhã – Carlos Bueno.png", title: "Crianças do Amanhã", desc: "Carlos Bueno" }
-                ].map((author, index) => (
-                  <div key={index} className="w-80 sm:w-96 md:w-[480px] bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative group-hover/card flex-shrink-0">
-                    <div className="aspect-[2/1] relative flex items-center justify-center bg-slate-900">
-                      <img 
-                        src={`/assets/${author.img}`} 
-                        alt={author.title}
-                        className="w-full h-full object-contain transition-transform duration-700 hover:scale-105"
-                      />
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none"></div>
-                      
-                      {/* Text info */}
-                      <div className="absolute bottom-5 left-5 right-5 pointer-events-none">
-                         <p className="text-[10px] text-amber-500 font-bold tracking-widest uppercase mb-1">{author.desc}</p>
-                         <p className="text-white font-bold leading-tight mb-2 text-sm sm:text-base uppercase">{author.title}</p>
-                         <div className="flex gap-1">
-                           {[...Array(5)].map((_, i) => <Star key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
-                         </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <SocialProofSection onSelectImage={setSelectedImage} />
 
       {/* 8. AUTHORITY SECTION */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-[#0a0a0a] border-t border-white/5 relative overflow-hidden">
@@ -557,6 +507,29 @@ export const WebinarLaunchV2: React.FC = () => {
           Garantir Vaga por R$ 29,90 <ChevronRight className="w-5 h-5" />
         </button>
       </div>
+
+      {/* LIGHTBOX MODAL FOR ENLARGING WHATSAPP PRINTS */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl w-full max-h-[90vh] flex flex-col items-center justify-center" onClick={e => e.stopPropagation()}>
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-12 right-0 sm:-top-4 sm:-right-4 z-10 bg-slate-800 text-white p-2.5 rounded-full border border-white/20 hover:bg-amber-500 hover:text-black transition-colors shadow-2xl"
+              aria-label="Fechar"
+            >
+              <X className="w-6 h-6" />
+            </button>
+            <img 
+              src={selectedImage} 
+              alt="Depoimento em tamanho amplo" 
+              className="max-h-[85vh] w-auto max-w-full rounded-2xl object-contain shadow-2xl border border-white/10"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
