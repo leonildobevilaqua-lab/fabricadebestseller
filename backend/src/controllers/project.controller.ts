@@ -1935,10 +1935,8 @@ export const downloadProjectBook = async (req: Request, res: Response) => {
             const p = project as any;
             const currentStatus = (p?.metadata?.status || p?.status || '').toUpperCase();
             const isCompleted = allowedStatuses.includes(currentStatus) ||
-                (p?.structure && Array.isArray(p.structure) && p.structure.length > 0) ||
-                (p?.metadata?.structure && Array.isArray(p.metadata.structure) && p.metadata.structure.length > 0) ||
                 ((p?.progress || 0) >= 100 || (p?.metadata && p.metadata.progress >= 100)) ||
-                (p?.currentStep === 'DONE' || p?.metadata?.currentStep === 'DONE' || p?.currentStep === 'DETAILS' || p?.metadata?.currentStep === 'DETAILS');
+                (p?.currentStep === 'DONE' || p?.metadata?.currentStep === 'DONE');
 
             // Gerar se o projeto estiver em um estado "finalizado"
             if (p && isCompleted) {

@@ -338,10 +338,8 @@ export const UserAuthController = {
 
                 const currentStatus = (metadata.status || p.status || '').toUpperCase();
                 const isCompleted = ['COMPLETED', 'LIVRO ENTREGUE', 'READY', 'SUCCESS', 'READY_TO_DOWNLOAD', 'DONE', 'FINISHED', 'APPROVED'].includes(currentStatus) ||
-                    (p.structure && Array.isArray(p.structure) && p.structure.length > 0) ||
-                    (metadata.structure && Array.isArray(metadata.structure) && metadata.structure.length > 0) ||
                     (p.progress >= 100 || metadata.progress >= 100) ||
-                    (p.currentStep === 'DONE' || metadata.currentStep === 'DONE' || p.currentStep === 'DETAILS' || metadata.currentStep === 'DETAILS');
+                    (p.currentStep === 'DONE' || metadata.currentStep === 'DONE');
 
                 const finalStatus = isCompleted ? 'COMPLETED' : (currentStatus || 'PROCESSING');
                 const projId = p.id || metadata.id || p.projectId;
