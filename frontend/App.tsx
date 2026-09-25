@@ -34,6 +34,7 @@ const WebinarLaunch = lazy(() => import('./components/WebinarLaunch').then(m => 
 const WebinarLaunchV2 = lazy(() => import('./components/WebinarLaunchV2').then(m => ({ default: m.WebinarLaunchV2 })));
 const MasterclassLaunch1 = lazy(() => import('./components/MasterclassLaunch1').then(m => ({ default: m.MasterclassLaunch1 })));
 const MasterclassLaunch2 = lazy(() => import('./components/MasterclassLaunch2').then(m => ({ default: m.MasterclassLaunch2 })));
+const MasterclassVip = lazy(() => import('./components/MasterclassVip').then(m => ({ default: m.MasterclassVip })));
 
 // Inline component — carrega /diagramacao.html via iframe (mesmo padrão do SalesLandingV7)
 const DiagramacaoLanding: React.FC = () => (
@@ -265,7 +266,14 @@ const App: React.FC = () => {
         </ErrorBoundary>
       );
     }
-    if (path === '/lancamento' || path === '/webinar' || path === '/masterclass') {
+    if (path === '/masterclass-vip' || path === '/sala-vip' || path === '/masterclass' || path === '/assistir') {
+      return (
+        <ErrorBoundary>
+          <MasterclassVip />
+        </ErrorBoundary>
+      );
+    }
+    if (path === '/lancamento' || path === '/webinar') {
       return (
         <ErrorBoundary>
           <WebinarLaunch />
