@@ -1513,11 +1513,15 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 if (payload.data?.product_id) identifiers.add(String(payload.data.product_id).trim());
                 if (payload.data?.order?.checkout_id) identifiers.add(String(payload.data.order.checkout_id).trim());
                 if (payload.data?.order?.checkout_code) identifiers.add(String(payload.data.order.checkout_code).trim());
+                if (payload.offer?.code) identifiers.add(String(payload.offer.code).trim());
+                if (payload.offer_code) identifiers.add(String(payload.offer_code).trim());
+                if (payload.order?.offer_code) identifiers.add(String(payload.order.offer_code).trim());
+                if (tx.offer_code) identifiers.add(String(tx.offer_code).trim());
 
-                // Parse checkout URL if present
+                // Parse checkout URL if present (both checkout.ticto.app and payment.ticto.app)
                 const checkUrl = payload.checkout_url || payload.order?.checkout_url || tx.checkout_url || payload.item?.checkout_url || '';
                 if (checkUrl) {
-                    const match = checkUrl.match(/checkout\.ticto\.app\/([A-Za-z0-9]+)/);
+                    const match = checkUrl.match(/(?:checkout|payment)\.ticto\.app\/([A-Za-z0-9]+)/i);
                     if (match && match[1]) {
                         identifiers.add(match[1].trim());
                     }
@@ -1553,14 +1557,30 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     if (itemObj.product?.id) itemIds.add(String(itemObj.product.id).trim());
                     if (itemObj.offer_id) itemIds.add(String(itemObj.offer_id).trim());
                     if (itemObj.offer_code) itemIds.add(String(itemObj.offer_code).trim());
+                    if (itemObj.offer?.code) itemIds.add(String(itemObj.offer.code).trim());
                     if (itemObj.checkout_code) itemIds.add(String(itemObj.checkout_code).trim());
                     if (itemObj.checkout_id) itemIds.add(String(itemObj.checkout_id).trim());
                     if (itemObj.checkout_hash) itemIds.add(String(itemObj.checkout_hash).trim());
+
+                    // If single item order, merge root identifiers into itemIds
+                    if (itemsToProcess.length === 1) {
+                        for (const id of identifiers) itemIds.add(id);
+                    }
 
                     const itemMatches = (idsOrHashes: string[]) => idsOrHashes.some(id => itemIds.has(id));
 
                     let matched = false;
 
+                    // ID OF211B00F (1º Lote - MASTERCLASS - MPBE Turma 56 - 1 Livro)
+                    if (itemMatches(['OF211B00F', 'of211b00f'])) {
+                        bookCreditsToAdd += 1;
+                        matched = true;
+                    }
+                    // ID O001892B6 (Método PBE - Ecossistema Completo - 1 Livro)
+                    if (itemMatches(['O001892B6', 'o001892b6'])) {
+                        bookCreditsToAdd += 1;
+                        matched = true;
+                    }
                     // ID 111296 / O6F5202E7 (Oferta Especial 1ª Compra - 1 Livro)
                     if (itemMatches(['111296', 'O6F5202E7'])) {
                         bookCreditsToAdd += 1;
@@ -1626,7 +1646,18 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                             .normalize("NFD")
                             .replace(/[\u0300-\u036f]/g, "");
 
-                        if (itemPName.includes('REGISTRO COMPLETO') || itemPName.includes('PRC')) {
+                        if (
+                            itemPName.includes('OF211B00F') ||
+                            itemPName.includes('O001892B6') ||
+                            itemPName.includes('MASTERCLASS') ||
+                            itemPName.includes('MPBE') ||
+                            itemPName.includes('TURMA 56') ||
+                            itemPName.includes('PUBLICACAO BUSINESS EXPRESS') ||
+                            itemPName.includes('PUBLICAÇÃO BUSINESS EXPRESS')
+                        ) {
+                            bookCreditsToAdd += 1;
+                            matched = true;
+                        } else if (itemPName.includes('REGISTRO COMPLETO') || itemPName.includes('PRC')) {
                             cipCreditsToAdd += 1;
                             barcodeCreditsToAdd += 1;
                             qrCreditsToAdd += 1;
@@ -1698,7 +1729,13 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 // Determine Lead type & tag
                 let leadType = 'CREDIT';
                 let leadTag = 'TICTO_AUTO_PURCHASE';
-                if (cipCreditsToAdd > 0 && bookCreditsToAdd === 0) {
+                if (identifiers.has('OF211B00F') || identifiers.has('of211b00f')) {
+                    leadType = 'MASTERCLASS';
+                    leadTag = 'TICTO_MASTERCLASS_OF211B00F';
+                } else if (identifiers.has('O001892B6') || identifiers.has('o001892b6')) {
+                    leadType = 'METODO_PBE';
+                    leadTag = 'TICTO_PBE_O001892B6';
+                } else if (cipCreditsToAdd > 0 && bookCreditsToAdd === 0) {
                     leadType = 'FICHA_CATALOGRAFICA';
                     leadTag = 'TICTO_CIP_PURCHASE';
                 } else if (barcodeCreditsToAdd > 0 && bookCreditsToAdd === 0) {
