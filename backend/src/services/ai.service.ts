@@ -662,8 +662,6 @@ const cleanText = (text: string): string => {
     .replace(/[ \t]+([.,!?;:])/g, '$1') // Remove space before punctuation
     .replace(/[ \t]+\)/g, ')') // Remove space before closing parenthesis
     .replace(/\([ \t]+/g, '(') // Remove space after opening parenthesis
-    .replace(/(\w|\d|[.,!?;:])\s+([\"'”’])/g, '$1$2') // Space before closing quotes
-    .replace(/([\"'“‘])\s+(\w|\d)/g, '$1$2') // Space after opening quotes
     .replace(/\n{3,}/g, '\n\n') // Collapse 3+ newlines to double newlines
     .trim();
 };
