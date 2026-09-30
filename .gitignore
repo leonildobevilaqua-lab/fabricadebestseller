@@ -13,3 +13,11 @@ backend/dist/
 frontend/dist/
 dist/
 .DS_Store
+*.bak
+database.json.*
+backend/database.json.*
+*_dump.json
+dump_*.js
+check_*.js
+backend/scratch_*.js
+me_response.json

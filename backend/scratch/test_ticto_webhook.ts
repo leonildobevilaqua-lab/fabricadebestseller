@@ -206,6 +206,45 @@ async function runTest() {
                 transaction: { id: "tx_fallback_123" }
             },
             expected: { book: 32, cip: 3, barcode: 4, qr: 3 } // cip, barcode, qr increase by 1
+        },
+        {
+            name: "MÉTODO PBE - PLANO ESSENCIAL (ID: PECFC3010 / Código: O7FDCA228)",
+            payload: {
+                token: TICTO_TOKEN,
+                event: "sale_approved",
+                status: "approved",
+                customer: { email: TEST_EMAIL, name: "Cliente Plano Essencial" },
+                item: { product_id: "PECFC3010", product_name: "PLANO ESSENCIAL - Método PBE" },
+                order: { checkout_code: "O7FDCA228" },
+                transaction: { id: "tx_pbe_essencial_001" }
+            },
+            expected: { book: 33, cip: 4, barcode: 5, qr: 4 } // +1 book, +1 cip, +1 barcode, +1 qr
+        },
+        {
+            name: "MÉTODO PBE - PLANO IMERSÃO & GRUPO (ID: P76FEEB31 / Código: OE7D84BCD)",
+            payload: {
+                token: TICTO_TOKEN,
+                event: "sale_approved",
+                status: "approved",
+                customer: { email: TEST_EMAIL, name: "Cliente Imersão Grupo" },
+                item: { product_id: "P76FEEB31", product_name: "PLANO IMERSÃO & GRUPO - Método PBE" },
+                order: { checkout_code: "OE7D84BCD" },
+                transaction: { id: "tx_pbe_imersao_002" }
+            },
+            expected: { book: 34, cip: 5, barcode: 6, qr: 5 } // +1 book, +1 cip, +1 barcode, +1 qr
+        },
+        {
+            name: "MÉTODO PBE - MENTORIA VIP 1 A 1 (ID: PBFED1572 / Código: OCD34ABCE)",
+            payload: {
+                token: TICTO_TOKEN,
+                event: "sale_approved",
+                status: "approved",
+                customer: { email: TEST_EMAIL, name: "Cliente Mentoria VIP" },
+                item: { product_id: "PBFED1572", product_name: "MENTORIA VIP 1 A 1 - Método PBE" },
+                order: { checkout_code: "OCD34ABCE" },
+                transaction: { id: "tx_pbe_mentoria_003" }
+            },
+            expected: { book: 35, cip: 6, barcode: 7, qr: 6 } // +1 book, +1 cip, +1 barcode, +1 qr
         }
     ];
 

@@ -1488,16 +1488,30 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     if (!itemObj) continue;
                     if (itemObj.product_id) identifiers.add(String(itemObj.product_id).trim());
                     if (itemObj.product?.id) identifiers.add(String(itemObj.product.id).trim());
+                    if (itemObj.product_code) identifiers.add(String(itemObj.product_code).trim());
+                    if (itemObj.product?.code) identifiers.add(String(itemObj.product.code).trim());
+                    if (itemObj.code) identifiers.add(String(itemObj.code).trim());
                     if (itemObj.offer_id) identifiers.add(String(itemObj.offer_id).trim());
                     if (itemObj.offer_code) identifiers.add(String(itemObj.offer_code).trim());
+                    if (itemObj.offer?.code) identifiers.add(String(itemObj.offer.code).trim());
                     if (itemObj.checkout_code) identifiers.add(String(itemObj.checkout_code).trim());
                     if (itemObj.checkout_id) identifiers.add(String(itemObj.checkout_id).trim());
                     if (itemObj.checkout_hash) identifiers.add(String(itemObj.checkout_hash).trim());
+                    if (itemObj.checkout_url) {
+                        const match = itemObj.checkout_url.match(/(?:checkout|payment)\.ticto\.app\/([A-Za-z0-9]+)/i);
+                        if (match && match[1]) identifiers.add(match[1].trim());
+                    }
                 }
 
                 if (tx.product?.id) identifiers.add(String(tx.product.id).trim());
+                if (tx.product?.code) identifiers.add(String(tx.product.code).trim());
+                if (tx.product_code) identifiers.add(String(tx.product_code).trim());
+                if (tx.code) identifiers.add(String(tx.code).trim());
                 if (payload.product_id) identifiers.add(String(payload.product_id).trim());
+                if (payload.product_code) identifiers.add(String(payload.product_code).trim());
+                if (payload.code) identifiers.add(String(payload.code).trim());
                 if (payload.product?.id) identifiers.add(String(payload.product.id).trim());
+                if (payload.product?.code) identifiers.add(String(payload.product.code).trim());
                 if (payload.order?.checkout_id) identifiers.add(String(payload.order.checkout_id).trim());
                 if (payload.checkout_id) identifiers.add(String(payload.checkout_id).trim());
                 if (payload.checkout_hash) identifiers.add(String(payload.checkout_hash).trim());
@@ -1510,7 +1524,10 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 if (payload.data?.checkout_hash) identifiers.add(String(payload.data.checkout_hash).trim());
                 if (payload.order?.checkout_hash) identifiers.add(String(payload.order.checkout_hash).trim());
                 if (payload.data?.product?.id) identifiers.add(String(payload.data.product.id).trim());
+                if (payload.data?.product?.code) identifiers.add(String(payload.data.product.code).trim());
                 if (payload.data?.product_id) identifiers.add(String(payload.data.product_id).trim());
+                if (payload.data?.product_code) identifiers.add(String(payload.data.product_code).trim());
+                if (payload.data?.code) identifiers.add(String(payload.data.code).trim());
                 if (payload.data?.order?.checkout_id) identifiers.add(String(payload.data.order.checkout_id).trim());
                 if (payload.data?.order?.checkout_code) identifiers.add(String(payload.data.order.checkout_code).trim());
                 if (payload.offer?.code) identifiers.add(String(payload.offer.code).trim());
@@ -1519,7 +1536,7 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 if (tx.offer_code) identifiers.add(String(tx.offer_code).trim());
 
                 // Parse checkout URL if present (both checkout.ticto.app and payment.ticto.app)
-                const checkUrl = payload.checkout_url || payload.order?.checkout_url || tx.checkout_url || payload.item?.checkout_url || '';
+                const checkUrl = payload.checkout_url || payload.order?.checkout_url || tx.checkout_url || payload.item?.checkout_url || payload.data?.checkout_url || '';
                 if (checkUrl) {
                     const match = checkUrl.match(/(?:checkout|payment)\.ticto\.app\/([A-Za-z0-9]+)/i);
                     if (match && match[1]) {
@@ -1555,86 +1572,126 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     const itemIds = new Set<string>();
                     if (itemObj.product_id) itemIds.add(String(itemObj.product_id).trim());
                     if (itemObj.product?.id) itemIds.add(String(itemObj.product.id).trim());
+                    if (itemObj.product_code) itemIds.add(String(itemObj.product_code).trim());
+                    if (itemObj.product?.code) itemIds.add(String(itemObj.product.code).trim());
+                    if (itemObj.code) itemIds.add(String(itemObj.code).trim());
                     if (itemObj.offer_id) itemIds.add(String(itemObj.offer_id).trim());
                     if (itemObj.offer_code) itemIds.add(String(itemObj.offer_code).trim());
                     if (itemObj.offer?.code) itemIds.add(String(itemObj.offer.code).trim());
                     if (itemObj.checkout_code) itemIds.add(String(itemObj.checkout_code).trim());
                     if (itemObj.checkout_id) itemIds.add(String(itemObj.checkout_id).trim());
                     if (itemObj.checkout_hash) itemIds.add(String(itemObj.checkout_hash).trim());
+                    if (itemObj.checkout_url) {
+                        const match = itemObj.checkout_url.match(/(?:checkout|payment)\.ticto\.app\/([A-Za-z0-9]+)/i);
+                        if (match && match[1]) itemIds.add(match[1].trim());
+                    }
 
                     // If single item order, merge root identifiers into itemIds
                     if (itemsToProcess.length === 1) {
                         for (const id of identifiers) itemIds.add(id);
                     }
 
-                    const itemMatches = (idsOrHashes: string[]) => idsOrHashes.some(id => itemIds.has(id));
+                    // Case-insensitive ID/hash matching helper
+                    const itemMatches = (idsOrHashes: string[]) => idsOrHashes.some(id => {
+                        const target = id.toUpperCase().trim();
+                        for (const itemId of itemIds) {
+                            if (String(itemId).toUpperCase().trim() === target) return true;
+                        }
+                        return false;
+                    });
 
                     let matched = false;
 
+                    // --- PRODUTOS MÉTODO PBE (FÁBRICA DE BEST SELLER) ---
+                    // 1. PLANO ESSENCIAL: PECFC3010 / O7FDCA228 (1 Livro + 1 Ficha CIP + 1 Código de Barras + 1 QR Code)
+                    if (itemMatches(['PECFC3010', 'O7FDCA228'])) {
+                        bookCreditsToAdd += 1;
+                        cipCreditsToAdd += 1;
+                        barcodeCreditsToAdd += 1;
+                        qrCreditsToAdd += 1;
+                        matched = true;
+                    }
+                    // 2. PLANO IMERSÃO & GRUPO: P76FEEB31 / OE7D84BCD (1 Livro + 1 Ficha CIP + 1 Código de Barras + 1 QR Code)
+                    else if (itemMatches(['P76FEEB31', 'OE7D84BCD'])) {
+                        bookCreditsToAdd += 1;
+                        cipCreditsToAdd += 1;
+                        barcodeCreditsToAdd += 1;
+                        qrCreditsToAdd += 1;
+                        matched = true;
+                    }
+                    // 3. MENTORIA VIP 1 A 1: PBFED1572 / OCD34ABCE (1 Livro + 1 Ficha CIP + 1 Código de Barras + 1 QR Code)
+                    else if (itemMatches(['PBFED1572', 'OCD34ABCE'])) {
+                        bookCreditsToAdd += 1;
+                        cipCreditsToAdd += 1;
+                        barcodeCreditsToAdd += 1;
+                        qrCreditsToAdd += 1;
+                        matched = true;
+                    }
+
                     // ID OF211B00F (1º Lote - MASTERCLASS - MPBE Turma 56 - 1 Livro)
-                    if (itemMatches(['OF211B00F', 'of211b00f'])) {
+                    else if (itemMatches(['OF211B00F', 'of211b00f'])) {
                         bookCreditsToAdd += 1;
                         matched = true;
                     }
                     // ID O001892B6 (Método PBE - Ecossistema Completo - 1 Livro)
-                    if (itemMatches(['O001892B6', 'o001892b6'])) {
+                    else if (itemMatches(['O001892B6', 'o001892b6'])) {
                         bookCreditsToAdd += 1;
                         matched = true;
                     }
                     // ID 111296 / O6F5202E7 (Oferta Especial 1ª Compra - 1 Livro)
-                    if (itemMatches(['111296', 'O6F5202E7'])) {
+                    else if (itemMatches(['111296', 'O6F5202E7'])) {
                         bookCreditsToAdd += 1;
                         matched = true;
                     }
                     // ID Capa Profissional - OE1970B27
-                    if (itemMatches(['OE1970B27'])) {
+                    else if (itemMatches(['OE1970B27'])) {
                         coverCreditsToAdd += 1;
                         matched = true;
                     }
                     // ID 111114 / OAE19BCE4 (PRC - Pacote de Registro Completo - 1 de cada)
-                    if (itemMatches(['111114', 'OAE19BCE4'])) {
+                    else if (itemMatches(['111114', 'OAE19BCE4'])) {
                         cipCreditsToAdd += 1;
                         barcodeCreditsToAdd += 1;
                         qrCreditsToAdd += 1;
                         matched = true;
                     }
                     // ID 111112 / O8B28DD61 (Gerador Automático de QR Codes - 1 QR)
-                    if (itemMatches(['111112', 'O8B28DD61'])) {
+                    else if (itemMatches(['111112', 'O8B28DD61'])) {
                         qrCreditsToAdd += 1;
                         matched = true;
                     }
                     // ID 110881 / O9012A440 ou O77037442 (Crédito para Código de Barras - 1 Barcode)
-                    if (itemMatches(['110881', 'O9012A440', 'O77037442'])) {
+                    else if (itemMatches(['110881', 'O9012A440', 'O77037442'])) {
                         barcodeCreditsToAdd += 1;
                         matched = true;
                     }
                     // ID 110774 / O89DB6739 (Crédito para Ficha Catalográfica - 1 Ficha)
-                    if (itemMatches(['110774', 'O89DB6739'])) {
+                    else if (itemMatches(['110774', 'O89DB6739'])) {
                         cipCreditsToAdd += 1;
                         matched = true;
                     }
                     // ID 110633 / O1234F079 (Pacote 12 Livros)
-                    if (itemMatches(['110633', 'O1234F079'])) {
+                    else if (itemMatches(['110633', 'O1234F079'])) {
                         bookCreditsToAdd += 12;
                         matched = true;
                     }
                     // ID 110631 / OFD92B07B (Pacote 9 Livros)
-                    if (itemMatches(['110631', 'OFD92B07B'])) {
+                    else if (itemMatches(['110631', 'OFD92B07B'])) {
                         bookCreditsToAdd += 9;
                         matched = true;
                     }
                     // ID 110634 / O276DFB4A (Pacote 6 Livros)
-                    if (itemMatches(['110634', 'O276DFB4A'])) {
+                    else if (itemMatches(['110634', 'O276DFB4A'])) {
                         bookCreditsToAdd += 6;
                         matched = true;
                     }
                     // ID 110628 / OFEE31960 (Pacote 3 Livros)
-                    if (itemMatches(['110628', 'OFEE31960'])) {
+                    else if (itemMatches(['110628', 'OFEE31960'])) {
                         bookCreditsToAdd += 3;
                         matched = true;
                     }
                     // ID 108488 / O6CE296D4 (Gerador de Livros Profissionais - 1 Livro)
-                    if (itemMatches(['108488', 'O6CE296D4'])) {
+                    else if (itemMatches(['108488', 'O6CE296D4'])) {
                         bookCreditsToAdd += 1;
                         matched = true;
                     }
@@ -1646,7 +1703,28 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                             .normalize("NFD")
                             .replace(/[\u0300-\u036f]/g, "");
 
+                        // Fallback matching for Método PBE plans
                         if (
+                            itemPName.includes('PECFC3010') ||
+                            itemPName.includes('O7FDCA228') ||
+                            itemPName.includes('PLANO ESSENCIAL') ||
+                            itemPName.includes('P76FEEB31') ||
+                            itemPName.includes('OE7D84BCD') ||
+                            itemPName.includes('PLANO IMERSAO') ||
+                            itemPName.includes('IMERSAO & GRUPO') ||
+                            itemPName.includes('IMERSAO E GRUPO') ||
+                            itemPName.includes('PBFED1572') ||
+                            itemPName.includes('OCD34ABCE') ||
+                            itemPName.includes('MENTORIA VIP') ||
+                            itemPName.includes('MENTORIA 1 A 1') ||
+                            itemPName.includes('MENTORIA 1A1')
+                        ) {
+                            bookCreditsToAdd += 1;
+                            cipCreditsToAdd += 1;
+                            barcodeCreditsToAdd += 1;
+                            qrCreditsToAdd += 1;
+                            matched = true;
+                        } else if (
                             itemPName.includes('OF211B00F') ||
                             itemPName.includes('O001892B6') ||
                             itemPName.includes('MASTERCLASS') ||
@@ -1726,15 +1804,44 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                     console.log(`[TICTO WEBHOOK] SUCCESS: ${email} now has ${newCoverCredits} Cover credits (added +${coverCreditsToAdd}).`);
                 }
 
-                // Determine Lead type & tag
+                // Helper to check identifiers case-insensitively
+                const hasIdentifier = (code: string) => {
+                    const target = code.toUpperCase().trim();
+                    for (const id of identifiers) {
+                        if (String(id).toUpperCase().trim() === target) return true;
+                    }
+                    return false;
+                };
+
+                // Determine Lead type, tag & user plan
                 let leadType = 'CREDIT';
                 let leadTag = 'TICTO_AUTO_PURCHASE';
-                if (identifiers.has('OF211B00F') || identifiers.has('of211b00f')) {
+                let purchasedPlan: string | null = null;
+
+                if (hasIdentifier('PECFC3010') || hasIdentifier('O7FDCA228')) {
+                    leadType = 'PLANO_ESSENCIAL';
+                    leadTag = 'TICTO_PLANO_ESSENCIAL_O7FDCA228';
+                    purchasedPlan = 'PLANO_ESSENCIAL';
+                } else if (hasIdentifier('P76FEEB31') || hasIdentifier('OE7D84BCD')) {
+                    leadType = 'PLANO_IMERSAO';
+                    leadTag = 'TICTO_PLANO_IMERSAO_OE7D84BCD';
+                    purchasedPlan = 'PLANO_IMERSAO';
+                } else if (hasIdentifier('PBFED1572') || hasIdentifier('OCD34ABCE')) {
+                    leadType = 'MENTORIA_VIP';
+                    leadTag = 'TICTO_MENTORIA_VIP_OCD34ABCE';
+                    purchasedPlan = 'MENTORIA_VIP';
+                } else if (hasIdentifier('OF211B00F') || identifiers.has('of211b00f')) {
                     leadType = 'MASTERCLASS';
                     leadTag = 'TICTO_MASTERCLASS_OF211B00F';
-                } else if (identifiers.has('O001892B6') || identifiers.has('o001892b6')) {
+                } else if (hasIdentifier('O001892B6') || identifiers.has('o001892b6')) {
                     leadType = 'METODO_PBE';
                     leadTag = 'TICTO_PBE_O001892B6';
+                } else if (cipCreditsToAdd > 0 && barcodeCreditsToAdd > 0 && qrCreditsToAdd > 0 && bookCreditsToAdd > 0) {
+                    leadType = 'METODO_PBE';
+                    leadTag = 'TICTO_PBE_COMBO_PURCHASE';
+                } else if (cipCreditsToAdd > 0 && barcodeCreditsToAdd > 0 && qrCreditsToAdd > 0) {
+                    leadType = 'PACOTE_REGISTRO_COMPLETO';
+                    leadTag = 'TICTO_PRC_PURCHASE';
                 } else if (cipCreditsToAdd > 0 && bookCreditsToAdd === 0) {
                     leadType = 'FICHA_CATALOGRAFICA';
                     leadTag = 'TICTO_CIP_PURCHASE';
@@ -1744,9 +1851,17 @@ export const handleTictoWebhook = async (req: Request, res: Response) => {
                 } else if (qrCreditsToAdd > 0 && bookCreditsToAdd === 0) {
                     leadType = 'QR_CODE';
                     leadTag = 'TICTO_QR_PURCHASE';
-                } else if (cipCreditsToAdd > 0 && barcodeCreditsToAdd > 0 && qrCreditsToAdd > 0) {
-                    leadType = 'PACOTE_REGISTRO_COMPLETO';
-                    leadTag = 'TICTO_PRC_PURCHASE';
+                }
+
+                // Update user profile with plan info if applicable
+                await setVal(`/users/${safeEmail}/email`, email);
+                if (payerName) {
+                    await setVal(`/users/${safeEmail}/name`, payerName);
+                }
+                if (purchasedPlan) {
+                    await setVal(`/users/${safeEmail}/plan`, purchasedPlan);
+                    await setVal(`/users/${safeEmail}/currentPlan`, purchasedPlan);
+                    await setVal(`/users/${safeEmail}/planUpdatedAt`, new Date());
                 }
 
                 // Update/Create Lead

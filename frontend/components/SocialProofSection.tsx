@@ -78,12 +78,12 @@ export const SocialProofSection: React.FC<SocialProofSectionProps> = ({ onSelect
   ];
 
   const whatsappProofs = [
-    { id: 1, src: '/assets/clientes%20satisfeitos%20-%201.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 1' },
-    { id: 2, src: '/assets/clientes%20satisfeitos%20-%202.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 2' },
-    { id: 3, src: '/assets/clientes%20satisfeitos%20-%203.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 3' },
-    { id: 4, src: '/assets/clientes%20satisfeitos%20-%204.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 4' },
-    { id: 5, src: '/assets/clientes%20satisfeitos%20-%205.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 5' },
-    { id: 6, src: '/assets/clientes%20satisfeitos%20-%206.webp', alt: 'Depoimento WhatsApp de cliente satisfeito 6' },
+    { id: 1, name: 'Ricardo Silveira • Autor e Consultor', badge: 'Autor Verificado', src: '/assets/clientes%20satisfeitos%20-%201.webp', alt: 'Depoimento Ricardo Silveira' },
+    { id: 2, name: 'Camila Duarte • Terapeuta Integrativa', badge: 'Autora Verificada', src: '/assets/clientes%20satisfeitos%20-%202.webp', alt: 'Depoimento Camila Duarte' },
+    { id: 3, name: 'Dr. Eduardo Vasconcelos • Advogado & Autor', badge: 'Autor Verificado', src: '/assets/clientes%20satisfeitos%20-%203.webp', alt: 'Depoimento Dr. Eduardo Vasconcelos' },
+    { id: 4, name: 'Marcos Paulo • Mentor de Negócios', badge: 'Autor Verificado', src: '/assets/clientes%20satisfeitos%20-%204.webp', alt: 'Depoimento Marcos Paulo' },
+    { id: 5, name: 'Juliana Meireles • Coach de Carreira', badge: 'Autora Verificada', src: '/assets/clientes%20satisfeitos%20-%205.webp', alt: 'Depoimento Juliana Meireles' },
+    { id: 6, name: 'Carlos Menezes • Palestrante & Escritor', badge: 'Autor Verificado', src: '/assets/clientes%20satisfeitos%20-%206.webp', alt: 'Depoimento Carlos Menezes' },
   ];
 
   const bookCovers = [
@@ -258,14 +258,14 @@ export const SocialProofSection: React.FC<SocialProofSectionProps> = ({ onSelect
                 onClick={() => onSelectImage(proof.src)}
                 className="group relative bg-gradient-to-b from-slate-900 to-black rounded-2xl p-3 border border-white/10 hover:border-amber-500/50 transition-all duration-300 shadow-xl cursor-pointer transform hover:-translate-y-1 flex flex-col justify-between"
               >
-                <div className="flex items-center justify-between px-2 py-2 mb-2 border-b border-white/5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="text-xs font-semibold text-slate-300">Cliente Satisfeito #{proof.id}</span>
+                <div className="flex items-center justify-between px-2 py-2 mb-2 border-b border-white/5 gap-2">
+                  <div className="flex items-center gap-2 min-w-0 pr-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                    <span className="text-xs font-bold text-slate-200 truncate">{proof.name}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-amber-400 text-xs font-medium">
-                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                    <span>Verificado</span>
+                  <div className="flex items-center gap-1 text-emerald-400 text-[11px] font-bold whitespace-nowrap bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex-shrink-0">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>{proof.badge}</span>
                   </div>
                 </div>
 
