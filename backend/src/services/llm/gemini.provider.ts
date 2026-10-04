@@ -13,6 +13,13 @@ export class GeminiProvider implements LLMProvider {
         "gemini-2.5-flash",  // PRIMARY: Confirmed active, fast and cost-effective
     ];
 
+    // STRICT POLICY: Ban any image, banana, or pro models from ever being called by this provider
+    private validateModel(modelName: string) {
+        const lower = modelName.toLowerCase();
+        if (lower.includes('banana') || lower.includes('image') || lower.includes('imagen') || lower.includes('veo') || lower.includes('pro')) {
+            throw new Error(`[SECURITY ALERT] Model "${modelName}" is strictly forbidden by financial policy. Only Flash text models are permitted.`);
+        }
+    }
 
     constructor(apiKey: string) {
         let key = apiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
@@ -26,6 +33,7 @@ export class GeminiProvider implements LLMProvider {
 
         for (const modelName of this.models) {
             try {
+                this.validateModel(modelName);
                 const generativeModel = this.client.getGenerativeModel({
                     model: modelName,
                     generationConfig: { temperature: 0.7, maxOutputTokens: 8000 },
@@ -62,6 +70,7 @@ export class GeminiProvider implements LLMProvider {
         let lastError: any;
         for (const modelName of this.models) {
             try {
+                this.validateModel(modelName);
                 const generativeModel = this.client.getGenerativeModel({
                     model: modelName,
                     generationConfig: { responseMimeType: "application/json", temperature: 0.7, maxOutputTokens: 8000 },
