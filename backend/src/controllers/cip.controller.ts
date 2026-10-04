@@ -270,14 +270,15 @@ ${text.substring(0, 8000)}
       console.error("CIP Generation Error:", error);
       if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       const detail = error?.message || "";
-      const isQuota = detail.toLowerCase().includes('quota') || detail.toLowerCase().includes('rate');
-      const isAuth = detail.toLowerCase().includes('api_key') || detail.toLowerCase().includes('key') || detail.toLowerCase().includes('403') || detail.toLowerCase().includes('unauthorized');
+      const lowerDetail = detail.toLowerCase();
+      const isAuth = lowerDetail.includes('api_key') || lowerDetail.includes('api key') || lowerDetail.includes('401') || lowerDetail.includes('403') || lowerDetail.includes('unauthorized') || lowerDetail.includes('permission_denied');
+      const isQuota = !isAuth && (lowerDetail.includes('quota') || lowerDetail.includes('rate limit') || lowerDetail.includes('rate_limit') || lowerDetail.includes('resource_exhausted') || lowerDetail.includes('429'));
 
       let userMsg = "Falha na análise do documento.";
-      if (isQuota) {
+      if (isAuth) {
+        userMsg = "Chave da API Gemini inválida ou não autorizada. Verifique a configuração da chave no painel.";
+      } else if (isQuota) {
         userMsg = "Limite de requisições da IA excedido (quota). Tente novamente em alguns minutos.";
-      } else if (isAuth) {
-        userMsg = "Chave da API Gemini inválida ou não autorizada. Verifique a configuração da chave.";
       } else if (detail) {
         userMsg = detail;
       }

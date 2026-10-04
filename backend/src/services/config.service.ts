@@ -75,9 +75,9 @@ const defaultConfig: AppConfig = {
 // Since Config is rarely changed, efficient.
 
 export const getConfig = async (): Promise<AppConfig> => {
-    // Load fresh data mapped to user's database.json structure
-    const settingsData = await getVal('/settings');
-    const adminData = await getVal('/admin');
+    // Load fresh data mapped to user's database.json structure with forceSync to avoid stale cache
+    const settingsData = await getVal('/settings', { forceSync: true });
+    const adminData = await getVal('/admin', { forceSync: true });
 
     // Base default
     let finalConfig = { ...defaultConfig };
@@ -110,14 +110,18 @@ export const getConfig = async (): Promise<AppConfig> => {
         finalConfig.admin.pass = process.env.ADMIN_PASS;
     }
 
-    // --- LLM PROVIDER OVERRIDES VIA ENV (STRICT PRIORITY - SURVIVES SAVE) ---
+    // --- LLM PROVIDER OVERRIDES VIA ENV (FALLBACK ONLY - DB SETTINGS TAKE PRECEDENCE) ---
     const envGemini = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
-    if (envGemini && envGemini.length > 10) finalConfig.providers.gemini = envGemini;
+    if (!finalConfig.providers.gemini && envGemini && envGemini.length > 10) {
+        finalConfig.providers.gemini = envGemini;
+    }
 
-    if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 10) {
+    if (!finalConfig.providers.openai && process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY.length > 10) {
         finalConfig.providers.openai = process.env.OPENAI_API_KEY;
     }
-    if (process.env.ANTHROPIC_API_KEY) finalConfig.providers.anthropic = process.env.ANTHROPIC_API_KEY;
+    if (!finalConfig.providers.anthropic && process.env.ANTHROPIC_API_KEY) {
+        finalConfig.providers.anthropic = process.env.ANTHROPIC_API_KEY;
+    }
 
     return finalConfig;
 };
