@@ -489,15 +489,26 @@ export const startResearch = async (req: Request, res: Response) => {
         }
         const workerId = uuidv4();
 
-    // 1. LOCK CHECK
+    // 1. LOCK CHECK & CIRCUIT BREAKER
     const force = req.body?.force === true;
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = !force && project.metadata.status === 'RESEARCHING' && (now - lastPulse < 25000); // 25s grace
+    const isActuallyRunning = !force && project.metadata.status === 'RESEARCHING' && (now - lastPulse < 90000); // 90s grace to prevent worker collision
 
     if (isActuallyRunning) {
         console.log(`[startResearch] Research already active for ${id} (last pulse ${now - lastPulse}ms ago). Skipping new worker.`);
         return res.json({ success: true, message: "Research already in progress", status: 'ACTIVE' });
+    }
+
+    const currentAttempts = Number((project.metadata as any)?.researchAttempts || 0);
+    if (currentAttempts >= 10 && !force) {
+        console.error(`[CIRCUIT BREAKER] Project ${id} exceeded maximum research attempts (${currentAttempts}). Halting.`);
+        await QueueService.updateMetadata(id, {
+            status: 'FAILED',
+            statusMessage: "Limite de tentativas de pesquisa atingido por segurança.",
+            currentWorkerId: ''
+        });
+        return res.status(429).json({ error: "Limite de tentativas de pesquisa excedido por segurança." });
     }
 
     // 2. TAKE OVER
@@ -507,8 +518,9 @@ export const startResearch = async (req: Request, res: Response) => {
         statusMessage: "🏭 Iniciando esteira de produção de conhecimento...",
         language: language || project.metadata.language || 'pt',
         lastWorkerPulse: new Date().toISOString(),
-        currentWorkerId: workerId
-    });
+        currentWorkerId: workerId,
+        researchAttempts: currentAttempts + 1
+    } as any);
 
     // --- UPDATE LEAD STATUS TO IN_PROGRESS ---
     try {
@@ -779,15 +791,26 @@ export const generateBookContent = async (req: Request, res: Response) => {
     const workerId = uuidv4();
     const targetLang = language || project.metadata.language || 'pt';
 
-    // 1. LOCK CHECK: Prevent multiple workers from processing the same project
+    // 1. LOCK CHECK & CIRCUIT BREAKER: Prevent multiple workers from colliding on the same project
     const force = req.body?.force === true;
     const now = Date.now();
     const lastPulse = project.metadata.lastWorkerPulse ? new Date(project.metadata.lastWorkerPulse).getTime() : 0;
-    const isActuallyRunning = !force && project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 25000); // 25s grace
+    const isActuallyRunning = !force && project.metadata.status === 'WRITING_CHAPTERS' && (now - lastPulse < 120000); // 120s grace to protect active workers
 
     if (isActuallyRunning) {
         console.log(`[PROJECT] Generation already active for ${id} (Pulse: ${now - lastPulse}ms ago). Skipping new worker.`);
         return res.json({ message: "Content generation already in progress", status: 'ACTIVE' });
+    }
+
+    const currentAttempts = Number((project.metadata as any)?.generationAttempts || 0);
+    if (currentAttempts >= 10 && !force) {
+        console.error(`[CIRCUIT BREAKER] Project ${id} exceeded maximum generation attempts (${currentAttempts}). Halting to protect API costs.`);
+        await QueueService.updateMetadata(id, {
+            status: 'FAILED',
+            statusMessage: "Limite de tentativas de geração de capítulos atingido por segurança.",
+            currentWorkerId: ''
+        });
+        return res.status(429).json({ error: "Limite de tentativas de geração excedido por segurança." });
     }
 
     // 2. TAKE OVER / START
@@ -795,8 +818,9 @@ export const generateBookContent = async (req: Request, res: Response) => {
         status: 'WRITING_CHAPTERS', 
         progress: project.metadata.progress || 41,
         lastWorkerPulse: new Date().toISOString(),
-        currentWorkerId: workerId 
-    });
+        currentWorkerId: workerId,
+        generationAttempts: currentAttempts + 1
+    } as any);
 
     res.json({ message: "Content generation started", workerId });
 

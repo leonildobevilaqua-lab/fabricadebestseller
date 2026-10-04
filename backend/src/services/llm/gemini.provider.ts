@@ -8,11 +8,9 @@ export class GeminiProvider implements LLMProvider {
     private client: GoogleGenerativeAI;
     // UPDATED: Prioritizing Gemini 2.5 Flash as requested and verified in AI Studio.
     // This model provides the best balance of speed, cost and quality for this project.
+    // FINANCIAL SAFEGUARD: Restrict strictly to Flash models. Never auto-fallback to Pro models (which cost up to 66x more).
     private models = [
-        "gemini-2.5-flash",  // PRIMARY: User confirmed active
-        "gemini-2.5-pro",    // SECONDARY: User confirmed active
-        "gemini-2.0-flash",  // GA STABLE: High performance
-        "gemini-1.5-flash",  // LEGACY STABLE
+        "gemini-2.5-flash",  // PRIMARY: Confirmed active, fast and cost-effective
     ];
 
 

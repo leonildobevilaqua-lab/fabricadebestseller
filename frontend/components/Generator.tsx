@@ -543,8 +543,12 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     await API.selectTitle(projectId, opt.title, opt.subtitle);
   };
 
+  const isApprovingStructureRef = useRef(false);
+  const isRetryingRef = useRef(false);
+
   const handleApproveStructure = async () => {
-    if (!projectId || !project) return;
+    if (!projectId || !project || isApprovingStructureRef.current) return;
+    isApprovingStructureRef.current = true;
     try {
       await API.generateBookContent(projectId, bookLanguage || language, userContact?.email);
       setProject({ ...project, metadata: { ...project.metadata, status: 'WRITING_CHAPTERS', progress: 41 } });
@@ -552,13 +556,21 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     } catch (e: any) {
       console.error("Structure Approve Error", e);
       setError("Erro ao iniciar escrita. Tente novamente.");
+    } finally {
+      // Keep lock active for at least 15s to allow backend state to persist and prevent rapid re-triggering from polling
+      setTimeout(() => { isApprovingStructureRef.current = false; }, 15000);
     }
   };
 
   const [retryCount, setRetryCount] = useState(0);
 
   const handleRetry = async (forceParam: boolean = false) => {
-    if (!projectId || !project) return;
+    if (!projectId || !project || isRetryingRef.current) return;
+    if (retryCount >= 2 && !forceParam) {
+      console.warn("[RETRY-GUARD] Maximum auto-retry attempts reached (2). Manual intervention required.");
+      return;
+    }
+    isRetryingRef.current = true;
     setRetryCount(prev => prev + 1);
     try {
       if (progress < 30) {
@@ -573,20 +585,23 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
       }
     } catch (e) {
       console.error("Retry execution failed", e);
+    } finally {
+      setTimeout(() => { isRetryingRef.current = false; }, 10000);
     }
   };
 
-  // Auto-Retry Effect
+  // Auto-Retry Effect: STRICT LIMIT of 2 retries. NEVER auto-reset retryCount on interim state changes.
   useEffect(() => {
     if (status === 'FAILED') {
-      if (retryCount < 20) {
-        const timer = setTimeout(() => { handleRetry(); }, 5000);
+      if (retryCount < 2) {
+        const timer = setTimeout(() => { handleRetry(false); }, 10000); // 10s grace
         return () => clearTimeout(timer);
+      } else {
+        console.warn("[RETRY-GUARD] Auto-retry stopped after 2 attempts to protect API costs.");
       }
-    } else {
-      if (status !== 'FAILED' && retryCount > 0 && status !== 'IDLE') {
-        setRetryCount(0);
-      }
+    } else if (status === 'COMPLETED') {
+      // Only reset retry count if the project successfully finished!
+      setRetryCount(0);
     }
   }, [status, retryCount]);
 
@@ -638,17 +653,23 @@ export const Generator: React.FC<GeneratorProps> = ({ metadata, updateMetadata, 
     return () => clearInterval(interval);
   }, [projectId, lastProgress]);
 
-  // AUTO-RESUME EFFECT: If stuck for > 180s (3 min) in an active state without pulse updates, safely attempt resume
+  // AUTO-RESUME EFFECT: Only resume if stuck > 300s (5 min), and maximum 2 auto-resume attempts
+  const autoResumeAttemptsRef = useRef(0);
   useEffect(() => {
     if (!projectId || !project || error) return;
     const { status } = project.metadata;
     const now = Date.now();
-    const isStuck = (now - lastProgressTime > 180000); // 180 seconds (3 minutes) without progress or pulse update
+    const isStuck = (now - lastProgressTime > 300000); // 300 seconds (5 minutes) without progress or pulse update
     
     if (isStuck && (status === 'RESEARCHING' || status === 'WRITING_CHAPTERS' || status === 'GENERATING_MARKETING')) {
-       console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Attempting non-forcing resume...`);
-       setLastProgressTime(now); // Reset timer to avoid spamming
-       handleRetry(false); // Pass force=false for auto-resume to avoid spawning duplicate workers
+       if (autoResumeAttemptsRef.current < 2) {
+          console.warn(`[AUTO-RESUME] System stuck at ${lastProgress}% for status ${status}. Attempting single non-forcing resume (${autoResumeAttemptsRef.current + 1}/2)...`);
+          autoResumeAttemptsRef.current += 1;
+          setLastProgressTime(now); // Reset timer to avoid spamming
+          handleRetry(false);
+       } else {
+          console.warn("[AUTO-RESUME] Maximum resume attempts reached. Pausing to protect API costs.");
+       }
     }
   }, [projectId, project, lastProgress, lastProgressTime, error]);
 
