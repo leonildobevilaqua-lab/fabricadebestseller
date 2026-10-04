@@ -7,9 +7,8 @@ import fs from 'fs';
 import path from 'path';
 import { SUBJECT_CODES } from '../cip.constants';
 import { getVal, setVal, reloadDB } from '../services/db.service';
+import { getConfig } from '../services/config.service';
 import Jimp from 'jimp';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 const getEstadoSigla = (estado: string) => {
   const ufMap: { [key: string]: string } = {
@@ -125,6 +124,19 @@ Texto do livro (amostra inicial):
 ${text.substring(0, 8000)}
 `;
 
+      const config = await getConfig();
+      const geminiApiKey = config?.providers?.gemini || process.env.GEMINI_API_KEY;
+
+      if (!geminiApiKey) {
+        console.error("[CIP] Gemini API Key is not configured in DB or env.");
+        if (req.file) fs.unlinkSync(req.file.path);
+        return res.status(500).json({
+          error: "Chave da API Gemini não configurada. Configure a chave nas configurações do sistema.",
+          details: "Gemini API key is missing"
+        });
+      }
+
+      const genAI = new GoogleGenerativeAI(geminiApiKey);
       const model = genAI.getGenerativeModel({
         model: "gemini-2.5-flash", // MATCHING THE WORKING STANDALONE VERSION
         generationConfig: {
@@ -257,9 +269,21 @@ ${text.substring(0, 8000)}
     } catch (error: any) {
       console.error("CIP Generation Error:", error);
       if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-      const detail = error.message || "";
+      const detail = error?.message || "";
+      const isQuota = detail.toLowerCase().includes('quota') || detail.toLowerCase().includes('rate');
+      const isAuth = detail.toLowerCase().includes('api_key') || detail.toLowerCase().includes('key') || detail.toLowerCase().includes('403') || detail.toLowerCase().includes('unauthorized');
+
+      let userMsg = "Falha na análise do documento.";
+      if (isQuota) {
+        userMsg = "Limite de requisições da IA excedido (quota). Tente novamente em alguns minutos.";
+      } else if (isAuth) {
+        userMsg = "Chave da API Gemini inválida ou não autorizada. Verifique a configuração da chave.";
+      } else if (detail) {
+        userMsg = detail;
+      }
+
       res.status(500).json({ 
-        error: `Erro ao gerar ficha catalográfica: ${detail.includes('quota') ? 'Limite de uso da IA excedido.' : 'Falha na análise do documento.'}`,
+        error: `Erro ao gerar ficha catalográfica: ${userMsg}`,
         details: detail
       });
     }
