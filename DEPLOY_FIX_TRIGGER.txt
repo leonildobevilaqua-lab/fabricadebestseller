@@ -1,1 +1,1 @@
-DEPLOY TRIGGER FIX - 2026-05-17 12:44:00 - Rebuild landing page compression patch
+DEPLOY TRIGGER FIX - 2026-10-04 12:33:00 - Security blindagem Gemini & Anti-Spike Protections
